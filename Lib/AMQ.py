@@ -1,6 +1,8 @@
 import asyncio
 import aio_pika
 import threading
+import datetime
+
 
 class Client():
     def __init__(self,ipaddr,idname,password):
@@ -8,6 +10,7 @@ class Client():
         self.ipaddr=ipaddr
         self.id=idname
         self.pw=password
+        self.time=datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
 #        self.receive_tread=threading.Thread(target=self.receive_response)
 #        self.input_thread = threading.Thread(target=self.user_input_thread)
    
@@ -19,7 +22,7 @@ class Client():
                 aio_pika.Message(body=message.encode()),
                 routing_key=f'{device}_queue',
             )
-            print(f" [ICS] Sent command to device '{device}'")
+            print(f"[{self.time}][ICS] ICS>{device}: command to device '{device}'")
             await connection.close()
 
     async def receive_response(self):
@@ -30,7 +33,7 @@ class Client():
             async with queue.iterator() as queue_iter:
                 async for message in queue_iter:
                     async with message.process():
-                        print(" [ICS] Received ", message.body.decode())
+                        print(f"[{self.time}][ICS] DONE: ", message.body.decode())
 
 #    def receive_response(self):
 #        print('tttt')
@@ -73,6 +76,7 @@ class Server():
         self.id=idname
         self.pw=password
         self.stop_event = asyncio.Event()
+        self.time=datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
         print(self.id)
 
 
@@ -84,7 +88,7 @@ class Server():
                 aio_pika.Message(body=response.encode()),
                 routing_key='client_queue',
             )
-            print(f" [{device}] Sent response to Client")
+            print(f"[{self.time}][{device}]: Sent response to ICS.")
             await connection.close()
 
 
@@ -99,7 +103,7 @@ class Server():
                     routing_key='client_queue',
                 )
                 await asyncio.sleep(3)  # Wait for ??? seconds : Interval Time to send response
-                print(f" [{device}] Sent response to Client")
+                print(f"[{self.time}][{device}] Sent response to ICS.")
 
     async def loop_start_stop(self,device,response):
         if response != 'stop':
@@ -119,7 +123,7 @@ class Server():
             async with queue.iterator() as queue_iter:
                 async for message in queue_iter:
                     async with message.process():
-                        print(f"[{device}] {device} Server received command")#, message.body.decode())
+                        print(f"[{self.time}][{device}] {device} server received command.")#, message.body.decode())
                         return message.body
 
     async def run(self):

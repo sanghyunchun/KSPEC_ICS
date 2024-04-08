@@ -17,7 +17,7 @@ async def identify_excute(GFA_server,cmd):
     if func == 'gfastop':
         rsp=gfastop()
         await GFA_server.loop_start_stop('GFA',rsp)
-        rsp = 'GFA exposure finished'
+        rsp = 'GFA>ICS: GFA exposure finished'
         await GFA_server.send_response('GFA',rsp)
 
     if func == 'loadguide':
@@ -32,7 +32,7 @@ async def identify_excute(GFA_server,cmd):
 
 
 def gfacexp(time):
-    response='GFA exposure running'
+    response='GFA>ICS: GFA exposure running'
     return response
 
    

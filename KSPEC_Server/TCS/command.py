@@ -27,10 +27,10 @@ async def identify_excute(TCS_server,cmd):
         await TCS_server.send_response("TCS",rsp)
 
     if func == 'tra':
-        rsp='Telescope slewing.....'
+        rsp='TCS>ICS: Telescope slewing.....'
         await TCS_server.send_response("TCS",rsp)
         tra()
-        rsp='Telescope slew finished'
+        rsp='TCS>ICS: Telescope slew finished'
         await TCS_server.send_response("TCS",rsp)
 
 
@@ -40,5 +40,5 @@ def savedata(tid,tra,tdec):
         f.write("%4i %12.6f %12.6f \n" % (tid,tra, tdec))
     f.close
 
-    response="'TCS loaded the tile information'"
+    response="TCS>ICS: TCS loaded the tile information"
     return response

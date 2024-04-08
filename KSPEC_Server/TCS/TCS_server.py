@@ -52,7 +52,7 @@ async def main():
         msg=await TCS_server.receive_message("TCS")
         dict_data=json.loads(msg)
         message=dict_data['comments']
-#        print('[x]', message)
+        print('[TCS]', message)
         await identify_excute(TCS_server,msg)
         
 
