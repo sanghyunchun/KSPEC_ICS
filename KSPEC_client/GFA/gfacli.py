@@ -2,30 +2,49 @@ import os, sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 # from Lib.MsgMiddleware import *
 from Lib.AMQ import *
+import Lib.mkmessage as mkmsg
 #import argh
 #import uuid
-from .gfacore import *
+#from .gfacore import *
 import asyncio
 import threading
 
 
-def gfa_cexp(time,chip):
- #   GFA_client=Client('GFA')
-    GFAmsg=gfa_cexpfun(time,chip)
-    return GFAmsg
-#    asyncio.run(GFA_client.send_message("GFA", GFAmsg))
+def gfa_cexp(exptime,chip):
+    "Exposure specific GFA camera with desired exposure time"
+    comment='GFA camera exposure start'
 
+    cmd_data=mkmsg.gfamsg()
+    cmd_data.update(time=exptime,chip=chip,message=comment)
+    GFAmsg=json.dumps(cmd_data)
 
-def gfa_allexp(time):
-#    GFA_client=Client('GFA')
-    GFAmsg=gfa_allexpfun(time)
     return GFAmsg
-#    asyncio.run(GFA_client.send_message("GFA", GFAmsg))
 
-def gfa_stop():
-#    GFA_client=Client('GFA')
-    GFAmsg=gfa_stopfun()
+def gfa_allexp(exptime):
+    "Exposure all GFA camera with desired exposure time"
+    comment='All GFA camera exposure start'
+
+    cmd_data=mkmsg.gfamsg()
+    cmd_data.update(time=exptime,func='gfaallexp',message=comment)
+    GFAmsg=json.dumps(cmd_data)
+#    GFAmsg=gfa_allexpfun(time)
     return GFAmsg
-#    print(GFAmsg)
-#    asyncio.run(GFA_client.send_message("GFA", GFAmsg))
+
+def gfa_autoguide():
+    "Run auto guide system"
+    comment='Autoguiding running'
+    cmd_data=mkmsg.gfamsg()
+    cmd_data.update(func='autoguide',message=comment)
+    GFAmsg=json.dumps(cmd_data)
+    return GFAmsg
+
+def autoguide_stop():
+    "Exposure stop"
+    comment='All GFA camera exposure stop'
+
+    cmd_data=mkmsg.gfamsg()
+    cmd_data.update(func='autoguidestop',message=comment)
+    GFAmsg=json.dumps(cmd_data)
+#    GFAmsg=gfa_stopfun()
+    return GFAmsg
 

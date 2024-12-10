@@ -14,7 +14,6 @@ def gfa_cexpfun(time,chip):
     return GFAmsg
 
 
-
 def gfa_allexpfun(time):
     "Exposure all GFA camera with desired exposure time"
     comments='All GFA camera exposure start'
@@ -24,6 +23,14 @@ def gfa_allexpfun(time):
     GFAmsg=json.dumps(dict_data)
     return GFAmsg
 
+def gfa_autoguidefuc(time):
+    "GFA camera autoguiding start"
+    comments='GFA autoguiding start'
+
+    dict_data={'inst': 'GFA', 'func' : 'autoguide', 'time': time,
+            'comments': comments}
+    GFAmsg=json.dumps(dict_data)
+    return GFAmsg
 
 def gfa_stopfun():
     comments='All GFA camera exposure stop'

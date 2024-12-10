@@ -2,15 +2,30 @@ import os, sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 # from Lib.MsgMiddleware import *
 from Lib.AMQ import *
+import Lib.mkmessage as mkmsg
 #import argh
 #import uuid
 from .mtlcore import *
 import asyncio
 import threading
+import json
 
 
-def mtl_exp():
+def mtl_exp(exptime):
 #    MTL_client=Client('MTL')
-    MTLmsg=mtl_expfun()
+    comment='Metrology camera exposure start'
+    cmd_data=mkmsg.mtlmsg()
+    cmd_data.update(func='mtlexp',time=exptime,message=comment)
+    MTLmsg=json.dumps(cmd_data)
     return MTLmsg
-#    asyncio.run(MTL_client.send_message('MTL',MTLmsg))
+
+
+def mtl_cal():
+    comment='Metrology calculates offset between Target and Fiber position'
+    cmd_data=mkmsg.mtlmsg()
+    cmd_data.update(func='mtlcal',message=comment)
+    MTLmsg=json.dumps(cmd_data)
+    return MTLmsg
+
+
+

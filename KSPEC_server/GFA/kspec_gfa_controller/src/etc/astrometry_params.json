@@ -1,0 +1,50 @@
+{
+    "pre_dir_path": "/home/yymx2/HDD/data6/GFA/image2/testformultiple/raw",
+    "pre_skycoord1": [
+        1000,
+        255
+    ],
+    "pre_skycoord2": [
+        1000,
+        767
+    ],
+    "sub_ind1": [
+        0,
+        1024,
+        0,
+        512
+    ],
+    "sub_ind2": [
+        0,
+        1024,
+        512,
+        1024
+    ],
+    "crop_ind": [
+        12,
+        979,
+        1,
+        1023
+    ],
+    "pre_dir_out": "/home/yymx2/HDD/data6/GFA/image2/testformultiple/procimg",
+    "ast_dir_out": "/home/yymx2/HDD/data6/GFA/image2/testformultiple/tempfiles",
+    "cpulimit": "6",
+    "ast_scale": [
+        "0.03",
+        "0.16"
+    ],
+    "ast_radius": "5",
+    "ast_dir_final": "/home/yymx2/HDD/data6/GFA/image2/testformultiple/astroimg/",
+    "off_astro_dir": "/home/yymx2/HDD/data6/GFA/image2/testformultiple/astroimg/",
+    "off_proc_dir": "/home/yymx2/HDD/data6/GFA/image2/testformultiple/procimg",
+    "boxsize": 40,
+    "crit_out": 0.25,
+    "peakmax": 30000,
+    "peakmin": 200,
+    "starcata": "/home/yymx2/HDD/data6/GFA/exercise1/combined_star.fits",
+    "ra_c": "index_ra",
+    "dec_c": "index_dec",
+    "mag/flux": "FLUX",
+    "ang_dist": 0.06,
+    "mag/fluxmin": 200
+}

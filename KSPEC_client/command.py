@@ -1,59 +1,186 @@
 import os,sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-from SCIOBS.sciobscli import load_tile,tra
-from GFA.gfacli import gfa_cexp, gfa_allexp,gfa_stop
-from MTL.mtlcli import mtl_exp
-from TCS.tcscli import tcs_tra
+from SCIOBS.sciobscli import sciobscli
+from GFA.gfacli import *
+from MTL.mtlcli import *
+from TCS.tcscli import *
+from FBP.fbpcli import *
+from ADC.adccli import *
+from LAMP.lampcli import *
+from SPECTRO.speccli import *
+from TEST.testcli import *
 import configparser as cp
 from Lib.AMQ import *
+from script.test import scriptrun
+import Lib.process as processes
+
 
 cfg=cp.ConfigParser()
-cfg.read('/media/shyunc/DATA/KSpec/KSPECICS_P4/Lib/KSPEC.ini')
+cfg.read('../Lib/KSPEC.ini')
 ip_addr=cfg.get("MAIN","ip_addr")
 idname=cfg.get("MAIN","idname")
 pwd=cfg.get("MAIN",'pwd')
 
-cmdlist=['','loadtile','gfacexp','gfaallexp','tra','gfastop','mtlexp']
+cmdlist=['','loadfile','obsstatus',
+        'gfastatus','gfacexp','gfaallexp','gfastop','autoguide','autoguidestop',
+        'mtlstatus','mtlexp','mtlcal',
+        'adcstatus','adcadjust','adcinit',
+        'fbpstatus','fbpmove','fbpoffset',
+        'arcon','arcoff','flaton','flatoff','fidon','fiducialoff',
+        'specstatus','specilluon','specilluoff','specexp',
+        'runscript',
+        'testfunc','teststop']
 
-def identify(cmd):
-    ICS_client = Client(ip_addr,idname,pwd)
+
+async def identify(arg,ICS_client,transport):
+#    ICS_client = Client(ip_addr,idname,pwd)
+#    print(arg)
+    cmd=arg.split(' ')
+    obs = sciobscli()
+    processes.initial()
 
     if cmd[0] not in cmdlist:
         print('Please insert right command')
 
-# Load tile information. Send tile information to GFA,Spectrograph,Metrology
-    if cmd[0] == 'loadtile':
-#        GFA_client = Client(ip_addr,idname,pwd)
-        msg=load_tile(cmd[1])
-        asyncio.run(ICS_client.send_message("TCS",msg))
-        asyncio.run(ICS_client.send_message("GFA",msg))
+#### Command for TEST ######
+    if cmd[0] == 'testfunc':
+        testmsg=test_func()
+        await ICS_client.send_message("TEST", testmsg)
 
-# Slew telescope to ra & dec
-    if cmd[0] == 'tra':
-        tcsmsg=tcs_tra(cmd[1],cmd[2])
-#        print(tcsmsg)
-        asyncio.run(ICS_client.send_message("TCS",tcsmsg))
+    if cmd[0] == 'teststop':
+        testmsg=test_stop()
+        await ICS_client.send_message("TEST", testmsg)
 
+### Command for current observation information
+    if cmd[0] == 'obsstatus':
+        obs.obsstatus()
 
+### Load observation file to ICS main server 
+    if cmd[0] == 'loadfile':
+        data=obs.loadfile(cmd[1])
+        print(data)
+        select_tile=input('Please select Tile ID above you want to observe: ')
+
+        obs.loadtile(select_tile)
+        if int(select_tile) <= 6000:
+            tilemsg,guidemsg,objmsg,motionmsg1,motionmsg2=obs.loadtile(select_tile)
+#            await ICS_client.send_message("GFA", guidemsg)
+#            await ICS_client.send_message("MTL", objmsg)
+#            await ICS_client.send_message("FBP", objmsg)
+#            await ICS_client.send_message("FBP", motionmsg1)
+#            await ICS_client.send_message("FBP", motionmsg2)
+        else:
+            print('Tile number should be less than 6000')
+#            return
+
+##### Command for Guide Camera ###############
 # Start exposure specific guide camera
     if cmd[0] == 'gfacexp':
         gfamsg=gfa_cexp(cmd[1],cmd[2])
-        asyncio.run(ICS_client.send_message("GFA", gfamsg))
+        await ICS_client.send_message("GFA", gfamsg)
 
-
-# Start exposure all guide camera
     if cmd[0] == 'gfaallexp':
         gfamsg=gfa_allexp(cmd[1])
-        asyncio.run(ICS_client.send_message("GFA", gfamsg))
+        respond=await ICS_client.send_message('GFA',gfamsg)
 
-# Stop GFA camera exposure
-    if cmd[0] == 'gfastop':
-        gfamsg=gfa_stop()
-        asyncio.run(ICS_client.send_message("GFA", gfamsg))
+    # Start exposure all guide camera
+    if cmd[0] == 'autoguide':
+        gfamsg=gfa_autoguide()
+        await ICS_client.send_message("GFA", gfamsg)
+
+    # Stop GFA camera exposure
+    if cmd[0] == 'autoguidestop':
+        gfamsg=autoguide_stop()
+        await ICS_client.send_message("GFA", gfamsg)
 
 
-# Start Metrology exposure
+##### Command for Metrology #################
+    # Start Metrology exposure
     if cmd[0] == 'mtlexp':
-        mtlmsg=mtl_exp()
-        print(mtlmsg)
-        asyncio.run(ICS_client.send_message("MTL", mtlmsg))
+        mtlmsg=mtl_exp(cmd[1])
+        await ICS_client.send_message("MTL", mtlmsg)
+
+    if cmd[0] == 'mtlcal':
+        mtlmsg=mtl_cal()
+        await ICS_client.send_message("MTL", mtlmsg)
+
+    if cmd[0] == 'hihihi':
+        await ICS_client.send_message('MTL','hihihi')
+        return
+
+##### Command for Fiber positioner ########################
+    if cmd[0] == 'fbpmove':
+        fbpmsg=fbp_move()
+        await ICS_client.send_message("FBP", fbpmsg)
+
+    if cmd[0] == 'fbpoffset':
+        fbpmsg=fbp_offset()
+        await ICS_client.send_message("FBP", fbpmsg)
+
+    if cmd[0] == 'fbpstatus':
+        fbpmsg=fbp_status()
+        await ICS_client.send_message("FBP", fbpmsg)
+
+##### Command for ADC #####################################
+    if cmd[0] == 'adcadjust':
+        adcmsg=adc_adjust(cmd[1])
+        await ICS_client.send_message("ADC",adcmsg)
+
+    if cmd[0] == 'adcinit':
+        adcmsg=adc_init()
+        await ICS_client.send_message("ADC",adcmsg)
+
+    if cmd[0] == 'adcstatus':
+        adcmsg=adc_status()
+        await ICS_client.send_message("ADC",adcmsg)
+
+    if cmd[0] == 'adcpoweroff':
+        adcmsg=adc_status()
+        await ICS_client.send_message("ADC",adcmsg)
+
+##### Command for Spectrograph #####################################
+    if cmd[0] == 'specilluon':
+        specmsg=spec_illu_on()
+        await ICS_client.send_message("SPEC",specmsg)
+
+    if cmd[0] == 'specilluoff':
+        specmsg=spec_illu_off()
+        await ICS_client.send_message("SPEC",specmsg)
+
+    if cmd[0] == 'specexp':
+        specmsg=spec_exp(cmd[1])
+        await ICS_client.send_message("SPEC",specmsg)
+
+    if cmd[0] == 'specstatus':
+        specmsg=spec_status()
+        await ICS_client.send_message("SPEC",specmsg)
+
+
+##### Command for Arc, Flat & Fiducial Lamp  ######################
+    if cmd[0] == 'arcon':
+        lampmsg=arcon()
+        await ICS_client.send_message("LAMP",lampmsg)
+
+    if cmd[0] == 'arcoff':
+        lampmsg=arcoff()
+        await ICS_client.send_message("LAMP",lampmsg)
+
+    if cmd[0] == 'flaton':
+        lampmsg=flaton()
+        await ICS_client.send_message("LAMP",lampmsg)
+
+    if cmd[0] == 'flatoff':
+        lampmsg=flatoff()
+        await ICS_client.send_message("LAMP",lampmsg)
+
+    if cmd[0] == 'fiducialon':
+        lampmsg = fiducialon()
+        await ICS_client.send_message("LAMP",lampmsg)
+
+    if cmd[0] == 'fiducialoff':
+        lampmsg=fiducialoff()
+        await ICS_client.send_message("LAMP",lampmsg)
+
+##### Command for script ##################################
+    if cmd[0] == 'runscript':
+        await scriptrun(ICS_client,transport,cmd[1])

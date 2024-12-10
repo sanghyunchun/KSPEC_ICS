@@ -8,20 +8,20 @@ from .obj_def import *
 import json
 import asyncio
 
-def readplan():
-    dtype=[('tid','i'),('obs_time','S100'),('obs_num','i')]
-    d=np.loadtxt(ppwd+filename,dtype=dtype,skiprows=1)
-    sequence_list=[]
-    for row in d:
-        ttid=row["tid"]
-        obsnum=row["obs_num"]
-        sequence_list.append((ttid,obsnum))
-    return sequence_list
+#def readplan():
+#    dtype=[('tid','i'),('obs_time','S100'),('obs_num','i')]
+#    d=np.loadtxt(ppwd+filename,dtype=dtype,skiprows=1)
+#    sequence_list=[]
+#    for row in d:
+#        ttid=row["tid"]
+#        obsnum=row["obs_num"]
+#        sequence_list.append((ttid,obsnum))
+#    return sequence_list
 
 # Load tile position of RA/DEC
 def load_tilepos(tile_id):
     dtype=[('tid','i'),('RA','f'),('DEC','f')]
-    dirs='/media/shyunc/DATA/KSpec/KSPECICS_P1/inputdata/plan/default/'
+    dirs='../../inputdata/plan/default/'
     d=np.loadtxt(dirs+'ASPECS_tile_pos.txt',dtype=dtype,skiprows=1)
     tilepos_list=[]
     for row in d:
@@ -46,7 +46,7 @@ def load_tilepos(tile_id):
 
 # Load RA/DEC and X/Y of guide star in specific tile
 def load_guide(tile_id):
-    dirs='/media/shyunc/DATA/KSpec/KSPECICS_P1/inputdata/plan/default/'
+    dirs='../../inputdata/plan/default/'
     dtype=[('tid','i'),('chipid','i'),('ra','f'),('dec','f'),('mag','f'),('xp','f'),('yp','f')]
     tid,chipid,ra,dec,mag,xp,yp=np.loadtxt(dirs+'ASPECS_GFA.txt',dtype=dtype,skiprows=1,unpack=True)
     idx = (tid == int(tile_id))

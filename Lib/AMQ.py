@@ -1,137 +1,141 @@
 import asyncio
 import aio_pika
 import threading
-import datetime
+import json
+import uuid
 
 
-class Client():
-    def __init__(self,ipaddr,idname,password):
-#        self.queue_name=device_name
+class AMQclass():
+    def __init__(self,ipaddr,idname,password,whoami,exchange):
         self.ipaddr=ipaddr
         self.id=idname
         self.pw=password
-        self.time=datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
-#        self.receive_tread=threading.Thread(target=self.receive_response)
-#        self.input_thread = threading.Thread(target=self.user_input_thread)
-   
-    async def send_message(self, device, message):
-        connection = await aio_pika.connect_robust(host=self.ipaddr,login=self.id,password=self.pw)
-        async with connection:
-            channel = await connection.channel()
-            await channel.default_exchange.publish(
-                aio_pika.Message(body=message.encode()),
-                routing_key=f'{device}_queue',
-            )
-            print(f"[{self.time}][ICS] ICS>{device}: command to device '{device}'")
-            await connection.close()
 
-    async def receive_response(self):
-        connection = await aio_pika.connect_robust(host=self.ipaddr,login=self.id,password=self.pw)
-        async with connection:
-            channel = await connection.channel()
-            queue = await channel.declare_queue('client_queue')
-            async with queue.iterator() as queue_iter:
-                async for message in queue_iter:
-                    async with message.process():
-                        print(f"[{self.time}][ICS] DONE: ", message.body.decode())
-
-#    def receive_response(self):
-#        print('tttt')
-#        connection = asyncio.run(aio_pika.connect_robust("amqp://guest:guest@localhost/"))
-#        channel = connection.channel()
-#        queue = asyncio.run(channel.declare_queue('client_queue'))
-
-#        async def _receive():
-#            async for message in queue:
-#                async with message.process():
-#                    print("Received response from server:", message.body.decode())
-
-#        asyncio.run(_receive())
-
-
-#async with queue.iterator() as queue_iter:
-#            async for message in queue_iter:
-#                async with message.process():
-#                    print(" [x] Received ", message.body.decode())
-
-#    def start_thread(self):
-#        self.receive_tread.start()
-
-#    def user_input_thread(self):
-#        while True:
-#            user_input = input("Type 'start' to start receiving messages or 'stop' to stop: ")
-#            if user_input.strip().lower() in ('start', 'stop'):
-#                device = input("Enter the device ID (device1 or device2): ")
-#                message = user_input.strip().lower()
-#                asyncio.run(self.send_message(device, message))
-
-#    async def run(self):
-#        self.input_thread.start()
-#        await self.receive_message()
-
-class Server():
-    def __init__(self,ipaddr,idname,password,device_name):
-        self.queue_name=device_name
-        self.ipaddr=ipaddr
-        self.id=idname
-        self.pw=password
+        self.im=whoami
+        self.exchange = exchange
+        self.queue = None
+        self.channel = None
+        self.connection = None
+        self.futures = {}
         self.stop_event = asyncio.Event()
-        self.time=datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
-        print(self.id)
+        self.mission = False
 
+    async def connect(self):
+        self.connection = await aio_pika.connect_robust(host=self.ipaddr,login=self.id,password=self.pw)
+        self.channel = await self.connection.channel()
+        print('RabbitMQ server connected')
 
-    async def send_response(self, device, response):
-        connection = await aio_pika.connect_robust(host=self.ipaddr,login=self.id,password=self.pw)
-        async with connection:
-            channel = await connection.channel()
-            await channel.default_exchange.publish(
-                aio_pika.Message(body=response.encode()),
-                routing_key='client_queue',
+    async def define_producer(self):
+        self.cmd_exchange = await self.channel.declare_exchange(self.exchange, aio_pika.ExchangeType.DIRECT)
+        print(f'{self.exchange} exchange was defined')
+
+    async def send_message(self, _routing_key, message):
+        await self.cmd_exchange.publish(
+                aio_pika.Message(body=message.encode()),
+                routing_key=_routing_key,
             )
-            print(f"[{self.time}][{device}]: Sent response to ICS.")
-            await connection.close()
+        print(f"{self.im} sent message to device '{_routing_key}'")
 
+    async def define_consumer(self):
+        if self.queue is None:
+            self.cmd_exchange = await self.channel.declare_exchange(self.exchange, aio_pika.ExchangeType.DIRECT)
+            self.queue = await self.channel.declare_queue(f'{self.im}_queue',durable=True)
 
-    async def send_loopresponse(self, device,response):
-#        print('ok good')
-        connection = await aio_pika.connect_robust(host=self.ipaddr,login=self.id,password=self.pw)
-        async with connection:
-            channel = await connection.channel()
-            while not self.stop_event.is_set():
-                await channel.default_exchange.publish(
+    async def receive_message(self,_routing_key):
+        await self.queue.bind(self.cmd_exchange,routing_key=_routing_key)
+        async with self.queue.iterator() as qiterator:
+            async for message in qiterator:
+                async with message.process():
+                    print(f'{_routing_key} Server received message') #, message.body.decode())
+                    return message.body
+
+    async def send_loopresponse(self, _routing_key,itmax,function,subserver):
+        itn=0
+        while not self.stop_event.is_set():
+            response=await function(subserver)
+#            print(response)
+            if response != None:
+                if itn==itmax:
+                    await self.cmd_exchange.publish(
                     aio_pika.Message(body=response.encode()),
-                    routing_key='client_queue',
-                )
-                await asyncio.sleep(3)  # Wait for ??? seconds : Interval Time to send response
-                print(f"[{self.time}][{device}] Sent response to ICS.")
+                    routing_key=_routing_key,
+                    )
+                    print(f"{self.im} Sever sent message to '{_routing_key}'")
+                    itn=0
+                itn=itn+1
+            await asyncio.sleep(2)  # Wait for ??? seconds : Interval Time to send response
 
-    async def loop_start_stop(self,device,response):
-        if response != 'stop':
-            asyncio.create_task(self.send_loopresponse(device,response))
-        elif response == 'stop':
+    async def loop_start_stop(self,_routing_key,msg,itmax,function,subserver):
+        if msg != 'stop':
+            asyncio.create_task(self.send_loopresponse(_routing_key,itmax,function,subserver))
+        elif msg == 'stop':
             self.stop_event.set()
-            await asyncio.sleep(5)  # Wait for ??? second to ensure all tasks are completed. 
+            await asyncio.sleep(2)  # Wait for ??? second to ensure all tasks are completed.
                                     # This time should be longer than interval time to send response in send_looprespons function.
             self.stop_event.clear()  # Reset stop_event for future messages
 
 
-    async def receive_message(self,device):
-        connection = await aio_pika.connect_robust(host=self.ipaddr,login=self.id,password=self.pw)
-        async with connection:
-            channel = await connection.channel()
-            queue = await channel.declare_queue(f'{device}_queue')
-            async with queue.iterator() as queue_iter:
-                async for message in queue_iter:
-                    async with message.process():
-                        print(f"[{self.time}][{device}] {device} server received command.")#, message.body.decode())
-                        return message.body
+class UDPClientProtocol:
+    def __init__(self, on_con_lost):
+        self.on_con_lost = on_con_lost  # Future to signal connection lost
 
-    async def run(self):
-        await self.receive_start_stop_message()
+    def connection_made(self, transport):
+        self.transport = transport  # Save the transport for sending data
 
-if __name__ == "__main__":
-    client = Client()
-    server = Server()
-    asyncio.run(server.run())
-    asyncio.run(client.run())
+    def datagram_received(self, data, addr):
+        print(f"From server: {data.decode()}")  # Print received message
 
+    def error_received(self, exc):
+        print(f"Error received: {exc}")
+        if not self.on_con_lost.done():
+            self.on_con_lost.set_result(True)  # Signal the connection is lost on error
+
+    def connection_lost(self, exc):
+        print("Connection closed.")
+        if not self.on_con_lost.done():
+            self.on_con_lost.set_result(True)  # Signal the connection is lost on close
+
+
+"""
+class TCSclient():
+    def __init__(self,host,port):
+        self.host=host
+        self.port=port
+        self.reader=None
+        self.writer=None
+
+    async def connect(self):
+        self.reader, self.writer = await asyncio.open_connection(self.host, self.port)
+        print('Connected to the server')
+        await self.send_message("START")
+
+    async def send_message(self, message):
+        print(f'Sending: {message}')
+        self.writer.write((message + "\n").encode())
+        await self.writer.drain()
+
+    async def receive_message(self):
+        try:
+            while True:
+                data = await self.reader.readline()
+                print(f"Received: {data.decode().strip()}")
+        except asyncio.CancelledError:
+            print("Connection closed by server")
+        finally:
+            self.close_connection()
+
+#    async def user_input(self):
+#        loop = asyncio.get_event_loop()
+#        while True:
+#            message = await loop.run_in_executor(None, input, "")
+#            await self.send_message(message)
+
+    def close_connection(self):
+        if self.writer:
+            self.writer.close()
+            print("Connection closed")
+
+#    async def run(self):
+#        await self.connect()
+#        await asyncio.gather(self.receive_message(), self.user_input())
+"""

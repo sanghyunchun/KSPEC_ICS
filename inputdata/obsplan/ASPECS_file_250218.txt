@@ -1,0 +1,2 @@
+# OBS_file		 tile_position          assign_file        guide_file  
+ASPECS_obs_250218.txt  ASPECS_tile_pos.txt   ASPECS_assign.txt   ASPECS_GFA.txt
