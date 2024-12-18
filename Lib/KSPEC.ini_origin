@@ -1,0 +1,12 @@
+[MAIN]
+idname = kspecadmin
+pwd = kasikspec
+ip_addr = 127.0.0.1
+TelcomIP = 127.0.0.1
+TelcomPort = 8888
+
+{
+"idname": "kspecadmin", "pwd": "kasikspec", "ip_addr": "127.0.0.1",
+	"TelcomIP": "127.0.0.1", "TelcomPort": 8888
+}
+

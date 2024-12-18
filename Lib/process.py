@@ -1,27 +1,30 @@
 import json
 
 
+with open('./Lib/KSPEC.ini','r') as fs:
+    kspecinfo=json.load(fs)
+
+processini = kspecinfo['processini']
+processfile = kspecinfo['processfile']
+
 def initial():
-    filepath='../Lib/process.ini'
-    with open(filepath,'r') as f:
+    with open(processini,'r') as f:
         initial_status=json.load(f)
     f.close()
 
-    filepath='./PROCESS/process.json'
-    with open(filepath,'r') as f:
+    with open(processfile,'r') as f:
         process_status=json.load(f)
     f.close()
 
     process_status.update(initial_status)
 
-    with open(filepath,'w') as f:
+    with open(processfile,'w') as f:
         json.dump(process_status,f)
 
     f.close()
 
 def update_process(inst,status):
-    filepath='./PROCESS/process.json'
-    with open(filepath,'r') as f:
+    with open(processfile,'r') as f:
         process_status=json.load(f)
 
     f.close()
@@ -30,14 +33,13 @@ def update_process(inst,status):
 
     process_status.update(process_update)
 
-    with open(filepath,'w') as f:
+    with open(processfile,'w') as f:
         json.dump(process_status,f)
 
     f.close()
 
 def get_process(inst):
-    filepath='./PROCESS/process.json'
-    with open(filepath,'r') as f:
+    with open(processfile,'r') as f:
         process_status=json.load(f)
 
     f.close()

@@ -49,13 +49,13 @@ class AMQclass():
                     print(f'{_routing_key} Server received message') #, message.body.decode())
                     return message.body
 
-    async def send_loopresponse(self, _routing_key,itmax,function,subserver):
+    async def send_loopresponse(self, _routing_key,itmax,function,subserver):    ### For autoguiding
         itn=0
         while not self.stop_event.is_set():
             response=await function(subserver)
-#            print(response)
             if response != None:
-                if itn==itmax:
+                if itn==itmax or response['thred'] > 7:
+                    response=json.dumps(response)
                     await self.cmd_exchange.publish(
                     aio_pika.Message(body=response.encode()),
                     routing_key=_routing_key,

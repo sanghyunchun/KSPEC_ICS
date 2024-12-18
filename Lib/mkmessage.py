@@ -42,7 +42,7 @@ def mtlmsg():
 
 def specmsg():
     dict_data=common()
-    update_data={'time': 'None'}
+    update_data={'time': 'None','numframe': 'None'}
     dict_data.update(update_data)
     dict_data.update(inst='SPEC')
     return dict_data

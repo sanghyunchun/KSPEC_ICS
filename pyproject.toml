@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "kspecics-p2"
+version = "0.1.0"
+description = ""
+authors = ["shyunc <shyunc@kasi.re.kr>"]
+readme = "README.md"
+packages =[
+	{ include = "ADC" },
+	{ include = "FBP" },
+	{ include = "GFA" },
+	{ include = "LAMP" },
+	{ include = "Lib" },
+	{ include = "MTL" },
+	{ include = "SCIOBS" },
+	{ include = "script" },
+	{ include = "SPECTRO" },
+	{ include = "TCS" },
+	{ include = "TEST" },
+]
+
+
+[tool.poetry.dependencies]
+python = "^3.10"
+aio-pika = "^9.5.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
