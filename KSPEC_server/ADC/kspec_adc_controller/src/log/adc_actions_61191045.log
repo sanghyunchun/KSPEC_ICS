@@ -1,8 +1,0 @@
-2024-12-05 14:41:05 [INFO] Starting the process to find devices...
-2024-12-05 14:41:05 [INFO] ID 0: BusHardwareId(Wi-Fi (Intel(R) Wi-Fi 6E AX211 160MHz)) [bus hardware: Network Adapter, protocol: EtherCAT, hardware specifier: {0B3C66B5-CC23-40D1-997B-E4053F477E82}]
-2024-12-05 14:41:05 [INFO] ID 1: BusHardwareId(Serial Port (COM3)) [bus hardware: Serial Port, protocol: MODBUS RTU, hardware specifier: COM3]
-2024-12-05 14:41:05 [INFO] ID 2: BusHardwareId(USB Bus) [bus hardware: USB BUS, protocol: MODBUS VCP, hardware specifier: UsbRoot0, extra hardware specifier: UsbBusVcp]
-2024-12-05 14:41:05 [INFO] ID 3: BusHardwareId(Wi-Fi (Intel(R) Wi-Fi 6E AX211 160MHz)) [bus hardware: Network Adapter, protocol: MODBUS TCP, hardware specifier: {0B3C66B5-CC23-40D1-997B-E4053F477E82}]
-2024-12-05 14:41:05 [INFO] ID 4: BusHardwareId(Wi-Fi (Intel(R) Wi-Fi 6E AX211 160MHz)) [bus hardware: Network Adapter, protocol: RESTful API, hardware specifier: {0B3C66B5-CC23-40D1-997B-E4053F477E82}]
-2024-12-05 14:41:05 [INFO] ID 5: BusHardwareId(USB Bus) [bus hardware: USB BUS, protocol: MSC, hardware specifier: UsbRoot0, extra hardware specifier: UsbBusMsc]
-2024-12-05 14:41:11 [INFO] Selected bus hardware ID: <nanotec_nanolib.Nanolib.BusHardwareId; proxy of <Swig Object of type 'nlc::BusHardwareId *' at 0x000002DE1336FF90> >
