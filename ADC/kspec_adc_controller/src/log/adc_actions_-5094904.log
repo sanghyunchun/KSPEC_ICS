@@ -1,0 +1,62 @@
+2024-12-05 14:29:57 [INFO] Starting the process to find devices...
+2024-12-05 14:29:57 [INFO] Calling listAvailableBusHardware()...
+2024-12-05 14:29:57 [INFO] Number of available bus hardware IDs: 6
+2024-12-05 14:29:57 [INFO] Available Bus Hardware IDs:
+2024-12-05 14:29:57 [INFO] ID 0: BusHardwareId(Wi-Fi (Intel(R) Wi-Fi 6E AX211 160MHz)) [bus hardware: Network Adapter, protocol: EtherCAT, hardware specifier: {0B3C66B5-CC23-40D1-997B-E4053F477E82}]
+2024-12-05 14:29:57 [INFO] ID 1: BusHardwareId(Serial Port (COM3)) [bus hardware: Serial Port, protocol: MODBUS RTU, hardware specifier: COM3]
+2024-12-05 14:29:57 [INFO] ID 2: BusHardwareId(USB Bus) [bus hardware: USB BUS, protocol: MODBUS VCP, hardware specifier: UsbRoot0, extra hardware specifier: UsbBusVcp]
+2024-12-05 14:29:57 [INFO] ID 3: BusHardwareId(Wi-Fi (Intel(R) Wi-Fi 6E AX211 160MHz)) [bus hardware: Network Adapter, protocol: MODBUS TCP, hardware specifier: {0B3C66B5-CC23-40D1-997B-E4053F477E82}]
+2024-12-05 14:29:57 [INFO] ID 4: BusHardwareId(Wi-Fi (Intel(R) Wi-Fi 6E AX211 160MHz)) [bus hardware: Network Adapter, protocol: RESTful API, hardware specifier: {0B3C66B5-CC23-40D1-997B-E4053F477E82}]
+2024-12-05 14:29:57 [INFO] ID 5: BusHardwareId(USB Bus) [bus hardware: USB BUS, protocol: MSC, hardware specifier: UsbRoot0, extra hardware specifier: UsbBusMsc]
+2024-12-05 14:29:57 [INFO] Selecting bus hardware ID at index 1.
+2024-12-05 14:29:57 [INFO] Selected bus hardware ID: <nanotec_nanolib.Nanolib.BusHardwareId; proxy of <Swig Object of type 'nlc::BusHardwareId *' at 0x00000228D782C180> >
+2024-12-05 14:29:57 [INFO] Configuring ADC motor options...
+2024-12-05 14:29:57 [INFO] ADC motor options configured successfully.
+2024-12-05 14:29:57 [INFO] Opening bus hardware with protocol...
+2024-12-05 14:29:58 [INFO] Bus hardware opened successfully.
+2024-12-05 14:29:58 [INFO] Scanning for devices on the bus...
+2024-12-05 14:30:25 [INFO] Number of devices found: 2
+2024-12-05 14:30:25 [INFO] Device IDs found:
+2024-12-05 14:30:25 [INFO] ID 0: <nanotec_nanolib.Nanolib.DeviceId; proxy of <Swig Object of type 'nlc::DeviceId *' at 0x00000228D7ABB420> >
+2024-12-05 14:30:25 [INFO] ID 1: <nanotec_nanolib.Nanolib.DeviceId; proxy of <Swig Object of type 'nlc::DeviceId *' at 0x00000228D7ABBBA0> >
+2024-12-05 14:30:25 [INFO] Adding devices to the system...
+2024-12-05 14:30:25 [INFO] Device 1 added successfully with handle: <nanotec_nanolib.Nanolib.DeviceHandle; proxy of <Swig Object of type 'nlc::DeviceHandle *' at 0x00000228D7A83900> >
+2024-12-05 14:30:25 [INFO] Device 2 added successfully with handle: <nanotec_nanolib.Nanolib.DeviceHandle; proxy of <Swig Object of type 'nlc::DeviceHandle *' at 0x00000228D7ABB750> >
+2024-12-05 14:30:25 [INFO] Initializing device connection statuses...
+2024-12-05 14:30:25 [INFO] Device connection statuses initialized. Process completed successfully.
+2024-12-05 14:30:25 [INFO] Retrieving status for motor 0.
+2024-12-05 14:30:25 [INFO] Device states: {'motor1': {'connection_state': False}, 'motor2': {'connection_state': False}}
+2024-12-05 14:30:25 [INFO] Motor 0 status: {'motor1': {'connection_state': False}, 'motor2': {'connection_state': False}}
+2024-12-05 14:30:25 [INFO] Activating motors.
+2024-12-05 14:30:25 [INFO] Device 1 connected successfully.
+2024-12-05 14:30:25 [INFO] Device 2 connected successfully.
+2024-12-05 14:30:25 [INFO] Device states: {'motor1': {'connection_state': True}, 'motor2': {'connection_state': True}}
+2024-12-05 14:30:25 [INFO] Motor status: {'motor1': {'connection_state': True}, 'motor2': {'connection_state': True}}
+2024-12-05 14:30:25 [INFO] Modes of operation display: 1
+2024-12-05 14:30:26 [INFO] Modes of operation display: 1
+2024-12-05 14:30:26 [INFO] <nanotec_nanolib.Nanolib.ResultVoid; proxy of <Swig Object of type 'nlc::ResultVoid *' at 0x00000228D7B485A0> >
+2024-12-05 14:30:26 [INFO] <nanotec_nanolib.Nanolib.ResultVoid; proxy of <Swig Object of type 'nlc::ResultVoid *' at 0x00000228D7B639C0> >
+2024-12-05 14:30:26 [INFO] <nanotec_nanolib.Nanolib.ResultVoid; proxy of <Swig Object of type 'nlc::ResultVoid *' at 0x00000228D7B48C90> >
+2024-12-05 14:30:26 [INFO] <nanotec_nanolib.Nanolib.ResultVoid; proxy of <Swig Object of type 'nlc::ResultVoid *' at 0x00000228D7AD8A50> >
+2024-12-05 14:30:26 [INFO] <nanotec_nanolib.Nanolib.ResultVoid; proxy of <Swig Object of type 'nlc::ResultVoid *' at 0x00000228D7ABBED0> >
+2024-12-05 14:30:26 [INFO] <nanotec_nanolib.Nanolib.ResultVoid; proxy of <Swig Object of type 'nlc::ResultVoid *' at 0x00000228D7B485A0> >
+2024-12-05 14:30:26 [INFO] <nanotec_nanolib.Nanolib.ResultVoid; proxy of <Swig Object of type 'nlc::ResultVoid *' at 0x00000228D7B48F30> >
+2024-12-05 14:30:26 [INFO] <nanotec_nanolib.Nanolib.ResultVoid; proxy of <Swig Object of type 'nlc::ResultVoid *' at 0x00000228D7B48D50> >
+2024-12-05 14:30:26 [INFO] <nanotec_nanolib.Nanolib.ResultVoid; proxy of <Swig Object of type 'nlc::ResultVoid *' at 0x00000228D7711080> >
+2024-12-05 14:30:26 [INFO] <nanotec_nanolib.Nanolib.ResultVoid; proxy of <Swig Object of type 'nlc::ResultVoid *' at 0x00000228D7B48D80> >
+2024-12-05 14:30:26 [INFO] <nanotec_nanolib.Nanolib.ResultVoid; proxy of <Swig Object of type 'nlc::ResultVoid *' at 0x00000228D7ABB9C0> >
+2024-12-05 14:30:26 [INFO] <nanotec_nanolib.Nanolib.ResultVoid; proxy of <Swig Object of type 'nlc::ResultVoid *' at 0x00000228D7ABBED0> >
+2024-12-05 14:30:41 [INFO] Motor 1 reached target position.
+2024-12-05 14:30:41 [INFO] Motor 2 reached target position.
+2024-12-05 14:30:41 [INFO] Total execution time for move_motor (Motor 1): 15.42 seconds
+2024-12-05 14:30:41 [INFO] {'initial_position': 12150, 'final_position': 16200, 'position_change': 4050, 'execution_time': 15.416256189346313}
+2024-12-05 14:30:41 [INFO] Total execution time for move_motor (Motor 2): 15.43 seconds
+2024-12-05 14:30:41 [INFO] {'initial_position': 12150, 'final_position': 16200, 'position_change': 4050, 'execution_time': 15.429849624633789}
+2024-12-05 14:30:41 [INFO] Motors activated successfully.
+2024-12-05 14:30:41 [INFO] Retrieving status for motor 0.
+2024-12-05 14:30:41 [INFO] Device states: {'motor1': {'connection_state': True}, 'motor2': {'connection_state': True}}
+2024-12-05 14:30:41 [INFO] Motor 0 status: {'motor1': {'connection_state': True}, 'motor2': {'connection_state': True}}
+2024-12-05 14:30:41 [INFO] Powering off and disconnecting from devices.
+2024-12-05 14:30:41 [INFO] Device 1 disconnected successfully.
+2024-12-05 14:30:41 [INFO] Device 2 disconnected successfully.
+2024-12-05 14:30:41 [INFO] Power off successful.
