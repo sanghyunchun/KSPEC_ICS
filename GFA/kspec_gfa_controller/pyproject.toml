@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "kspec-gfa-controller"
+version = "0.6.0"
+description = "The Controller software for KSPEC-GFA Camera"
+authors = ["Mingyeong Yang <mmingyeong@kasi.re.kr>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+astropy = "^6.1.2"
+datetime = "^5.5"
+asyncio = "^3.4.3"
+pypylon = "^4.0.0"
+
+[tool.poetry.scripts]
+set-permissions = "scripts.set_permissions:main"
+
+[tool.poetry.group.dev.dependencies]
+matplotlib = "^3.9.2"
+ruff = "^0.6.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
