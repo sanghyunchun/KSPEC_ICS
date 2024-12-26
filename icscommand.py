@@ -18,13 +18,12 @@ import Lib.process as processes
 cmdlist=['','loadfile','obsstatus',
         'gfastatus','gfacexp','gfaallexp','gfastop','autoguide','autoguidestop',
         'mtlstatus','mtlexp','mtlcal',
-        'adcstatus','adcadjust','adcinit',
+        'adcstatus','adcadjust','adcinit','adcconnect','adcrotate1','adcrotate2',
         'fbpstatus','fbpmove','fbpoffset','fbpinit',
         'lampstatus','arcon','arcoff','flaton','flatoff','fidon','fiducialoff',
         'specstatus','specilluon','specilluoff','objexp','biasexp','flatexp','arcexp',
         'runscript',
         'testfunc','teststop']
-
 
 async def identify(arg,ICS_client,transport):
     cmd=arg.split(' ')
@@ -33,6 +32,7 @@ async def identify(arg,ICS_client,transport):
 
     if cmd[0] not in cmdlist:
         print('Please insert right command')
+        return
 
 #### Command for TEST ######
     if cmd[0] == 'testfunc':
@@ -137,6 +137,18 @@ async def identify(arg,ICS_client,transport):
 
     if cmd[0] == 'adcpoweroff':
         adcmsg=adc_status()
+        await ICS_client.send_message("ADC",adcmsg)
+
+    if cmd[0] == 'adcconnect':
+        adcmsg=adc_connect()
+        await ICS_client.send_message("ADC",adcmsg)
+
+    if cmd[0] == 'adcrotate1':
+        adcmsg=adc_rotate1(cmd[1])
+        await ICS_client.send_message("ADC",adcmsg)
+
+    if cmd[0] == 'adcrotate2':
+        adcmsg=adc_rotate1(cmd[1])
         await ICS_client.send_message("ADC",adcmsg)
 
 ##### Command for Spectrograph #####################################
