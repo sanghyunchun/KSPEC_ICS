@@ -5,6 +5,7 @@ import asyncio
 import aio_pika
 import json
 from GFA.command import *
+from GFA.endo_controller.endo_actions import endo_actions
 #import configparser as cp
 
 

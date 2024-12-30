@@ -17,6 +17,7 @@ import Lib.process as processes
 
 cmdlist=['','loadfile','obsstatus',
         'gfastatus','gfacexp','gfaallexp','gfastop','autoguide','autoguidestop',
+        'endoguide','endotest','endofocus','endostop','endoexpset',
         'mtlstatus','mtlexp','mtlcal',
         'adcstatus','adcadjust','adcinit','adcconnect','adcrotate1','adcrotate2',
         'fbpstatus','fbpmove','fbpoffset','fbpinit',
@@ -89,6 +90,30 @@ async def identify(arg,ICS_client,transport):
         gfamsg=autoguide_stop()
         await ICS_client.send_message("GFA", gfamsg)
 
+    # Start Endoscope camera exposure
+    if cmd[0] == 'endoguide':
+        gfamsg=endo_guide(cmd[1])
+        await ICS_client.send_message("GFA", gfamsg)
+
+    # Stop Endoscope camera exposure
+    if cmd[0] == 'endostop':
+        gfamsg=endo_stop()
+        await ICS_client.send_message("GFA", gfamsg)
+
+    # Test Endoscope camera exposure
+    if cmd[0] == 'endotest':
+        gfamsg=endo_test(cmd[1])
+        await ICS_client.send_message("GFA", gfamsg)
+
+    # Endoscope camera focus set
+    if cmd[0] == 'endofocus':
+        gfamsg=endo_focus(cmd[1])
+        await ICS_client.send_message("GFA", gfamsg)
+
+    # Endoscope camera exposure time set
+    if cmd[0] == 'endoexpset':
+        gfamsg=endo_expset(cmd[1])
+        await ICS_client.send_message("GFA", gfamsg)
 
 ##### Command for Metrology #################
     # Start Metrology exposure
