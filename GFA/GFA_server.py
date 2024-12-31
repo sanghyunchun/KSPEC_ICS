@@ -14,9 +14,9 @@ async def main():
     with open('./Lib/KSPEC.json','r') as f:
         kspecinfo=json.load(f)
 
-    ip_addr = kspecinfo['ip_addr']
-    idname = kspecinfo['idname']
-    pwd = kspecinfo['pwd']
+    ip_addr = kspecinfo['RabbitMQ']['ip_addr']
+    idname = kspecinfo['RabbitMQ']['idname']
+    pwd = kspecinfo['RabbitMQ']['pwd']
 
     print('GFA Sever Started!!!')
     GFA_server=AMQclass(ip_addr,idname,pwd,'GFA','ics.ex')
