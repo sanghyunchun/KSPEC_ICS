@@ -8,7 +8,7 @@ def mtlexp(exptime
            , gain=10
            , offset=30
            , nexposure=1
-           , data_dir='./data/'):
+           , data_dir='./MTL/data/'):              # Need edit by real observation
     
     qc = QHY_Camera()
     qc.sdk.InitQHYCCDResource()
@@ -27,7 +27,7 @@ def mtlexp(exptime
         hdr['texp'] = exptime
 
         empty_primary = fits.PrimaryHDU(header=hdr, data=im)
-        empty_primary.writeto(data_dir+f'test{i}.fits', overwrite=True)
+        empty_primary.writeto(data_dir+f'test{i}.fits', overwrite=True)     # Need edit by real observation
 
     qc.CamExit()
 

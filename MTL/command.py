@@ -43,7 +43,7 @@ async def identify_excute(MTL_server,cmd):
         await MTL_server.send_message('ICS',rsp)
 
     if func == 'mtlexp':
-        exptime=receive_msg['time']
+        exptime=float(receive_msg['time'])
         comment=mtlexp.mtlexp(exptime)
         reply_data=mkmsg.mtlmsg()
         reply_data.update(message=comment,process='Done')
