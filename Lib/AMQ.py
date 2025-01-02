@@ -49,10 +49,10 @@ class AMQclass():
                     print(f'{_routing_key} Server received message') #, message.body.decode())
                     return message.body
 
-    async def send_loopresponse(self, _routing_key,itmax,function,subserver):    ### For autoguiding
+    async def start_guidingloop(self, _routing_key,itmax,function,exptime,subserver):    ### For autoguiding
         itn=0
         while not self.stop_event.is_set():
-            response=await function(subserver)
+            response=await function(exptime,subserver)
             if response != None:
                 if itn==itmax or response['thred'] > 7:
                     response=json.dumps(response)
@@ -65,9 +65,9 @@ class AMQclass():
                 itn=itn+1
             await asyncio.sleep(2)  # Wait for ??? seconds : Interval Time to send response
 
-    async def loop_start_stop(self,_routing_key,msg,itmax,function,subserver):
+    async def guiding_start_stop(self,_routing_key,msg,itmax,function,exptime,subserver):
         if msg != 'stop':
-            asyncio.create_task(self.send_loopresponse(_routing_key,itmax,function,subserver))
+            asyncio.create_task(self.start_guidingloop(_routing_key,itmax,function,exptime,subserver))
         elif msg == 'stop':
             self.stop_event.set()
             await asyncio.sleep(2)  # Wait for ??? second to ensure all tasks are completed.
