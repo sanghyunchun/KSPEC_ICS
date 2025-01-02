@@ -11,7 +11,7 @@ from GFA.endo_controller.endo_actions import endo_actions
 
 async def main():
 
-    with open('./Lib/KSPEC.json','r') as f:
+    with open('./Lib/KSPEC.ini','r') as f:
         kspecinfo=json.load(f)
 
     ip_addr = kspecinfo['RabbitMQ']['ip_addr']

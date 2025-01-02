@@ -46,6 +46,7 @@ async def identify_excute(GFA_server,cmd):
     if func == 'autoguide':
         msg='start'
 #        action=gfa_actions()
+        exptime=float(dict_data['time'])
         itmax=3
         comment = 'Autoguide start'
         reply_data=mkmsg.gfamsg()
@@ -53,8 +54,8 @@ async def identify_excute(GFA_server,cmd):
         reply_data.update(message=comment,process='Done')
         rsp=json.dumps(reply_data)
         await GFA_server.send_message('ICS',rsp)
-#        await GFA_server.loop_start_stop('ICS',msg,itmax,action.guiding,GFA_server)
-        await GFA_server.loop_start_stop('ICS',msg,itmax,autoguide,GFA_server)  # For Simulation. Annotate when real observation
+#        await GFA_server.loop_start_stop('ICS',msg,itmax,action.guiding,exptime,GFA_server)
+        await GFA_server.guiding_start_stop('ICS',msg,itmax,autoguide,exptime,GFA_server)  # For Simulation. Annotate when real observation
 #        reply_data=mkmsg.gfamsg()
 #        reply_data.update(message=comment)
 #        message='Autoguide offset'
@@ -83,7 +84,7 @@ async def identify_excute(GFA_server,cmd):
         reply_data.update(message=comment,process='Done')
         rsp=json.dumps(reply_data)
         await GFA_server.send_message('ICS',rsp)
-        await GFA_server.loop_start_stop('ICS',msg,itmax,endoaction.endo_guide,exptime,GFA_server)
+        await GFA_server.guiding_start_stop('ICS',msg,itmax,endoaction.endo_guide,exptime,GFA_server)
         
     if func == 'endostop':
         msg='stop'
@@ -152,12 +153,9 @@ def savedata(ra,dec,xp,yp,mag):
     msg="'Guide stars are loaded.'"
     return msg
 
-
-
-
 # Below functions are for simulation. When connect the instruments, please annotate.
 
-async def autoguide(subserver):
+async def autoguide(exptime,subserver):
     msg=random.randrange(1,11)
     if msg < 7:
         reply=mkmsg.gfamsg()
