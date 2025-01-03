@@ -74,54 +74,6 @@ async def identify_excute(GFA_server,cmd):
         print('\033[32m'+'[GFA]', comment+'\033[0m')
         await GFA_server.send_message('ICS',rsp)
 
-    if func == 'endoguide':
-        msg='start'
-        exptime=float(dict_data['time'])
-        itmax=3
-        comment='Endoscope starts to expose'
-        reply_data=mkmsg.gfamsg()
-        print('\033[32m'+'[GFA]', comment+'\033[0m')
-        reply_data.update(message=comment,process='Done')
-        rsp=json.dumps(reply_data)
-        await GFA_server.send_message('ICS',rsp)
-        await GFA_server.guiding_start_stop('ICS',msg,itmax,endoaction.endo_guide,exptime,GFA_server)
-        
-    if func == 'endostop':
-        msg='stop'
-        await GFA_server.loop_start_stop('ICS',msg,0,'None','None','None')
-        comment='Endoscope Exposure Stop. Endoscope cameras exposure finished.'
-        reply_data=mkmsg.gfamsg()
-        reply_data.update(message=comment,process='Done')
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[GFA]', comment+'\033[0m')
-        await GFA_server.send_message('ICS',rsp)
-
-    if func == 'endotest':
-        exptime=float(dict_data['time'])
-        comment=endoaction.endo_test(exptime)
-        reply_data=mkmsg.gfamsg()
-        print('\033[32m'+'[GFA]', comment+'\033[0m')
-        reply_data.update(message=comment,process='Done')
-        rsp=json.dumps(reply_data)
-        await GFA_server.send_message('ICS',rsp)
-
-    if func == 'endofocus':
-        fc=float(dict_data['focus'])
-        comment=endoaction.endo_focus(fc)
-        reply_data=mkmsg.gfamsg()
-        print('\033[32m'+'[GFA]', comment+'\033[0m')
-        reply_data.update(message=comment,process='Done')
-        rsp=json.dumps(reply_data)
-        await GFA_server.send_message('ICS',rsp)
-
-    if func == 'endoexpset':
-        expt=float(dict_data['time'])
-        comment=endoaction.endo_expset(expt)
-        reply_data=mkmsg.gfamsg()
-        print('\033[32m'+'[GFA]', comment+'\033[0m')
-        reply_data.update(message=comment,process='Done')
-        rsp=json.dumps(reply_data)
-        await GFA_server.send_message('ICS',rsp)
 
     if func == 'loadguide':
         chipnum=dict_data['chipnum']

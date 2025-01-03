@@ -7,12 +7,23 @@ from datetime import datetime
 import asyncio
 import random
 import Lib.mkmessage as mkmsg
+import os
 
 class endo_actions:
 
     def __init__(self):
         pass
 
+    def endo_clear(self):
+        if os.path.exists('./ENDO/endo_controller/data'):
+            for file in os.scandir('./ENDO/endo_controller/data'):
+                os.remove(file.path)
+            rsp = 'Endoscope images are removed'
+            return rsp
+#        else:
+#            rsp = 'There are no files'
+#            return rsp
+        
     def endo_connect(self):
         self.cam=cv2.VideoCapture(0)
         if not self.cam.isOpened():
@@ -21,6 +32,8 @@ class endo_actions:
             print("Endoscope open")
 
         self.cam.set(cv2.CAP_PROP_EXPOSURE,1000)
+        self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 2544)
+        self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1944)
 
     def endo_focus(self,focus):
         self.cam.set(cv2.CAP_PROP_FOCUS,focus)
@@ -32,27 +45,34 @@ class endo_actions:
         rsp=f'Endoscope exposure time is set to {expt}'
         return rsp
 
-    async def endo_guide(self,expt,subserver):
-        self.cam.set(cv2.CAP_PROP_EXPOSURE,expt)
-        extt=self.cam.get(cv2.CAP_PROP_EXPOSURE)
-        print(extt)
+    async def endo_guide(self,subserver):
+    #    self.cam.set(cv2.CAP_PROP_EXPOSURE,expt)
+    #    extt=self.cam.get(cv2.CAP_PROP_EXPOSURE)
+    #    print(extt)
         ret,frame=self.cam.read()
+        
+        frame =  frame[:,:,::-1]
+        
+        r_data = np.array(frame[:,:,0])
+        r_data=r_data[::-1]
+        g_data = np.array(frame[:,:,1])
+        g_data=g_data[::-1]
+        b_data = np.array(frame[:,:,2])
+        b_data=b_data[::-1]
+        
+        img_data=g_data
 
-        plt.figure()
-        plt.imshow(frame)
-        plt.axis('off')
-        plt.savefig('./temp.jpg')
-
-        image = Image.open('./temp.jpg')   
-        xsize, ysize = image.size
-        r, g, b = image.split()
-        g_data = np.array(g.getdata())
-        g_data = g_data.reshape(ysize, xsize)
-        green = fits.PrimaryHDU(data=g_data)
+        final = fits.PrimaryHDU(data=img_data)
         utc=datetime.utcnow()
         surf=utc.strftime("%Y%m%d_%H%M%S")
         filename='E'+surf+'.fits'
-        green.writeto('./GFA/endo_controller/data/'+filename,overwrite=True)
+        filename2='E'+surf+'.jpg'
+        
+        plt.imshow(img_data)
+        plt.savefig('./ENDO/endo_controller/data/'+filename2)
+        
+         
+        final.writeto('./ENDO/endo_controller/data/'+filename,overwrite=True)
 
         msg=random.randrange(1,11)
         if msg < 7:
@@ -72,24 +92,25 @@ class endo_actions:
             rsp=reply
         return rsp
 
-    def endo_test(self,exptime):
-        self.cam.set(cv2.CAP_PROP_EXPOSURE,exptime)
+    def endo_test(self):
+    #    self.cam.set(cv2.CAP_PROP_EXPOSURE,exptime)
        # extt=self.cam.get(cv2.CAP_PROP_EXPOSURE)
         ret,frame=self.cam.read()
-
-        plt.figure()
+        frame =  frame[:,:,::-1]
+        
         plt.imshow(frame)
-        plt.axis('off')
-        plt.savefig('./temp.jpg')
+        plt.savefig('./ENDO/endo_controller/data/temp.jpg')
+        
+        r_data = np.array(frame[:,:,0])
+        r_data=r_data[::-1]
+        g_data = np.array(frame[:,:,1])
+        g_data=g_data[::-1]
+        b_data = np.array(frame[:,:,2])
+        b_data=b_data[::-1]
 
-        image = Image.open('./temp.jpg')   
-        xsize, ysize = image.size
-        r, g, b = image.split()
-        g_data = np.array(g.getdata())
-        g_data = g_data.reshape(ysize, xsize)
         green = fits.PrimaryHDU(data=g_data)
         filename='Test.fits'
-        green.writeto('./GFA/endo_controller/data/'+filename,overwrite=True)
+        green.writeto('./ENDO/endo_controller/data/'+filename,overwrite=True)
         return filename+'is saved'
 
 

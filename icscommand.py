@@ -8,6 +8,7 @@ from FBP.fbpcli import *
 from ADC.adccli import *
 from LAMP.lampcli import *
 from SPECTRO.speccli import *
+from ENDO.ENDOcli import *
 #import configparser as cp
 from Lib.AMQ import *
 #from script.test import scriptrun
@@ -17,7 +18,7 @@ import Lib.process as processes
 
 cmdlist=['','loadfile','obsstatus',
         'gfastatus','gfacexp','gfaallexp','gfastop','autoguide','autoguidestop',
-        'endoguide','endotest','endofocus','endostop','endoexpset',
+        'endoguide','endotest','endofocus','endostop','endoexpset','endoclear',
         'mtlstatus','mtlexp','mtlcal',
         'adcstatus','adcadjust','adcinit','adcconnect','adcrotate1','adcrotate2',
         'fbpstatus','fbpmove','fbpoffset','fbpinit',
@@ -90,30 +91,35 @@ async def identify(arg,ICS_client,transport):
         gfamsg=autoguide_stop()
         await ICS_client.send_message("GFA", gfamsg)
 
+##### Command for Endoscope #################
     # Start Endoscope camera exposure
     if cmd[0] == 'endoguide':
-        gfamsg=endo_guide(cmd[1])
-        await ICS_client.send_message("GFA", gfamsg)
+        endomsg=endo_guide()
+        await ICS_client.send_message("ENDO", endomsg)
 
     # Stop Endoscope camera exposure
     if cmd[0] == 'endostop':
-        gfamsg=endo_stop()
-        await ICS_client.send_message("GFA", gfamsg)
+        endomsg=endo_stop()
+        await ICS_client.send_message("ENDO", endomsg)
 
     # Test Endoscope camera exposure
     if cmd[0] == 'endotest':
-        gfamsg=endo_test(cmd[1])
-        await ICS_client.send_message("GFA", gfamsg)
+        endomsg=endo_test()
+        await ICS_client.send_message("ENDO", endomsg)
 
     # Endoscope camera focus set
     if cmd[0] == 'endofocus':
-        gfamsg=endo_focus(cmd[1])
-        await ICS_client.send_message("GFA", gfamsg)
+        endomsg=endo_focus(cmd[1])
+        await ICS_client.send_message("ENDO", endomsg)
 
     # Endoscope camera exposure time set
     if cmd[0] == 'endoexpset':
-        gfamsg=endo_expset(cmd[1])
-        await ICS_client.send_message("GFA", gfamsg)
+        endomsg=endo_expset(cmd[1])
+        await ICS_client.send_message("ENDO", endomsg)
+        
+    if cmd[0] == 'endoclear':
+        endomsg=endo_clear()
+        await ICS_client.send_message("ENDO", endomsg)
 
 ##### Command for Metrology #################
     # Start Metrology exposure

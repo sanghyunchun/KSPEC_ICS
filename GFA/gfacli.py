@@ -52,41 +52,5 @@ def autoguide_stop():
     GFAmsg=json.dumps(cmd_data)
     return GFAmsg
 
-def endo_guide(expt):
-    comment='Endoscope exposure start'
-    cmd_data=mkmsg.gfamsg()
-    cmd_data.update(func='endoguide',time=expt,message=comment)
-    GFAmsg=json.dumps(cmd_data)
-    return GFAmsg
-
-def endo_stop():
-    comment='Endoscope exposure stop'
-    cmd_data=mkmsg.gfamsg()
-    cmd_data.update(func='endostop',message=comment)
-    GFAmsg=json.dumps(cmd_data)
-    return GFAmsg
-
-def endo_focus(fc):
-    comment=f'Endoscope focus set to {fc}'
-    cmd_data=mkmsg.gfamsg()
-    cmd_data.update(func='endofocus',message=comment)
-    cmd_data.update(focus=fc)
-    GFAmsg=json.dumps(cmd_data)
-    return GFAmsg
-
-def endo_expset(exptime):
-    comment=f'Endoscope exposure time set to {exptime}'
-    cmd_data=mkmsg.gfamsg()
-    cmd_data.update(func='endoexpset',time=exptime,message=comment)
-    GFAmsg=json.dumps(cmd_data)
-    return GFAmsg
-
-def endo_test(exptime):
-    comment='Endoscope exposure Test'
-    cmd_data=mkmsg.gfamsg()
-    cmd_data.update(func='endotest',time=exptime,message=comment)
-    GFAmsg=json.dumps(cmd_data)
-    return GFAmsg
-
 
 
