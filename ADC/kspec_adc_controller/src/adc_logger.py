@@ -9,11 +9,14 @@ import logging
 import os
 import datetime
 
+
 class LoggerInitializationError(Exception):
     """
     Custom exception: Raised when attempting to initialize a duplicate logger.
     """
+
     pass
+
 
 class AdcLogger:
     """
@@ -29,9 +32,16 @@ class AdcLogger:
     log_path : str
         Absolute path to the generated log file.
     """
+
     _initialized_loggers = set()  # Prevent duplicate loggers
 
-    def __init__(self, file, log_directory=".", stream_level=logging.DEBUG, file_level=logging.INFO):
+    def __init__(
+        self,
+        file,
+        log_directory=".",
+        stream_level=logging.DEBUG,
+        file_level=logging.INFO,
+    ):
         """
         Initialize the logger with specified file name, log directory, and log levels.
 
@@ -56,30 +66,29 @@ class AdcLogger:
         self.file_name = f"{base_name}_{current_time}.log"
         self.log_path = os.path.join(log_directory, self.file_name)
 
-        # Check for duplicate file paths
+        # Check for duplicate file paths (파일 핸들러가 없는 경우에도 절대 경로를 사용하여 중복을 체크할 수 있습니다)
         absolute_path = os.path.abspath(self.log_path)
         if absolute_path in AdcLogger._initialized_loggers:
-            raise LoggerInitializationError(f"Logger for '{absolute_path}' has already been initialized.")
+            raise LoggerInitializationError(
+                f"Logger for '{absolute_path}' has already been initialized."
+            )
 
+        # Create logger
         self.logger = logging.getLogger(self.file_name)
         self.logger.setLevel(logging.DEBUG)  # Set the lowest level
 
         # Configure formatter
-        formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s", "%Y-%m-%d %H:%M:%S")
+        formatter = logging.Formatter(
+            "%(asctime)s [%(levelname)s] %(message)s", "%Y-%m-%d %H:%M:%S"
+        )
 
-        # Console handler
+        # Console handler (파일 핸들러는 추가하지 않음)
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(formatter)
         stream_handler.setLevel(stream_level)
         self.logger.addHandler(stream_handler)
 
-        # File handler
-        os.makedirs(log_directory, exist_ok=True)
-        file_handler = logging.FileHandler(self.log_path)
-        file_handler.setFormatter(formatter)
-        file_handler.setLevel(file_level)
-        self.logger.addHandler(file_handler)
-
+        # Add logger to initialized loggers to avoid reinitialization with the same file
         AdcLogger._initialized_loggers.add(absolute_path)
 
     def log(self, level, message):
