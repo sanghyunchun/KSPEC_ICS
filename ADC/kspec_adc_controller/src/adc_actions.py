@@ -106,7 +106,7 @@ class AdcActions:
             self.logger.error(f"Error in status: {e}")
             return self._generate_response("error", str(e), motor_num=motor_num)
 
-    async def activate(self, pos, vel_set) -> dict:
+    async def activate(self, za, vel_set) -> dict:
         """
         Activate both motors simultaneously with specified velocities.
 
@@ -120,11 +120,11 @@ class AdcActions:
         dict
             A dictionary indicating the success or failure of the activation.
         """
-#        self.logger.info(f"Activating motors. za_angle={za}")
+        self.logger.info(f"Activating motors. za_angle={za}")
         vel = vel_set  # deafault
 
-#        ang = self.calculator.calc_from_za(za)
-#        pos = self.calculator.degree_to_count(ang)
+        ang = self.calculator.calc_from_za(za)
+        pos = self.calculator.degree_to_count(ang)
 
         try:
             #self.controller.connect()
@@ -136,10 +136,10 @@ class AdcActions:
                 )
 
             motor1_task = move_motor_async(1, -pos, vel)
- #           motor2_task = move_motor_async(2, -pos, vel)
+            motor2_task = move_motor_async(2, -pos, vel)
 
-#            results = await asyncio.gather(motor1_task, motor2_task)
-            results = await asyncio.gather(motor1_task)
+            results = await asyncio.gather(motor1_task, motor2_task)
+#            results = await asyncio.gather(motor1_task)
 #            results = await asyncio.gather(motor2_task)
 
             self.logger.info("Motors activated successfully.")
@@ -147,7 +147,7 @@ class AdcActions:
                 "success",
                 "Motors activated successfully.",
                 motor_1=results[0],
-#                motor_2=results[1],
+                motor_2=results[1],
             )
         except Exception as e:
             self.logger.error(f"Failed to activate motors: {e}")
