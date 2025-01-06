@@ -23,7 +23,6 @@ async def identify_excute(ENDO_server,endoaction,cmd):
 
     if func == 'endoguide':
         msg='start'
-    #    exptime=float(dict_data['time'])
         itmax=3
         comment='Endoscope starts to expose'
         reply_data=mkmsg.gfamsg()
@@ -70,74 +69,8 @@ async def identify_excute(ENDO_server,endoaction,cmd):
         rsp=json.dumps(reply_data)
         await ENDO_server.send_message('ICS',rsp)
 
-    if func == 'loadguide':
-        chipnum=dict_data['chipnum']
-        ra=dict_data['ra']
-        dec=dict_data['dec']
-        mag=dict_data['mag']
-        xp=dict_data['xp']
-        yp=dict_data['yp']
-        comment=savedata(ra,dec,xp,yp,mag)
-#        dict_data={'inst': 'ENDO', 'savedata': 'False','filename': 'None','message': message}
-        reply_data=mkmsg.gfamsg()
-        reply_data.update(message=comment,process='Done')
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[ENDO]', comment+'\033[0m')
-        await ENDO_server.send_message('ICS',rsp)
-        
-
-def savedata(ra,dec,xp,yp,mag):
-    with open('./Lib/KSPEC.ini','r') as f:
-        inidata=json.load(f)
-
-    gfafilepath=inidata['ENDO']['gfafilepath']
-
-    savefile=open(gfafilepath+'position.radec','w')
-    for i in range(len(ra)):
-        savefile.write("%12.6f %12.6f %12.6f %12.6f %9.4f\n" % (ra[i],dec[i],xp[i],yp[i],mag[i]))
-    savefile.close
-
-    msg="'Guide stars are loaded.'"
-    return msg
-
 # Below functions are for simulation. When connect the instruments, please annotate.
 
-async def autoguide(exptime,subserver):
-    msg=random.randrange(1,11)
-    if msg < 7:
-        reply=mkmsg.gfamsg()
-        comment='Autoguiding continue.......'
-        dict_data={'inst': 'ENDO', 'savedata': 'False','filename': 'None','message': comment, 'thred': msg}
-        reply.update(dict_data)
-#        rsp=json.dumps(reply)
-        rsp=reply
-    else:
-        reply=mkmsg.gfamsg()
-        comment=f'Telescope offset {msg}'
-        print('\033[32m'+'[ENDO]', comment+'\033[0m')
-        dict_data={'inst': 'ENDO', 'savedata': 'False','filename': 'None','message': comment, 'thred': msg}
-        reply.update(dict_data)
-#        rsp=json.dumps(reply)
-        rsp=reply
-    return rsp
 
-def gfastatus():
-    msg = 'ENDO is ready'
-    return msg
-
-def gfacexp(exptime):
-    time.sleep(exptime)
-    msg='ENDO exposure finished'
-    return msg
-
-def gfaallexp():
-    time.sleep(10)
-    msg='All ENDO cameras exposure finished'
-    return msg
-
-   
-def gfastop():
-    msg='stop'
-    return msg
 
 

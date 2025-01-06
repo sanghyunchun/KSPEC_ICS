@@ -8,6 +8,34 @@ import asyncio
 import random
 import Lib.mkmessage as mkmsg
 import os
+import glob
+
+def median_combine_fits(files):
+    data_list = []
+    for file in files:
+        with fits.open(file) as hdul:
+            data_list.append(hdul[0].data)
+    
+    median_data = np.median(data_list, axis=0)
+
+    output_filename = os.path.join('./ENDO/endo_controller/data/', 'median_' + os.path.basename(files[0]))
+
+    if not os.path.isfile(output_filename):
+        hdu = fits.PrimaryHDU(median_data)
+        hdu.writeto(output_filename, overwrite=True)
+        print(f"Median combined FITS file saved as {output_filename}")
+    
+
+def combine_fits_files():
+    files = sorted(glob.glob(os.path.join('./ENDO/endo_controller/data/', 'E*.fits')))
+   
+    # median combine when 5 fits files are saved 
+    while len(files) >= 5:
+        files_to_combine = files[:5]
+        median_combine_fits(files_to_combine)
+        
+        # remove used 5 files in list
+        files = files[5:]
 
 class endo_actions:
 
@@ -20,9 +48,6 @@ class endo_actions:
                 os.remove(file.path)
             rsp = 'Endoscope images are removed'
             return rsp
-#        else:
-#            rsp = 'There are no files'
-#            return rsp
         
     def endo_connect(self):
         self.cam=cv2.VideoCapture(0)
@@ -31,9 +56,13 @@ class endo_actions:
         else:
             print("Endoscope open")
 
-        self.cam.set(cv2.CAP_PROP_EXPOSURE,1000)
+        expt_default=self.cam.get(cv2.CAP_PROP_EXPOSURE)
+        focus_default=self.cam.get(cv2.CAP_PROP_FOCUS)
         self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 2544)
         self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1944)
+        print(f'Default exposure time : {expt_default}')
+        print(f'Default focus : {focus_default}')
+        
 
     def endo_focus(self,focus):
         self.cam.set(cv2.CAP_PROP_FOCUS,focus)
@@ -46,9 +75,6 @@ class endo_actions:
         return rsp
 
     async def endo_guide(self,subserver):
-    #    self.cam.set(cv2.CAP_PROP_EXPOSURE,expt)
-    #    extt=self.cam.get(cv2.CAP_PROP_EXPOSURE)
-    #    print(extt)
         ret,frame=self.cam.read()
         
         frame =  frame[:,:,::-1]
@@ -68,10 +94,8 @@ class endo_actions:
         filename='E'+surf+'.fits'
         filename2='E'+surf+'.jpg'
         
-        plt.imshow(img_data)
-        plt.savefig('./ENDO/endo_controller/data/'+filename2)
-        
-         
+#        plt.imshow(img_data)
+#        plt.savefig('./ENDO/endo_controller/data/'+filename2)       
         final.writeto('./ENDO/endo_controller/data/'+filename,overwrite=True)
 
         msg=random.randrange(1,11)
@@ -90,11 +114,12 @@ class endo_actions:
             reply.update(dict_data)
 #        rsp=json.dumps(reply)
             rsp=reply
+        
+        combine_fits_files()
+            
         return rsp
 
     def endo_test(self):
-    #    self.cam.set(cv2.CAP_PROP_EXPOSURE,exptime)
-       # extt=self.cam.get(cv2.CAP_PROP_EXPOSURE)
         ret,frame=self.cam.read()
         frame =  frame[:,:,::-1]
         
@@ -108,10 +133,21 @@ class endo_actions:
         b_data = np.array(frame[:,:,2])
         b_data=b_data[::-1]
 
+        #red = fits.PrimaryHDU(data=r_data)
+        #rfilename='red.fits'
+        #red.writeto('./ENDO/endo_controller/data/'+filename,overwrite=True)
+        
         green = fits.PrimaryHDU(data=g_data)
-        filename='Test.fits'
-        green.writeto('./ENDO/endo_controller/data/'+filename,overwrite=True)
-        return filename+'is saved'
+        utc=datetime.utcnow()
+        surf=utc.strftime("%Y%m%d_%H%M%S")
+        gfilename='test_'+surf+'.fits'
+        green.writeto('./ENDO/endo_controller/data/'+gfilename,overwrite=True)
+        
+        #blue = fits.PrimaryHDU(data=b_data)
+        #bfilename='blue.fits'
+        #blue.writeto('./ENDO/endo_controller/data/'+filename,overwrite=True)
+        
+        return gfilename+' is saved'
 
 
 
