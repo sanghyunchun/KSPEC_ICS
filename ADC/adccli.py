@@ -25,15 +25,15 @@ def adc_rotate1(count):
     "ADC lens 1 rotate"
     comment=f'ADC lens 1 rotate {count} counts.'
     cmd_data=mkmsg.adcmsg()
-    cmd_data.update(func='adcrotate1',lens1=count,message=comment)
+    cmd_data.update(func='adcrotate1',lens=1,pcount=count,message=comment)
     adcmsg=json.dumps(cmd_data)
     return adcmsg
 
 def adc_rotate2(count):
     "ADC lens 1 rotate"
-    comment=f'ADC lens 1 rotate {count} counts.'
+    comment=f'ADC lens 2 rotate {count} counts.'
     cmd_data=mkmsg.adcmsg()
-    cmd_data.update(func='adcrotate2',lens2=count,message=comment)
+    cmd_data.update(func='adcrotate2',lens=2,pcount=count,message=comment)
     adcmsg=json.dumps(cmd_data)
     return adcmsg
 

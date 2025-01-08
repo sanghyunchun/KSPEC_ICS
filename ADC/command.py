@@ -14,7 +14,6 @@ async def identify_excute(ADC_server,cmd):               # For Simulation. Annot
 
     if func == 'adcinit':
         comment='ADC initialized.'
-#        reply_data={'inst': 'ADC', 'savedata': 'False','filename': 'None','message': message}
         reply_data=mkmsg.adcmsg()
         reply_data.update(message=comment,process='Done')
         rsp=json.dumps(reply_data)
@@ -28,9 +27,8 @@ async def identify_excute(ADC_server,cmd):               # For Simulation. Annot
 #        comment=reply_data['message']  # For real observation
 
         comment = 'ADC connected'                         # For Simulation. Annotate when real observation
-        reply_data.update(message=comment)                # For Simulation. Annotate when real observation
 
-        reply_data.update(process='Done')
+        reply_data.update(message=comment,process='Done')   
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[ADC]', comment+'\033[0m')
         await ADC_server.send_message('ICS',rsp)
@@ -42,9 +40,8 @@ async def identify_excute(ADC_server,cmd):               # For Simulation. Annot
 #        comment=reply_data['message']  # For real observation
 
         comment = 'ADC power off'                         # For Simulation. Annotate when real observation
-        reply_data.update(message=comment)                # For Simulation. Annotate when real observation
 
-        reply_data.update(process='Done')
+        reply_data.update(message=comment,process='Done')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[ADC]', comment+'\033[0m')
         await ADC_server.send_message('ICS',rsp)
@@ -56,8 +53,8 @@ async def identify_excute(ADC_server,cmd):               # For Simulation. Annot
 #        comment=result['message']                   # For real observation
 
         comment  = 'ADC connection is OK. ADC is ready'   # For Simulation. Annotate when real observation
-        reply_data.update(message=comment)                # For Simulation. Annotate when real observation
 
+        reply_data.update(message=comment,process='Done')
         reply_data.update(process='Done')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[ADC]', comment+'\033[0m')
@@ -70,7 +67,7 @@ async def identify_excute(ADC_server,cmd):               # For Simulation. Annot
 #        motor_1=result['motor_1']           # For real observation.
 #        motor_2=result['motor_2']           # For real observation.
 #        comment1=result['message']          # For real observation.
-#        comment=f'{comment1}. ADC lens rotate {motor_1}, {motor_2} counts successfully.'  # For real observation.
+#        comment=f'{comment1}. ADC lens rotate {motor_1}, {motor_2} counts successfully.'     # For real observation.
 
         angle1,angle2=calangle(zdist)                                   # For Simulation. Annotate when real observation
         comment =f'ADC lens roate {angle1}, {angle2} successfully.'     # For Simulation. Annotate when real observation
@@ -82,7 +79,12 @@ async def identify_excute(ADC_server,cmd):               # For Simulation. Annot
 
     if func == 'adcrotate1':
         reply_data=mkmsg.adcmsg()
-        count=float(dict_data['lens1'])
+        count=float(dict_data['pcount'])
+#        lens=dict_data['lens']                       #  For real observation.
+#        result=adc_action.move(lens,count)           #  For real observation.
+#        reply_data.update(result)                    # For real observation
+#        comment=reply_data['message']                # For real observation
+
         comment=rotate1(count)                                 # For Simulation. Annotate when real observation
 
         reply_data.update(message=comment,process='Done')
@@ -92,7 +94,12 @@ async def identify_excute(ADC_server,cmd):               # For Simulation. Annot
 
     if func == 'adcrotate2':
         reply_data=mkmsg.adcmsg()
-        count=float(dict_data['lens2'])
+        count=float(dict_data['pcount'])
+#        lens=dict_data['lens']                       #  For real observation.
+#        result=adc_action.move(lens,count)           #  For real observation.
+#        reply_data.update(result)                    # For real observation
+#        comment=reply_data['message']                # For real observation
+
         comment=rotate2(count)                                 # For Simulation. Annotate when real observation
 
         reply_data.update(message=comment,process='Done')
