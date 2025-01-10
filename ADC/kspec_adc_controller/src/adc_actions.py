@@ -224,7 +224,7 @@ class AdcActions:
         try:
             # Activate motors using asyncio.to_thread for non-blocking calls
             motor1_task = asyncio.to_thread(self.controller.move_motor, 1, -pos, vel)  # motor 1 L4 위치, 시계 방향 회전
-            motor2_task = asyncio.to_thread(self.controller.move_motor, 2, pos, vel)  # motor 2 L3 위치, 반시계 방향 회전
+            motor2_task = asyncio.to_thread(self.controller.move_motor, 2, -pos, vel)  # motor 2 L3 위치, 반시계 방향 회전
 
             results = await asyncio.gather(motor1_task, motor2_task)
 
@@ -282,7 +282,7 @@ class AdcActions:
             - "status": "success" if the zeroing was successful, "error" if it failed.
             - "message": A string explaining the failure, only present if "status" is "error".
         """
-        zero_offset_motor1 = 7000  # Adjust this value based on calibration.
+        zero_offset_motor1 = 7500  # Adjust this value based on calibration.
         zero_offset_motor2 = 2000  # Adjust this value based on calibration.
 
         self.logger.info("Starting zeroing operation.")

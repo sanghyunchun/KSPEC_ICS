@@ -29,7 +29,6 @@ class ADCCalc:
         Maximum value of zenith angle in the lookup table (degree)
     """
 
-# Edit lookup table file path in real observation
     def __init__(self, logger, lookup_table="./ADC/kspec_adc_controller/src/etc/ADC_lookup.csv", method="pchip"):
         self.logger = logger
         self.create_interp_func(lookup_table, method)

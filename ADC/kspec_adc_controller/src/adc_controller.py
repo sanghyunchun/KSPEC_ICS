@@ -36,7 +36,7 @@ class AdcController:
         The maximum motor position. Default is 4,294,967,296.
     """
 
-    CONFIG_FILE = "./ADC/kspec_adc_controller/src/etc/adc_config.json"   # Edit Config file path when real observation
+    CONFIG_FILE = "./ADC/kspec_adc_controller/src/etc/adc_config.json"
 
     def __init__(self, logger):
         """
@@ -106,7 +106,7 @@ class AdcController:
             raise Exception("No bus hardware IDs found.")
 
         for i, bus_id in enumerate(bus_hardware_ids):
-            self.logger.debug(f"Found bus hardware ID {i}: {bus_id.toString() if hasattr(bus_id, 'toString') else str(bus_id)}")
+            self.logger.info(f"Found bus hardware ID {i}: {bus_id.toString() if hasattr(bus_id, 'toString') else str(bus_id)}")
 
         ind = self.selected_bus_index
         self.adc_motor_id = bus_hardware_ids[ind]
@@ -477,7 +477,7 @@ class AdcController:
             self.nanolib_accessor.writeNumber(device_handle, 0x5F, Nanolib.OdIndex(0x6040, 0x00), 16)
 
             self.logger.info(f"Motor {motor_id} homing initiated. Monitoring position changes...")
-            timeout = 120  # Maximum time to search for home position (in seconds)
+            timeout = 300  # Maximum time to search for home position (in seconds)
             start_time = time.time()
 
             while True:
@@ -489,6 +489,7 @@ class AdcController:
 
                 # Check if homing took too long
                 if time.time() - start_time > timeout:
+                    self.stop_motor(motor_id)
                     self.logger.error(f"Timeout: Motor {motor_id} failed to find home position.")
                     raise TimeoutError(f"Motor {motor_id} failed to find home position within timeout.")
                 
