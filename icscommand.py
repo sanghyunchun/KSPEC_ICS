@@ -20,7 +20,7 @@ cmdlist=['','loadfile','obsstatus',
         'gfastatus','gfacexp','gfaallexp','gfastop','autoguide','autoguidestop',
         'endoguide','endotest','endofocus','endostop','endoexpset','endoclear',
         'mtlstatus','mtlexp','mtlcal',
-        'adcstatus','adcadjust','adcinit','adcconnect','adcrotate1','adcrotate2',
+        'adcstatus','adcadjust','adcinit','adcconnect','adcdisconnect','adchome','adczero','adcpoweroff','adcrotate1','adcrotate2',
         'fbpstatus','fbpmove','fbpoffset','fbpinit',
         'lampstatus','arcon','arcoff','flaton','flatoff','fidon','fiducialoff',
         'specstatus','specilluon','specilluoff','objexp','biasexp','flatexp','arcexp',
@@ -167,11 +167,23 @@ async def identify(arg,ICS_client,transport):
         await ICS_client.send_message("ADC",adcmsg)
 
     if cmd[0] == 'adcpoweroff':
-        adcmsg=adc_status()
+        adcmsg=adc_poweroff()
         await ICS_client.send_message("ADC",adcmsg)
 
     if cmd[0] == 'adcconnect':
         adcmsg=adc_connect()
+        await ICS_client.send_message("ADC",adcmsg)
+
+    if cmd[0] == 'adcdisconnect':
+        adcmsg=adc_disconnect()
+        await ICS_client.send_message("ADC",adcmsg)
+
+    if cmd[0] == 'adchome':
+        adcmsg=adc_home()
+        await ICS_client.send_message("ADC",adcmsg)
+
+    if cmd[0] == 'adczero':
+        adcmsg=adc_zero()
         await ICS_client.send_message("ADC",adcmsg)
 
     if cmd[0] == 'adcrotate1':
