@@ -33,6 +33,19 @@ async def identify_excute(ADC_server,cmd):               # For Simulation. Annot
         print('\033[32m'+'[ADC]', comment+'\033[0m')
         await ADC_server.send_message('ICS',rsp)
 
+    if func == 'adcdisconnect':
+        reply_data=mkmsg.adcmsg()
+#        result=adc_action.disconnect()  # For real observation
+#        reply_data.update(result)      # For real observation
+#        comment=reply_data['message']  # For real observation
+
+        comment = 'ADC disconnected'                         # For Simulation. Annotate when real observation
+
+        reply_data.update(process='Done')   
+        rsp=json.dumps(reply_data)
+        print('\033[32m'+'[ADC]', comment+'\033[0m')
+        await ADC_server.send_message('ICS',rsp)
+
     if func == 'adcpoweroff':
         reply_data=mkmsg.adcmsg()
 #        result=adc_action.power_off()  # For real observation
