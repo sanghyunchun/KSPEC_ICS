@@ -21,6 +21,30 @@ def adc_connect():
     adcmsg=json.dumps(cmd_data)
     return adcmsg
 
+def adc_disconnect():
+    "ADC disconnection"
+    comment="Disconnect ADC instrument"
+    cmd_data=mkmsg.adcmsg()
+    cmd_data.update(func='adcdisconnect',message=comment)
+    adcmsg=json.dumps(cmd_data)
+    return adcmsg
+
+def adc_home():
+    "ADC Homing"
+    comment="Homing ADC lens"
+    cmd_data=mkmsg.adcmsg()
+    cmd_data.update(func='adchome',message=comment)
+    adcmsg=json.dumps(cmd_data)
+    return adcmsg
+
+def adc_zero():
+    "ADC zeroing"
+    comment="Rotate ADC lens to zero position"
+    cmd_data=mkmsg.adcmsg()
+    cmd_data.update(func='adczero',message=comment)
+    adcmsg=json.dumps(cmd_data)
+    return adcmsg
+
 def adc_rotate1(count):
     "ADC lens 1 rotate"
     comment=f'ADC lens 1 rotate {count} counts.'
