@@ -191,7 +191,7 @@ async def identify(arg,ICS_client,transport):
         await ICS_client.send_message("ADC",adcmsg)
 
     if cmd[0] == 'adcrotate2':
-        adcmsg=adc_rotate1(cmd[1])
+        adcmsg=adc_rotate2(cmd[1])
         await ICS_client.send_message("ADC",adcmsg)
 
 ##### Command for Spectrograph #####################################
