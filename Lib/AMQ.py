@@ -25,6 +25,27 @@ class AMQclass():
         self.channel = await self.connection.channel()
         print('RabbitMQ server connected')
 
+    async def disconnect(self):
+        """Safely disconnect the RabbitMQ connection and close channels."""
+        try:
+            # Unbind and delete the queue if it exists
+            if self.queue:
+                await self.queue.unbind(self.cmd_exchange)
+                await self.queue.delete()
+                print("Queue unbound and deleted.")
+
+            # Close the channel if it exists
+            if self.channel:
+                await self.channel.close()
+                print("Channel closed.")
+
+            # Close the connection if it exists
+            if self.connection:
+                await self.connection.close()
+                print("RabbitMQ connection closed.")
+        except Exception as e:
+            print(f"Error during RabbitMQ disconnect: {e}")
+
     async def define_producer(self):
         self.cmd_exchange = await self.channel.declare_exchange(self.exchange, aio_pika.ExchangeType.DIRECT)
         print(f'{self.exchange} exchange was defined')
