@@ -223,8 +223,10 @@ class AdcActions:
 
         try:
             # Activate motors using asyncio.to_thread for non-blocking calls
-            motor1_task = asyncio.to_thread(self.controller.move_motor, 1, -pos, vel)  # motor 1 L4 위치, 시계 방향 회전
-            motor2_task = asyncio.to_thread(self.controller.move_motor, 2, -pos, vel)  # motor 2 L3 위치, 반시계 방향 회전
+            # motor 1 L4 위치, 빛의 진행 방향 기준 시계 방향 회전
+            motor1_task = asyncio.to_thread(self.controller.move_motor, 1, pos, vel)
+            # motor 2 L3 위치, 빛의 진행 방향 기준 반시계 방향 회전
+            motor2_task = asyncio.to_thread(self.controller.move_motor, 2, pos, vel)
 
             results = await asyncio.gather(motor1_task, motor2_task)
 
@@ -243,8 +245,7 @@ class AdcActions:
                 error=str(e),
             )
 
-
-    async def homing(self):
+    async def homing(self, homing_vel=1):
         """
         Perform a homing operation with the motor controller.
         
@@ -261,14 +262,38 @@ class AdcActions:
         self.logger.info("Starting homing operation.")
         try:
             self.logger.debug("Calling homing method on controller.")
-            await self.controller.homing()
+            await self.controller.homing(homing_vel)
             self.logger.info("Homing completed successfully.")
             return self._generate_response("success", "Homing completed successfully.")
         except Exception as e:
             self.logger.error(f"Error in homing operation: {str(e)}", exc_info=True)
             return self._generate_response("error", str(e))
 
-    async def zeroing(self):
+    async def parking(self, vel=1):
+        """
+        Park the motors at a predefined position.
+
+        This operation moves the motors to a predefined 'parking' position, which is usually a safe position
+        where the motors are not obstructing any other devices or in a position where they can be safely powered off.
+
+        Returns
+        -------
+        dict
+            A JSON-like dictionary indicating the success or failure of the operation:
+            - "status": "success" if the parking operation was successful, "error" if it failed.
+            - "message": A string explaining the failure, only present if "status" is "error".
+        """
+        self.logger.info("Starting parking operation.")
+        try:
+            self.logger.debug("Parking motors at predefined position.")
+            await self.controller.parking(vel)
+            self.logger.info("Parking completed successfully.")
+            return self._generate_response("success", "Parking completed successfully.")
+        except Exception as e:
+            self.logger.error(f"Error in parking operation: {str(e)}", exc_info=True)
+            return self._generate_response("error", str(e))
+
+    async def zeroing(self, vel=1):
         """
         Perform a zeroing operation by adjusting motor positions based on calibrated offsets.
         
@@ -282,19 +307,10 @@ class AdcActions:
             - "status": "success" if the zeroing was successful, "error" if it failed.
             - "message": A string explaining the failure, only present if "status" is "error".
         """
-        zero_offset_motor1 = 7500  # Adjust this value based on calibration.
-        zero_offset_motor2 = 2000  # Adjust this value based on calibration.
-
         self.logger.info("Starting zeroing operation.")
         try:
             self.logger.debug("Initiating homing as part of zeroing.")
-            await self.controller.homing()
-            self.logger.debug(f"Moving motor 1 by {zero_offset_motor1} counts.")
-            self.logger.debug(f"Moving motor 2 by {zero_offset_motor2} counts.")
-            await asyncio.gather(
-                asyncio.to_thread(self.controller.move_motor, 1, zero_offset_motor1, 5),
-                asyncio.to_thread(self.controller.move_motor, 2, zero_offset_motor2, 5)
-            )
+            await self.controller.zeroing(vel)
             self.logger.info("Zeroing completed successfully.")
             return self._generate_response("success", "Zeroing completed successfully.")
         except Exception as e:

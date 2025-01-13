@@ -12,7 +12,7 @@ import asyncio
 from nanotec_nanolib import Nanolib
 
 __all__ = ["AdcController"]
-
+max_position = 4_294_967_296
 
 class AdcController:
     """
@@ -376,7 +376,131 @@ class AdcController:
             self.logger.error(f"Motor {motor_id}: Error during stopping.")
             raise e
 
-    async def homing(self):
+    async def parking(self, parking_vel=1):
+        """
+        Moves the motors to a parking position by offsetting from the home position by approximately -500 counts.
+
+        This operation should only be performed after the homing process is complete.
+
+        The motors will be moved relative to the home position by the specified parking offset.
+        The parking offset is applied as a negative value of -500 counts for both motors.
+
+        Raises:
+            Exception: If homing has not been completed before parking.
+        """
+        parking_offset_motor1 = -500
+        parking_offset_motor2 = -500
+
+        # Parking must be done only after homing is complete.
+        if not self.home_position:
+            self.logger.error("Parking must be performed after homing.")
+            raise Exception("Parking must be performed after homing.")
+        else:
+            self.logger.info("Parking process initiated...")
+
+            # Read current motor positions
+            current_pos_1 = self.read_motor_position(1)
+            current_pos_2 = self.read_motor_position(2)
+
+            self.logger.info(f"Current positions: Motor 1: {current_pos_1}, Motor 2: {current_pos_2}")
+            self.logger.info(f"Target parking positions relative to home: "
+                            f"Motor 1: {self.home_position_motor1 + parking_offset_motor1}, "
+                            f"Motor 2: {self.home_position_motor2 + parking_offset_motor2}")
+
+            if current_pos_1 < 1_000_000 and current_pos_2 < 1_000_000:
+                # Both positions are less than 1,000,000
+                target_pos_1 = self.home_position_motor1 + parking_offset_motor1 - current_pos_1
+                target_pos_2 = self.home_position_motor2 + parking_offset_motor2 - current_pos_2
+            elif current_pos_1 < 1_000_000:
+                # Only current_pos_1 is less than 1,000,000
+                target_pos_1 = self.home_position_motor1 + parking_offset_motor1 - current_pos_1
+                target_pos_2 = max_position - current_pos_2 + self.home_position_motor2 + parking_offset_motor2
+            elif current_pos_2 < 1_000_000:
+                # Only current_pos_2 is less than 1,000,000
+                target_pos_1 = max_position - current_pos_1 + self.home_position_motor1 + parking_offset_motor1
+                target_pos_2 = self.home_position_motor2 + parking_offset_motor2 - current_pos_2
+            else:
+                # Both positions are greater than or equal to 1,000,000
+                target_pos_1 = max_position - current_pos_1 + self.home_position_motor1 + parking_offset_motor1
+                target_pos_2 = max_position - current_pos_2 + self.home_position_motor2 + parking_offset_motor2
+
+            # Allow a small threshold for position tolerance
+            threshold = 10  # Define an acceptable threshold for small positional errors
+            if abs(target_pos_1) < threshold and abs(target_pos_2) < threshold:
+                self.logger.info("Both motors are already close to the parking position.")
+            else:
+                self.logger.info("Moving motors to parking positions...")
+
+                try:
+                    await asyncio.gather(
+                        asyncio.to_thread(self.move_motor, 1, target_pos_1, parking_vel),
+                        asyncio.to_thread(self.move_motor, 2, target_pos_2, parking_vel)
+                    )
+                    self.logger.info("Motors moved to parking positions successfully.")
+                except Exception as e:
+                    self.logger.error(f"Error while moving motors to parking position: {e}")
+                    raise  # Re-raise the exception to propagate it further
+
+    async def zeroing(self, zeroing_vel=1):
+        """
+        This function adjusts the motor positions to their zero positions after a homing process is complete.
+        Zeroing should be performed only after homing has been successfully completed.
+
+        Raises:
+            None
+        """
+        zero_offset_motor1 = 7561  # Adjust this value based on calibration.
+        zero_offset_motor2 = 2000  # Adjust this value based on calibration.
+
+        # Zeroing must be done only after homing is complete.
+        if not self.home_position:
+            self.logger.error("Zeroing must be performed after homing.")
+            raise Exception("Zeroing must be performed after homing.")
+        else:
+            self.logger.info("Zeroing process initiated...")
+
+            # Read current motor positions
+            current_pos_1 = self.read_motor_position(1)
+            current_pos_2 = self.read_motor_position(2)
+
+            self.logger.info(f"Current positions: Motor 1: {current_pos_1}, Motor 2: {current_pos_2}")
+            self.logger.info(f"Target Zero positions: Motor 1: {self.home_position_motor1 + zero_offset_motor1}, "
+                            f"Motor 2: {self.home_position_motor2 + zero_offset_motor2}")
+
+            if current_pos_1 < 1_000_000 and current_pos_2 < 1_000_000:
+                # Both positions are less than 1,000,000
+                target_pos_1 = self.home_position_motor1 + zero_offset_motor1 - current_pos_1
+                target_pos_2 = self.home_position_motor2 + zero_offset_motor2 - current_pos_2
+            elif current_pos_1 < 1_000_000:
+                # Only current_pos_1 is less than 1,000,000
+                target_pos_1 = self.home_position_motor1 + zero_offset_motor1 - current_pos_1
+                target_pos_2 = max_position - current_pos_2 + self.home_position_motor2 + zero_offset_motor2
+            elif current_pos_2 < 1_000_000:
+                # Only current_pos_2 is less than 1,000,000
+                target_pos_1 = max_position - current_pos_1 + self.home_position_motor1 + zero_offset_motor1
+                target_pos_2 = self.home_position_motor2 + zero_offset_motor2 - current_pos_2
+            else:
+                # Both positions are greater than or equal to 1,000,000
+                target_pos_1 = max_position - current_pos_1 + self.home_position_motor1 + zero_offset_motor1
+                target_pos_2 = max_position - current_pos_2 + self.home_position_motor2 + zero_offset_motor2
+
+            # Allow a small threshold for position tolerance
+            threshold = 10  # Define an acceptable threshold for small positional errors
+            if abs(target_pos_1) < threshold and abs(target_pos_2) < threshold:
+                self.logger.info("Both motors are already close to Zero position.")
+            else:
+                self.logger.info("Moving motors to Zero positions...")
+                try:
+                    await asyncio.gather(
+                        asyncio.to_thread(self.move_motor, 1, target_pos_1, zeroing_vel),
+                        asyncio.to_thread(self.move_motor, 2, target_pos_2, zeroing_vel)
+                    )
+                    self.logger.info("Motors moved to Zero positions successfully.")
+                except Exception as e:
+                    self.logger.error(f"Error while moving motors to Zero position: {e}")
+
+
+    async def homing(self, homing_vel=1):
         """
         Perform homing for both motors.
 
@@ -389,13 +513,34 @@ class AdcController:
         Exception
             If an error occurs during the homing process.
         """
+        motor_id = 1
+        device_motor1 = self.devices.get(motor_id)
+        if not device_motor1:
+            self.logger.error(f"Motor with ID {motor_id} not found.")
+            raise KeyError(f"Motor with ID {motor_id} not found.")
+        device_handle_motor1 = device_motor1["handle"]
+
+        motor_id = 2
+        device_motor2 = self.devices.get(motor_id)
+        if not device_motor2:
+            self.logger.error(f"Motor with ID {motor_id} not found.")
+            raise KeyError(f"Motor with ID {motor_id} not found.")
+        device_handle_motor2 = device_motor2["handle"]
+
         try:
             if not self.home_position:
+                busstop = 192  # Bus stop value for homing
                 self.logger.info("Initializing homing process for both motors.")
-                await asyncio.gather(
-                    self.find_home_position(1),
-                    self.find_home_position(2)
-                )
+                raw_val_motor1 = self.nanolib_accessor.readNumber(device_handle_motor1, Nanolib.OdIndex(0x3240, 5)).getResult()
+                raw_val_motor2 = self.nanolib_accessor.readNumber(device_handle_motor2, Nanolib.OdIndex(0x3240, 5)).getResult()
+                print(f"Raw value Motor 1: {raw_val_motor1}, Raw value Motor 2: {raw_val_motor2}")
+                if raw_val_motor1 == busstop and raw_val_motor2 == busstop:
+                    self.logger.info("Both motors are already at the bus stop position.")
+                else:
+                    await asyncio.gather(
+                        self.find_home_position(1, homing_vel),
+                        self.find_home_position(2, homing_vel)
+                    )
                 # Update home positions
                 self.home_position_motor1 = self.read_motor_position(1)
                 self.home_position_motor2 = self.read_motor_position(2)
@@ -412,17 +557,32 @@ class AdcController:
                 self.logger.info(f"Target home positions: Motor 1: {self.home_position_motor1}, "
                                 f"Motor 2: {self.home_position_motor2}")
 
-                # Calculate movement offsets
-                target_pos_1 = self.home_position_motor1 - current_pos_1
-                target_pos_2 = self.home_position_motor2 - current_pos_2
+                if current_pos_1 < 1_000_000 and current_pos_2 < 1_000_000:
+                    # Both positions are less than 1,000,000
+                    target_pos_1 = self.home_position_motor1 - current_pos_1
+                    target_pos_2 = self.home_position_motor2 - current_pos_2
+                elif current_pos_1 < 1_000_000:
+                    # Only current_pos_1 is less than 1,000,000
+                    target_pos_1 = self.home_position_motor1 - current_pos_1
+                    target_pos_2 = max_position - current_pos_2 + self.home_position_motor2
+                elif current_pos_2 < 1_000_000:
+                    # Only current_pos_2 is less than 1,000,000
+                    target_pos_1 = max_position - current_pos_1 + self.home_position_motor1
+                    target_pos_2 = self.home_position_motor2 - current_pos_2
+                else:
+                    # Both positions are greater than or equal to 1,000,000
+                    target_pos_1 = max_position - current_pos_1 + self.home_position_motor1
+                    target_pos_2 = max_position - current_pos_2 + self.home_position_motor2
 
-                if target_pos_1 == 0 and target_pos_2 == 0:
-                    self.logger.info("Both motors are already at home position.")
+                # Allow a small threshold for position tolerance
+                threshold = 10  # Define an acceptable threshold for small positional errors
+                if abs(target_pos_1) < threshold and abs(target_pos_2) < threshold:
+                    self.logger.info("Both motors are already close to home position.")
                 else:
                     self.logger.info("Moving motors to home positions...")
                     await asyncio.gather(
-                        asyncio.to_thread(self.move_motor, 1, target_pos_1, 1),
-                        asyncio.to_thread(self.move_motor, 2, target_pos_2, 1)
+                        asyncio.to_thread(self.move_motor, 1, target_pos_1, homing_vel),
+                        asyncio.to_thread(self.move_motor, 2, target_pos_2, homing_vel)
                     )
                     self.logger.info("Motors moved to home positions successfully.")
 
@@ -435,7 +595,7 @@ class AdcController:
             self.logger.error(f"Error during homing process for motors: {e}", exc_info=True)
             raise
 
-    async def find_home_position(self, motor_id: int, homing_vel=1, sleep_time=0.01):
+    async def find_home_position(self, motor_id: int, homing_vel=1, sleep_time=0.001):
         """
         Find the home position for a specified motor.
 
@@ -464,6 +624,7 @@ class AdcController:
 
         try:
             initial_raw_value = self.nanolib_accessor.readNumber(device_handle, Nanolib.OdIndex(0x3240, 5)).getResult()
+            #print(f"Initial raw value: {initial_raw_value}")
 
             # Configure the motor for homing
             self.nanolib_accessor.writeNumber(device_handle, 1, Nanolib.OdIndex(0x6060, 0x00), 8)
@@ -482,6 +643,7 @@ class AdcController:
 
             while True:
                 raw_value = self.nanolib_accessor.readNumber(device_handle, Nanolib.OdIndex(0x3240, 5)).getResult()
+                #print(f"Raw value: {raw_value}")
                 if initial_raw_value != raw_value:
                     self.stop_motor(motor_id)
                     self.logger.info(f"Home position found for Motor {motor_id}.")

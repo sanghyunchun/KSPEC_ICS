@@ -8,7 +8,6 @@ from scipy import interpolate
 import numpy as np
 
 async def identify_excute(ADC_server,adc_action,cmd):    # For real observation
-#async def identify_excute(ADC_server,cmd):               # For Simulation. Annotate when real observation
     dict_data=json.loads(cmd)
     func=dict_data['func']
 
@@ -26,7 +25,6 @@ async def identify_excute(ADC_server,adc_action,cmd):    # For real observation
         reply_data.update(result)      # For real observation
         comment=reply_data['message']  # For real observation
 
-#        comment = 'ADC connected'                         # For Simulation. Annotate when real observation
 
         reply_data.update(process='Done')   
         rsp=json.dumps(reply_data)
@@ -39,7 +37,6 @@ async def identify_excute(ADC_server,adc_action,cmd):    # For real observation
         reply_data.update(result)      # For real observation
         comment=reply_data['message']  # For real observation
 
-#        comment = 'ADC disconnected'                         # For Simulation. Annotate when real observation
 
         reply_data.update(process='Done')   
         rsp=json.dumps(reply_data)
@@ -52,7 +49,6 @@ async def identify_excute(ADC_server,adc_action,cmd):    # For real observation
         reply_data.update(result)      # For real observation
         comment=reply_data['message']  # For real observation
 
-#        comment = 'ADC power off'                         # For Simulation. Annotate when real observation
 
         reply_data.update(process='Done')
         rsp=json.dumps(reply_data)
@@ -65,7 +61,6 @@ async def identify_excute(ADC_server,adc_action,cmd):    # For real observation
         reply_data.update(result)                   # For real observation
         comment=result['message']                   # For real observation
 
-#        comment  = 'ADC connection is OK. ADC is ready'   # For Simulation. Annotate when real observation
 
         reply_data.update(process='Done')
         rsp=json.dumps(reply_data)
@@ -81,8 +76,6 @@ async def identify_excute(ADC_server,adc_action,cmd):    # For real observation
         comment1=result['message']          # For real observation.
         comment=f'{comment1}. ADC lens rotate {motor_1}, {motor_2} counts successfully.'     # For real observation.
 
-#        angle1,angle2=calangle(zdist)                                   # For Simulation. Annotate when real observation
-#        comment =f'ADC lens roate {angle1}, {angle2} successfully.'     # For Simulation. Annotate when real observation
 
         reply_data.update(message=comment,process='Done')
         rsp=json.dumps(reply_data)
@@ -97,8 +90,6 @@ async def identify_excute(ADC_server,adc_action,cmd):    # For real observation
         reply_data.update(result)                    # For real observation
         comment=reply_data['message']                # For real observation
 
-#        comment=rotate1(count)                                 # For Simulation. Annotate when real observation
-
         reply_data.update(process='Done')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[ADC]', comment+'\033[0m')
@@ -112,8 +103,6 @@ async def identify_excute(ADC_server,adc_action,cmd):    # For real observation
         reply_data.update(result)                    # For real observation
         comment=reply_data['message']                # For real observation
 
-#        comment=rotate2(count)                                 # For Simulation. Annotate when real observation
-
         reply_data.update(process='Done')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[ADC]', comment+'\033[0m')
@@ -124,8 +113,6 @@ async def identify_excute(ADC_server,adc_action,cmd):    # For real observation
         result=await adc_action.homing()           #  For real observation.
         reply_data.update(result)                    # For real observation
         comment=reply_data['message']                # For real observation
-
-#        comment=homing()                                 # For Simulation. Annotate when real observation
 
         reply_data.update(process='Done')
         rsp=json.dumps(reply_data)
@@ -138,37 +125,8 @@ async def identify_excute(ADC_server,adc_action,cmd):    # For real observation
         reply_data.update(result)                    # For real observation
         comment=reply_data['message']                # For real observation
 
-#        comment=zeroing()                                 # For Simulation. Annotate when real observation
-
         reply_data.update(process='Done')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[ADC]', comment+'\033[0m')
         await ADC_server.send_message('ICS',rsp)
-
-
-
-# Below functions are for simulation. When connect the instruments, please annoate.
-def calangle(inputvalue):
-    zdist,angle1,angle2=np.loadtxt('./ADC/Lookup_test.txt',dtype=float,unpack=True,usecols=(0,1,2),skiprows=1)
-    f_spline1=interpolate.interp1d(zdist,angle1,kind='quadratic')
-    f_spline2=interpolate.interp1d(zdist,angle2,kind='quadratic')
-    ang1=f_spline1(inputvalue)
-    ang2=f_spline2(inputvalue)
-    return ang1,ang2
-
-def rotate1(inputvalue):
-    comment=f'Lens 1 rotates {inputvalue}' 
-    return comment
-
-def rotate2(inputvalue):
-    comment=f'Lens 2 rotates {inputvalue}' 
-    return comment
-
-def homing():
-    comment=f'Homing finished' 
-    return comment
-
-def zeroing():
-    comment=f'Zeroing finished' 
-    return comment
 
