@@ -11,8 +11,11 @@ from astropy.time import Time
 import astropy.units as u
 from .kspec_adc_controller.src.adc_calc_angle import ADCCalc
 
+
+adcadjust_task=None
 async def identify_excute(ADC_server,adc_action,cmd):    # For real observation
     dict_data=json.loads(cmd)
+    global adcadjust_task
     func=dict_data['func']
 
     if func == 'adcinit':
@@ -129,6 +132,22 @@ async def identify_excute(ADC_server,adc_action,cmd):    # For real observation
         print('\033[32m'+'[ADC]', comment+'\033[0m')
         await ADC_server.send_message('ICS',rsp)
 
+
+    if func == 'adcadjust':
+        ra=float(dict_data['RA'])
+        dec=float(dict_data['DEC'])
+
+        if adcadjust_task and not adcadjust_task.done():
+            print("Cancelling the previous task...")
+            adcadjust_task.cancel()
+            try:
+                await adcadjust_task
+            except asyncio.CancelledError:
+                print("Previous task cancelled")
+
+        adcadjust_task=asyncio.create_task(handle_adcadjust(ADC_server,adc_action,ra,dec))
+
+
     if func == 'adcstop':
         reply_data=mkmsg.adcmsg()
         result=await adc_action.stop()           #  For real observation.
@@ -140,21 +159,27 @@ async def identify_excute(ADC_server,adc_action,cmd):    # For real observation
         print('\033[32m'+'[ADC]', comment+'\033[0m')
         await ADC_server.send_message('ICS',rsp)
 
-    if func == 'adcadjust':
-        ra=float(dict_data['RA'])
-        dec=float(dict_data['DEC'])
-
-        asyncio.create_task(handle_adcadjust(ADC_server,adc_action,ra,dec))
+        if adcadjust_task and not adcadjust_task.done():
+            print("Stopping current task...")
+            adcadjust_task.cancel()
+            try:
+                await adcadjust_task
+            except asyncio.CancelledError:
+                print("Current task stopped.")
+        else:
+            print("No task is currently running.")
 
 
 async def handle_adcadjust(ADC_server,adc_action,ra,dec):
         ini_zdist=calculate_zenith_distance(ra,dec)
         calculator = ADCCalc()
         ang=calculator.calc_from_za(ini_zdist)
-        ini_pos=calculator.degree_to_count(ang)
+        ini_count=calculator.degree_to_count(ang)
 
         delcount=ini_count
+        obsnum=3
         for i in range(obsnum):
+            print(i)
             comment = f'ADC is now rotating. Rotaing count is {delcount}'
             print('\033[32m'+'[ADC]', comment+'\033[0m')
             reply_data=mkmsg.adcmsg()
