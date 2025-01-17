@@ -12,6 +12,9 @@ import numpy as np
 from scipy.interpolate import CubicSpline
 from scipy.interpolate import PchipInterpolator
 from scipy.interpolate import Akima1DInterpolator
+#from astropy.coordinates import EarthLocation, SkyCoord, AltAz
+#from astropy.time import Time
+#import astropy.units as u
 
 
 class ADCCalc:
@@ -137,3 +140,34 @@ class ADCCalc:
         self.logger.debug(f"Converted {degree} degrees to {int(count)} counts.")
 
         return int(count)
+
+    """
+    def calculate_zenith_distance(ra_obj,dec_obj):
+#    start_time = Time.now()
+#    end_time = start_time.unix + 15 * 60  # 15분 후 종료 시간
+
+        longitude = 149.06256  # AAO longtitude degrees
+        latitude = -31.27118   # AAO latitude degrees
+        location = EarthLocation(lat=latitude, lon=longitude)
+
+        ra_obj=float(ra_obj)
+        dec_obj=float(dec_obj)
+
+        object_coord = SkyCoord(ra=ra_obj * 15. * u.deg, dec=dec_obj * u.deg)
+
+#    while Time.now().unix < end_time
+        current_time = Time.now()
+        times = current_time + np.arange(0, 6) * u.minute   #  Make 5 min. times interval 1 min.
+
+        # AltAz 프레임 정의
+        altaz_frame = AltAz(obstime=times, location=location)
+
+        # 별의 고도/방위각 계산
+        object_altaz = object_coord.transform_to(altaz_frame)
+
+        # Zenith distance 계산 (90° - 고도)
+        zenith_distance = 90 - object_altaz.alt.degree
+
+        return np.mean(zenith_distance)
+        """
+

@@ -3,7 +3,7 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from SCIOBS.sciobscli import sciobscli
 from GFA.gfacli import *
 from MTL.mtlcli import *
-#from TCS.tcscli import *
+from TCS.tcscli import *
 from FBP.fbpcli import *
 from ADC.adccli import *
 from LAMP.lampcli import *
@@ -11,7 +11,7 @@ from SPECTRO.speccli import *
 from ENDO.ENDOcli import *
 #import configparser as cp
 from Lib.AMQ import *
-#from script.test import scriptrun
+from script.test import *
 import Lib.process as processes
 #from TEST.testcli import *
 
@@ -20,7 +20,7 @@ cmdlist=['','loadfile','obsstatus',
         'gfastatus','gfacexp','gfaallexp','gfastop','autoguide','autoguidestop',
         'endoguide','endotest','endofocus','endostop','endoexpset','endoclear',
         'mtlstatus','mtlexp','mtlcal',
-        'adcstatus','adcadjust','adcinit','adcconnect','adcdisconnect','adchome','adczero','adcpoweroff','adcrotate1','adcrotate2',
+        'adcstatus','adcactivate','adcadjust','adcinit','adcconnect','adcdisconnect','adchome','adczero','adcpoweroff','adcrotate1','adcrotate2','adcstop',
         'fbpstatus','fbpmove','fbpoffset','fbpinit',
         'lampstatus','arcon','arcoff','flaton','flatoff','fidon','fiducialoff',
         'specstatus','specilluon','specilluoff','objexp','biasexp','flatexp','arcexp',
@@ -154,8 +154,13 @@ async def identify(arg,ICS_client,transport):
         await ICS_client.send_message("FBP", fbpmsg)
 
 ##### Command for ADC #####################################
+    if cmd[0] == 'adcactivate':
+        adcmsg=adc_activate(cmd[1])
+        await ICS_client.send_message("ADC",adcmsg)
+
     if cmd[0] == 'adcadjust':
-        adcmsg=adc_adjust(cmd[1])
+#        adc_adjust(cmd[1], cmd[2])
+        adcmsg=adc_adjust(cmd[1],cmd[2])
         await ICS_client.send_message("ADC",adcmsg)
 
     if cmd[0] == 'adcinit':
@@ -192,6 +197,10 @@ async def identify(arg,ICS_client,transport):
 
     if cmd[0] == 'adcrotate2':
         adcmsg=adc_rotate2(cmd[1])
+        await ICS_client.send_message("ADC",adcmsg)
+
+    if cmd[0] == 'adcstop':
+        adcmsg=adc_stop()
         await ICS_client.send_message("ADC",adcmsg)
 
 ##### Command for Spectrograph #####################################
@@ -256,3 +265,4 @@ async def identify(arg,ICS_client,transport):
 ##### Command for script ##################################
     if cmd[0] == 'runscript':
         await scriptrun(ICS_client,transport,cmd[1])
+

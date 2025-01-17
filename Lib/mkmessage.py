@@ -14,7 +14,7 @@ def gfamsg():
 
 def adcmsg():
     dict_data=common()
-    update_data={'zdist': 'None'}
+    update_data={'zdist': 'None','RA': 'None', 'DEC': 'None'}
     dict_data.update(update_data)
     dict_data.update(inst='ADC')
     return dict_data

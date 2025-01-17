@@ -80,3 +80,23 @@ async def scriptrun(ICS_client,transport,filename):
 
 #    mtlmsg=mtl_exp()
 #    await ICS_client.send_message("MTL", mtlmsg)
+
+
+async def adc_run():
+    ra=123.45
+    dec=-34.56
+    obsnum=6
+
+    zdist=calculate_zenith_distance(ra,dec)
+    current=zdist
+    for i in range(6):
+        next=calculate_zenith_distance(ra,dec)
+        count=3456
+        command=adc_activate(count)
+        print(command)
+        await asyncio.sleep(30)
+
+
+
+
+

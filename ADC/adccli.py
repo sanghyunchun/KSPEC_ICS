@@ -4,6 +4,11 @@ from Lib.AMQ import *
 import Lib.mkmessage as mkmsg
 import asyncio
 import json
+from astropy.coordinates import EarthLocation, SkyCoord, AltAz
+from astropy.time import Time
+import astropy.units as u
+import numpy as np
+#from .kspec_adc_controller.src.adc_calc_angle import ADCCalc
 
 def adc_init():
     "ADC initializing"
@@ -61,11 +66,19 @@ def adc_rotate2(count):
     adcmsg=json.dumps(cmd_data)
     return adcmsg
 
-def adc_adjust(zdistance):
+def adc_adjust(ra,dec):
+    "ADC lens adjust with desired angle"
+    comment='ADC is adjusting'
+    cmd_data=mkmsg.adcmsg()
+    cmd_data.update(func='adcadjust',RA=ra,DEC=dec,message=comment)
+    adcmsg=json.dumps(cmd_data)
+    return adcmsg
+
+def adc_activate(count):
     "ADC lens adjusti with desired angle"
     comment='ADC is adjusting'
     cmd_data=mkmsg.adcmsg()
-    cmd_data.update(func='adcadjust',zdist=zdistance,message=comment)
+    cmd_data.update(func='adcactivate',pcount=count,message=comment)
     adcmsg=json.dumps(cmd_data)
     return adcmsg
 
@@ -84,3 +97,12 @@ def adc_poweroff():
     cmd_data.update(func='adcpoweroff',message=comment)
     adcmsg=json.dumps(cmd_data)
     return adcmsg
+
+def adc_stop():
+    "Stop ADC rotating"
+    comment='ADC rotating stop'
+    cmd_data=mkmsg.adcmsg()
+    cmd_data.update(func='adcstop',message=comment)
+    adcmsg=json.dumps(cmd_data)
+    return adcmsg
+

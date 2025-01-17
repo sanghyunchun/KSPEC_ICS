@@ -5,7 +5,6 @@ import asyncio
 from Lib.AMQ import *
 from icscommand import *
 import aio_pika
-#import configparser as cp
 import Lib.process as processes
 import json
 
@@ -115,6 +114,9 @@ if __name__ == "__main__":
     if sys.argv[1] == 'ics':
         asyncio.run(main())  # Run the main coroutine
 
+    if sys.argv[1] == 'ics':
+        asyncio.run(main())  # Run the main coroutine
+
     if sys.argv[1] == 'GFA':
         from GFA import GFA_server
         asyncio.run(GFA_server.main())
@@ -138,3 +140,10 @@ if __name__ == "__main__":
     if sys.argv[1] == 'LAMP':
         from LAMP import LAMP_server
         asyncio.run(LAMP_server.main())
+
+    if sys.argv[1] == 'ADCsimul':
+        from ADC.Simul import ADC_server
+        asyncio.run(ADC_server.main())
+
+
+

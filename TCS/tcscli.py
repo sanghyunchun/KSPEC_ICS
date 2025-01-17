@@ -2,7 +2,6 @@ import os, sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 # from Lib.MsgMiddleware import *
 from Lib.AMQ import *
-from .tcscore import *
 import asyncio
 import socket
 

@@ -5,7 +5,7 @@ import json
 import asyncio
 import time
 import random
-from GFA.endo_controller.endo_actions import endo_actions
+#from GFA.endo_controller.endo_actions import endo_actions
 #from GFA.kspec_gfa_controller.python.gfa_controller import gfa_actions
 #from KSPEC_Server.GFA.kspec_gfa_controller.src.gfa_actions import gfa_actions
 

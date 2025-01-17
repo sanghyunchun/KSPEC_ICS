@@ -5,6 +5,7 @@ import asyncio
 import aio_pika
 import json
 from ADC.Simul.command import *
+from ADC.Simul.kspec_adc_controller.src.adc_actions import AdcActions
 
 async def main():
     with open('./Lib/KSPEC.ini','r') as f:
@@ -16,6 +17,7 @@ async def main():
 
     print('ADC Sever Started!!!')
     ADC_server=AMQclass(ip_addr,idname,pwd,'ADC','ics.ex')
+    action=AdcActions()
     print('\033[32m'+'[ADC] ADC device is found and ready.'+'\033[0m')
     await ADC_server.connect()
     await ADC_server.define_consumer()
@@ -26,7 +28,7 @@ async def main():
         message=dict_data['message']
         print('\033[94m'+'[ADC] received: ', message+'\033[0m')
 
-        await identify_excute(ADC_server,msg)                     # For simulation. Annotate when real observation
+        await identify_excute(ADC_server,action,msg)                     # For simulation. Annotate when real observation
 
 
 if __name__ == "__main__":
