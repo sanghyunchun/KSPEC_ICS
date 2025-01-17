@@ -28,7 +28,7 @@ async def main():
         message=dict_data['message']
         print('\033[94m'+'[ADC] received: ', message+'\033[0m')
 
-        await identify_excute(ADC_server,action,msg)                     # For simulation. Annotate when real observation
+        await identify_execute(ADC_server,action,msg)                     # For simulation. Annotate when real observation
 
 
 if __name__ == "__main__":

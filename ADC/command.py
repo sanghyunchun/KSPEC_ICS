@@ -1,197 +1,170 @@
-import os,sys
-from Lib.AMQ import *
-import json
 import asyncio
-import time
+import json
+from Lib.AMQ import *
 import Lib.mkmessage as mkmsg
-from scipy import interpolate
-import numpy as np
 from astropy.coordinates import EarthLocation, SkyCoord, AltAz
 from astropy.time import Time
 import astropy.units as u
+import numpy as np
 from .kspec_adc_controller.src.adc_calc_angle import ADCCalc
 
+# Global task tracker
+adcadjust_task = None
 
-adcadjust_task=None
-async def identify_excute(ADC_server,adc_action,cmd):    # For real observation
-    dict_data=json.loads(cmd)
+def log(message):
+    """Utility function for consistent logging."""
+    print(f"\033[32m[ADC] {message}\033[0m")
+
+async def identify_execute(ADC_server, adc_action, cmd):
     global adcadjust_task
-    func=dict_data['func']
+    dict_data = json.loads(cmd)
+    func = dict_data['func']
+
+    log(f"Received command: {func}")
 
     if func == 'adcinit':
-        comment='ADC initialized.'
-        reply_data=mkmsg.adcmsg()
-        reply_data.update(message=comment,process='Done')
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[ADC]', comment+'\033[0m')
-        await ADC_server.send_message('ICS',rsp)
+        comment = 'ADC initialized.'
+        reply_data = mkmsg.adcmsg()
+        reply_data.update(message=comment, process='Done')
+        rsp = json.dumps(reply_data)
+        log(comment)
+        await ADC_server.send_message('ICS', rsp)
 
-    if func == 'adcconnect':
-        reply_data=mkmsg.adcmsg()
-        result=adc_action.connect()  # For real observation
-        reply_data.update(result)      # For real observation
-        comment=reply_data['message']  # For real observation
-
-        reply_data.update(process='Done')   
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[ADC]', comment+'\033[0m')
-        await ADC_server.send_message('ICS',rsp)
-
-    if func == 'adcdisconnect':
-        reply_data=mkmsg.adcmsg()
-        result=adc_action.disconnect()  # For real observation
-        reply_data.update(result)      # For real observation
-        comment=reply_data['message']  # For real observation
-
-        reply_data.update(process='Done')   
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[ADC]', comment+'\033[0m')
-        await ADC_server.send_message('ICS',rsp)
-
-    if func == 'adcpoweroff':
-        reply_data=mkmsg.adcmsg()
-        result=adc_action.power_off()  # For real observation
-        reply_data.update(result)      # For real observation
-        comment=reply_data['message']  # For real observation
-
+    elif func == 'adcconnect':
+        reply_data = mkmsg.adcmsg()
+        result = adc_action.connect()
+        reply_data.update(result)
         reply_data.update(process='Done')
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[ADC]', comment+'\033[0m')
-        await ADC_server.send_message('ICS',rsp)
+        rsp = json.dumps(reply_data)
+        log(reply_data['message'])
+        await ADC_server.send_message('ICS', rsp)
 
-    if func == 'adcstatus':
-        reply_data=mkmsg.adcmsg()
-        result=adc_action.status()                  # For real observation
-        reply_data.update(result)                   # For real observation
-        comment=result['message']                   # For real observation
-
+    elif func == 'adcdisconnect':
+        reply_data = mkmsg.adcmsg()
+        result = adc_action.disconnect()
+        reply_data.update(result)
         reply_data.update(process='Done')
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[ADC]', comment+'\033[0m')
-        await ADC_server.send_message('ICS',rsp)
+        rsp = json.dumps(reply_data)
+        log(reply_data['message'])
+        await ADC_server.send_message('ICS', rsp)
 
-    if func == 'adcactivate':
-        reply_data=mkmsg.adcmsg()
-        zdist=float(dict_data['zdist'])
-        result=await adc_action.activate(zdist)  # For real observation. Rotate lens function by calculated values
-        motor_1=result['motor_1']           # For real observation.
-        motor_2=result['motor_2']           # For real observation.
-        comment1=result['message']          # For real observation.
-        comment=f'{comment1}. ADC lens rotate {motor_1}, {motor_2} counts successfully.'     # For real observation.
-
-        reply_data.update(message=comment,process='Done')
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[ADC]', comment+'\033[0m')
-        await ADC_server.send_message('ICS',rsp)
-
-    if func == 'adcrotate1':
-        reply_data=mkmsg.adcmsg()
-        count=int(dict_data['pcount'])
-        lens=dict_data['lens']                       #  For real observation.
-        result=await adc_action.move(lens,count)           #  For real observation.
-        reply_data.update(result)                    # For real observation
-        comment=reply_data['message']                # For real observation
-
+    elif func == 'adcpoweroff':
+        reply_data = mkmsg.adcmsg()
+        result = adc_action.power_off()
+        reply_data.update(result)
         reply_data.update(process='Done')
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[ADC]', comment+'\033[0m')
-        await ADC_server.send_message('ICS',rsp)
+        rsp = json.dumps(reply_data)
+        log(reply_data['message'])
+        await ADC_server.send_message('ICS', rsp)
 
-    if func == 'adcrotate2':
-        reply_data=mkmsg.adcmsg()
-        count=int(dict_data['pcount'])
-        lens=dict_data['lens']                       #  For real observation.
-        result=await adc_action.move(lens,count)           #  For real observation.
-        reply_data.update(result)                    # For real observation
-        comment=reply_data['message']                # For real observation
-
+    elif func == 'adcstatus':
+        reply_data = mkmsg.adcmsg()
+        result = adc_action.status()
+        reply_data.update(result)
         reply_data.update(process='Done')
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[ADC]', comment+'\033[0m')
-        await ADC_server.send_message('ICS',rsp)
+        rsp = json.dumps(reply_data)
+        log(reply_data['message'])
+        await ADC_server.send_message('ICS', rsp)
 
-    if func == 'adchome':
-        reply_data=mkmsg.adcmsg()
-        result=await adc_action.homing()           #  For real observation.
-        reply_data.update(result)                    # For real observation
-        comment=reply_data['message']                # For real observation
+    elif func == 'adcactivate':
+        zdist = float(dict_data['zdist'])
+        result = await adc_action.activate(zdist)
+        motor_1, motor_2 = result['motor_1'], result['motor_2']
+        comment1=result['message']
+        comment = f"{comment1} Lens rotated {motor_1}, {motor_2} counts successfully."
+        reply_data = mkmsg.adcmsg()
+        reply_data.update(message=comment, process='Done')
+        rsp = json.dumps(reply_data)
+        log(comment)
+        await ADC_server.send_message('ICS', rsp)
 
-        reply_data.update(process='Done')
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[ADC]', comment+'\033[0m')
-        await ADC_server.send_message('ICS',rsp)
+    elif func == 'adcadjust':
+        ra = float(dict_data['RA'])
+        dec = float(dict_data['DEC'])
 
-    if func == 'adczero':
-        reply_data=mkmsg.adcmsg()
-        result=await adc_action.zeroing()           #  For real observation.
-        reply_data.update(result)                    # For real observation
-        comment=reply_data['message']                # For real observation
-
-        reply_data.update(process='Done')
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[ADC]', comment+'\033[0m')
-        await ADC_server.send_message('ICS',rsp)
-
-
-    if func == 'adcadjust':
-        ra=float(dict_data['RA'])
-        dec=float(dict_data['DEC'])
-
+        # Cancel any running task before starting a new one
         if adcadjust_task and not adcadjust_task.done():
-            print("Cancelling the previous task...")
+            log("Cancelling the running adcadjust task...")
             adcadjust_task.cancel()
             try:
                 await adcadjust_task
             except asyncio.CancelledError:
-                print("Previous task cancelled")
+                log("Previous adcadjust task cancelled.")
 
-        adcadjust_task=asyncio.create_task(handle_adcadjust(ADC_server,adc_action,ra,dec))
+        # Start a new adcadjust task
+        adcadjust_task = asyncio.create_task(handle_adcadjust(ADC_server, adc_action, ra, dec))
+        log("New adcadjust task started.")
 
-
-    if func == 'adcstop':
-        reply_data=mkmsg.adcmsg()
-        result=await adc_action.stop()           #  For real observation.
-        reply_data.update(result)                    # For real observation
-        comment=reply_data['message']                # For real observation
-
+    elif func == 'adcstop':
+        reply_data = mkmsg.adcmsg()
+        result = await adc_action.stop()
+        reply_data.update(result)
         reply_data.update(process='Done')
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[ADC]', comment+'\033[0m')
-        await ADC_server.send_message('ICS',rsp)
+        rsp = json.dumps(reply_data)
+        log(reply_data['message'])
+        await ADC_server.send_message('ICS', rsp)
 
+        # Cancel the adcadjust task if it's running
         if adcadjust_task and not adcadjust_task.done():
-            print("Stopping current task...")
+            log("Stopping adcadjust task...")
             adcadjust_task.cancel()
             try:
                 await adcadjust_task
             except asyncio.CancelledError:
-                print("Current task stopped.")
+                log("adcadjust task stopped.")
         else:
-            print("No task is currently running.")
+            log("No adcadjust task is currently running.")
 
+    elif func in {'adcrotate1', 'adcrotate2'}:
+        count = int(dict_data['pcount'])
+        lens = dict_data['lens']
+        result = await adc_action.move(lens, count)
+        reply_data = mkmsg.adcmsg()
+        reply_data.update(result)
+        reply_data.update(process='Done')
+        rsp = json.dumps(reply_data)
+        log(reply_data['message'])
+        await ADC_server.send_message('ICS', rsp)
 
-async def handle_adcadjust(ADC_server,adc_action,ra,dec):
-        ini_zdist=calculate_zenith_distance(ra,dec)
+    elif func == 'adchome':
+        result = await adc_action.homing()
+        reply_data = mkmsg.adcmsg()
+        reply_data.update(result)
+        reply_data.update(process='Done')
+        rsp = json.dumps(reply_data)
+        log(reply_data['message'])
+        await ADC_server.send_message('ICS', rsp)
+
+    elif func == 'adczero':
+        result = await adc_action.zeroing()
+        reply_data = mkmsg.adcmsg()
+        reply_data.update(result)
+        reply_data.update(process='Done')
+        rsp = json.dumps(reply_data)
+        log(reply_data['message'])
+        await ADC_server.send_message('ICS', rsp)
+
+async def handle_adcadjust(ADC_server, adc_action, ra, dec):
+    try:
+        ini_zdist = calculate_zenith_distance(ra, dec)
         calculator = ADCCalc()
-        ang=calculator.calc_from_za(ini_zdist)
-        ini_count=calculator.degree_to_count(ang)
+        ini_count = calculator.degree_to_count(calculator.calc_from_za(ini_zdist))
+        delcount = ini_count
+        obsnum = 3
 
-        delcount=ini_count
-        obsnum=3
         for i in range(obsnum):
-            print(i)
-            comment = f'ADC is now rotating. Rotaing count is {delcount}'
-            print('\033[32m'+'[ADC]', comment+'\033[0m')
+            comment=f"Rotation step {i+1}/{obsnum}. ADC is now rotating by {delcount} counts."
+            log(comment)
             reply_data=mkmsg.adcmsg()
             reply_data.update(message=comment)
             rsp=json.dumps(reply_data)
             await ADC_server.send_message('ICS',rsp)
 
-            result = await adc_action.activate(delcount)
-            motor_1=result['motor_1']           # For real observation.
-            motor_2=result['motor_2']           # For real observation.
+            result = await adc_action.move(0,delcount)
+            motor_1, motor_2 = result['motor_1'], result['motor_2']
             comment1=result['message']          # For real observation.
-            comment=f'{comment1} ADC lens rotated {motor_1}, {motor_2} counts successfully.'     # For real observation.
+            comment=f'{comment1} ADC lens rotated {motor_1}, {motor_2} counts successfully.'
+            log(f"ADC lens rotated: {motor_1}, {motor_2} counts successfully.")
             reply_data=mkmsg.adcmsg()
             reply_data.update(result)
             if i == obsnum-1:
@@ -202,37 +175,26 @@ async def handle_adcadjust(ADC_server,adc_action,ra,dec):
             rsp=json.dumps(reply_data)
             print('\033[32m'+'[ADC]', comment+'\033[0m')
             await ADC_server.send_message('ICS',rsp)
-            await asyncio.sleep(30)
 
-            zdist=calculate_zenith_distance(ra,dec)
-            ang=calculator.calc_from_za(zdist)
-            next_count=calculator.degree_to_count(ang)
-
+            await asyncio.sleep(30)                       # Wait for exposure time
+            zdist = calculate_zenith_distance(ra, dec)
+            next_count = calculator.degree_to_count(calculator.calc_from_za(zdist))
             delcount = next_count - ini_count
 
+    except asyncio.CancelledError:
+        log("handle_adcadjust task was cancelled.")
+        raise
+    except Exception as e:
+        log(f"Error in handle_adcadjust: {e}")
+    else:
+        log("handle_adcadjust completed successfully.")
 
-def calculate_zenith_distance(ra_obj,dec_obj):
-
-    longitude = 149.06256  # AAO longtitude degrees
-    latitude = -31.27118   # AAO latitude degrees
-    location = EarthLocation(lat=latitude, lon=longitude)
-
+def calculate_zenith_distance(ra_obj, dec_obj):
+    location = EarthLocation(lat=-31.27118, lon=149.06256)  # AAO coordinates
     object_coord = SkyCoord(ra=ra_obj * u.deg, dec=dec_obj * u.deg)
-
     current_time = Time.now()
     times = current_time + np.arange(0, 6) * u.minute
-
-        # AltAz frame define
     altaz_frame = AltAz(obstime=times, location=location)
-
-        # Calculate Alt. Az of stars
-    object_altaz = object_coord.transform_to(altaz_frame)
-
-        # Calculate Zenith distance 
-    zenith_distance = 90. - object_altaz.alt.degree
-
+    zenith_distance = 90. - object_coord.transform_to(altaz_frame).alt.degree
     return np.mean(zenith_distance)
-
-
-
 
