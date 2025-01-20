@@ -20,12 +20,15 @@ class Telcomclass():
         self.PID = '123'
         self.host = TelcomIP
         self.port = int(TelcomPort)
+        print(self.host)
+        print(self.port)
 
     def TelcomConnect(self):
         self.clientsocket=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         
         try:
             self.clientsocket.connect((self.host,self.port))
+            print('Connected Telcom Server')
             return True
         except OSError:
             print('Connection to Telcom fail')
@@ -46,7 +49,7 @@ class Telcomclass():
         return data
 
     def RequestRA(self):
-        cmd = f'REQUEST RA'
+        cmd = f'{self.TELID} {self.SYSID} {self.PID} REQUEST RA'
         print('Telescope request cmd :', cmd)
         self.clientsocket.send(cmd.encode())
         RA=self.recv_data()
@@ -56,7 +59,7 @@ class Telcomclass():
         cmd = f'REQUEST DEC'
         print('Telescope request cmd :', cmd)
         self.clientsocket.send(cmd.encode())
-        DEC=self.recv_data()
+        DEC=self.recv_data(1024)
         return DEC
 
 """
