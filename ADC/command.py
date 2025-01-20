@@ -92,7 +92,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
                 log("Previous adcadjust task cancelled.")
 
         # Start a new adcadjust task
-        adcadjust_task = asyncio.create_task(handle_adcadjust(ADC_server, adc_action, ra, dec))
+        adcadjust_task = asyncio.create_task(handle_adcadjust2(ADC_server, adc_action, ra, dec))
         log("New adcadjust task started.")
 
     elif func == 'adcstop':
@@ -188,6 +188,48 @@ async def handle_adcadjust(ADC_server, adc_action, ra, dec):
         log(f"Error in handle_adcadjust: {e}")
     else:
         log("handle_adcadjust completed successfully.")
+
+async def handle_adcadjust2(ADC_server, adc_action, ra, dec):
+    try:
+        ini_zdist = calculate_zenith_distance(ra, dec)
+        calculator = ADCCalc()
+        ini_count = calculator.degree_to_count(calculator.calc_from_za(ini_zdist))
+        delcount = ini_count
+
+        while True:
+            comment=f"ADC is now rotating by {delcount} counts."
+            log(comment)
+            reply_data=mkmsg.adcmsg()
+            reply_data.update(message=comment)
+            rsp=json.dumps(reply_data)
+            await ADC_server.send_message('ICS',rsp)
+
+            result = await adc_action.move(0,delcount)
+            motor_1, motor_2 = result['motor_1'], result['motor_2']
+            comment1=result['message']
+            comment=f'{comment1} ADC lens rotated {motor_1}, {motor_2} counts successfully.'
+#            log(f"ADC lens rotated: {motor_1}, {motor_2} counts successfully.")
+            reply_data=mkmsg.adcmsg()
+            reply_data.update(result)
+            reply_data.update(message=comment,process='In process')
+
+            rsp=json.dumps(reply_data)
+            print('\033[32m'+'[ADC]', comment+'\033[0m')
+            await ADC_server.send_message('ICS',rsp)
+
+            await asyncio.sleep(60)                       # Wait for exposure time
+            zdist = calculate_zenith_distance(ra, dec)
+            next_count = calculator.degree_to_count(calculator.calc_from_za(zdist))
+            delcount = next_count - ini_count
+
+    except asyncio.CancelledError:
+        log("handle_adcadjust task was cancelled.")
+        raise
+    except Exception as e:
+        log(f"Error in handle_adcadjust: {e}")
+    else:
+        log("handle_adcadjust completed successfully.")
+
 
 def calculate_zenith_distance(ra_obj, dec_obj):
     location = EarthLocation(lat=-31.27118, lon=149.06256)  # AAO coordinates
