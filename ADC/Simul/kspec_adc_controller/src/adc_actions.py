@@ -110,6 +110,7 @@ class AdcActions:
         """
         try:
             if motor_id == 0:
+                await asyncio.sleep(10)
                 self.logger.debug(
                     f"Starting simultaneous move for motors 1 and 2 to position {pos_count} with velocity {vel_set}."
                 )
