@@ -114,9 +114,6 @@ if __name__ == "__main__":
     if sys.argv[1] == 'ics':
         asyncio.run(main())  # Run the main coroutine
 
-    if sys.argv[1] == 'ics':
-        asyncio.run(main())  # Run the main coroutine
-
     if sys.argv[1] == 'GFA':
         from GFA import GFA_server
         asyncio.run(GFA_server.main())
@@ -140,6 +137,10 @@ if __name__ == "__main__":
     if sys.argv[1] == 'LAMP':
         from LAMP import LAMP_server
         asyncio.run(LAMP_server.main())
+
+    if sys.argv[1] == 'ENDO':
+        from ENDO import ENDO_server
+        asyncio.run(ENDO_server.main())
 
     if sys.argv[1] == 'ADCsimul':
         from ADC.Simul import ADC_server
