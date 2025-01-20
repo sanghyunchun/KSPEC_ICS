@@ -44,7 +44,7 @@ async def identify_excute(MTL_server,cmd):
 
     if func == 'mtlexp':
         exptime=float(receive_msg['time'])
-        comment=mtlexp.mtlexp(exptime)
+        comment=mtlexp.mtlexp(exptime*1000000.)
         reply_data=mkmsg.mtlmsg()
         reply_data.update(message=comment,process='Done')
         rsp=json.dumps(reply_data)

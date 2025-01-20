@@ -1,6 +1,7 @@
 from .qhyccd import QHY_Camera
 import numpy as np
 from astropy.io import fits
+from datetime import datetime
 
 def mtlexp(exptime
            , readmode=1
@@ -26,8 +27,12 @@ def mtlexp(exptime
         hdr['offset'] = offset
         hdr['texp'] = exptime
 
+        utc=datatime.utcnow()
+        surf=utc.strftime("%Y%m%d_%H%M%S")
+        filename='M'+surf+'.fits'
+
         empty_primary = fits.PrimaryHDU(header=hdr, data=im)
-        empty_primary.writeto(data_dir+f'test{i}.fits', overwrite=True)     # Need edit by real observation
+        empty_primary.writeto(data_dir+filename, overwrite=True)     # Need edit by real observation
 
     qc.CamExit()
 
