@@ -11,7 +11,7 @@ class QHY_Camera:
     def __init__(self):
         current_dir = os.path.dirname(__file__)
 #        lib_path = os.path.join(current_dir, "../lib", "libqhyccd.so")
-        lib_path = '/media/shyunc/DATA/KSpec/KSPECICS_P5/KSPEC_server/MTL/kspec_metrology/lib/libqhyccd.so'
+        lib_path = './MTL/kspec_metrology/lib/libqhyccd.so'
         self.sdk = CDLL(lib_path)
 
         #Set function input and output dtype
