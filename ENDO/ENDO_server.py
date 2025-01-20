@@ -8,6 +8,14 @@ from ENDO.command import *
 from ENDO.endo_controller.endo_actions import endo_actions
 
 
+
+def ensure_directory(dir_path):
+    if not os.path.exists(dir_path):
+        print(f"There is no directroy. Now making directory: {dir_path}")
+        os.makedirs(dir_path)
+    else:
+        print(f"There is alireay the directory. Skip making directory : {dir_path}")
+
 async def main():
 
     with open('./Lib/KSPEC.ini','r') as f:
@@ -16,6 +24,9 @@ async def main():
     ip_addr = kspecinfo['RabbitMQ']['ip_addr']
     idname = kspecinfo['RabbitMQ']['idname']
     pwd = kspecinfo['RabbitMQ']['pwd']
+
+    data_path=kspecinfo['ENDO']['endoimagepath']
+    ensure_directory(data_path)
 
     print('Endoscope Sever Started!!!')
     ENDO_server=AMQclass(ip_addr,idname,pwd,'ENDO','ics.ex')
@@ -30,7 +41,7 @@ async def main():
         message=dict_data['message']
         print('\033[94m'+'[ENDO] received: ', message+'\033[0m')
 
-        await identify_excute(ENDO_server,endoaction,msg)
+        await identify_execute(ENDO_server,endoaction,msg)
 
 
 if __name__ == "__main__":

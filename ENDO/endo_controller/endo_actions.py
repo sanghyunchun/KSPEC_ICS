@@ -18,7 +18,7 @@ def median_combine_fits(files):
     
     median_data = np.median(data_list, axis=0)
 
-    output_filename = os.path.join('./ENDO/endo_controller/data/', 'median_' + os.path.basename(files[0]))
+    output_filename = os.path.join('./ENDO/data/', 'median_' + os.path.basename(files[0]))
 
     if not os.path.isfile(output_filename):
         hdu = fits.PrimaryHDU(median_data)
@@ -27,7 +27,7 @@ def median_combine_fits(files):
     
 
 def combine_fits_files():
-    files = sorted(glob.glob(os.path.join('./ENDO/endo_controller/data/', 'E*.fits')))
+    files = sorted(glob.glob(os.path.join('./ENDO/data/', 'E*.fits')))
    
     # median combine when 5 fits files are saved 
     while len(files) >= 5:
@@ -43,8 +43,8 @@ class endo_actions:
         pass
 
     def endo_clear(self):
-        if os.path.exists('./ENDO/endo_controller/data'):
-            for file in os.scandir('./ENDO/endo_controller/data'):
+        if os.path.exists('./ENDO/data'):
+            for file in os.scandir('./ENDO/data'):
                 os.remove(file.path)
             rsp = 'Endoscope images are removed'
             return rsp
@@ -96,7 +96,7 @@ class endo_actions:
         
 #        plt.imshow(img_data)
 #        plt.savefig('./ENDO/endo_controller/data/'+filename2)       
-        final.writeto('./ENDO/endo_controller/data/'+filename,overwrite=True)
+        final.writeto('./ENDO/data/'+filename,overwrite=True)
 
         msg=random.randrange(1,11)
         if msg < 7:
@@ -124,7 +124,7 @@ class endo_actions:
         frame =  frame[:,:,::-1]
         
         plt.imshow(frame)
-        plt.savefig('./ENDO/endo_controller/data/temp.jpg')
+        plt.savefig('./ENDO/data/temp.jpg')
         
         r_data = np.array(frame[:,:,0])
         r_data=r_data[::-1]
@@ -141,7 +141,7 @@ class endo_actions:
         utc=datetime.utcnow()
         surf=utc.strftime("%Y%m%d_%H%M%S")
         gfilename='test_'+surf+'.fits'
-        green.writeto('./ENDO/endo_controller/data/'+gfilename,overwrite=True)
+        green.writeto('./ENDO/data/'+gfilename,overwrite=True)
         
         #blue = fits.PrimaryHDU(data=b_data)
         #bfilename='blue.fits'
