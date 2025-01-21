@@ -226,7 +226,7 @@ async def handle_adcadjust2(ADC_server, adc_action, ra, dec):
             print('\033[32m'+'[ADC]', comment+'\033[0m')
             await ADC_server.send_message('ICS',rsp)
 
-            await asyncio.sleep(60)                       # Wait for exposure time
+            await asyncio.sleep(30)                       # Wait for exposure time
             zdist = calculate_zenith_distance(ra, dec)
             next_count = calculator.degree_to_count(calculator.calc_from_za(zdist))
             delcount = next_count - ini_count

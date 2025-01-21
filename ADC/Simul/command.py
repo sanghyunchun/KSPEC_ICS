@@ -146,6 +146,15 @@ async def identify_execute(ADC_server, adc_action, cmd):
         log(reply_data['message'])
         await ADC_server.send_message('ICS', rsp)
 
+    elif func == 'adcpark':
+        result = await adc_action.parking()
+        reply_data = mkmsg.adcmsg()
+        reply_data.update(result)
+        reply_data.update(process='Done')
+        rsp = json.dumps(reply_data)
+        log(reply_data['message'])
+        await ADC_server.send_message('ICS', rsp)
+
 async def handle_adcadjust(ADC_server, adc_action, ra, dec):
     try:
         ini_zdist = calculate_zenith_distance(ra, dec)
