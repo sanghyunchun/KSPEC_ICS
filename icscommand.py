@@ -20,7 +20,7 @@ cmdlist=['','loadfile','obsstatus',
         'gfastatus','gfacexp','gfaallexp','gfastop','autoguide','autoguidestop',
         'endoguide','endotest','endofocus','endostop','endoexpset','endoclear',
         'mtlstatus','mtlexp','mtlcal',
-        'adcstatus','adcactivate','adcadjust','adcinit','adcconnect','adcdisconnect','adchome','adczero','adcpoweroff','adcrotate1','adcrotate2','adcstop',
+        'adcstatus','adcactivate','adcadjust','adcinit','adcconnect','adcdisconnect','adchome','adczero','adcpoweroff','adcrotate1','adcrotate2','adcstop','adcpark',
         'fbpstatus','fbpmove','fbpoffset','fbpinit',
         'lampstatus','arcon','arcoff','flaton','flatoff','fidon','fiducialoff',
         'specstatus','specilluon','specilluoff','objexp','biasexp','flatexp','arcexp',
@@ -191,6 +191,10 @@ async def identify(arg,ICS_client,transport):
         adcmsg=adc_zero()
         await ICS_client.send_message("ADC",adcmsg)
 
+    if cmd[0] == 'adcpark':
+        adcmsg=adc_park()
+        await ICS_client.send_message("ADC",adcmsg)
+
     if cmd[0] == 'adcrotate1':
         adcmsg=adc_rotate1(cmd[1])
         await ICS_client.send_message("ADC",adcmsg)
@@ -265,4 +269,7 @@ async def identify(arg,ICS_client,transport):
 ##### Command for script ##################################
     if cmd[0] == 'runscript':
         await scriptrun(ICS_client,transport,cmd[1])
+
+
+##### Command for TCS  ###################################
 

@@ -106,3 +106,11 @@ def adc_stop():
     adcmsg=json.dumps(cmd_data)
     return adcmsg
 
+def adc_park():
+    "Rotate ADC to parking position"
+    comment='Rorate ADC to parking position'
+    cmd_data=mkmsg.adcmsg()
+    cmd_data.update(func='adcpark',message=comment)
+    adcmsg=json.dumps(cmd_data)
+    return adcmsg
+
