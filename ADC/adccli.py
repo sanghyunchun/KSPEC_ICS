@@ -52,7 +52,7 @@ def adc_zero():
 
 def adc_rotate1(count):
     "ADC lens 1 rotate"
-    comment=f'ADC lens 1 rotate {count} counts.'
+    comment=f'Rotate ADC lens 1 by {count} counts.'
     cmd_data=mkmsg.adcmsg()
     cmd_data.update(func='adcrotate1',lens=1,pcount=count,message=comment)
     adcmsg=json.dumps(cmd_data)
@@ -60,7 +60,7 @@ def adc_rotate1(count):
 
 def adc_rotate2(count):
     "ADC lens 1 rotate"
-    comment=f'ADC lens 2 rotate {count} counts.'
+    comment=f'Rotate ADC lens 2 by {count} counts.'
     cmd_data=mkmsg.adcmsg()
     cmd_data.update(func='adcrotate2',lens=2,pcount=count,message=comment)
     adcmsg=json.dumps(cmd_data)
@@ -68,17 +68,17 @@ def adc_rotate2(count):
 
 def adc_adjust(ra,dec):
     "ADC lens adjust with desired angle"
-    comment='ADC is adjusting'
+    comment='ADC adjusting'
     cmd_data=mkmsg.adcmsg()
     cmd_data.update(func='adcadjust',RA=ra,DEC=dec,message=comment)
     adcmsg=json.dumps(cmd_data)
     return adcmsg
 
-def adc_activate(count):
+def adc_activate(zdist):
     "ADC lens adjusti with desired angle"
-    comment='ADC is adjusting'
+    comment='ADC activate'
     cmd_data=mkmsg.adcmsg()
-    cmd_data.update(func='adcactivate',pcount=count,message=comment)
+    cmd_data.update(func='adcactivate',zdist=zdist,message=comment)
     adcmsg=json.dumps(cmd_data)
     return adcmsg
 
@@ -92,7 +92,7 @@ def adc_status():
 
 def adc_poweroff():
     "Show ADC current status"
-    comment='ADC disconnect and power off'
+    comment='ADC power off'
     cmd_data=mkmsg.adcmsg()
     cmd_data.update(func='adcpoweroff',message=comment)
     adcmsg=json.dumps(cmd_data)

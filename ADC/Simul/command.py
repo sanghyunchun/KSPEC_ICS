@@ -20,7 +20,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
     dict_data = json.loads(cmd)
     func = dict_data['func']
 
-    log(f"Received command: {func}")
+    log(f"{func}")
 
     if func == 'adcinit':
         comment = 'ADC initialized.'
@@ -67,18 +67,25 @@ async def identify_execute(ADC_server, adc_action, cmd):
         await ADC_server.send_message('ICS', rsp)
 
     elif func == 'adcactivate':
-#        zdist = float(dict_data['zdist'])
-        ra = float(dict_data['RA'])
-        dec = float(dict_data['DEC'])
-        result = await adc_action.move(0,4000)
-        motor_1, motor_2 = result['motor_1'], result['motor_2']
-        comment1=result['message']
-        comment = f"{comment1} Lens rotated {motor_1}, {motor_2} counts successfully."
-        reply_data = mkmsg.adcmsg()
-        reply_data.update(message=comment, process='Done')
-        rsp = json.dumps(reply_data)
-        log(comment)
-        await ADC_server.send_message('ICS', rsp)
+        if adcadjust_task and not adcadjust_task.done():
+            comment="Please cancel first the running task..."
+            log("Please cancel first the running task...")
+            reply_data = mkmsg.adcmsg()
+            reply_data.update(message=comment, process='Done')
+            rsp = json.dumps(reply_data)
+            await ADC_server.send_message('ICS', rsp)
+        
+        else:
+            zdist = float(dict_data['zdist'])
+            result = await adc_action.activate(zdist)
+            motor_1, motor_2 = result['motor_1'], result['motor_2']
+            comment1=result['message']
+            comment = f"{comment1} Lens rotated {motor_1}, {motor_2} counts successfully."
+            reply_data = mkmsg.adcmsg()
+            reply_data.update(message=comment, process='Done')
+            rsp = json.dumps(reply_data)
+            log(comment)
+            await ADC_server.send_message('ICS', rsp)
 
     elif func == 'adcadjust':
         ra = float(dict_data['RA'])
