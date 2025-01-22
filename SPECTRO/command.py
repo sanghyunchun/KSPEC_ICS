@@ -6,7 +6,7 @@ import asyncio
 import time
 import random
 
-async def identify_excute(SPEC_server,cmd):
+async def identify_execute(SPEC_server,cmd):
     dict_data=json.loads(cmd)
     func=dict_data['func']
 

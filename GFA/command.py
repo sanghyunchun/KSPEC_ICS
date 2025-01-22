@@ -10,7 +10,7 @@ import random
 #from KSPEC_Server.GFA.kspec_gfa_controller.src.gfa_actions import gfa_actions
 
 
-async def identify_excute(GFA_server,cmd):
+async def identify_execute(GFA_server,cmd):
     dict_data=json.loads(cmd)
     func=dict_data['func']
     endoaction=endo_actions()

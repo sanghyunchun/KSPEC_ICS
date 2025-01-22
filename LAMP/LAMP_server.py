@@ -26,7 +26,7 @@ async def main():
         message=dict_data['message']
         print('\033[94m'+'[LAMP] received: ', message+'\033[0m')
 
-        await identify_excute(LAMP_server,msg)
+        await identify_execute(LAMP_server,msg)
 
 
 if __name__ == "__main__":

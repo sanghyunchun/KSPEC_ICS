@@ -31,7 +31,7 @@ async def main():
         print('\033[94m'+'[GFA] received: ', message+'\033[0m')
 #        print(GFA_server.cmd_exchange)
 
-        await identify_excute(GFA_server,msg)
+        await identify_execute(GFA_server,msg)
 
 
 if __name__ == "__main__":

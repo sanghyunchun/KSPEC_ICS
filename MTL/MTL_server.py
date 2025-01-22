@@ -39,7 +39,7 @@ async def main():
         message=dict_data['message']
         print('\033[94m'+'[MTL] received: ', message+'\033[0m')
 
-        await identify_excute(MTL_server,msg)
+        await identify_execute(MTL_server,msg)
 
 
 if __name__ == "__main__":

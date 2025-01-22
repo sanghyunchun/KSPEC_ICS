@@ -11,7 +11,7 @@ with open('./Lib/KSPEC.ini','r') as fs:
 
 mtlfilepath=kspecinfo['MTL']['mtlfilepath']
 
-async def identify_excute(MTL_server,cmd):
+async def identify_execute(MTL_server,cmd):
     receive_msg=json.loads(cmd)
     func=receive_msg['func']
 

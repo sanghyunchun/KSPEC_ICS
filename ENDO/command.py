@@ -7,7 +7,7 @@ import time
 import random
 #from ENDO.endo_controller.endo_actions import endo_actions
 
-async def identify_excute(ENDO_server,endoaction,cmd):
+async def identify_execute(ENDO_server,endoaction,cmd):
     dict_data=json.loads(cmd)
     func=dict_data['func']
 #    endoaction=endo_actions()

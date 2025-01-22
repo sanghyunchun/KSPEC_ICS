@@ -246,7 +246,13 @@ async def handle_adcadjust2(ADC_server, adc_action, ra, dec):
         log("handle_adcadjust task was cancelled.")
         raise
     except Exception as e:
-        log(f"Error in handle_adcadjust: {e}")
+#        log(f"Error in handle_adcadjust: {e}")
+        comment=f"Error in handle_adcadjust: {e}"
+        log(comment)
+        reply_data=mkmsg.adcmsg()
+        reply_data.update(message=comment,process='Done')
+        rsp=json.dumps(reply_data)
+        await ADC_server.send_message('ICS',rsp)
     else:
         log("handle_adcadjust completed successfully.")
 
@@ -255,7 +261,7 @@ def calculate_zenith_distance(ra_obj, dec_obj):
     location = EarthLocation(lat=-31.27118, lon=149.06256)  # AAO coordinates
     object_coord = SkyCoord(ra=ra_obj * u.deg, dec=dec_obj * u.deg)
     current_time = Time.now()
-    times = current_time + np.arange(0, 6) * u.minute
+    times = current_time + np.arange(0, 2) * u.minute
     altaz_frame = AltAz(obstime=times, location=location)
     zenith_distance = 90. - object_coord.transform_to(altaz_frame).alt.degree
     return np.mean(zenith_distance)

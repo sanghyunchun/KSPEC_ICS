@@ -12,7 +12,7 @@ with open('./Lib/KSPEC.ini','r') as fs:
 
     fbpfilepath=kspecinfo['FBP']['fbpfilepath']
 
-async def identify_excute(FBP_server,cmd):
+async def identify_execute(FBP_server,cmd):
     dict_data=json.loads(cmd)
     func=dict_data['func']
 

@@ -5,7 +5,7 @@ import json
 import asyncio
 import time
 
-async def identify_excute(server,cmd):
+async def identify_execute(server,cmd):
     dict_data=json.loads(cmd)
     func=dict_data['func']
 

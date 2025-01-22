@@ -25,7 +25,7 @@ async def main():
         message=dict_data['message']
         print('\033[94m'+'[FBP] received: ', message+'\033[0m')
 
-        await identify_excute(FBP_server,msg)
+        await identify_execute(FBP_server,msg)
 
 if __name__ == "__main__":
     asyncio.run(main())

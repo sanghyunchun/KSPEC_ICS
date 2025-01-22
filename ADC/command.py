@@ -246,7 +246,12 @@ async def handle_adcadjust2(ADC_server, adc_action, ra, dec):
         log("handle_adcadjust task was cancelled.")
         raise
     except Exception as e:
-        log(f"Error in handle_adcadjust: {e}")
+        comment="Error in handle_adcadjust: {e}"
+        log(comment)
+        reply_data=mkmsg.adcmsg()
+        reply_data.update(message=comment,process='Done')
+        rsp=json.dumps(reply_data)
+        await ADC_server.send_message('ICS',rsp)
     else:
         log("handle_adcadjust completed successfully.")
 
