@@ -6,7 +6,7 @@ import asyncio
 import socket
 
 
-with open('./Lib/KSPEC.ini','r') as f:
+with open('../Lib/KSPEC.ini','r') as f:
         kspecinfo=json.load(f)
 
 TelcomIP = kspecinfo['TCS']['TelcomIP']
@@ -16,7 +16,7 @@ class Telcomclass():
     def __init__(self):
         self.tele_num = 150
         self.TELID = 'KMTNET'
-        self.SYSID = ' TCS'
+        self.SYSID = 'TCS'
         self.PID = '123'
         self.host = TelcomIP
         self.port = int(TelcomPort)
@@ -48,19 +48,56 @@ class Telcomclass():
         data=self.clientsocket.recv(1024)
         return data
 
+    def RequestALL(self):
+        cmd = f'{self.TELID} {self.SYSID} {self.PID} REQUEST ALL'
+        print('Telescope request cmd :', cmd)
+        self.clientsocket.send(cmd.encode())
+        recv=self.recv_data()
+        return recv
+
+    def RequestHA(self):
+        cmd = f'{self.TELID} {self.SYSID} {self.PID} REQUEST HA'
+        print('Telescope request cmd :', cmd)
+        self.clientsocket.send(cmd.encode())
+        recv=self.recv_data()
+        return recv
+
     def RequestRA(self):
         cmd = f'{self.TELID} {self.SYSID} {self.PID} REQUEST RA'
         print('Telescope request cmd :', cmd)
         self.clientsocket.send(cmd.encode())
-        RA=self.recv_data()
-        return RA
+        recv=self.recv_data()
+        return recv
 
     def RequestDEC(self):
-        cmd = f'REQUEST DEC'
+        cmd = f'{self.TELID} {self.SYSID} {self.PID} REQUEST DEC'
         print('Telescope request cmd :', cmd)
         self.clientsocket.send(cmd.encode())
-        DEC=self.recv_data(1024)
-        return DEC
+        recv=self.recv_data(1024)
+        return recv
+
+    def RequestEL(self):
+        cmd = f'{self.TELID} {self.SYSID} {self.PID} REQUEST EL'
+        print('Telescope request cmd :', cmd)
+        self.clientsocket.send(cmd.encode())
+        recv=self.recv_data(1024)
+        return recv
+
+    def RequestAZ(self):
+        cmd = f'{self.TELID} {self.SYSID} {self.PID} REQUEST AZ'
+        print('Telescope request cmd :', cmd)
+        self.clientsocket.send(cmd.encode())
+        recv=self.recv_data(1024)
+        return recv
+
+    def RequestSECZ(self):
+        cmd = f'{self.TELID} {self.SYSID} {self.PID} REQUEST SECZ'
+        print('Telescope request cmd :', cmd)
+        self.clientsocket.send(cmd.encode())
+        recv=self.recv_data(1024)
+        return recv
+
+
 
 """
 async def tcp_client(message):
