@@ -7,27 +7,49 @@ from astropy.time import Time
 import astropy.units as u
 import numpy as np
 from .kspec_adc_controller.src.adc_calc_angle import ADCCalc
+from .kspec_adc_controller.src.adc_logger import AdcLogger
+
+"""Command module for handling ADC-related functionalities.
+
+This module provides functions to execute commands related to the ADC device, such as initialization,
+connection, adjustment, and various operational controls. It includes utilities for printing, message
+handling, and managing asynchronous tasks.
+"""
 
 # Global task tracker
 adcadjust_task = None
 
-def log(message):
-    """Utility function for consistent logging."""
+def printing(message):
+    """Utility function for consistent printingging.
+
+    Args:
+        message (str): The message to be printingged.
+    """
     print(f"\033[32m[ADC] {message}\033[0m")
 
 async def identify_execute(ADC_server, adc_action, cmd):
+    """Identify and execute the requested ADC command.
+
+    Args:
+        ADC_server (AMQclass): The ADC server instance.
+        adc_action (AdcActions): Instance of ADC action handler.
+        cmd (str): JSON string containing the command details.
+
+    Raises:
+        ValueError: If the provided command is not recognized.
+    """
     global adcadjust_task
     dict_data = json.loads(cmd)
     func = dict_data['func']
 
-    log(f"{func}")
+    printing(f"{func}")
 
     if func == 'adcinit':
         comment = 'ADC initialized.'
         reply_data = mkmsg.adcmsg()
         reply_data.update(message=comment, process='Done')
         rsp = json.dumps(reply_data)
-        log(comment)
+        printing(comment)
         await ADC_server.send_message('ICS', rsp)
 
     elif func == 'adcconnect':
@@ -36,7 +58,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
         reply_data.update(result)
         reply_data.update(process='Done')
         rsp = json.dumps(reply_data)
-        log(reply_data['message'])
+        printing(reply_data['message'])
         await ADC_server.send_message('ICS', rsp)
 
     elif func == 'adcdisconnect':
@@ -45,7 +67,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
         reply_data.update(result)
         reply_data.update(process='Done')
         rsp = json.dumps(reply_data)
-        log(reply_data['message'])
+        printing(reply_data['message'])
         await ADC_server.send_message('ICS', rsp)
 
     elif func == 'adcpoweroff':
@@ -54,7 +76,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
         reply_data.update(result)
         reply_data.update(process='Done')
         rsp = json.dumps(reply_data)
-        log(reply_data['message'])
+        printing(reply_data['message'])
         await ADC_server.send_message('ICS', rsp)
 
     elif func == 'adcstatus':
@@ -63,13 +85,13 @@ async def identify_execute(ADC_server, adc_action, cmd):
         reply_data.update(result)
         reply_data.update(process='Done')
         rsp = json.dumps(reply_data)
-        log(reply_data['message'])
+        printing(reply_data['message'])
         await ADC_server.send_message('ICS', rsp)
 
     elif func == 'adcactivate':
         if adcadjust_task and not adcadjust_task.done():
             comment="Please cancel first the running task..."
-            log("Please cancel first the running task...")
+            printing("Please cancel first the running task...")
             reply_data = mkmsg.adcmsg()
             reply_data.update(message=comment, process='Done')
             rsp = json.dumps(reply_data)
@@ -78,13 +100,11 @@ async def identify_execute(ADC_server, adc_action, cmd):
         else:
             zdist = float(dict_data['zdist'])
             result = await adc_action.activate(zdist)
-            motor_1, motor_2 = result['motor_1'], result['motor_2']
-            comment1=result['message']
-            comment = f"{comment1} Lens rotated {motor_1}, {motor_2} counts successfully."
             reply_data = mkmsg.adcmsg()
-            reply_data.update(message=comment, process='Done')
+            reply_data.update(result)
+            reply_data.update(process='Done')
             rsp = json.dumps(reply_data)
-            log(comment)
+            printing(reply_data['message'])
             await ADC_server.send_message('ICS', rsp)
 
     elif func == 'adcadjust':
@@ -93,38 +113,38 @@ async def identify_execute(ADC_server, adc_action, cmd):
 
         # Cancel any running task before starting a new one
         if adcadjust_task and not adcadjust_task.done():
-            log("Cancelling the running adcadjust task...")
+            printing("Cancelling the running adcadjust task...")
             adcadjust_task.cancel()
             try:
                 await adcadjust_task
             except asyncio.CancelledError:
-                log("Previous adcadjust task cancelled.")
+                printing("Previous adcadjust task cancelled.")
 
         # Start a new adcadjust task
-        adcadjust_task = asyncio.create_task(handle_adcadjust2(ADC_server, adc_action, ra, dec))
-        log("New adcadjust task started.")
+        adcadjust_task = asyncio.create_task(handle_adcadjust(ADC_server, adc_action, ra, dec))
+        printing("New adcadjust task started.")
 
     elif func == 'adcstop':
         reply_data = mkmsg.adcmsg()
-        result = await adc_action.stop()
+        result = await adc_action.stop(0)
         reply_data.update(result)
         reply_data.update(process='Done')
         rsp = json.dumps(reply_data)
-        log(reply_data['message'])
+        printing(reply_data['message'])
         await ADC_server.send_message('ICS', rsp)
 
         # Cancel the adcadjust task if it's running
         if adcadjust_task and not adcadjust_task.done():
-            log("Stopping adcadjust task...")
+            printing("Stopping adcadjust task...")
             adcadjust_task.cancel()
             try:
                 await adcadjust_task
             except asyncio.CancelledError:
-                log("adcadjust task stopped.")
+                printing("adcadjust task stopped.")
         else:
-            log("No adcadjust task is currently running.")
+            printing("No adcadjust task is currently running.")
 
-    elif func in {'adcrotate1', 'adcrotate2'}:
+    elif func in {'adcrotate1', 'adcrotate2', 'adcrotateop','adcrotatesame'}:
         count = int(dict_data['pcount'])
         lens = dict_data['lens']
         result = await adc_action.move(lens, count)
@@ -132,7 +152,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
         reply_data.update(result)
         reply_data.update(process='Done')
         rsp = json.dumps(reply_data)
-        log(reply_data['message'])
+        printing(reply_data['message'])
         await ADC_server.send_message('ICS', rsp)
 
     elif func == 'adchome':
@@ -141,7 +161,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
         reply_data.update(result)
         reply_data.update(process='Done')
         rsp = json.dumps(reply_data)
-        log(reply_data['message'])
+        printing(reply_data['message'])
         await ADC_server.send_message('ICS', rsp)
 
     elif func == 'adczero':
@@ -150,7 +170,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
         reply_data.update(result)
         reply_data.update(process='Done')
         rsp = json.dumps(reply_data)
-        log(reply_data['message'])
+        printing(reply_data['message'])
         await ADC_server.send_message('ICS', rsp)
 
     elif func == 'adcpark':
@@ -159,66 +179,35 @@ async def identify_execute(ADC_server, adc_action, cmd):
         reply_data.update(result)
         reply_data.update(process='Done')
         rsp = json.dumps(reply_data)
-        log(reply_data['message'])
+        printing(reply_data['message'])
         await ADC_server.send_message('ICS', rsp)
 
 async def handle_adcadjust(ADC_server, adc_action, ra, dec):
+    """Handle continuous ADC adjustment for a specified RA and DEC.
+
+    Args:
+        ADC_server (AMQclass): The ADC server instance.
+        adc_action (AdcActions): Instance of ADC action handler.
+        ra (float): Right Ascension in degrees.
+        dec (float): Declination in degrees.
+
+    Raises:
+        asyncio.CancelledError: If the task is cancelled externally.
+        Exception: For any unexpected errors during adjustment.
+    """
     try:
         ini_zdist = calculate_zenith_distance(ra, dec)
-        calculator = ADCCalc()
+        logger = AdcLogger(__file__)
+        print('ssss')
+        calculator = ADCCalc(logger)
+        print('tttt')
         ini_count = calculator.degree_to_count(calculator.calc_from_za(ini_zdist))
         delcount = ini_count
-        obsnum = 3
-
-        for i in range(obsnum):
-            comment=f"Rotation step {i+1}/{obsnum}. ADC is now rotating by {delcount} counts."
-            log(comment)
-            reply_data=mkmsg.adcmsg()
-            reply_data.update(message=comment)
-            rsp=json.dumps(reply_data)
-            await ADC_server.send_message('ICS',rsp)
-
-            result = await adc_action.move(0,delcount)
-            motor_1, motor_2 = result['motor_1'], result['motor_2']
-            comment1=result['message']  
-            comment=f'{comment1} ADC lens rotated {motor_1}, {motor_2} counts successfully.'
-            log(f"ADC lens rotated: {motor_1}, {motor_2} counts successfully.")
-            reply_data=mkmsg.adcmsg()
-            reply_data.update(result)
-            if i == obsnum-1:
-                reply_data.update(message=comment,process='Done')
-            else:
-                reply_data.update(message=comment,process='In process')
-
-            rsp=json.dumps(reply_data)
-            print('\033[32m'+'[ADC]', comment+'\033[0m')
-            await ADC_server.send_message('ICS',rsp)
-
-            await asyncio.sleep(30)                       # Wait for exposure time
-            zdist = calculate_zenith_distance(ra, dec)
-            next_count = calculator.degree_to_count(calculator.calc_from_za(zdist))
-            delcount = next_count - ini_count
-
-    except asyncio.CancelledError:
-        log("handle_adcadjust task was cancelled.")
-        raise
-    except Exception as e:
-        log(f"Error in handle_adcadjust: {e}")
-    else:
-        log("handle_adcadjust completed successfully.")
-
-
-async def handle_adcadjust2(ADC_server, adc_action, ra, dec):
-    try:
-        ini_zdist = calculate_zenith_distance(ra, dec)
-        calculator = ADCCalc()
-        ini_count = calculator.degree_to_count(calculator.calc_from_za(ini_zdist))
-        delcount = ini_count
-        obsnum = 3
+        prev_count=ini_count
 
         while True:
             comment=f"ADC is now rotating by {delcount} counts."
-            log(comment)
+            printing(comment)
             reply_data=mkmsg.adcmsg()
             reply_data.update(message=comment)
             rsp=json.dumps(reply_data)
@@ -228,7 +217,6 @@ async def handle_adcadjust2(ADC_server, adc_action, ra, dec):
             motor_1, motor_2 = result['motor_1'], result['motor_2']
             comment1=result['message']  
             comment=f'{comment1} ADC lens rotated {motor_1}, {motor_2} counts successfully.'
-#            log(f"ADC lens rotated: {motor_1}, {motor_2} counts successfully.")
             reply_data=mkmsg.adcmsg()
             reply_data.update(result)
             reply_data.update(message=comment,process='In process')
@@ -240,28 +228,41 @@ async def handle_adcadjust2(ADC_server, adc_action, ra, dec):
             await asyncio.sleep(60)                       # Wait for exposure time
             zdist = calculate_zenith_distance(ra, dec)
             next_count = calculator.degree_to_count(calculator.calc_from_za(zdist))
-            delcount = next_count - ini_count
+            delcount = next_count - prev_count
+            prev_count = next_count
 
     except asyncio.CancelledError:
-        log("handle_adcadjust task was cancelled.")
+        printing("handle_adcadjust task was cancelled.")
         raise
     except Exception as e:
-        comment="Error in handle_adcadjust: {e}"
-        log(comment)
+        comment=f"Error in handle_adcadjust: {e}"
+        printing(comment)
         reply_data=mkmsg.adcmsg()
         reply_data.update(message=comment,process='Done')
         rsp=json.dumps(reply_data)
         await ADC_server.send_message('ICS',rsp)
     else:
-        log("handle_adcadjust completed successfully.")
+        printing("handle_adcadjust completed successfully.")
 
 
 def calculate_zenith_distance(ra_obj, dec_obj):
-    location = EarthLocation(lat=-31.27118, lon=149.06256)  # AAO coordinates
+    """Calculate the zenith distance for a given RA and DEC.
+
+    Args:
+        ra_obj (float): Right Ascension in degrees.
+        dec_obj (float): Declination in degrees.
+
+    Returns:
+        float: The zenith distance in degrees.
+    """
+    location = EarthLocation(lat=-31.27118, lon=149.06256, height=1165*u.m)  # AAO coordinates
     object_coord = SkyCoord(ra=ra_obj * u.deg, dec=dec_obj * u.deg)
     current_time = Time.now()
     times = current_time + np.arange(0, 2) * u.minute
     altaz_frame = AltAz(obstime=times, location=location)
     zenith_distance = 90. - object_coord.transform_to(altaz_frame).alt.degree
+    ele=object_coord.transform_to(altaz_frame).alt.degree
+    print(f'Current UT time: {current_time}')
+    print(f'Mean Zenith distance for 1 min. : {zenith_distance} degree')
     return np.mean(zenith_distance)
 

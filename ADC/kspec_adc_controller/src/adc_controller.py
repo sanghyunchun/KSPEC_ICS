@@ -36,7 +36,9 @@ class AdcController:
         The maximum motor position. Default is 4,294,967,296.
     """
 
+    #CONFIG_FILE = "etc/adc_config.json"
     CONFIG_FILE = "./ADC/kspec_adc_controller/src/etc/adc_config.json"
+
 
     def __init__(self, logger):
         """
@@ -382,20 +384,22 @@ class AdcController:
 
         This operation should only be performed after the homing process is complete.
 
-        The motors will be moved relative to the home position by the specified parking offset.
-        The parking offset is applied as a negative value of -500 counts for both motors.
+        Args:
+            parking_vel (int, optional): Speed at which the motors will move to the parking position. Default is 1.
 
         Raises:
             Exception: If homing has not been completed before parking.
+            Exception: If an error occurs while moving the motors to the parking position.
         """
         parking_offset_motor1 = -500
         parking_offset_motor2 = -500
 
-        # Parking must be done only after homing is complete.
+
         if not self.home_position:
             self.logger.error("Parking must be performed after homing.")
             raise Exception("Parking must be performed after homing.")
-        else:
+        
+        try:
             self.logger.info("Parking process initiated...")
 
             # Read current motor positions
@@ -440,24 +444,33 @@ class AdcController:
                 except Exception as e:
                     self.logger.error(f"Error while moving motors to parking position: {e}")
                     raise  # Re-raise the exception to propagate it further
+        except Exception as e:
+            self.logger.error(f"Error while moving motors to parking position: {e}", exc_info=True)
+            raise
 
     async def zeroing(self, zeroing_vel=1):
         """
-        This function adjusts the motor positions to their zero positions after a homing process is complete.
-        Zeroing should be performed only after homing has been successfully completed.
+        Adjusts the motor positions to their zero positions after a homing process is complete.
+        Zeroing should only be performed after homing has been successfully completed.
+
+        Args:
+            zeroing_vel (int, optional): Speed at which the motors will move to the zero position. Default is 1.
 
         Raises:
-            None
+            Exception: If homing has not been completed.
+            Exception: If an error occurs while moving the motors to the zero position.
         """
-        zero_offset_motor1 = 7561  # Adjust this value based on calibration.
-        zero_offset_motor2 = 2000  # Adjust this value based on calibration.
+        # 20250212 modifid by Mingyeong Yang
+        zero_offset_motor1 = 7635  # Adjust this value based on calibration.
+        zero_offset_motor2 = 1926  # Adjust this value based on calibration.
 
-        # Zeroing must be done only after homing is complete.
         if not self.home_position:
             self.logger.error("Zeroing must be performed after homing.")
             raise Exception("Zeroing must be performed after homing.")
-        else:
-            self.logger.info("Zeroing process initiated...")
+
+        self.logger.info("Zeroing process initiated...")
+
+        try:
 
             # Read current motor positions
             current_pos_1 = self.read_motor_position(1)
@@ -490,14 +503,14 @@ class AdcController:
                 self.logger.info("Both motors are already close to Zero position.")
             else:
                 self.logger.info("Moving motors to Zero positions...")
-                try:
-                    await asyncio.gather(
-                        asyncio.to_thread(self.move_motor, 1, target_pos_1, zeroing_vel),
-                        asyncio.to_thread(self.move_motor, 2, target_pos_2, zeroing_vel)
-                    )
-                    self.logger.info("Motors moved to Zero positions successfully.")
-                except Exception as e:
-                    self.logger.error(f"Error while moving motors to Zero position: {e}")
+                await asyncio.gather(
+                    asyncio.to_thread(self.move_motor, 1, target_pos_1, zeroing_vel),
+                    asyncio.to_thread(self.move_motor, 2, target_pos_2, zeroing_vel)
+                )
+                self.logger.info("Motors moved to Zero positions successfully.")
+        except Exception as e:
+            self.logger.error(f"Error while moving motors to zero position: {e}", exc_info=True)
+            raise
 
 
     async def homing(self, homing_vel=1):
@@ -533,7 +546,7 @@ class AdcController:
                 self.logger.info("Initializing homing process for both motors.")
                 raw_val_motor1 = self.nanolib_accessor.readNumber(device_handle_motor1, Nanolib.OdIndex(0x3240, 5)).getResult()
                 raw_val_motor2 = self.nanolib_accessor.readNumber(device_handle_motor2, Nanolib.OdIndex(0x3240, 5)).getResult()
-                print(f"Raw value Motor 1: {raw_val_motor1}, Raw value Motor 2: {raw_val_motor2}")
+                self.logger.info(f"Raw value Motor 1: {raw_val_motor1}, Raw value Motor 2: {raw_val_motor2}")
                 if raw_val_motor1 == busstop and raw_val_motor2 == busstop:
                     self.logger.info("Both motors are already at the bus stop position.")
                 else:

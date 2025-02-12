@@ -29,7 +29,8 @@ class ADCCalc:
         Maximum value of zenith angle in the lookup table (degree)
     """
 
-    def __init__(self, lookup_table="./ADC/Simul/kspec_adc_controller/src/etc/ADC_lookup.csv", method="pchip"):
+    def __init__(self, logger, lookup_table="./ADC/kspec_adc_controller/src/etc/ADC_lookup.csv", method="pchip"):
+        self.logger = logger
         self.create_interp_func(lookup_table, method)
 
     def create_interp_func(self, lookup_table, method):
@@ -54,13 +55,17 @@ class ADCCalc:
             If the specified interpolation method is not valid.
         """
         if not os.path.isfile(lookup_table):
+            self.logger.error(f"Lookup table cannot be found: {lookup_table}")
             raise FileNotFoundError(f"Lookup table cannot be found: {lookup_table}")
+
+        self.logger.info(f"Lookup table found: {lookup_table}")
 
         try:
             adc_raw_data = np.genfromtxt(lookup_table, comments="#", delimiter=",")
             data_za, data_adc = adc_raw_data[:, 0], adc_raw_data[:, 1]
             self.za_min, self.za_max = data_za.min(), data_za.max()
         except Exception as e:
+            self.logger.error(f"Failed to read lookup table: {e}")
             raise ValueError(f"Failed to read lookup table: {e}")
 
         # Set interpolation function based on chosen method
@@ -71,7 +76,10 @@ class ADCCalc:
         elif method == "akima":
             self.fn_za_adc = Akima1DInterpolator(data_za, data_adc)
         else:
+            self.logger.error(f"Invalid interpolation method: {method}")
             raise ValueError(f"Invalid interpolation method: {method}")
+
+        self.logger.info(f"Interpolation function using {method} method created.")
 
     def calc_from_za(self, za):
         """
@@ -96,11 +104,14 @@ class ADCCalc:
         """
         if isinstance(za, (int, float)):  # For single values
             if za < self.za_min or za > self.za_max:
+                self.logger.error(f"Input zenith angle {za} is out of bounds ({self.za_min}, {self.za_max})")
                 raise ValueError(f"Input zenith angle {za} is out of bounds.")
         elif hasattr(za, "min") and hasattr(za, "max"):  # For arrays
             if za.min() < self.za_min or za.max() > self.za_max:
+                self.logger.error(f"Input zenith angle array is out of bounds ({self.za_min}, {self.za_max})")
                 raise ValueError("Input zenith angle array is out of bounds.")
         else:
+            self.logger.error(f"Invalid type for zenith angle: {type(za)}")
             raise TypeError(f"Invalid type for zenith angle: {type(za)}")
 
         return self.fn_za_adc(za)
@@ -123,5 +134,6 @@ class ADCCalc:
         count = degree * count_per_degree
 
         # Log the conversion information
+        self.logger.debug(f"Converted {degree} degrees to {int(count)} counts.")
 
         return int(count)
