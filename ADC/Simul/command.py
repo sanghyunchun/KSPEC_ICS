@@ -6,8 +6,8 @@ from astropy.coordinates import EarthLocation, SkyCoord, AltAz
 from astropy.time import Time
 import astropy.units as u
 import numpy as np
-from .kspec_adc_controller.src.adc_calc_angle import ADCCalc
-from .kspec_adc_controller.src.adc_logger import AdcLogger
+#from .kspec_adc_controller.src.adc_calc_angle import ADCCalc
+#from .kspec_adc_controller.src.adc_logger import AdcLogger
 
 """Command module for handling ADC-related functionalities.
 
@@ -197,9 +197,14 @@ async def handle_adcadjust(ADC_server, adc_action, ra, dec):
     """
     try:
         ini_zdist = calculate_zenith_distance(ra, dec)
-        logger = AdcLogger(__file__)
-        calculator = ADCCalc(logger)
-        ini_count = calculator.degree_to_count(calculator.calc_from_za(ini_zdist))
+        print(f'tttt: {ini_zdist}')
+        result1=adc_action.calc_from_za(ini_zdist)
+        print(result1)
+        lensdegree=float(result1['message'])
+        print(f'lends degree: {lensdegree}')
+        result2 = adc_action.degree_to_count(lensdegree)
+        ini_count=int(result2['message'])
+        print(f'initial count: {ini_count}')
         delcount = ini_count
         prev_count=ini_count
 
@@ -212,20 +217,20 @@ async def handle_adcadjust(ADC_server, adc_action, ra, dec):
             await ADC_server.send_message('ICS',rsp)
 
             result = await adc_action.move(0,delcount)
-            motor_1, motor_2 = result['motor_1'], result['motor_2']
-            comment1=result['message']  
-            comment=f'{comment1} ADC lens rotated {motor_1}, {motor_2} counts successfully.'
             reply_data=mkmsg.adcmsg()
             reply_data.update(result)
-            reply_data.update(message=comment,process='In process')
-
+            reply_data.update(process='In process')
             rsp=json.dumps(reply_data)
             print('\033[32m'+'[ADC]', comment+'\033[0m')
             await ADC_server.send_message('ICS',rsp)
 
             await asyncio.sleep(60)                       # Wait for exposure time
             zdist = calculate_zenith_distance(ra, dec)
-            next_count = calculator.degree_to_count(calculator.calc_from_za(zdist))
+            result1=adc_action.calc_from_za(zdist)
+            lensdegree=float(result1['message'])
+            result2 = adc_action.degree_to_count(lensdegree)
+            next_count=int(result2['message'])
+#            next_count = calculator.degree_to_count(calculator.calc_from_za(zdist))
             delcount = next_count - prev_count
             prev_count = next_count
 

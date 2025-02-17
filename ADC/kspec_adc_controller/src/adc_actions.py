@@ -492,3 +492,61 @@ class AdcActions:
         except Exception as e:
             self.logger.error(f"Error in power off: {str(e)}", exc_info=True)
             return self._generate_response("error", str(e))
+
+   def calc_from_za(self, za) -> dict:
+        """
+        Calculate from ZA using the calculator object.
+
+        This function computes a value from the provided ZA input using an internal calculator.
+
+        Parameters
+        ----------
+        za : float
+            ZA value to be converted.
+
+        Returns
+        -------
+        dict
+            A JSON-like dictionary indicating the success or failure of the operation:
+            - "status": "success" if the operation was successful.
+            - "message": The computed value.
+        """
+        self.logger.info("Calculating from ZA.")
+        try:
+            fn_za_adc = self.calculator.calc_from_za(za)
+            self.logger.info(f"Calculation successful: {fn_za_adc}")
+            return self._generate_response("success", f"{fn_za_adc}")
+        except Exception as e:
+            self.logger.error(f"Error calculating from ZA: {str(e)}", exc_info=True)
+            return self._generate_response("error", str(e))
+
+
+    def degree_to_count(self, degree) -> dict:
+        """
+        Convert degrees to counts using the calculator object.
+
+        This function converts an angle in degrees to encoder counts using an internal calculator.
+
+        Parameters
+        ----------
+        degree : float
+            Angle in degrees to be converted.
+
+        Returns
+        -------
+        dict
+            A JSON-like dictionary indicating the success or failure of the operation:
+            - "status": "success" if the operation was successful.
+            - "message": The computed value.
+        """
+        self.logger.info("Converting degrees to counts.")
+        try:
+            count = self.calculator.degree_to_count(degree)
+            self.logger.info(f"Conversion successful: {count}")
+            return self._generate_response("success", f"{count}")
+        except Exception as e:
+            self.logger.error(f"Error converting degrees to counts: {str(e)}", exc_info=True)
+            return self._generate_response("error", str(e))
+
+
+

@@ -5,227 +5,48 @@ from Lib.AMQ import *
 import Lib.mkmessage as mkmsg
 import asyncio
 import json
-from astropy.coordinates import EarthLocation, SkyCoord, AltAz
-from astropy.time import Time
-import astropy.units as u
-import numpy as np
 
-def adc_init():
-    """
-    Initialize the ADC.
 
-    Returns:
-        str: JSON string containing the ADC initialization command.
-    """
-    comment = "Start ADC initializing"
+def create_adc_command(func, **kwargs):
+    """Helper function to create ADC commands."""
     cmd_data = mkmsg.adcmsg()
-    cmd_data.update(func='adcinit', message=comment)
-    adcmsg = json.dumps(cmd_data)
-    return adcmsg
+    cmd_data.update(func=func, **kwargs)
+    return json.dumps(cmd_data)
 
-def adc_connect():
-    """
-    Connect the ADC instrument.
+def adc_init(): return create_adc_command('adcinit', message='Start ADC initializing')
+def adc_connect(): return create_adc_command('adcconnect', message='Connect ADC instrument')
+def adc_disconnect(): return create_adc_command('adcdisconnect', message='Disconnect ADC instrument')
+def adc_home(): return create_adc_command('adchome', message='Homing ADC lens')
+def adc_zero(): return create_adc_command('adczero', message='Rotate ADC lens to zero position')
+def adc_status(): return create_adc_command('adcstatus', message='ADC status')
+def adc_poweroff(): return create_adc_command('adcpoweroff', message='ADC power off')
+def adc_stop(): return create_adc_command('adcstop', message='ADC rotating stop')
+def adc_park(): return create_adc_command('adcpark', message='Rotate ADC to parking position')
 
-    Returns:
-        str: JSON string containing the ADC connection command.
-    """
-    comment = "Connect ADC instrument"
-    cmd_data = mkmsg.adcmsg()
-    cmd_data.update(func='adcconnect', message=comment)
-    adcmsg = json.dumps(cmd_data)
-    return adcmsg
-
-def adc_disconnect():
-    """
-    Disconnect the ADC instrument.
-
-    Returns:
-        str: JSON string containing the ADC disconnection command.
-    """
-    comment = "Disconnect ADC instrument"
-    cmd_data = mkmsg.adcmsg()
-    cmd_data.update(func='adcdisconnect', message=comment)
-    adcmsg = json.dumps(cmd_data)
-    return adcmsg
-
-def adc_home():
-    """
-    Move the ADC lens to the home position.
-
-    Returns:
-        str: JSON string containing the ADC homing command.
-    """
-    comment = "Homing ADC lens"
-    cmd_data = mkmsg.adcmsg()
-    cmd_data.update(func='adchome', message=comment)
-    adcmsg = json.dumps(cmd_data)
-    return adcmsg
-
-def adc_zero():
-    """
-    Rotate the ADC lens to the zero position.
-
-    Returns:
-        str: JSON string containing the ADC zeroing command.
-    """
-    comment = "Rotate ADC lens to zero position"
-    cmd_data = mkmsg.adcmsg()
-    cmd_data.update(func='adczero', message=comment)
-    adcmsg = json.dumps(cmd_data)
-    return adcmsg
-
-def adc_rotate1(count):
-    """
-    Rotate the ADC lens 2 by a specified count.
-
-    Args:
-        count (int): Number of steps to rotate lens 2.
-
-    Returns:
-        str: JSON string containing the ADC lens 2 rotation command.
-    """
-    comment = f'Rotate ADC lens 2 by {count} counts.'
-    cmd_data = mkmsg.adcmsg()
-    cmd_data.update(func='adcrotate1', lens=1, pcount=count, message=comment)
-    adcmsg = json.dumps(cmd_data)
-    return adcmsg
-
-def adc_rotate2(count):
-    """
-    Rotate the ADC lens 1 by a specified count.
-
-    Args:
-        count (int): Number of steps to rotate lens 1.
-
-    Returns:
-        str: JSON string containing the ADC lens 1 rotation command.
-    """
-    comment = f'Rotate ADC lens 1 by {count} counts.'
-    cmd_data = mkmsg.adcmsg()
-    cmd_data.update(func='adcrotate2', lens=2, pcount=count, message=comment)
-    adcmsg = json.dumps(cmd_data)
-    return adcmsg
-
-def adc_rotateop(count):
-    """
-    Rotate both ADC lens 1 and 2 by a specified count in opposite direction.
-    (-) count : ADC 1 counter-clockwise. ADC 2 clockwise.
-    (+) count : ADC 1clockwise. ADC 2 counter-clockwise.
-
-    Args:
-        count (int) : Number of counts to rotate the ADC lens
-
-    Returns:
-        str: JSON string containing the ADC lens 1 and 2 rotation command.
-    """
-    comment=f'Rotate ADC lens 1 and 2 by {count} counts.'
-    cmd_data=mkmsg.adcmsg()
-    cmd_data.update(func='adcrotateop',lens=0,pcount=count,message=comment)
-    adcmsg=json.dumps(cmd_data)
-    return adcmsg
-
-def adc_rotatesame(count):
-    """
-    Rotate both ADC lens 1 and 2 by a specified count in the same direction.
-    (-) count : ADC 1 counter-clockwise. ADC 2 counter-clockwise.
-    (+) count : ADC 1 clockwise. ADC 2 clockwise.
-
-    Args:
-        count (int) : Number of counts to rotate the ADC lens
-
-    Returns:
-        str: JSON string containing the ADC lens 1 and 2 rotation command.
-    """
-    comment=f'Rotate ADC lens 1 and 2 by {count} counts.'
-    cmd_data=mkmsg.adcmsg()
-    cmd_data.update(func='adcrotatesame',lens=-1,pcount=count,message=comment)
-    adcmsg=json.dumps(cmd_data)
-    return adcmsg
-
+def adc_rotate(lens, count, direction):
+    """Rotate ADC lens."""
+    return create_adc_command(direction, lens=lens, pcount=count, message=f'Rotate ADC lens {lens} by {count} counts.')
 
 def adc_adjust(ra, dec):
-    """
-    Adjust the ADC lens based on the desired RA and DEC angles.
-
-    Args:
-        ra (float): Right Ascension angle.
-        dec (float): Declination angle.
-
-    Returns:
-        str: JSON string containing the ADC adjustment command.
-    """
-    comment = 'ADC adjusting'
-    cmd_data = mkmsg.adcmsg()
-    cmd_data.update(func='adcadjust', RA=ra, DEC=dec, message=comment)
-    adcmsg = json.dumps(cmd_data)
-    return adcmsg
+    return create_adc_command('adcadjust', RA=ra, DEC=dec, message='ADC adjusting')
 
 def adc_activate(zdist):
-    """
-    Activate the ADC with a specified zenith distance.
+    return create_adc_command('adcactivate', zdist=zdist, message='ADC activate')
 
-    Args:
-        zdist (float): Zenith distance.
-
-    Returns:
-        str: JSON string containing the ADC activation command.
-    """
-    comment = 'ADC activate'
-    cmd_data = mkmsg.adcmsg()
-    cmd_data.update(func='adcactivate', zdist=zdist, message=comment)
-    adcmsg = json.dumps(cmd_data)
-    return adcmsg
-
-def adc_status():
-    """
-    Retrieve the current status of the ADC.
-
-    Returns:
-        str: JSON string containing the ADC status command.
-    """
-    comment = 'ADC status'
-    cmd_data = mkmsg.adcmsg()
-    cmd_data.update(func='adcstatus', message=comment)
-    adcmsg = json.dumps(cmd_data)
-    return adcmsg
-
-def adc_poweroff():
-    """
-    Power off the ADC.
-
-    Returns:
-        str: JSON string containing the ADC power-off command.
-    """
-    comment = 'ADC power off'
-    cmd_data = mkmsg.adcmsg()
-    cmd_data.update(func='adcpoweroff', message=comment)
-    adcmsg = json.dumps(cmd_data)
-    return adcmsg
-
-def adc_stop():
-    """
-    Stop the ADC rotation.
-
-    Returns:
-        str: JSON string containing the ADC stop command.
-    """
-    comment = 'ADC rotating stop'
-    cmd_data = mkmsg.adcmsg()
-    cmd_data.update(func='adcstop', message=comment)
-    adcmsg = json.dumps(cmd_data)
-    return adcmsg
-
-def adc_park():
-    """
-    Move the ADC to the parking position.
-
-    Returns:
-        str: JSON string containing the ADC parking command.
-    """
-    comment = 'Rotate ADC to parking position'
-    cmd_data = mkmsg.adcmsg()
-    cmd_data.update(func='adcpark', message=comment)
-    adcmsg = json.dumps(cmd_data)
-    return adcmsg
-
+async def handle_adc(arg, ICS_client):
+    """Handle ADC commands."""
+    cmd, *params = arg.split()
+    command_map = {
+        'adcinit': adc_init, 'adcconnect': adc_connect, 'adcdisconnect': adc_disconnect,
+        'adchome': adc_home, 'adczero': adc_zero, 'adcstatus': adc_status,
+        'adcpoweroff': adc_poweroff, 'adcstop': adc_stop, 'adcpark': adc_park,
+        'adcrotate1': lambda: adc_rotate(1, int(params[0]), 'adcrotate1'),
+        'adcrotate2': lambda: adc_rotate(2, int(params[0]), 'adcrotate2'),
+        'adcrotateop': lambda: adc_rotate(0, int(params[0]), 'adcrotateop'),
+        'adcrotatesame': lambda: adc_rotate(-1, int(params[0]), 'adcrotatesame'),
+        'adcadjust': lambda: adc_adjust(float(params[0]), float(params[1])),
+        'adcactivate': lambda: adc_activate(float(params[0]))
+    }
+    if cmd in command_map:
+        adcmsg = command_map[cmd]()
+        await ICS_client.send_message("ADC", adcmsg)
