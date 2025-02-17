@@ -9,7 +9,9 @@ import os
 import sys
 import asyncio
 from Lib.AMQ import *
-from icscommand import *
+#from icscommand import *
+from ADC.adccli import handle_adc
+from GFA.gfacli import handle_gfa
 import aio_pika
 import Lib.process as processes
 import json
@@ -39,7 +41,86 @@ class kspecicsclass:
             "astat", "acmd", "fsastat", "fs", "fttstat",
             "ft", "dfocus", "dtilt", "fttgoto"
         ]
+
+        self.adclist = [
+                'adcstatus', 'adcactivate', 'adcadjust', 'adcinit', 'adcconnect', 'adcdisconnect', 'adchome', 'adczero',
+                'adcpoweroff', 'adcrotate1', 'adcrotate2', 'adcstop', 'adcpark','adcrotateop','adcrotatesame'
+        ]
+
+        self.gfalist = [
+                'gfastatus', 'gfagrab', 'gfastop', 'gfaguide', 'gfaguidestop'
+        ]
+
         self.running = True
+
+    async def user_input(self, ICSclient):
+        """
+        Handles user input asynchronously and sends commands to the server.
+
+        Args:
+            ICSclient (AMQclass): The AMQ client instance for communication.
+        """
+        with open('./Lib/KSPEC.ini', 'r') as f:
+            kspecinfo = json.load(f)
+
+        tcsagentIP = kspecinfo['TCS']['TCSagentIP']
+        tcsagentPort = kspecinfo['TCS']['TCSagentPort']
+        telcomIP = kspecinfo['TCS']['TelcomIP']
+        telcomPort = kspecinfo['TCS']['TelcomPort']
+
+        telcom_client = TCPClient(telcomIP, telcomPort)
+
+        try:
+            loop = asyncio.get_event_loop()
+            on_con_lost = loop.create_future()  # Future to wait for connection loss
+
+            # Define a factory function that returns a new protocol instance
+            def protocol_factory():
+                return UDPClientProtocol(on_con_lost)
+
+            # Create UDP connection
+            self.transport, self.protocol = await loop.create_datagram_endpoint(
+                protocol_factory, remote_addr=(tcsagentIP, tcsagentPort)
+            )
+
+            # Create TCP/IP connection
+            telcom_client = TCPClient(telcomIP, telcomPort)
+            await telcom_client.connect()
+
+            while True:
+                # Run input() in the default executor (blocking call to non-blocking)
+                message = await loop.run_in_executor(None, input, "\n Input command: ")
+                if not message:
+                    continue
+
+                cmd = message.split(" ")
+                messagetcs='KSPEC>TC '+message
+
+                if cmd[0] in self.tcslist:
+                    self.transport.sendto(messagetcs.encode())  # Send message to server
+
+                elif cmd[0] in self.adclist:
+                    await handle_adc(message,ICSclient)
+
+                elif cmd[0] in self.gfalist:
+                    await handle_gfa(message,ICSclient)
+
+                elif message.lower() == "quit":  # Exit condition
+                    print("Closing connection...")
+                    self.transport.close()  # Close the connection
+                    await telcom_client.close()
+                    self.running = False
+                    break
+
+#                else:
+#                    await identify(message, ICSclient, telcom_client, self.transport)
+
+        except asyncio.CancelledError:
+            print("user_input cancelled.")
+        except Exception as e:
+            print(f"An error occurred in user_input: {e}")
+        finally:
+            print("user_input finalized.")
 
     async def response_act(self, ICS_client):
         """
@@ -92,50 +173,6 @@ class kspecicsclass:
         finally:
             print("response_act finalized.")
 
-    async def user_input(self, ICSclient):
-        """
-        Handles user input asynchronously and sends commands to the server.
-
-        Args:
-            ICSclient (AMQclass): The AMQ client instance for communication.
-        """
-        try:
-            loop = asyncio.get_event_loop()
-            on_con_lost = loop.create_future()  # Future to wait for connection loss
-
-            # Define a factory function that returns a new protocol instance
-            def protocol_factory():
-                return UDPClientProtocol(on_con_lost)
-
-            # Create UDP connection
-            self.transport, self.protocol = await loop.create_datagram_endpoint(
-                protocol_factory, remote_addr=("127.0.0.1", 12345)
-            )
-
-            while True:
-                # Run input() in the default executor (blocking call to non-blocking)
-                message = await loop.run_in_executor(None, input, "\n Input command: ")
-                cmd = message.split(" ")
-                messagetcs='KSPEC>TC '+message
-
-                if cmd[0] in self.tcslist:
-                    self.transport.sendto(messagetcs.encode())  # Send message to server
-
-                elif message.lower() == "quit":  # Exit condition
-                    print("Closing connection...")
-                    self.transport.close()  # Close the connection
-                    self.running = False
-                    break
-
-                else:
-                    await identify(message, ICSclient, self.transport)
-        except asyncio.CancelledError:
-            print("user_input cancelled.")
-        except Exception as e:
-            print(f"An error occurred in user_input: {e}")
-        finally:
-            print("user_input finalized.")
-
 async def main():
     """
     Main function to initialize and run the asynchronous tasks.
@@ -151,6 +188,7 @@ async def main():
     await ICS_client.connect()
     await ICS_client.define_producer()
     await ICS_client.define_consumer()
+
     kspecics = kspecicsclass()
 
     try:
@@ -209,3 +247,6 @@ if __name__ == "__main__":
         from ADC.Simul import ADC_server
         asyncio.run(ADC_server.main())
 
+    if sys.argv[1] == 'GFAsimul':
+        from GFA.Simul import GFA_server
+        asyncio.run(GFA_server.main())
