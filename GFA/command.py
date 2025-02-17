@@ -5,31 +5,41 @@ import json
 import asyncio
 import time
 import random
-#from GFA.endo_controller.endo_actions import endo_actions
-#from GFA.kspec_gfa_controller.python.gfa_controller import gfa_actions
+#from .kspec_gfa_controller.src.gfa_actions import GFAActions
 #from KSPEC_Server.GFA.kspec_gfa_controller.src.gfa_actions import gfa_actions
 
 
-async def identify_execute(GFA_server,cmd):
+def printing(message):
+    """Utility function for consistent printingging.
+
+    Args:
+        message (str): The message to be printingged.
+    """
+    print(f"\033[32m[ADC] {message}\033[0m")
+
+
+async def identify_execute(GFA_server,gfa_actions,cmd):
     dict_data=json.loads(cmd)
     func=dict_data['func']
-    endoaction=endo_actions()
-    endoaction.endo_connect()
+#    endoaction=endo_actions()
+#    endoaction.endo_connect()
 
     if func == 'gfastatus':
-        comment=gfastatus()
+        result=gfa_actions.status()
         reply_data=mkmsg.gfamsg()
-        reply_data.update(message=comment,process='Done')
+        reply_data.update(result)
+        reply_data.update(process='Done')
         rsp=json.dumps(reply_data)
-        print('\033[32m'+'[GFA]', comment+'\033[0m')
+        printing(reply_data['message'])
         await GFA_server.send_message('ICS',rsp)
 
-    if func == 'gfaallexp':
-        comment=gfaallexp()
+    if func == 'gfagrab':
+        result = await gfa_actions.grab(dict_data['CamNum'],dict_data['ExpTime'])
         reply_data=mkmsg.gfamsg()
-        reply_data.update(message=comment,process='Done')
+        reply_data.update(result)
+        reply_data.update(process='Done')
         rsp=json.dumps(reply_data)
-        print('\033[32m'+'[GFA]', comment+'\033[0m')
+        printing(reply_data['message'])
         await GFA_server.send_message('ICS',rsp)
 
     if func == 'gfacexp':

@@ -3,54 +3,31 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 # from Lib.MsgMiddleware import *
 from Lib.AMQ import *
 import Lib.mkmessage as mkmsg
-#import argh
-#import uuid
-#from .gfacore import *
 import asyncio
-import threading
+import json
 
-def gfa_status():
-    cmd_data=mkmsg.gfamsg()
-    comment = 'GFA status'
-    cmd_data.update(func='gfastatus',message=comment)
-    GFAmsg=json.dumps(cmd_data)
-    return GFAmsg
+def create_gfa_command(func, **kwargs):
+    """Helper function to create ADC commands."""
+    cmd_data = mkmsg.gfamsg()
+    cmd_data.update(func=func, **kwargs)
+    return json.dumps(cmd_data)
 
-def gfa_cexp(exptime,chip):
-    "Exposure specific GFA camera with desired exposure time"
-    comment='GFA camera exposure start'
+def gfa_status() : return create_gfa_command('gfastatus', message ='Show GFA status')
+def gfa_guiding() : return create_gfa_command('gfaguide', message ='Autoguiding Start!')
+def gfa_guidestop() : return create_gfa_command('gfaguidestop',message='Stop autoguiding')
+def gfa_grab(cam,expt):
+    return create_gfa_command('gfagrab',CamNum=cam,ExpTime=expt,message=f'Exposure camera {cam} with exposure time {expt} seconds.')
 
-    cmd_data=mkmsg.gfamsg()
-    cmd_data.update(time=exptime,chip=chip,message=comment)
-    GFAmsg=json.dumps(cmd_data)
-    return GFAmsg
+async def handle_gfa(arg, ICS_client):
+    cmd, *params = arg.split()
+    command_map = {
+        'gfastatus': gfa_status, 'gfagrab': lambda: gfa_grab(int(params[0]),float(params[1])),
+        'gfaguide' : gfa_guiding,
+        'gfaguidestop' : gfa_guidestop
+    }
 
-def gfa_allexp(exptime):
-    "Exposure all GFA camera with desired exposure time"
-    comment='All GFA camera exposure start'
-
-    cmd_data=mkmsg.gfamsg()
-    cmd_data.update(time=exptime,func='gfaallexp',message=comment)
-    GFAmsg=json.dumps(cmd_data)
-#    GFAmsg=gfa_allexpfun(time)
-    return GFAmsg
-
-def gfa_autoguide():
-    "Run auto guide system"
-    comment='Autoguiding running'
-    cmd_data=mkmsg.gfamsg()
-    cmd_data.update(func='autoguide',message=comment)
-    GFAmsg=json.dumps(cmd_data)
-    return GFAmsg
-
-def autoguide_stop():
-    "Exposure stop"
-    comment='All GFA camera exposure stop'
-
-    cmd_data=mkmsg.gfamsg()
-    cmd_data.update(func='autoguidestop',message=comment)
-    GFAmsg=json.dumps(cmd_data)
-    return GFAmsg
-
-
+    if cmd in command_map:
+        gfamsg = command_map[cmd]()
+        print(gfamsg)
+        await ICS_client.send_message("GFA", gfamsg)
 
