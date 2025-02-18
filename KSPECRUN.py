@@ -12,6 +12,7 @@ from Lib.AMQ import *
 #from icscommand import *
 from ADC.adccli import handle_adc
 from GFA.gfacli import handle_gfa
+from ENDO.ENDOcli import handle_endo
 import aio_pika
 import Lib.process as processes
 import json
@@ -49,6 +50,10 @@ class kspecicsclass:
 
         self.gfalist = [
                 'gfastatus', 'gfagrab', 'gfastop', 'gfaguide', 'gfaguidestop'
+        ]
+
+        self.endolist = [
+                'endoguide', 'endotest', 'endofocus', 'endostop', 'endoexpset', 'endoclear'
         ]
 
         self.running = True
@@ -104,6 +109,9 @@ class kspecicsclass:
 
                 elif cmd[0] in self.gfalist:
                     await handle_gfa(message,ICSclient)
+
+                elif cmd[0] in self.endolist:
+                    await handle_endo(message,ICSclient)
 
                 elif message.lower() == "quit":  # Exit condition
                     print("Closing connection...")
@@ -250,3 +258,7 @@ if __name__ == "__main__":
     if sys.argv[1] == 'GFAsimul':
         from GFA.Simul import GFA_server
         asyncio.run(GFA_server.main())
+
+    if sys.argv[1] == 'ENDOsimul':
+        from ENDO.Simul import ENDO_server
+        asyncio.run(ENDO_server.main())

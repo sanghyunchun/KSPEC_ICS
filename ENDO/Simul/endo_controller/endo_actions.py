@@ -71,86 +71,84 @@ class endo_actions:
             return self._generate_response("sucess", rsp) 
         
     def endo_connect(self):
-        self.cam=cv2.VideoCapture(0)
-        if not self.cam.isOpened():
-            print("Could not open video device")
-            rsp='Could not open video device'
-            return self._generate_response("fail", rsp) 
-        else:
-            print("Endoscope open")
+#        self.cam=cv2.VideoCapture(0)
+#        if not self.cam.isOpened():
+#            print("Could not open video device")
+#            rsp='Could not open video device'
+#            return self._generate_response("fail", rsp) 
+#        else:
+#            print("Endoscope open")
 
-            expt_default=self.cam.get(cv2.CAP_PROP_EXPOSURE)
-            focus_default=self.cam.get(cv2.CAP_PROP_FOCUS)
-            self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 2544)
-            self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1944)
-            print(f'Default exposure time : {expt_default}')
-            print(f'Default focus : {focus_default}')
+#            expt_default=self.cam.get(cv2.CAP_PROP_EXPOSURE)
+#            focus_default=self.cam.get(cv2.CAP_PROP_FOCUS)
+#            self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 2544)
+#            self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1944)
+            print(f'Default exposure time : ####')
+            print(f'Default focus : ####')
             rsp='Endocsope connected.'
             return self._generate_response("sucess", rsp) 
         
     def endo_focus(self,focus):
-        self.cam.set(cv2.CAP_PROP_FOCUS,focus)
+#        self.cam.set(cv2.CAP_PROP_FOCUS,focus)
         rsp=f'Endoscope focus is set to {focus}'
         return self._generate_response("sucess", rsp) 
 
     def endo_expset(self,expt):
-        self.cam.set(cv2.CAP_PROP_EXPOSURE,expt)
+#        self.cam.set(cv2.CAP_PROP_EXPOSURE,expt)
         rsp=f'Endoscope exposure time is set to {expt}'
         return self._generate_response("sucess", rsp) 
 
-    async def endo_guide(self,subserver):
-        ret,frame=self.cam.read()
+    async def endo_guide(self):
+#        ret,frame=self.cam.read()
         
-        frame =  frame[:,:,::-1]
+#        frame =  frame[:,:,::-1]
         
-        r_data = np.array(frame[:,:,0])
-        r_data=r_data[::-1]
-        g_data = np.array(frame[:,:,1])
-        g_data=g_data[::-1]
-        b_data = np.array(frame[:,:,2])
-        b_data=b_data[::-1]
+#        r_data = np.array(frame[:,:,0])
+#        r_data=r_data[::-1]
+#        g_data = np.array(frame[:,:,1])
+#        g_data=g_data[::-1]
+#        b_data = np.array(frame[:,:,2])
+#        b_data=b_data[::-1]
         
-        img_data=g_data
+#        img_data=g_data
 
-        final = fits.PrimaryHDU(data=img_data)
+#        final = fits.PrimaryHDU(data=img_data)
         utc=datetime.utcnow()
         surf=utc.strftime("%Y%m%d_%H%M%S")
         filename='E'+surf+'.fits'
         filename2='E'+surf+'.jpg'
         
-        final.writeto('./ENDO/data/'+filename,overwrite=True)
+#        final.writeto('./ENDO/data/'+filename,overwrite=True)
 
         msg=random.randrange(1,11)
         if msg < 7:
-            reply=mkmsg.gfamsg()
             rsp='Autoguiding continue.......'
         else:
-            reply=mkmsg.gfamsg()
             rsp=f'Telescope offset {msg}'
             print('\033[32m'+'[GFA]', rsp+'\033[0m')
         
-        combine_fits_files()
+#        combine_fits_files()
         return self._generate_response("sucess", rsp) 
 
     def endo_test(self):
-        ret,frame=self.cam.read()
-        frame =  frame[:,:,::-1]
+#        ret,frame=self.cam.read()
+#        frame =  frame[:,:,::-1]
         
-        plt.imshow(frame)
-        plt.savefig('./ENDO/data/temp.jpg')
+#        plt.imshow(frame)
+#        plt.savefig('./ENDO/data/temp.jpg')
         
-        r_data = np.array(frame[:,:,0])
-        r_data=r_data[::-1]
-        g_data = np.array(frame[:,:,1])
-        g_data=g_data[::-1]
-        b_data = np.array(frame[:,:,2])
-        b_data=b_data[::-1]
+#        r_data = np.array(frame[:,:,0])
+#        r_data=r_data[::-1]
+#        g_data = np.array(frame[:,:,1])
+#        g_data=g_data[::-1]
+#        b_data = np.array(frame[:,:,2])
+#        b_data=b_data[::-1]
 
-        green = fits.PrimaryHDU(data=g_data)
+#        green = fits.PrimaryHDU(data=g_data)
         utc=datetime.utcnow()
         surf=utc.strftime("%Y%m%d_%H%M%S")
         gfilename='test_'+surf+'.fits'
-        green.writeto('./ENDO/data/'+gfilename,overwrite=True)
+#        green.writeto('./ENDO/data/'+gfilename,overwrite=True)
         
         #blue = fits.PrimaryHDU(data=b_data)
         #bfilename='blue.fits'
