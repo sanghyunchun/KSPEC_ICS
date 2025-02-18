@@ -89,7 +89,7 @@ async def identify_execute(ENDO_server,endoactions,cmd):
 async def handle_guiding(ENDO_server, endoactions):
     try:
         while True:
-            result = await endoactions.endo_guiding()
+            result = await endoactions.endo_guide()
             reply_data = mkmsg.endomsg()
             reply_data.update(result)
             reply_data.update(process='In process')
