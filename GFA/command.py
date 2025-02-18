@@ -9,16 +9,18 @@ import random
 #from KSPEC_Server.GFA.kspec_gfa_controller.src.gfa_actions import gfa_actions
 
 
+guiding_task = None
+
 def printing(message):
     """Utility function for consistent printingging.
 
     Args:
         message (str): The message to be printingged.
     """
-    print(f"\033[32m[ADC] {message}\033[0m")
-
+    print(f"\033[32m[GFA] {message}\033[0m")
 
 async def identify_execute(GFA_server,gfa_actions,cmd):
+    global guiding_task 
     dict_data=json.loads(cmd)
     func=dict_data['func']
 #    endoaction=endo_actions()
@@ -33,7 +35,7 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
         printing(reply_data['message'])
         await GFA_server.send_message('ICS',rsp)
 
-    if func == 'gfagrab':
+    elif func == 'gfagrab':
         result = await gfa_actions.grab(dict_data['CamNum'],dict_data['ExpTime'])
         reply_data=mkmsg.gfamsg()
         reply_data.update(result)
@@ -42,30 +44,44 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
         printing(reply_data['message'])
         await GFA_server.send_message('ICS',rsp)
 
-    if func == 'gfacexp':
-        exptime=float(dict_data['time'])
-        cam=dict_data['chip']
-        comment=gfacexp(exptime)                      ### Position of all gfa camera exposure function
-#        dict_data={'inst': 'GFA', 'savedata': 'False','filename': 'None','message': message}
-        reply_data=mkmsg.gfamsg()
-        reply_data.update(message=comment,process='Done')
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[GFA]', comment+'\033[0m')
-        await GFA_server.send_message('ICS',rsp)
+    elif func == 'gfaguide':
 
-    if func == 'autoguide':
-        msg='start'
+        # Cancel any running task before starting a new one
+        if guiding_task and not guiding_task.done():
+            printing("Cancelling the running autoguiding task...")
+            guiding_task.cancel()
+            try:
+                await guiding_task
+            except asyncio.CancelledError:
+                printing("Previous guiding task cancelled.")
+
+        # Start a new adcadjust task
+        guiding_task = asyncio.create_task(handle_guiding(GFA_server, gfa_actions))
+        printing("New guiding task started.")
+
+    elif func == 'gfaguidestop':
+        if guiding_task and not guiding_task.done():
+            printing("Stopping guiding task...")
+            guiding_task.cancel()
+            try:
+                await guiding_task
+            except asyncio.CancelledError:
+                printing("Guiding task stopped.")
+        else:
+            printing("No Guiding task is currently running.")
+
+#        msg='start'
 #        action=gfa_actions()
-        exptime=float(dict_data['time'])
-        itmax=3
-        comment = 'Autoguide start'
-        reply_data=mkmsg.gfamsg()
-        print('\033[32m'+'[GFA]', comment+'\033[0m')
-        reply_data.update(message=comment,process='Done')
-        rsp=json.dumps(reply_data)
-        await GFA_server.send_message('ICS',rsp)
+#        exptime=float(dict_data['time'])
+#        itmax=3
+#        comment = 'Autoguide start'
+#        reply_data=mkmsg.gfamsg()
+#        print('\033[32m'+'[GFA]', comment+'\033[0m')
+#        reply_data.update(message=comment,process='Done')
+#        rsp=json.dumps(reply_data)
+#        await GFA_server.send_message('ICS',rsp)
 #        await GFA_server.loop_start_stop('ICS',msg,itmax,action.guiding,exptime,GFA_server)
-        await GFA_server.guiding_start_stop('ICS',msg,itmax,autoguide,exptime,GFA_server)  # For Simulation. Annotate when real observation
+#        await GFA_server.guiding_start_stop('ICS',msg,itmax,autoguide,exptime,GFA_server)  # For Simulation. Annotate when real observation
 #        reply_data=mkmsg.gfamsg()
 #        reply_data.update(message=comment)
 #        message='Autoguide offset'
@@ -73,16 +89,6 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
 #        rsp=json.dumps(reply_data)
 #        print('\033[32m'+'[GFA]', comment+'\033[0m')
 #        await GFA_server.send_message('GFA',rsp)
-
-    if func == 'autoguidestop':
-        msg='stop'
-        await GFA_server.loop_start_stop('ICS',msg,0,'None','None')
-        comment='Autoguide Stop. All GFA cameras exposure finished.'
-        reply_data=mkmsg.gfamsg()
-        reply_data.update(message=comment,process='Done')
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[GFA]', comment+'\033[0m')
-        await GFA_server.send_message('ICS',rsp)
 
 
     if func == 'loadguide':
@@ -136,23 +142,30 @@ async def autoguide(exptime,subserver):
         rsp=reply
     return rsp
 
-def gfastatus():
-    msg = 'GFA is ready'
-    return msg
 
-def gfacexp(exptime):
-    time.sleep(exptime)
-    msg='GFA exposure finished'
-    return msg
+async def handle_guiding(GFA_server, gfa_actions):
+    try:
+        while True:
+            result = await gfa_actions.guiding()
+            reply_data = mkmsg.gfamsg()
+            reply_data.update(result)
+            reply_data.update(process='In process')
+            rsp=json.dumps(reply_data)
+            await GFA_server.send_message('ICS',rsp)
 
-def gfaallexp():
-    time.sleep(10)
-    msg='All GFA cameras exposure finished'
-    return msg
+            await asyncio.sleep(30)
 
-   
-def gfastop():
-    msg='stop'
-    return msg
+    except asyncio.CancelledError:
+        printing("handle_guiding task was cancelled.")
+        raise
+    except Exception as e:
+        comment=f"Error in handle_guiding: {e}"
+        printing(comment)
+        reply_data=mkmsg.gfamsg()
+        reply_data.update(message=comment,process='Done')
+        rsp=json.dumps(reply_data)
+        await GFA_server.send_message('ICS',rsp)
+    else:
+        printing("handle_guiding completed successfully.")
 
 
