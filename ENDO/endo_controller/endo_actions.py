@@ -98,7 +98,7 @@ class endo_actions:
         rsp=f'Endoscope exposure time is set to {expt}'
         return self._generate_response("sucess", rsp) 
 
-    async def endo_guide(self,subserver):
+    async def endo_guide(self):
         ret,frame=self.cam.read()
         
         frame =  frame[:,:,::-1]
