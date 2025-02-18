@@ -40,7 +40,7 @@ async def scriptrun(ICS_client,transport,filename):
     ra=tile_data['ra']
     dec=tile_data['dec']
     print(f'### Slew telescope to {ra}, {dec} ###')
-    message=f'tmradec {ra} {dec}'
+    message=f'KSEPC>TC tmradec {ra} {dec}'
     transport.sendto(message.encode())
     
     print(f'Telescope is slewing to {ra}, {dec}...')

@@ -9,13 +9,6 @@ TELID = 'KMTNET'
 SYSID = 'TCS'
 PID = '123'
 
-async def RequestRA(telcom_client):
-    cmd = f'{TELID} {SYSID} {PID} REQUEST RA'
-    print('Telescope request cmd :', cmd)
-    recv = await telcom_client.send_receive(cmd)
-    return recv
-
-"""
 def RequestALL(self):
     cmd = f'{self.TELID} {self.SYSID} {self.PID} REQUEST ALL'
     print('Telescope request cmd :', cmd)
@@ -30,6 +23,12 @@ def RequestHA(self):
     recv=self.recv_data()
     return recv
 
+def RequestRA(self):
+    cmd = f'{self.TELID} {self.SYSID} {self.PID} REQUEST RA'
+    print('Telescope request cmd :', cmd)
+    self.clientsocket.send(cmd.encode())
+    recv=self.recv_data()
+    return recv
 
 def RequestDEC(self):
     cmd = f'{self.TELID} {self.SYSID} {self.PID} REQUEST DEC'
@@ -60,7 +59,7 @@ def RequestSECZ(self):
     return recv
 
 def CommandNEXTRA(self,ra):
-    cmd = f'{self.TELID} {self.SYSID} {self.PID} COMMAND NEXTRA {ra}'
+    cmd = f'{self.TELID} {self.SYSID} {self.PID} COMMAND NEXTRA {ra}\r\n'
     print('Telescope request cmd :', cmd)
     self.clientsocket.send(cmd.encode())
     recv=self.recv_data()
@@ -74,37 +73,37 @@ def CommandNEXTDEC(self,dec):
     return recv
 
 def CommandMVNEXT(self):
-    cmd = f'{self.TELID} {self.SYSID} {self.PID} COMMAND MOVNEXT'
+    cmd = f'{self.TELID} {self.SYSID} {self.PID} COMMAND MOVNEXT\r\n'
     print('Telescope request cmd :', cmd)
     self.clientsocket.send(cmd.encode())
     recv=self.recv_data()
     return recv
 
 def CommandMVSTOW(self):
-    cmd = f'{self.TELID} {self.SYSID} {self.PID} COMMAND MOVSTOW'
+    cmd = f'{self.TELID} {self.SYSID} {self.PID} COMMAND MOVSTOW\r\n'
     print('Telescope request cmd :', cmd)
     self.clientsocket.send(cmd.encode())
     recv=self.recv_data()
     return recv
 
 def CommandMVELAZ(self):
-    cmd = f'{self.TELID} {self.SYSID} {self.PID} COMMAND ELAZ'
+    cmd = f'{self.TELID} {self.SYSID} {self.PID} COMMAND ELAZ\r\n'
     print('Telescope request cmd :', cmd)
     self.clientsocket.send(cmd.encode())
     recv=self.recv_data()
     return recv
 
 def CommandMVSTOP(self):
-    cmd = f'{self.TELID} {self.SYSID} {self.PID} COMMAND CANCEL'
+    cmd = f'{self.TELID} {self.SYSID} {self.PID} COMMAND CANCEL\r\n'
     print('Telescope request cmd :', cmd)
     self.clientsocket.send(cmd.encode())
     recv=self.recv_data()
     return recv
 
 def CommandTRACK(self,bools):
-    cmd = f'{self.TELID} {self.SYSID} {self.PID} COMMAND TRACK {bools}'
+    cmd = f'{self.TELID} {self.SYSID} {self.PID} COMMAND TRACK {bools}\r\n'
     print('Telescope request cmd :', cmd)
     self.clientsocket.send(cmd.encode())
     recv=self.recv_data()
     return recv
-"""
+
