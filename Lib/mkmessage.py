@@ -7,9 +7,12 @@ def common():
 
 def gfamsg():
     dict_data=common()
-    update_data={'time': 'None', 'chip' : 0}
-    dict_data.update(update_data)
     dict_data.update(inst='GFA')
+    return dict_data
+
+def endomsg():
+    dict_data=common()
+    dict_data.update(inst='ENDO')
     return dict_data
 
 def adcmsg():
