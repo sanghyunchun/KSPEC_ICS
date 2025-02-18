@@ -5,6 +5,7 @@ import asyncio
 import aio_pika
 import json
 from GFA.command import *
+from GFA.kspec_gfa_controller.src.gfa_actions import GFAActions
 #from GFA.endo_controller.endo_actions import endo_actions
 #import configparser as cp
 
@@ -20,6 +21,7 @@ async def main():
 
     print('GFA Sever Started!!!')
     GFA_server=AMQclass(ip_addr,idname,pwd,'GFA','ics.ex')
+    gfa_actions=GFAActions()
     await GFA_server.connect()
     await GFA_server.define_consumer()
     while True:
@@ -31,7 +33,7 @@ async def main():
         print('\033[94m'+'[GFA] received: ', message+'\033[0m')
 #        print(GFA_server.cmd_exchange)
 
-        await identify_execute(GFA_server,msg)
+        await identify_execute(GFA_server,gfa_actions,msg)
 
 
 if __name__ == "__main__":
