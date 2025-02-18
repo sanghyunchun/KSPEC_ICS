@@ -11,7 +11,7 @@ To install the `KSPEC_ICS', clone the repository and check package path
 git clone https://github.com/sanghyunchun/KSPEC_ICS.git
 ```
 
-In ADC/kspec_adc_controller/src/adc_actions.py
+In ADC/kspec_adc_controller/src/adc_actions.py, check the imported package path
 
 ```python
 from .adc_controller import AdcController
@@ -19,7 +19,7 @@ from .adc_logger import AdcLogger
 from .adc_calc_angle import ADCCalc
 ```
 
-In ADC/kspec_adc_controller/src/adc_calc_angle.py
+In ADC/kspec_adc_controller/src/adc_calc_angle.py, check the path of lookup_table
 
 ```python
 def __init__(self, logger, lookup_table="./ADC/kspec_adc_controller/src/etc/ADC_lookup.csv", method="pchip"):
@@ -27,11 +27,22 @@ def __init__(self, logger, lookup_table="./ADC/kspec_adc_controller/src/etc/ADC_
         self.create_interp_func(lookup_table, method)
 ```
 
-In ADC/kspec_adc_controller/src/adc_controller.py
+In ADC/kspec_adc_controller/src/adc_controller.py, check the path of config.json file
 
 ```python
 CONFIG_FILE = "./ADC/kspec_adc_controller/src/etc/adc_config.json"
 ```
+
+In GFA/kspec_gfa_controller/src/gfa_actions.py, check the imported package path
+
+```python
+from .gfa_logger import GFALogger
+from .gfa_controller import GFAController
+from .gfa_astrometry import GFAAstrometry
+from .gfa_guider import GFAGuider
+```
+
+
 
 ## Usage Examples
 Here is a basic example to run ics and other instrument server.
