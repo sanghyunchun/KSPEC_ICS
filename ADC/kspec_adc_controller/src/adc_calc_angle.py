@@ -5,13 +5,27 @@
 # @Date: 2024-12-06
 # @Filename: adc_calc_angle.py
 
-
 import os
 import numpy as np
 
 from scipy.interpolate import CubicSpline
 from scipy.interpolate import PchipInterpolator
 from scipy.interpolate import Akima1DInterpolator
+
+
+def _get_default_lookup_path() -> str:
+    """
+    Returns the default ADC lookup CSV file path based on the location of this script.
+    Raises FileNotFoundError if the file does not exist.
+    """
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    default_path = os.path.join(script_dir, "etc", "ADC_lookup.csv")
+    if not os.path.isfile(default_path):
+        raise FileNotFoundError(
+            f"Default ADC lookup file not found at: {default_path}. "
+            "Please place ADC_lookup.csv in the 'etc' folder or adjust `_get_default_lookup_path()`."
+        )
+    return default_path
 
 
 class ADCCalc:
@@ -29,8 +43,24 @@ class ADCCalc:
         Maximum value of zenith angle in the lookup table (degree)
     """
 
-    def __init__(self, logger, lookup_table="./ADC/kspec_adc_controller/src/etc/ADC_lookup.csv", method="pchip"):
+    def __init__(self, logger, lookup_table=None, method="pchip"):
+        """
+        Parameters
+        ----------
+        logger : logging.Logger
+            A logger instance for debug/info/error outputs.
+        lookup_table : str, optional
+            A path to the ADC lookup CSV. If None, a default path is used.
+        method : {'cubic', 'pchip', 'akima'}, optional
+            The interpolation method to be used.
+        """
         self.logger = logger
+
+        # 1) lookup_table이 None이면 _get_default_lookup_path()로 자동 설정
+        if lookup_table is None:
+            lookup_table = _get_default_lookup_path()
+
+        # 2) 주어진(혹은 기본) lookup_table 경로로 Interpolation Function 생성
         self.create_interp_func(lookup_table, method)
 
     def create_interp_func(self, lookup_table, method):
@@ -46,14 +76,8 @@ class ADCCalc:
         method : str
             Interpolation method from the ADC lookup table
             It should be either 'cubic', 'pchip', or 'akima'.
-
-        Raises
-        ------
-        FileNotFoundError
-            If the ADC lookup table file does not exist at the given file name
-        ValueError
-            If the specified interpolation method is not valid.
         """
+        # 경로 유효성 확인
         if not os.path.isfile(lookup_table):
             self.logger.error(f"Lookup table cannot be found: {lookup_table}")
             raise FileNotFoundError(f"Lookup table cannot be found: {lookup_table}")
@@ -94,19 +118,12 @@ class ADCCalc:
         -------
         float or array-like
             The corresponding ADC angle(s) in degrees.
-
-        Raises
-        ------
-        ValueError
-            If the zenith angle is out of bounds.
-        TypeError
-            If the input zenith angle type is not valid.
         """
         if isinstance(za, (int, float)):  # For single values
             if za < self.za_min or za > self.za_max:
                 self.logger.error(f"Input zenith angle {za} is out of bounds ({self.za_min}, {self.za_max})")
                 raise ValueError(f"Input zenith angle {za} is out of bounds.")
-        elif hasattr(za, "min") and hasattr(za, "max"):  # For arrays
+        elif hasattr(za, "min") and hasattr(za, "max"):  # For numpy arrays, etc.
             if za.min() < self.za_min or za.max() > self.za_max:
                 self.logger.error(f"Input zenith angle array is out of bounds ({self.za_min}, {self.za_max})")
                 raise ValueError("Input zenith angle array is out of bounds.")
@@ -133,7 +150,5 @@ class ADCCalc:
         count_per_degree = 16200 / 360  # 360 degrees = 16200 counts
         count = degree * count_per_degree
 
-        # Log the conversion information
         self.logger.debug(f"Converted {degree} degrees to {int(count)} counts.")
-
         return int(count)

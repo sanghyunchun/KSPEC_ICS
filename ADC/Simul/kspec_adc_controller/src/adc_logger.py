@@ -7,6 +7,7 @@
 
 import logging
 import os
+import datetime
 
 class AdcLogger:
     """
@@ -17,7 +18,7 @@ class AdcLogger:
 
     _initialized_loggers = set()  # Class-level set to track initialized loggers
 
-    def __init__(self, stream_level=logging.INFO, enable_file_logging=False):
+    def __init__(self, stream_level=logging.INFO, enable_file_logging=True):
         """
         Initialize the logger with configurable log levels and optional file logging.
 
@@ -28,33 +29,50 @@ class AdcLogger:
         enable_file_logging : bool, optional
             Whether to enable file logging. Defaults to False.
         """
-        logger_name = os.path.basename(__file__)  # Use only the script filename
+        # base_dir: 현재 스크립트 파일(adc_logger.py)이 위치한 디렉토리의 절대 경로
+        base_dir = os.path.abspath(os.path.dirname(__file__))
+
+        # logger_name: 스크립트 파일 이름만 추출 (adc_logger.py)
+        logger_name = os.path.basename(__file__)
+        
+        # 중복 초기화 방지
         if logger_name in AdcLogger._initialized_loggers:
             return
         AdcLogger._initialized_loggers.add(logger_name)
 
-        # Create logger
+        # Logger 생성
         self.logger = logging.getLogger(logger_name)
         self.logger.setLevel(logging.INFO)
 
-        # Configure formatter
+        # Formatter 설정
         formatter = logging.Formatter(
             "%(asctime)s [%(levelname)s] %(message)s", "%Y-%m-%d %H:%M:%S"
         )
 
-        # Console handler
+        # 콘솔 핸들러
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(formatter)
-        stream_handler.setLevel(logging.INFO)  # Set to DEBUG or INFO
+        stream_handler.setLevel(stream_level)  # INFO 혹은 DEBUG 등으로 세팅 가능
         if not self.logger.hasHandlers():
             self.logger.addHandler(stream_handler)
 
-        # Optional file handler
+        # 파일 로깅 활성화
         if enable_file_logging:
-            default_file_name = f"{logger_name}.log"
-            file_handler = logging.FileHandler(default_file_name)
+            # 1) 스크립트 파일이 있는 디렉토리에 log 폴더 생성
+            log_dir = os.path.join(base_dir, "log")
+            os.makedirs(log_dir, exist_ok=True)
+
+            # 2) 날짜/시간 정보를 파일 이름에 포함: adc_logger_YYYY-MM-DD_HH-MM-SS.log
+            timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            log_file_name = f"adc_logger_{timestamp}.log"  # adc_logger.log 대신 시분초 포함
+
+            # 3) 최종 파일 경로
+            log_file_path = os.path.join(log_dir, log_file_name)
+
+            # 파일 핸들러 생성
+            file_handler = logging.FileHandler(log_file_path)
             file_handler.setFormatter(formatter)
-            file_handler.setLevel(logging.DEBUG)  # Default file logging level
+            file_handler.setLevel(logging.DEBUG)  # 파일에는 상세 정보까지 기록
             self.logger.addHandler(file_handler)
 
     def debug(self, message):

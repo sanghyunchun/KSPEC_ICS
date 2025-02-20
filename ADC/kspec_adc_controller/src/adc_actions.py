@@ -24,7 +24,7 @@ class AdcActions:
         logger : AdcLogger, optional
             Logger instance for logging operations. If None, a default AdcLogger instance is created.
         """
-        self.logger = logger or AdcLogger(__file__)  # Use provided logger or create a default one
+        self.logger = logger or AdcLogger()  # Use provided logger or create a default one
         self.logger.debug("Initializing AdcActions class.")
         self.controller = AdcController(self.logger)
         self.controller.find_devices()
@@ -493,12 +493,12 @@ class AdcActions:
             self.logger.error(f"Error in power off: {str(e)}", exc_info=True)
             return self._generate_response("error", str(e))
 
-   def calc_from_za(self, za) -> dict:
+    def calc_from_za(self, za) -> dict:
         """
         Calculate from ZA using the calculator object.
 
         This function computes a value from the provided ZA input using an internal calculator.
-
+        
         Parameters
         ----------
         za : float
@@ -515,7 +515,7 @@ class AdcActions:
         try:
             fn_za_adc = self.calculator.calc_from_za(za)
             self.logger.info(f"Calculation successful: {fn_za_adc}")
-            return self._generate_response("success", f"{fn_za_adc}")
+            return self._generate_response("success", fn_za_adc)
         except Exception as e:
             self.logger.error(f"Error calculating from ZA: {str(e)}", exc_info=True)
             return self._generate_response("error", str(e))
@@ -543,10 +543,7 @@ class AdcActions:
         try:
             count = self.calculator.degree_to_count(degree)
             self.logger.info(f"Conversion successful: {count}")
-            return self._generate_response("success", f"{count}")
+            return self._generate_response("success", count)
         except Exception as e:
             self.logger.error(f"Error converting degrees to counts: {str(e)}", exc_info=True)
             return self._generate_response("error", str(e))
-
-
-
