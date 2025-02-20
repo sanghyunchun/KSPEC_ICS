@@ -7,57 +7,42 @@ import asyncio
 import json
 
 
+def create_lamp_command(func, **kwargs):
+    """Helper function to create lamps commands."""
+    cmd_data = mkmsg.lampmsg()
+    cmd_data.update(func=func, **kwargs)
+    return json.dumps(cmd_data)
 
-def lamp_status():
-    comment='All lamps status'
-    cmd_data=mkmsg.lampmsg()
-    cmd_data.update(func='lampstatus',message=comment)
-    LAMPmsg=json.dumps(cmd_data)
-    return LAMPmsg
 
-def arcon():
-#    MTL_client=Client('MTL')
-    comment='Arc lamp on.'
-    cmd_data=mkmsg.lampmsg()
-    cmd_data.update(func='arcon',message=comment)
-    LAMPmsg=json.dumps(cmd_data)
-    return LAMPmsg
+def lamp_status(): return create_lamp_command('lampstatus',message='Show all lamps status')
 
-def arcoff():
-    comment='Arc lamp off'
-    cmd_data=mkmsg.lampmsg()
-    cmd_data.update(func='arcoff',message=comment)
-    LAMPmsg=json.dumps(cmd_data)
-    return LAMPmsg
+def arcon(): return create_lamp_command('arcon',message='Arc lamp on')
 
-def flaton():
-    comment='Flat lamp on'
-    cmd_data=mkmsg.lampmsg()
-    cmd_data.update(func='flaton',message=comment)
-    LAMPmsg=json.dumps(cmd_data)
-    return LAMPmsg
+def arcoff(): return create_lamp_command('arcoff',message='Arc lamp off')
 
-def flatoff():
-    comment='Flat lamp off'
-    cmd_data=mkmsg.lampmsg()
-    cmd_data.update(func='flatoff',message=comment)
-    LAMPmsg=json.dumps(cmd_data)
-    return LAMPmsg
+def flaton(): return create_lamp_command('flaton',message='Flat lamp on')
 
-def fiducialon():
-    comment='Fiducial lamp on'
-    cmd_data=mkmsg.lampmsg()
-    cmd_data.update(func='fiducialon',message=comment)
-    LAMPmsg=json.dumps(cmd_data)
-    return LAMPmsg
+def flatoff(): return create_lamp_command('flatoff',message='Flat lamp off')
 
-def fiducialoff():
-    comment='Fiducial lamp off'
-    cmd_data=mkmsg.lampmsg()
-    cmd_data.update(func='fiducialoff',message=comment)
-    LAMPmsg=json.dumps(cmd_data)
-    return LAMPmsg
+def fiducialon(): return create_lamp_command('fiducialon',message='Fiducial led on')
 
+def fiducialoff(): return create_lamp_command('fiducialoff',message='Fiducial led off')
+
+async def handle_lamp(arg, ICS_client):
+    print('tttttt')
+    cmd, *params = arg.split()
+    command_map = {
+        'lampstatus': lamp_status, 'arcon': arcon,
+        'arcoff' : arcoff,
+        'flaton' : flaton,
+        'flatoff': flatoff,
+        'fiducialon': fiducialon,
+        'fiducialoff': fiducialoff
+    }
+
+    if cmd in command_map:
+        lampmsg = command_map[cmd]()
+        await ICS_client.send_message("LAMP", lampmsg)
 
 
 
