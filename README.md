@@ -32,6 +32,7 @@ In GFA/kspec_gfa_controller/src/gfa_controller.py, check the imported package pa
 
 ```python
 from .gfa_img import GFAImage
+```
 
 ## Usage Examples
 Here is a basic example to run ics and other instrument server.
