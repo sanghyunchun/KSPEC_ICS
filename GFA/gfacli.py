@@ -21,13 +21,25 @@ def gfa_grab(cam,expt):
 async def handle_gfa(arg, ICS_client):
     cmd, *params = arg.split()
     command_map = {
-        'gfastatus': gfa_status, 'gfagrab': lambda: gfa_grab(int(params[0]),float(params[1])),
+        'gfastatus': gfa_status,
         'gfaguide' : gfa_guiding,
         'gfaguidestop' : gfa_guidestop
     }
 
+    if cmd == 'gfagrab':
+        if len(params) != 2:
+            print("Error: 'gfagrab' needs two parameters: camera number and exposure time value. ex) gfagrab 1 10 ")
+            return
+        try:
+            camNum, ExpT = int(params[0]), float(params[1])
+        except ValueError:
+            print(f"Error: Input parameters of 'gfagrab' should be int and float. input value: {params[0]} {params[1]}")
+            return
+        command_map[cmd] = lambda: gfa_grab(camNum, ExpT)
+
     if cmd in command_map:
         gfamsg = command_map[cmd]()
-        print(gfamsg)
         await ICS_client.send_message("GFA", gfamsg)
+    else:
+        print(f"Error: '{cmd}' is not right command for GFA.")
 

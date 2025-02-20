@@ -1,0 +1,5 @@
+2025-02-20 16:17:43 [INFO] Lookup table found: /media/shyunc/DATA/KSpec/KSPEC_ICS/ADC/Simul/kspec_adc_controller/src/etc/ADC_lookup.csv
+2025-02-20 16:17:43 [INFO] Interpolation function using pchip method created.
+2025-02-20 16:17:55 [INFO] Activating motors with zenith angle 39.56, velocity 1 RPM.
+2025-02-20 16:17:55 [INFO] Calculated angle: -36.5169994728014, position: -1643.
+2025-02-20 16:17:55 [INFO] Motors activated successfully.

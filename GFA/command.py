@@ -70,26 +70,6 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
         else:
             printing("No Guiding task is currently running.")
 
-#        msg='start'
-#        action=gfa_actions()
-#        exptime=float(dict_data['time'])
-#        itmax=3
-#        comment = 'Autoguide start'
-#        reply_data=mkmsg.gfamsg()
-#        print('\033[32m'+'[GFA]', comment+'\033[0m')
-#        reply_data.update(message=comment,process='Done')
-#        rsp=json.dumps(reply_data)
-#        await GFA_server.send_message('ICS',rsp)
-#        await GFA_server.loop_start_stop('ICS',msg,itmax,action.guiding,exptime,GFA_server)
-#        await GFA_server.guiding_start_stop('ICS',msg,itmax,autoguide,exptime,GFA_server)  # For Simulation. Annotate when real observation
-#        reply_data=mkmsg.gfamsg()
-#        reply_data.update(message=comment)
-#        message='Autoguide offset'
-#        dict_data={'inst': 'GFA', 'savedata': 'False','filename': 'None','message': message}
-#        rsp=json.dumps(reply_data)
-#        print('\033[32m'+'[GFA]', comment+'\033[0m')
-#        await GFA_server.send_message('GFA',rsp)
-
 
     if func == 'loadguide':
         chipnum=dict_data['chipnum']

@@ -1,0 +1,9 @@
+2025-02-20 16:03:07 [INFO] Lookup table found: /media/shyunc/DATA/KSpec/KSPEC_ICS/ADC/Simul/kspec_adc_controller/src/etc/ADC_lookup.csv
+2025-02-20 16:03:07 [INFO] Interpolation function using pchip method created.
+2025-02-20 16:03:39 [INFO] Calculating from ZA.
+2025-02-20 16:03:39 [INFO] Calculation successful: -35.0806523475847
+2025-02-20 16:03:39 [INFO] Converting degrees to counts.
+2025-02-20 16:03:39 [INFO] Conversion successful: -1578
+2025-02-20 16:03:39 [INFO] Both motors moved successfully.
+2025-02-20 16:03:45 [INFO] Both motors stopped successfully.
+2025-02-20 16:04:02 [INFO] Motor 1 moved successfully to position 323.
