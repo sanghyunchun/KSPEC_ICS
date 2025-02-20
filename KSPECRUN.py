@@ -12,7 +12,9 @@ from Lib.AMQ import *
 #from icscommand import *
 from ADC.adccli import handle_adc
 from GFA.gfacli import handle_gfa
+from FBP.fbpcli import handle_fbp
 from ENDO.ENDOcli import handle_endo
+from LAMP.lampcli import handle_lamp
 import aio_pika
 import Lib.process as processes
 import json
@@ -52,8 +54,16 @@ class kspecicsclass:
                 'gfastatus', 'gfagrab', 'gfastop', 'gfaguide', 'gfaguidestop'
         ]
 
+        self.fbplist = [
+                'fbpstatus', 'fbpzero', 'fbpmove', 'fbpoffset'
+        ]
+
         self.endolist = [
                 'endoguide', 'endotest', 'endofocus', 'endostop', 'endoexpset', 'endoclear'
+        ]
+
+        self.lamplist = [
+                'lampstatus', 'arcon', 'arcoff', 'flaton', 'flatoff', 'fiducialon',  'fiducialoff'
         ]
 
         self.running = True
@@ -110,8 +120,14 @@ class kspecicsclass:
                 elif cmd[0] in self.gfalist:
                     await handle_gfa(message,ICSclient)
 
+                elif cmd[0] in self.fbplist:
+                    await handle_fbp(message,ICSclient)
+
                 elif cmd[0] in self.endolist:
                     await handle_endo(message,ICSclient)
+
+                elif cmd[0] in self.lamplist:
+                    await handle_lamp(message,ICSclient)
 
                 elif message.lower() == "quit":  # Exit condition
                     print("Closing connection...")
