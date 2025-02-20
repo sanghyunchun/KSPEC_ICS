@@ -28,7 +28,10 @@ from .gfa_astrometry import GFAAstrometry
 from .gfa_guider import GFAGuider
 ```
 
+In GFA/kspec_gfa_controller/src/gfa_controller.py, check the imported package path
 
+```python
+from .gfa_img import GFAImage
 
 ## Usage Examples
 Here is a basic example to run ics and other instrument server.
