@@ -19,20 +19,6 @@ from .adc_logger import AdcLogger
 from .adc_calc_angle import ADCCalc
 ```
 
-In ADC/kspec_adc_controller/src/adc_calc_angle.py, check the path of lookup_table
-
-```python
-def __init__(self, logger, lookup_table="./ADC/kspec_adc_controller/src/etc/ADC_lookup.csv", method="pchip"):
-        self.logger = logger
-        self.create_interp_func(lookup_table, method)
-```
-
-In ADC/kspec_adc_controller/src/adc_controller.py, check the path of config.json file
-
-```python
-CONFIG_FILE = "./ADC/kspec_adc_controller/src/etc/adc_config.json"
-```
-
 In GFA/kspec_gfa_controller/src/gfa_actions.py, check the imported package path
 
 ```python
