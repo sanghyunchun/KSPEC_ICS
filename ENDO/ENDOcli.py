@@ -29,18 +29,43 @@ async def handle_endo(arg,ICS_client):
     """Handle Endoscope commands."""
     cmd, *params = arg.split()
     command_map = {
-            'endofocus': lambda : endo_focus(params[0]), 
-            'endoexpset': lambda: endo_expset(params[0]), 
             'endotest': endo_test, 'endoclear': endo_clear,
             'endoguide': endo_guide, 'endostop': endo_stop
 
     }
+    if cmd == 'endofocus':
+        if len(params) != 1:
+            print("Error: 'endofocus' need one focus value between 0~255. ex) endofocus 220 ")
+            return
+        try:
+            fc = int(params[0])
+            if fc >= 255:
+                print("Error: ENDO foucs value should be less than 255. input value: {fc}")
+                return
+        except ValueError:
+            print(f"Error: Input parameters of 'endofocus' should be int. input value: {params[0]}")
+            return
+        command_map[cmd] = lambda: endo_focus(fc)
+
+    elif cmd == 'endoexpset':
+        if len(params) != 1:
+            print("Error: 'endoexpset' need one exposure time between -12~0. ex) endoexpset -5 ")
+            return
+        try:
+            expT = int(params[0])
+            if expT > 0:
+                print(f"Error: ENDO exposure time should be less than 0. input value: {params[0]}")
+                return
+        except ValueError:
+            print(f"Error: Input parameters of 'endoexpset' should be int. input value: {params[0]}")
+            return
+        command_map[cmd] = lambda: endo_expset(expT)
+
+
     if cmd in command_map:
         endomsg = command_map[cmd]()
         print(endomsg)
         await ICS_client.send_message("ENDO", endomsg)
 
-
-
-
-
+    else:
+        print(f"Error: '{cmd}' is not right command for ENDO")
