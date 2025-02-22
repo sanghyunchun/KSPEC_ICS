@@ -1,13 +1,14 @@
 import os, sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import asyncio
-from GFA.gfacli import *
-from MTL.mtlcli import *
 from TCS import tcscli
-from FBP.fbpcli import *
-from ADC.adccli import *
-from LAMP.lampcli import *
-from SPECTRO.speccli import *
+from GFA.gfacli import handle_gfa
+from MTL.mtlcli import handle_mtl
+from FBP.fbpcli import handle_fbp
+from ADC.adccli import handle_adc
+from LAMP.lampcli import handle_lamp
+from SPECTRO.speccli import handle_spec
+from ENDO.ENDOcli import handle_endo
 from SCIOBS.sciobscli import sciobscli
 import Lib.process as processes
 import numpy as np
@@ -20,7 +21,7 @@ with open('./Lib/KSPEC.ini','r') as fs:
 
 osbplanpath=kspecinfo['SCIOBS']['obsplanpath']
 
-async def script_run(ICS_client,transport,filename):
+async def run_script(ICS_client,transport,filename):
 
     data=pd.read_csv(obsplanpath+filename)
     print(data)
@@ -71,10 +72,6 @@ async def script_run(ICS_client,transport,filename):
 #    RA=ttt.RequestRA()
 #    print(RA)
 
-
-    
-
-
 #    gfamsg=gfa_allexp(10)
 #    await ICS_client.send_message("GFA", gfamsg)
 
@@ -82,19 +79,44 @@ async def script_run(ICS_client,transport,filename):
 #    await ICS_client.send_message("MTL", mtlmsg)
 
 
-async def adc_run():
-    ra=123.45
-    dec=-34.56
-    obsnum=6
+async def obs_initial(ICSclient,tcstransport):
+    print('Start instruments intialize')
+    await handle_endo('endostatus',ICSclient)
+    await handle_gfa('gfastatus',ICSclient)
+    await handle_fbp('fbpstatus',ICSclient)
+    await handle_mtl('mtlstatus',ICSclient)
+    await handle_adc('adchome',ICSclient)
+    await handle_adc('adczero',ICSclient)
+    await handle_adc('adcstatus',ICSclient)
+    await handle_spec('specstatus',ICSclient)
 
-    zdist=calculate_zenith_distance(ra,dec)
-    current=zdist
-    for i in range(6):
-        next=calculate_zenith_distance(ra,dec)
-        count=3456
-        command=adc_activate(count)
-        print(command)
-        await asyncio.sleep(30)
+
+
+async def run_calib(ICSclient,tcstransport):
+    print('Get Calibration Frame')
+
+    await handle_lamp('flaton',ICSclient)
+
+    await handle_spec('getflat 2 10',ICSclient)
+
+    await handle_lamp('flatoff',ICSclient)
+    await handle_lamp('arcon',ICSclient)
+    await handle_spec('getarc 2 10',ICSclient)
+    await handle_lamp('arcoff',ICSclient)
+
+
+
+async def handle_script(cmd, ICSclient,tcstransport):
+    """ Handle script with error checking. """
+    command_map = {
+            'obsinitial': obs_initial, 'runcalib': run_calib
+    }
+
+    if cmd in command_map:
+        await command_map[cmd](ICSclient,tcstransport)
+    else:
+        print(f"Error: '{cmd}' is not right command for SCRIPT")
+
 
 
 

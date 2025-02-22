@@ -14,7 +14,10 @@ from ADC.adccli import handle_adc
 from GFA.gfacli import handle_gfa
 from FBP.fbpcli import handle_fbp
 from ENDO.ENDOcli import handle_endo
+from MTL.mtlcli import handle_mtl
 from LAMP.lampcli import handle_lamp
+from SPECTRO.speccli import handle_spec
+from script.scriptcli import handle_script
 import aio_pika
 import Lib.process as processes
 import json
@@ -59,11 +62,23 @@ class kspecicsclass:
         ]
 
         self.endolist = [
-                'endoguide', 'endotest', 'endofocus', 'endostop', 'endoexpset', 'endoclear'
+                'endoguide', 'endotest', 'endofocus', 'endostop', 'endoexpset', 'endoclear', 'endostatus'
+        ]
+
+        self.mtllist = [
+                'mtlstatus','mtlexp','mtlcal'
         ]
 
         self.lamplist = [
                 'lampstatus', 'arcon', 'arcoff', 'flaton', 'flatoff', 'fiducialon',  'fiducialoff'
+        ]
+
+        self.speclist = [
+                'specstatus', 'illuon', 'illuoff', 'getobj', 'getbias', 'getflat', 'getarc'
+        ]
+
+        self.scriptlist = [
+                'obsinitial','runscript','runcalib'
         ]
 
         self.running = True
@@ -126,8 +141,17 @@ class kspecicsclass:
                 elif cmd[0] in self.endolist:
                     await handle_endo(message,ICSclient)
 
+                elif cmd[0] in self.mtllist:
+                    await handle_mtl(message,ICSclient)
+
                 elif cmd[0] in self.lamplist:
                     await handle_lamp(message,ICSclient)
+
+                elif cmd[0] in self.speclist:
+                    await handle_spec(message,ICSclient)
+
+                elif cmd[0] in self.scriptlist:
+                    await handle_script(message,ICSclient,self.transport)
 
                 elif message.lower() == "quit":  # Exit condition
                     print("Closing connection...")
@@ -158,9 +182,8 @@ class kspecicsclass:
                 rsp_msg = await ICS_client.receive_message('ICS')
                 dict_data = json.loads(rsp_msg)
                 inst = dict_data['inst']
-                process_status = dict_data['process']
-                print('process status :', process_status)
-                processes.update_process(inst, process_status)
+                print(f'{inst} process status :', dict_data['process'])
+                processes.update_process(inst, dict_data['process'])
 
                 saveflag = dict_data["savedata"]
                 if saveflag == "False":
@@ -168,28 +191,31 @@ class kspecicsclass:
                 else:
                     with open('./Lib/KSPEC.ini', 'r') as fs:
                         kspecinfo = json.load(fs)
+                    fs.close()
 
                     savefilepath = kspecinfo['savepath']
 
                     with open(savefilepath + dict_data["filename"], "w") as f:
                         json.dump(dict_data, f)
+                    f.close()
+
                     outfile = dict_data["filename"]
                     print('\033[94m' + '\n[ICS] received: ', dict_data["message"] + '\033[0m')
                     print('\033[94m' + f'[ICS] "{outfile}" File saved' + '\033[0m')
 
-                nextstep = dict_data['nextstep']
-                if nextstep == 'True':
-                    message = dict_data['nextstep']
-                    cmd = message.split(" ")
+#                nextstep = dict_data['nextstep']
+#                if nextstep == 'True':
+#                    message = dict_data['nextstep']
+#                    cmd = message.split(" ")
 
-                    if cmd[0] in self.tcslist:
-                        self.transport.sendto(message.encode())  # Send message to server
+#                    if cmd[0] in self.tcslist:
+#                        self.transport.sendto(message.encode())  # Send message to server
 
-                    else:
-                        await identify(message, ICS_client, self.transport)
+#                    else:
+#                        await identify(message, ICS_client, self.transport)
 
-                if nextstep == 'None':
-                    pass
+#                if nextstep == 'None':
+#                    pass
         except asyncio.CancelledError:
             print("response_act cancelled.")
         except Exception as e:
@@ -216,6 +242,7 @@ async def main():
     kspecics = kspecicsclass()
 
     try:
+        processes.initial()
         await asyncio.gather(kspecics.user_input(ICS_client), kspecics.response_act(ICS_client))
     except asyncio.CancelledError:
         print("Main coroutine cancelled.")
@@ -255,7 +282,7 @@ if __name__ == "__main__":
         from MTL import MTL_server
         asyncio.run(MTL_server.main())
 
-    if sys.argv[1] == 'SPECTRO':
+    if sys.argv[1] == 'SPEC':
         from SPECTRO import SPEC_server
         asyncio.run(SPEC_server.main())
 
@@ -278,3 +305,7 @@ if __name__ == "__main__":
     if sys.argv[1] == 'ENDOsimul':
         from ENDO.Simul import ENDO_server
         asyncio.run(ENDO_server.main())
+
+    if sys.argv[1] == 'MTLsimul':
+        from MTL.Simul import MTL_server
+        asyncio.run(MTL_server.main())
