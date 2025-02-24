@@ -10,6 +10,7 @@ import Lib.mkmessage as mkmsg
 import os
 import glob
 from typing import Union, List, Dict, Any, Optional
+import time
 
 def median_combine_fits(files):
     data_list = []
@@ -85,8 +86,22 @@ class endo_actions:
 #            self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1944)
             print(f'Default exposure time : ####')
             print(f'Default focus : ####')
-            rsp='Endocsope connected.'
-            return self._generate_response("sucess", rsp) 
+            rsp=f'Endocsope connected.'
+
+            return self._generate_response("sucess", rsp)
+
+    def endo_status(self):
+#        if not self.cam.isOpened():
+#            print("Could not open video device")
+#            rsp='Could not open video device'
+#            return self._generate_response("fail", rsp)
+#        else:
+#            expt_default=self.cam.get(cv2.CAP_PROP_EXPOSURE)
+#            focus_default=self.cam.get(cv2.CAP_PROP_FOCUS)
+        print(f'Default exposure time : ####')
+        print(f'Default focus : ####')
+        rsp=f'Endocsope connected. Default exposure time : ####. Default focus : ####.'
+        return self._generate_response("sucess", rsp)
         
     def endo_focus(self,focus):
 #        self.cam.set(cv2.CAP_PROP_FOCUS,focus)

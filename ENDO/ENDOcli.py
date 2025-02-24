@@ -25,13 +25,16 @@ def endo_test(): return create_endo_command('endotest',message='Start test expos
 
 def endo_clear(): return create_endo_command('endoclear',message='Remove all Endoscope images')
 
+def endo_status(): return create_endo_command('endostatus',message='Show Endoscope status')
+
+
+
 async def handle_endo(arg,ICS_client):
     """Handle Endoscope commands."""
     cmd, *params = arg.split()
     command_map = {
             'endotest': endo_test, 'endoclear': endo_clear,
-            'endoguide': endo_guide, 'endostop': endo_stop
-
+            'endoguide': endo_guide, 'endostop': endo_stop, 'endostatus': endo_status
     }
     if cmd == 'endofocus':
         if len(params) != 1:
@@ -64,7 +67,6 @@ async def handle_endo(arg,ICS_client):
 
     if cmd in command_map:
         endomsg = command_map[cmd]()
-        print(endomsg)
         await ICS_client.send_message("ENDO", endomsg)
 
     else:

@@ -24,7 +24,7 @@ cmdlist = [
     'adcpoweroff', 'adcrotate1', 'adcrotate2', 'adcstop', 'adcpark','adcrotateop','adcrotatesame',
     'fbpstatus', 'fbpmove', 'fbpoffset', 'fbpinit',
     'lampstatus', 'arcon', 'arcoff', 'flaton', 'flatoff', 'fidon', 'fiducialoff',
-    'specstatus', 'specilluon', 'specilluoff', 'objexp', 'biasexp', 'flatexp', 'arcexp',
+    'specstatus', 'specilluon', 'specilluoff', 'getobj', 'getbias', 'getflat', 'getarc',
     'runscript',
     'testfunc', 'teststop'
 ]

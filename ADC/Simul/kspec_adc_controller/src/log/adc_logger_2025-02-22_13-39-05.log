@@ -1,0 +1,32 @@
+2025-02-22 13:39:05 [INFO] Lookup table found: /media/shyunc/DATA/KSpec/KSPEC_ICS/ADC/Simul/kspec_adc_controller/src/etc/ADC_lookup.csv
+2025-02-22 13:39:05 [INFO] Interpolation function using pchip method created.
+2025-02-22 13:39:44 [INFO] Starting homing operation.
+2025-02-22 13:39:54 [INFO] Homing completed successfully.
+2025-02-22 13:39:54 [INFO] Starting zeroing operation with velocity 1 RPM.
+2025-02-22 13:40:04 [INFO] Zeroing operation completed successfully.
+2025-02-22 13:40:04 [INFO] Retrieving status for motor 0.
+2025-02-22 13:40:04 [INFO] Motor 0 status: $$$$$
+2025-02-22 13:41:41 [INFO] Starting homing operation.
+2025-02-22 13:41:51 [INFO] Homing completed successfully.
+2025-02-22 13:41:51 [INFO] Starting zeroing operation with velocity 1 RPM.
+2025-02-22 13:42:01 [INFO] Zeroing operation completed successfully.
+2025-02-22 13:42:01 [INFO] Retrieving status for motor 0.
+2025-02-22 13:42:01 [INFO] Motor 0 status: $$$$$
+2025-02-22 13:44:41 [INFO] Starting homing operation.
+2025-02-22 13:44:51 [INFO] Homing completed successfully.
+2025-02-22 13:44:51 [INFO] Starting zeroing operation with velocity 1 RPM.
+2025-02-22 13:45:01 [INFO] Zeroing operation completed successfully.
+2025-02-22 13:45:01 [INFO] Retrieving status for motor 0.
+2025-02-22 13:45:01 [INFO] Motor 0 status: $$$$$
+2025-02-22 14:00:43 [INFO] Starting homing operation.
+2025-02-22 14:00:53 [INFO] Homing completed successfully.
+2025-02-22 14:00:53 [INFO] Starting zeroing operation with velocity 1 RPM.
+2025-02-22 14:01:03 [INFO] Zeroing operation completed successfully.
+2025-02-22 14:01:03 [INFO] Retrieving status for motor 0.
+2025-02-22 14:01:03 [INFO] Motor 0 status: $$$$$
+2025-02-22 14:08:36 [INFO] Starting homing operation.
+2025-02-22 14:08:46 [INFO] Homing completed successfully.
+2025-02-22 14:08:46 [INFO] Starting zeroing operation with velocity 1 RPM.
+2025-02-22 14:08:56 [INFO] Zeroing operation completed successfully.
+2025-02-22 14:08:56 [INFO] Retrieving status for motor 0.
+2025-02-22 14:08:56 [INFO] Motor 0 status: $$$$$

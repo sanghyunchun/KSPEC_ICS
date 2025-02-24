@@ -17,7 +17,7 @@ class AMQclass():
         self.channel = None
         self.connection = None
         self.futures = {}
-        self.stop_event = asyncio.Event()
+        self.stop_event = None
         self.mission = False
 
     async def connect(self):
@@ -55,7 +55,8 @@ class AMQclass():
                 aio_pika.Message(body=message.encode()),
                 routing_key=_routing_key,
             )
-        print(f"{self.im} sent message to device '{_routing_key}'")
+        dict_data=json.loads(message)
+        print(f"{self.im} sent message to device '{_routing_key}'. message: {dict_data['message']}")
 
     async def define_consumer(self):
         if self.queue is None:
@@ -70,30 +71,30 @@ class AMQclass():
                     print(f'{_routing_key} Server received message') #, message.body.decode())
                     return message.body
 
-    async def start_guidingloop(self, _routing_key,itmax,function,subserver):    ### For autoguiding
-        itn=0
-        while not self.stop_event.is_set():
-            response=await function(subserver)
-            if response != None:
-                if itn==itmax or response['thred'] > 7:
-                    response=json.dumps(response)
-                    await self.cmd_exchange.publish(
-                    aio_pika.Message(body=response.encode()),
-                    routing_key=_routing_key,
-                    )
-                    print(f"{self.im} Sever sent message to '{_routing_key}'")
-                    itn=0
-                itn=itn+1
-            await asyncio.sleep(2)  # Wait for ??? seconds : Interval Time to send response
+#    async def start_guidingloop(self, _routing_key,itmax,function,subserver):    ### For autoguiding
+#        itn=0
+#        while not self.stop_event.is_set():
+#            response=await function(subserver)
+#            if response != None:
+#                if itn==itmax or response['thred'] > 7:
+#                    response=json.dumps(response)
+#                    await self.cmd_exchange.publish(
+#                    aio_pika.Message(body=response.encode()),
+#                    routing_key=_routing_key,
+#                    )
+#                    print(f"{self.im} Sever sent message to '{_routing_key}'")
+#                    itn=0
+#                itn=itn+1
+#            await asyncio.sleep(2)  # Wait for ??? seconds : Interval Time to send response
 
-    async def guiding_start_stop(self,_routing_key,msg,itmax,function,subserver):
-        if msg != 'stop':
-            asyncio.create_task(self.start_guidingloop(_routing_key,itmax,function,subserver))
-        elif msg == 'stop':
-            self.stop_event.set()
-            await asyncio.sleep(2)  # Wait for ??? second to ensure all tasks are completed.
+#    async def guiding_start_stop(self,_routing_key,msg,itmax,function,subserver):
+#        if msg != 'stop':
+#            asyncio.create_task(self.start_guidingloop(_routing_key,itmax,function,subserver))
+#        elif msg == 'stop':
+#            self.stop_event.set()
+#            await asyncio.sleep(2)  # Wait for ??? second to ensure all tasks are completed.
                                     # This time should be longer than interval time to send response in send_looprespons function.
-            self.stop_event.clear()  # Reset stop_event for future messages
+#            self.stop_event.clear()  # Reset stop_event for future messages
 
 
 class UDPClientProtocol:

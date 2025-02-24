@@ -34,10 +34,12 @@ async def main():
     await ENDO_server.define_consumer()
     endoaction=endo_actions()
     endoaction.endo_connect()
+
     while True:
         print('Waiting for message from client......')
         msg=await ENDO_server.receive_message('ENDO')
         dict_data=json.loads(msg)
+        print(dict_data)
         message=dict_data['message']
         print('\033[94m'+'[ENDO] received: ', message+'\033[0m')
 

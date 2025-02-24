@@ -29,7 +29,6 @@ def fiducialon(): return create_lamp_command('fiducialon',message='Fiducial led 
 def fiducialoff(): return create_lamp_command('fiducialoff',message='Fiducial led off')
 
 async def handle_lamp(arg, ICS_client):
-    print('tttttt')
     cmd, *params = arg.split()
     command_map = {
         'lampstatus': lamp_status, 'arcon': arcon,

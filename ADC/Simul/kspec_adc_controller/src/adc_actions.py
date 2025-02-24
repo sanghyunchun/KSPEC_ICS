@@ -124,7 +124,7 @@ class AdcActions:
 
                 # Wait for both motors to complete
 #                results = await asyncio.gather(motor1_task, motor2_task)
-
+                await asyncio.sleep(15)
                 self.logger.info("Both motors moved successfully.")
                 return self._generate_response(
                     "success",
@@ -142,6 +142,7 @@ class AdcActions:
                 # Wait for both motors to complete
 #                results = await asyncio.gather(motor1_task, motor2_task)
 
+                await asyncio.sleep(15)
                 self.logger.info("Both motors moved successfully.")
                 return self._generate_response(
                     "success",
@@ -153,6 +154,7 @@ class AdcActions:
                     f"Moving motor {motor_id} to position {pos_count} with velocity {vel_set}."
                 )
 #                result = await asyncio.to_thread(self.controller.move_motor, motor_id, -pos_count, vel_set)
+                await asyncio.sleep(15)
                 self.logger.info(f"Motor {motor_id} moved successfully to position {pos_count}.")
                 return self._generate_response(
                     "success",
@@ -277,7 +279,7 @@ class AdcActions:
 #                        "error",
 #                        f"Motor {i+1} activation failed with position {pos} and velocity {vel}. Error: {result}"
 #                    )
-
+            await asyncio.sleep(10)
             self.logger.info("Motors activated successfully.")
             return self._generate_response(
                 "success",
@@ -336,6 +338,7 @@ class AdcActions:
         self.logger.info("Starting homing operation.")
         try:
             self.logger.debug("Calling homing method on controller.")
+            await asyncio.sleep(10)
 #            await self.controller.homing(vel)
             self.logger.info("Homing completed successfully.")
             return self._generate_response("success", "Homing completed successfully.")
@@ -388,6 +391,7 @@ class AdcActions:
         try:
             self.logger.debug("Parking motors at predefined position.")
 #            await self.controller.parking(vel)
+            await asyncio.sleep(10)
             self.logger.info("Parking completed successfully.")
             return self._generate_response("success", "Parking completed successfully.")
         except Exception as e:
@@ -440,6 +444,7 @@ class AdcActions:
             self.logger.debug("Initiating homing as part of zeroing.")
             # Assuming self.controller.zeroing(vel) handles motor movement logic.
 #            await self.controller.zeroing(vel)
+            await asyncio.sleep(10)
             self.logger.info("Zeroing operation completed successfully.")
             return self._generate_response("success", "Zeroing completed successfully.")
         except Exception as e:

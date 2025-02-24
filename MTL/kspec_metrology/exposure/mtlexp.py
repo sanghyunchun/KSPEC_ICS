@@ -17,7 +17,7 @@ def mtlexp(exptime
 
     qc.Initialize(readmode, usb_traffic)
 
-    qc.CamSettings(gain, offset, exptime)
+    qc.CamSettings(gain, offset, exptime*1000000.)
 
     for i in range(nexposure):
         im = qc.CamCapture()
@@ -36,7 +36,7 @@ def mtlexp(exptime
 
     qc.CamExit()
 
-    msg='Metrology exposure finished'
+    msg=f'Metrology {exptime} seconds exposure finished'
     return msg
 
 

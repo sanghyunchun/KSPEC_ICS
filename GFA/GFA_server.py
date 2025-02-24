@@ -26,12 +26,10 @@ async def main():
     await GFA_server.define_consumer()
     while True:
         print('Waiting for message from client......')
-#        msgtot,msg=await GFA_server.receive_message('GFA.q')
         msg=await GFA_server.receive_message('GFA')
         dict_data=json.loads(msg)
         message=dict_data['message']
         print('\033[94m'+'[GFA] received: ', message+'\033[0m')
-#        print(GFA_server.cmd_exchange)
 
         await identify_execute(GFA_server,gfa_actions,msg)
 

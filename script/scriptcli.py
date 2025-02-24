@@ -21,6 +21,17 @@ with open('./Lib/KSPEC.ini','r') as fs:
 
 osbplanpath=kspecinfo['SCIOBS']['obsplanpath']
 
+
+#script_task = None
+
+async def wait_for(inst):
+    while True:
+        status=processes.get_process(inst)
+        if status == "Done":
+            break
+        await asyncio.sleep(1)
+            
+
 async def run_script(ICS_client,transport,filename):
 
     data=pd.read_csv(obsplanpath+filename)
@@ -91,23 +102,43 @@ async def obs_initial(ICSclient,tcstransport):
     await handle_spec('specstatus',ICSclient)
 
 
-
 async def run_calib(ICSclient,tcstransport):
-    print('Get Calibration Frame')
+    script_task = asyncio.create_task(handle_calib(ICSclient))
+    script_task = None
 
+
+async def handle_calib(ICSclient):
+#    printing("New Calibration task started.")
+    ICSclient.stop_event = asyncio.Event()
     await handle_lamp('flaton',ICSclient)
+#    await wait_for('LAMP')
+    await ICSclient.stop_event.wait()
 
-    await handle_spec('getflat 2 10',ICSclient)
+    ICSclient.stop_event = asyncio.Event()
+    await handle_spec('getflat 20 10',ICSclient)
+#    await wait_for('GFA')
+    await ICSclient.stop_event.wait()
 
+    ICSclient.stop_event = asyncio.Event()
     await handle_lamp('flatoff',ICSclient)
-    await handle_lamp('arcon',ICSclient)
-    await handle_spec('getarc 2 10',ICSclient)
-    await handle_lamp('arcoff',ICSclient)
+    await ICSclient.stop_event.wait()
 
+    ICSclient.stop_event = asyncio.Event()
+    await handle_lamp('arcon',ICSclient)
+    await ICSclient.stop_event.wait()
+
+    ICSclient.stop_event = asyncio.Event()
+    await handle_spec('getarc 20 10',ICSclient)
+    await ICSclient.stop_event.wait()
+
+    ICSclient.stop_event = asyncio.Event()
+    await handle_lamp('arcoff',ICSclient)
+    await ICSclient.stop_event.wait()
 
 
 async def handle_script(cmd, ICSclient,tcstransport):
     """ Handle script with error checking. """
+    global script_task
     command_map = {
             'obsinitial': obs_initial, 'runcalib': run_calib
     }

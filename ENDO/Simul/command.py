@@ -86,10 +86,21 @@ async def identify_execute(ENDO_server,endoactions,cmd):
         rsp=json.dumps(reply_data)
         await ENDO_server.send_message('ICS',rsp)
 
+    if func == 'endostatus':
+        print('HIHIHI')
+        result=endoactions.endo_status()
+        reply_data=mkmsg.endomsg()
+        reply_data.update(result)
+        reply_data.update(process='Done')
+        printing(reply_data['message'])
+        rsp=json.dumps(reply_data)
+        await ENDO_server.send_message('ICS',rsp)
+
+
 async def handle_guiding(ENDO_server, endoactions):
     try:
         while True:
-            result = await endoactions.endo_guiding()
+            result = await endoactions.endo_guide()
             reply_data = mkmsg.endomsg()
             reply_data.update(result)
             reply_data.update(process='In process')

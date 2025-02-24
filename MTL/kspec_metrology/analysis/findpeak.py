@@ -4,7 +4,7 @@ from astropy.io import fits
 from .utils import com
 
 def findpeak(npeaks
-            , data_dir='./data/'
+            , data_dir='./MTL/data/'
             , nexposure=1
             , threshold=5e3
             , boxsize=40

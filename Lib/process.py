@@ -1,26 +1,15 @@
 import json
+import shutil
 
-
-with open('./Lib/KSPEC.ini','r') as fs:
-    kspecinfo=json.load(fs)
-
-processini = kspecinfo['processini']
-processfile = kspecinfo['processfile']
+processini = "./Lib/process.ini"
+processfile = "./PROCESS/process.json"
 
 def initial():
-    with open(processini,'r') as f:
-        initial_status=json.load(f)
-    f.close()
+    shutil.copy2(processini,processfile)
+    print('Process status is initialized')
 
     with open(processfile,'r') as f:
         process_status=json.load(f)
-    f.close()
-
-    process_status.update(initial_status)
-
-    with open(processfile,'w') as f:
-        json.dump(process_status,f)
-
     f.close()
 
 def update_process(inst,status):

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*- 
 #
 # @Author: Sang-Hyun Chun (shyunc@kasi.re.kr)
-# @Date: 2025-01-12
+# @Date: 2025-02-22
 # @Filename: KSPECRUN.py
 
 import os
@@ -18,6 +18,7 @@ from MTL.mtlcli import handle_mtl
 from LAMP.lampcli import handle_lamp
 from SPECTRO.speccli import handle_spec
 from script.scriptcli import handle_script
+from TCS.telcomcli import handle_telcom 
 import aio_pika
 import Lib.process as processes
 import json
@@ -46,6 +47,11 @@ class kspecicsclass:
             "auxreset", "auxclose", "auxarc", "auxstatus",
             "astat", "acmd", "fsastat", "fs", "fttstat",
             "ft", "dfocus", "dtilt", "fttgoto"
+        ]
+
+        self.telcomlist = [
+                'getall', 'getra','getdec', 'getha', 'getel', 'getaz', 'getsecz',
+                'telra', 'teldec', 'telstow', 'telelaz', 'telstop', 'teltrack'
         ]
 
         self.adclist = [
@@ -98,7 +104,7 @@ class kspecicsclass:
         telcomIP = kspecinfo['TCS']['TelcomIP']
         telcomPort = kspecinfo['TCS']['TelcomPort']
 
-        telcom_client = TCPClient(telcomIP, telcomPort)
+#        telcom_client = TCPClient(telcomIP, telcomPort)
 
         try:
             loop = asyncio.get_event_loop()
@@ -127,7 +133,10 @@ class kspecicsclass:
                 messagetcs='KSPEC>TC '+message
 
                 if cmd[0] in self.tcslist:
-                    self.transport.sendto(messagetcs.encode())  # Send message to server
+                    self.transport.sendto(messagetcs.encode())  # Send TCS message to TCS UDP server
+
+                elif cmd[0] in self.telcomlist:
+                    await handle_telcom(message,telcom_client)
 
                 elif cmd[0] in self.adclist:
                     await handle_adc(message,ICSclient)
@@ -184,6 +193,8 @@ class kspecicsclass:
                 inst = dict_data['inst']
                 print(f'{inst} process status :', dict_data['process'])
                 processes.update_process(inst, dict_data['process'])
+                if dict_data['process'] == 'Done':
+                    ICS_client.stop_event.set()
 
                 saveflag = dict_data["savedata"]
                 if saveflag == "False":

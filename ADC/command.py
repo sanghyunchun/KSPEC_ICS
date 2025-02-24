@@ -198,9 +198,7 @@ async def handle_adcadjust(ADC_server, adc_action, ra, dec):
     try:
         ini_zdist = calculate_zenith_distance(ra, dec)
         logger = AdcLogger(__file__)
-        print('ssss')
         calculator = ADCCalc(logger)
-        print('tttt')
         ini_count = calculator.degree_to_count(calculator.calc_from_za(ini_zdist))
         delcount = ini_count
         prev_count=ini_count
@@ -219,7 +217,7 @@ async def handle_adcadjust(ADC_server, adc_action, ra, dec):
             comment=f'{comment1} ADC lens rotated {motor_1}, {motor_2} counts successfully.'
             reply_data=mkmsg.adcmsg()
             reply_data.update(result)
-            reply_data.update(message=comment,process='In process')
+            reply_data.update(message=comment,process='ING')
 
             rsp=json.dumps(reply_data)
             print('\033[32m'+'[ADC]', comment+'\033[0m')
