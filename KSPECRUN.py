@@ -79,8 +79,14 @@ class KSPECRunner:
             try:
                 response = await self.ICS_client.receive_message("ICS")
                 response_data = json.loads(response)
-#                print(response_data)
-                print('\033[94m' + '[ICS] received: ', response_data['message'] + '\n\033[0m')
+                message=response_data.get('message','No message')
+ #               print(response_data)
+
+                if isinstance(message,dict):
+                    message = json.dumps(message, indent=2)
+                    print(f'\033[94m[ICS] received: {message}\n\033[0m')
+                else:
+                    print('\033[94m' + '[ICS] received: ', response_data['message'] + '\n\033[0m')
 
                 queue_map = {"GFA": self.GFA_response_queue, "ADC": self.ADC_response_queue}
                 if response_data['inst'] in queue_map and response_data['process'] == 'ING':
