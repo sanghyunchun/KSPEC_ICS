@@ -46,7 +46,7 @@ class KSPECRunner:
             "ft", "dfocus", "dtilt", "fttgoto"],
 
             "telcom": ["getall", "getra", "getdec", "getha", "getel", "getaz", "getsecz", "mvstow", "mvelaz", "mvstop", "mvra", "mvdec", "track"],
-            "script": ["runcalib", "obsinitial", "autoguide","autoguidestop"]
+            "script": ["runcalib", "obsinitial", "autoguide", "autoguidestop", "runobs"]
             }
     
     def load_config(self):

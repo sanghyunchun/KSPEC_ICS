@@ -66,7 +66,7 @@ async def handle_calib(ICSclient,send_udp_message, send_telcom_command, response
     await handle_lamp('flaton',ICSclient)
     await response_queue.get()
     
-    await handle_spec('getflat 30 1',ICSclient)
+    await handle_spec('getflat 10 10',ICSclient)
     await response_queue.get()
     
     await handle_lamp('flatoff',ICSclient)
@@ -75,7 +75,7 @@ async def handle_calib(ICSclient,send_udp_message, send_telcom_command, response
     await handle_lamp('arcon',ICSclient)
     await response_queue.get()
     
-    await handle_spec('getarc 30 1',ICSclient)
+    await handle_spec('getarc 10 10',ICSclient)
     await response_queue.get()
     
     await handle_lamp('arcoff',ICSclient)
@@ -120,16 +120,15 @@ async def autoguidestop(ICSclient):
         printing("No Autoguiding task is currently running.")
 
 async def run_obs(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue):
-    filename=input('Please insert Observation sequence file (ex. ASPECS_obs_250217.txt): ')
-    script_task = asyncio.create_task(handle_obs(ICSclient,transport,filename))
-    script_task = None
+    global script_task
+    script_task = asyncio.create_task(handle_obs(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue))
 
 async def handle_obs(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue):
+    filename=input('\nPlease insert Observation sequence file (ex. ASPECS_obs_250217.txt): ')
     sciobs=sciobscli()
     wild=filename.split('_')
     sciobs.project=wild[0]
     sciobs.obsdate=wild[-1].split('.')[0]
-    
     print('\n')
     printing(f'Project Name: {sciobs.project}')
     printing(f'Observation Date: {sciobs.obsdate}')
@@ -152,41 +151,45 @@ async def handle_obs(ICSclient,send_udp_message, send_telcom_command, response_q
         else:
             print('Tile ID was not selected.')
 
-    sciobs=sciobscli()
-    wild=filename.split('_')
-    sciobs.project=wild[0]
-    sciobs.obsdate=wild[-1].split('.')[0]
-
-#    sciobs.loadtile(select_tile)
     tilemsg,guidemsg,objmsg,motionmsg1,motionmsg2=sciobs.loadtile(select_tile)
-    ICSclient.stop_event = asyncio.Event()
-    await ICSclient.send_message("GFA", guidemsg)
-    await ICSclient.stop_event.wait()
-    ICSclient.stop_event = asyncio.Event()
-    await ICSclient.send_message("MTL", objmsg)
-    await ICSclient.stop_event.wait()
-    ICSclient.stop_event = asyncio.Event()
-    await ICSclient.send_message("FBP", objmsg)
-    await ICSclient.stop_event.wait()
-    ICSclient.stop_event = asyncio.Event()
-    await ICSclient.send_message("FBP", motionmsg1)
-    await ICSclient.stop_event.wait()
-    ICSclient.stop_event = asyncio.Event()
-    await ICSclient.send_message("FBP", motionmsg2)
-    await ICSclient.stop_event.wait()
 
-#    await asyncio.sleep(1)
+
+    await ICSclient.send_message("GFA", guidemsg)
+
+
+    await ICSclient.send_message("MTL", objmsg)
+
+
+    await ICSclient.send_message("FBP", objmsg)
+
+
+    await ICSclient.send_message("FBP", motionmsg1)
+
+
+    await ICSclient.send_message("FBP", motionmsg2)
+ 
+
+    await asyncio.sleep(1)
     tile_data=json.loads(tilemsg)
     ra,dec=convert_to_sexagesimal(tile_data['ra'],tile_data['dec'])
-    
-    printing(f"ICS sent message to device 'TCS'. message: Slew telescope to {ra}, {dec} ###")
-    message=f'KSPEC>TC tmradec {ra} {dec}'
-    transport.sendto(message.encode())
+#    print(ra,dec)
+    messagetcs = 'KSPEC>TC ' + 'tmradec ' + ra +' '+dec
+#    print(messagetcs)
+    await send_udp_message(messagetcs)
+
+    await asyncio.sleep(1)
+    fff=input("Are you sure that telescope slewing finished? (yes/no): ")
+
+
+
+
+    await run_autoguide(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue)
+
    
 
-    ICSclient.stop_event = asyncio.Event()
-    await handle_gfa('gfaguide',ICSclient)
-    await ICSclient.stop_event.wait()
+#    ICSclient.stop_event = asyncio.Event()
+#    await handle_gfa('gfaguide',ICSclient)
+#    await ICSclient.stop_event.wait()
 
 #    print(f'Telescope is slewing to {ra}, {dec}...')
 #    await asyncio.sleep(15)
