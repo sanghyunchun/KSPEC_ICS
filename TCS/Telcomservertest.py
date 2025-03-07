@@ -17,7 +17,13 @@ class AsyncTCPServer:
                     break
                 message = data.decode()
                 print(f"Received from {addr}: {message}")
-                answer='command transfer good'
+                cmd=message.split(" ")
+
+                if cmd[4] == 'RA':
+                    answer='310.4567'
+                elif cmd[4] == 'DEC':
+                    answer='-31.4455'
+
                 writer.write(answer.encode())
                 await writer.drain()
         except Exception as e:

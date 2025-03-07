@@ -1,0 +1,4 @@
+2025-02-26 09:49:26 [INFO] Lookup table found: /media/shyunc/DATA/KSpec/KSPEC_ICS/ADC/Simul/kspec_adc_controller/src/etc/ADC_lookup.csv
+2025-02-26 09:49:26 [INFO] Interpolation function using pchip method created.
+2025-02-26 09:49:33 [INFO] Retrieving status for motor 0.
+2025-02-26 09:49:33 [INFO] Motor 0 status: $$$$$

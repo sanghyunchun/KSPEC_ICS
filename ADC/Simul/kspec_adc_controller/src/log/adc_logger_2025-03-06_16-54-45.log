@@ -1,0 +1,8 @@
+2025-03-06 16:54:45 [INFO] Lookup table found: /media/shyunc/DATA/KSpec/KSPEC_ICS/ADC/Simul/kspec_adc_controller/src/etc/ADC_lookup.csv
+2025-03-06 16:54:45 [INFO] Interpolation function using pchip method created.
+2025-03-06 16:55:26 [INFO] Starting homing operation.
+2025-03-06 16:55:36 [INFO] Homing completed successfully.
+2025-03-06 16:55:36 [INFO] Starting zeroing operation with velocity 1 RPM.
+2025-03-06 16:55:46 [INFO] Zeroing operation completed successfully.
+2025-03-06 16:55:46 [INFO] Retrieving status for motor 0.
+2025-03-06 16:55:46 [INFO] Motor 0 status: $$$$$

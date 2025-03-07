@@ -9,10 +9,10 @@ import os
 import asyncio
 from typing import Union, List, Dict, Any, Optional
 
-from .gfa_logger import GFALogger
-from .gfa_controller import GFAController
-from .gfa_astrometry import GFAAstrometry
-from .gfa_guider import GFAGuider
+from gfa_logger import GFALogger
+from gfa_controller import GFAController
+from gfa_astrometry import GFAAstrometry
+from gfa_guider import GFAGuider
 
 ###############################################################################
 # Global Config Paths
@@ -110,13 +110,9 @@ class GFAActions:
             env = create_environment()  # Your existing environment factory
         self.env = env
 
-    def _generate_response(
-        self, 
-        status: str, 
-        message: str
-    ) -> Dict[str, Any]:
+    def _generate_response(self, status: str, message: str, **kwargs) -> dict:
         """
-        Generate a standardized response dictionary.
+        Generate a response dictionary.
 
         Parameters
         ----------
@@ -124,16 +120,18 @@ class GFAActions:
             Status of the operation ('success' or 'error').
         message : str
             Message describing the operation result.
+        **kwargs : dict
+            Additional data to include in the response.
 
         Returns
         -------
         dict
             A dictionary representing the response.
         """
-        return {
-            "status": status,
-            "message": message,
-        }
+        # Ensure 'status' and 'message' are included in the response, and optionally update with additional data
+        response = {"status": status, "message": message}
+        response.update(kwargs)
+        return response
 
     async def grab(
         self, 
@@ -224,7 +222,7 @@ class GFAActions:
                  f"(CamNum: {CamNum}, ExpTime: {ExpTime}, Binning: {Binning})")
             )
 
-    async def guiding(self) -> Dict[str, Any]:
+    async def guiding(self, ExpTime:float = 1.0) -> Dict[str, Any]:
         """
         The main guiding loop that grabs images, processes them with astrometry,
         and calculates offsets.
@@ -235,14 +233,16 @@ class GFAActions:
             Dictionary response indicating success or error and relevant messages.
         """
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        grab_save_path = os.path.join(base_dir, "img", "raw")
+        raw_save_path = os.path.join(base_dir, "img", "raw")
 
         try:
             self.env.logger.info("Guiding starts...")
 
             self.env.logger.info("Step #1: Grab an image (uncomment if needed).")
             # Example call:
-            # await self.grab(CamNum=0, ExpTime=0.1, Binning=4)
+            # await self.env.controller.grab(
+            #            CamNum=0, ExpTime=1, Binning=4, output_dir=raw_save_path
+            #        )
 
             self.env.logger.info("Step #2: Astrometry...")
             # If preproc() is synchronous, calling directly is fine
@@ -258,7 +258,8 @@ class GFAActions:
             return self._generate_response(
                 "success",
                 (f"Guiding completed successfully. "
-                 f"Offsets: fdx={fdx}, fdy={fdy}, FWHM={fwhm:.5f} arcsec")
+                 f"Offsets: fdx={fdx}, fdy={fdy}, FWHM={fwhm:.5f} arcsec"),
+                fdx=fdx, fdy=fdy, fwhm=fwhm
             )
         except Exception as e:
             self.env.logger.error(f"Error occurred during guiding: {str(e)}")
@@ -279,13 +280,9 @@ class GFAActions:
         try:
             self.env.logger.info("Checking status of all cameras.")
             status_info = self.env.controller.status()
-            # status_info is assumed to be an iterable of camera statuses
-            status_message = "\n".join(
-                [f"Camera {i+1}: {info}" for i, info in enumerate(status_info)]
-            )
             return self._generate_response(
                 "success",
-                f"Camera status retrieved successfully:\n{status_message}"
+                status_info
             )
         except Exception as e:
             self.env.logger.error(f"Error occurred while checking status: {str(e)}")

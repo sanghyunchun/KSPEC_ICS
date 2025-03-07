@@ -56,13 +56,17 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
                 printing("Previous guiding task cancelled.")
 
         # Start a new adcadjust task
-        guiding_task = asyncio.create_task(handle_guiding(GFA_server, gfa_actions))
         printing("New guiding task started.")
+        guiding_task = asyncio.create_task(handle_guiding(GFA_server, gfa_actions))
 
     elif func == 'gfaguidestop':
         if guiding_task and not guiding_task.done():
             printing("Stopping guiding task...")
             guiding_task.cancel()
+            reply_data=mkmsg.gfamsg()
+            reply_data.update(process='Done',message='Autoguide Stop')
+            rsp=json.dumps(reply_data)
+            await GFA_server.send_message('ICS',rsp)
             try:
                 await guiding_task
             except asyncio.CancelledError:
@@ -149,7 +153,7 @@ async def handle_guiding(GFA_server, gfa_actions):
             result = await gfa_actions.guiding()
             reply_data = mkmsg.gfamsg()
             reply_data.update(result)
-            reply_data.update(process='In process')
+            reply_data.update(process='ING')
             rsp=json.dumps(reply_data)
             await GFA_server.send_message('ICS',rsp)
 

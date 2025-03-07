@@ -56,7 +56,7 @@ class AMQclass():
                 routing_key=_routing_key,
             )
         dict_data=json.loads(message)
-        print(f"{self.im} sent message to device '{_routing_key}'. message: {dict_data['message']}")
+        print(f"\n\033[32m[{self.im}] sent message to device '{_routing_key}'. message: {dict_data['message']}\033[0m")
 
     async def define_consumer(self):
         if self.queue is None:

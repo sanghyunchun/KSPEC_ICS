@@ -1,8 +1,8 @@
 import json
 
 def common():
-    dict_data={'inst': 'None', 'func' : 'None', 'savedata': 'False', 'filename': 'None', 'process': 'in process', 'message': 'None',
-            'nextstep': 'None','status': 'fail'}
+    dict_data={'inst': 'None', 'func' : 'None', 'savedata': 'False', 'filename': 'None', 'process': 'ING', 'message': 'None',
+            'script': 'False','status': 'fail'}
     return dict_data
 
 def gfamsg():

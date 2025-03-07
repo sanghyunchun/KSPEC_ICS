@@ -7,6 +7,8 @@ import threading
 import numpy as np
 import pandas as pd
 import json
+from astropy.coordinates import Angle
+import astropy.units as u
 
 """
 Provide Sky position (RA, DEC) of Tile and target position to TCS computer,
@@ -41,7 +43,6 @@ class sciobscli:
         return data
 
     def obsstatus(self):
-#        file_path='./SCIOBS/observation/obs_info.json'
         with open(self.obsinfofile,'r') as f:
             obs_info=json.load(f)
 
@@ -71,10 +72,10 @@ class sciobscli:
         self.ra=tilepos_list[stile_id-1,1]
         self.dec=tilepos_list[stile_id-1,2]
 
-        message='Position of Tile is loaded'
+        message='Load Position of Tile'
 
         dict_data={"inst" : 'TCS', "func" : 'loadtile', 'tid' : stile_id, 
-                'ra' : self.ra, 'dec' : self.dec, 'message' : message}
+                'ra' : self.ra, 'dec' : self.dec, 'message' : message, 'process': 'Done'}
         tiledata=json.dumps(dict_data)
         return tiledata
 
@@ -93,10 +94,10 @@ class sciobscli:
         obj_dec=dec[idx]
         obj_class=clss[idx]
 
-        message='Objects file is loaded'
+        message='Load Target Objects of Tile'
 
         dict_data = { "tile_id":obj_tid[0].tolist(), "inst" : 'SCIOBS', "func" : 'loadobj', "ra":obj_ra.tolist(), "dec":obj_dec.tolist(),"xp":obj_xp.tolist(),
-                "yp":obj_yp.tolist(),"class":obj_class.tolist(),'message':message}
+                "yp":obj_yp.tolist(),"class":obj_class.tolist(),'message':message, 'process': 'Done'}
 
         objdata=json.dumps(dict_data)
         return objdata
@@ -116,10 +117,10 @@ class sciobscli:
         guide_xp=xp[idx]
         guide_yp=yp[idx]
 
-        message='Guide star of tile is loaded'
+        message='Load Guide star of Tile'
 
         dict_data = {"inst" : 'GFA', "func" : 'loadguide', "chipnum" : guide_chipid.tolist(),'ra': guide_ra.tolist(),'dec' : guide_dec.tolist(),'mag':
-                guide_mag.tolist(),'xp':guide_xp.tolist(),'yp':guide_yp.tolist(),'message':message}
+                guide_mag.tolist(),'xp':guide_xp.tolist(),'yp':guide_yp.tolist(),'message':message, 'process': 'Done'}
         guidedata=json.dumps(dict_data)
         return guidedata
 
@@ -138,13 +139,13 @@ class sciobscli:
             motion_beta[Fibnum[i]]=beta[:,i].tolist()
 
         a_motion=mkmsg.fbpmsg()
-        comment=f'Motion plan of alpha arm for Tile ID {self.tile_id} load.'
-        a_motion.update(func='loadmotion',message=comment,arm='alpha',tileid=self.tile_id)
+        comment=f'Load Motion plan of alpha arm for Tile ID {self.tile_id}.'
+        a_motion.update(func='loadmotion',message=comment,arm='alpha',tileid=self.tile_id,process='Done')
         a_motion.update(motion_alpha)
 
         b_motion=mkmsg.fbpmsg()
-        comment=f'Motion plan of beta arm for Tile ID {self.tile_id} load.'
-        b_motion.update(func='loadmotion',message=comment,arm='beta',tileid=self.tile_id)
+        comment=f'Load Motion plan of beta arm for Tile ID {self.tile_id}.'
+        b_motion.update(func='loadmotion',message=comment,arm='beta',tileid=self.tile_id,process='Done')
         b_motion.update(motion_beta)
 
         motionmsg1=json.dumps(a_motion)
@@ -153,8 +154,6 @@ class sciobscli:
 
 
     def loadtile(self,tile_id):
-#        file_path='./SCIOBS/observation/obs_info.json'
-
         self.tile_id=tile_id
         tileinfo = self.load_tilepos()
         TCSmsg = tileinfo
