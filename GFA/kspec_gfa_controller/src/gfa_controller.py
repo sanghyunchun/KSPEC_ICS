@@ -18,7 +18,7 @@ import pypylon.pylon as py
 import yaml
 from pypylon import genicam
 
-from .gfa_img import GFAImage
+from gfa_img import GFAImage
 
 __all__ = ["gfa_controller"]
 
@@ -178,30 +178,51 @@ class GFAController:
         self.logger.debug(f"Camera {CamNum} IP address: {Cam_IpAddress}")
         ping_test = os.system("ping -c 3 -w 1 " + Cam_IpAddress)
         self.logger.info(f"Pinging camera {CamNum} at {Cam_IpAddress}, result: {ping_test}")
-
+        
     def status(self):
         """
         Checks and logs the connection status of all cameras.
 
-        Iterates over a predefined range of cameras, retrieves each camera's IP address,
-        and checks its connection status by attempting to open and close the camera.
+        Returns
+        -------
+        dict
+            A dictionary containing True/False status for each camera.
         """
         self.logger.info("Checking status of all cameras")
+        camera_status_dict = {}  # 카메라 상태 정보를 저장할 딕셔너리
+
         for num in range(6):
             index = num + 1
+            cam_key = f"Cam{index}"
+            
             try:
-                Cam_IpAddress = self.cameras_info[f"Cam{index}"]["IpAddress"]
+                Cam_IpAddress = self.cameras_info[cam_key]["IpAddress"]
                 self.logger.debug(f"Camera {index} IP address: {Cam_IpAddress}")
 
                 cam_info = py.DeviceInfo()
                 cam_info.SetIpAddress(Cam_IpAddress)
                 camera = py.InstantCamera(self.tlf.CreateDevice(cam_info))
                 camera.Open()
-                self.logger.info(f"Camera {index} is online and in standby mode.")
+
+                # Standby 모드로 간주하는 기준 (필요시 조건 변경 가능)
+                is_standby = camera.IsOpen()  # 카메라가 열려 있으면 Standby로 간주
+                camera_status_dict[cam_key] = is_standby  # 상태 저장
+                
+                if is_standby:
+                    self.logger.info(f"Camera {index} is online and in standby mode.")
+                else:
+                    self.logger.warning(f"Camera {index} is online but not in standby mode.")
+
                 camera.Close()
 
             except Exception as e:
-                self.logger.error(f"Error with camera {index} ({Cam_IpAddress}): {e}")
+                error_message = f"Error with Camera {index} ({Cam_IpAddress}): {e}"
+                self.logger.error(error_message)
+                camera_status_dict[cam_key] = False  # 오류 발생 시 False 저장
+
+        return camera_status_dict  # 최종 결과 반환
+
+
 
     def cam_params(self, CamNum: int):
         """
@@ -257,7 +278,7 @@ class GFAController:
             try:
                 value = getattr(camera, attribute).GetValue()
                 # Changed from info to debug for verbose device data
-                self.logger.debug(f"{label} : {value}")
+                self.logger.info(f"{label} : {value}")
             except Exception as e:
                 self.logger.error(f"AccessException for {label}: {e}")
 
@@ -295,6 +316,11 @@ class GFAController:
         camera.ExposureTime.SetValue(ExpTime_microsec)
         self.logger.debug(f"Set exposure time: {ExpTime_microsec} μs")
 
+        # Set PixelFormat
+        set_PixelFormat = "Mono12"
+        camera.PixelFormat.SetValue(set_PixelFormat)
+        self.logger.debug(f"Set PixelFormat {set_PixelFormat}")
+
         # Set Binning
         camera.BinningHorizontal.SetValue(Bininng)
         camera.BinningVertical.SetValue(Bininng)
@@ -305,6 +331,7 @@ class GFAController:
             self.grab_timeout = 10000
             res = camera.GrabOne(self.grab_timeout)
             img = res.GetArray()
+            self.logger.debug(f"Max pixel value of grabbed image (Cam {CamNum}): {img.max()}")
             filename = f"{formatted}_grabone_cam{CamNum}.fits"
             self.img_class.save_fits(image_array=img,
                                      filename=filename,
@@ -313,7 +340,9 @@ class GFAController:
 
             fig = plt.figure()
             plt.imshow(img)
-            fig.savefig(f"/home/kspec/mingyeong/png_save/{filename}.png", dpi=300, bbox_inches="tight")
+            # 파일 확장자 제거
+            filename_clean = os.path.splitext(filename)[0]
+            fig.savefig(f"/home/kspec/mingyeong/png_save/{filename_clean}.png", dpi=300, bbox_inches="tight")
             plt.close(fig)
 
         except genicam.TimeoutException:
@@ -411,7 +440,9 @@ class GFAController:
 
         # Configure camera
         ExpTime_microsec = ExpTime * 1_000_000
+        set_PixelFormat = "Mono12"
         await loop.run_in_executor(None, camera.ExposureTime.SetValue, ExpTime_microsec)
+        await loop.run_in_executor(None, camera.PixelFormat.SetValue, set_PixelFormat)
         await loop.run_in_executor(None, camera.BinningHorizontal.SetValue, Bininng)
         await loop.run_in_executor(None, camera.BinningVertical.SetValue, Bininng)
 
@@ -421,6 +452,7 @@ class GFAController:
             result = await loop.run_in_executor(None, camera.GrabOne, self.grab_timeout)
             img = result.GetArray()
             self.logger.info(f"Image grabbed from camera: {serial_number}")
+            self.logger.debug(f"Max pixel value of grabbed image (Cam {device}): {img.max()}")
 
             filename = f"{formatted}_grab_cam_{serial_number}.fits"
             png_filename = f"{formatted}_grab_cam_{serial_number}.png"

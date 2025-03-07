@@ -93,3 +93,14 @@
 - **Image Save Path**:
   - Updated image save path in modules.
   - Verified changes through end-to-end tests.
+
+## Version 1.1.0
+- **Date**: 2025-02-25
+- **Changes to Camera Status Functionality**:
+  - Refactored `status()` method to return camera standby status as `True` or `False` instead of logging-only.
+  - Ensured cameras in standby mode return `True`, while connection failures or non-standby states return `False`.
+- **Logging & Error Handling**:
+  - Improved logging to include camera IP addresses and error messages for better debugging.
+- **Code Optimization**:
+  - Used a dictionary to store camera statuses (`{"Cam1": True, "Cam2": False, ...}`) for improved accessibility.
+  - Verified changes with runtime tests to ensure expected behavior.

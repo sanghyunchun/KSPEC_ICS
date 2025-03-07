@@ -118,7 +118,7 @@ class GFAAstrometry:
         filepre = glob.glob(os.path.join(self.dir_path, '*.fits'))
         self.raws = [os.path.basename(file) for file in filepre]
         self.raws = sorted(self.raws)
-        self.logger.info(f"Loaded {len(self.raws)} FITS files.")
+        self.logger.debug(f"Loaded {len(self.raws)} FITS files.")
 
     def process_file(self, flname: str):
         """
