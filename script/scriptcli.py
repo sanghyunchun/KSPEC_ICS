@@ -137,11 +137,18 @@ async def handle_obs(ICSclient,send_udp_message, send_telcom_command, response_q
     fs.close()
 
     obsplanpath=kspecinfo['SCIOBS']['obsplanpath']
-    data=pd.read_csv(obsplanpath+filename)
+    with open(obsplanpath+filename,'r') as f:
+        header = f.readline().strip().split()
+
+    data=np.loadtxt(obsplanpath+filename,skiprows=1,dtype=str)
+
+#    data=pd.read_csv(obsplanpath+filename)
 
     print('\n')
     print('### Load tile information ###')
-    print(data)
+    print("\t".join(header))
+    for row in data:
+        print("\t".join(row))
 
     while True:
         select_tile=input('\nPlease select Tile ID above you want to runscript.: ')
@@ -178,10 +185,14 @@ async def handle_obs(ICSclient,send_udp_message, send_telcom_command, response_q
     await send_udp_message(messagetcs)
 
     await asyncio.sleep(1)
-    fff=input("Are you sure that telescope slewing finished? (yes/no): ")
-
-
-
+    print('\n')
+    while True:
+        user_input=input("Are you sure that telescope slewing finished? (yes/no): ")
+        if user_input.lower() == "yes":
+            print('Continue next process.....')
+            break
+        else:
+            print("Wait until slewing finished and then insert 'yes'.")
 
     await run_autoguide(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue)
 
