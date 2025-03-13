@@ -1,10 +1,11 @@
 import numpy as np
 from photutils.detection import find_peaks
 from astropy.io import fits
-from .utils import com
+from kspec_metrology.analysis.utils import com
+from kspec_metrology.logging.log import get_logger
 
 def findpeak(npeaks
-            , data_dir='./MTL/data/'
+            , data_dir='./data/'
             , nexposure=1
             , threshold=5e3
             , boxsize=40
@@ -12,6 +13,7 @@ def findpeak(npeaks
             , SaveFiberImage=False
             , mode="Raw"
             , x=None, y=None):
+    log = get_logger()
 
     xchip = np.linspace(-5879.5, 5879.5, 11760)*3.76e-3
     ychip = np.linspace(-4420.5, 4420.5, 8842)*3.76e-3
@@ -23,9 +25,15 @@ def findpeak(npeaks
 
 
     #---Find Peaks Using any method---------------------------------------------------------------------------------------------------    
+    log.info("Start finding peaks with %s", mode)
     if mode == "Raw":
         peak_table = find_peaks(im, threshold=threshold, box_size=boxsize, npeaks=npeaks)
         xf, yf = peak_table['x_peak'].data, peak_table['y_peak'].data   
+        log.info(f"Found {xf.size} peaks")
+        if xf.size > npeaks:
+            log.warning("Too many peaks detected")
+        elif xf.size < npeaks:
+            log.warning(f"{npeaks-xf.size} peaks are not detected")
     elif mode=="Predict":
         from kspec_metrology.analysis.utils import transform, focal2camera_coeff
         coeff_temp = np.copy(focal2camera_coeff)

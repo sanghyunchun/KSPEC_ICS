@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.optimize import curve_fit
-from .utils import transform_polynomial, transform, camera2focal_coeff
+from kspec_metrology.analysis.utils import transform_polynomial, transform, camera2focal_coeff
 
 def fitdistortion(x, y, fid_flag
                   , xobs, yobs

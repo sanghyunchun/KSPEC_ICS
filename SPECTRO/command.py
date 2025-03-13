@@ -58,7 +58,7 @@ async def identify_execute(SPEC_server,cmd):
     if func == 'getobj':
         exptime=dict_data['time']
         numframe=dict_data['numframe']
-        comment=get_obj(float(exptime),int(numframe)) ### Position of all gfa camera exposure function
+        comment = await get_obj(SPEC_server,float(exptime),int(numframe)) ### Position of all gfa camera exposure function
         reply_data=mkmsg.specmsg()
         reply_data.update(message=comment,process='Done')
         rsp=json.dumps(reply_data)
@@ -85,10 +85,41 @@ def illu_off():
     msg='Back illumination light off.'
     return msg
 
-def get_obj(exptime,nframe):
-    time.sleep(exptime)
-    msg='Exposure finished'
+
+async def get_obj(SPEC_server, exptime, nframe):
+    msg = f'KSPEC starts {nframe} exposures with {exptime} seconds'
+    print('\033[32m' + '[SPEC]', msg + '\033[0m')
+    reply_data=mkmsg.specmsg()
+    reply_data.update(message=msg,process='ING')
+    rsp=json.dumps(reply_data)
+    await SPEC_server.send_message('ICS', rsp)
+
+    for i in range(nframe):
+        remaining_time = exptime
+        msg = f'KSPEC runs {i+1}/{nframe} exposure with {exptime} seconds'
+        print('\033[32m' + '[SPEC]', msg + '\033[0m')
+        reply_data=mkmsg.specmsg()
+        reply_data.update(message=msg,process='ING')
+        rsp=json.dumps(reply_data)
+        await SPEC_server.send_message('ICS', rsp)
+        while remaining_time > 0:
+            await asyncio.sleep(min(60, remaining_time))  # 1분 단위로 대기
+            remaining_time -= 60
+            msg = f'{i+1}/{nframe} exposure - Remaining exposure time: {remaining_time} seconds.'
+            print('\033[32m' + '[SPEC]', msg + '\033[0m')
+            reply_data=mkmsg.specmsg()
+            reply_data.update(message=msg,process='ING')
+            rsp=json.dumps(reply_data)
+            await SPEC_server.send_message('ICS', rsp)
+        msg=f'{i+1}/{nframe} exposure finished'
+        reply_data=mkmsg.specmsg()
+        reply_data.update(message=msg,process='ING')
+        rsp=json.dumps(reply_data)
+        await SPEC_server.send_message('ICS', rsp)
+
+    msg = 'All Exposures finished'
     return msg
+
 
 def spec_status():
     msg='Spectrograph Status is below. Spectrograph is ready.'

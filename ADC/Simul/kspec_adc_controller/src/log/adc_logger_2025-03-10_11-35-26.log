@@ -1,0 +1,2 @@
+2025-03-10 11:35:26 [INFO] Lookup table found: /media/shyunc/DATA/KSpec/KSPEC_ICS/ADC/Simul/kspec_adc_controller/src/etc/ADC_lookup.csv
+2025-03-10 11:35:26 [INFO] Interpolation function using pchip method created.

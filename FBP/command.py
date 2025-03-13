@@ -50,13 +50,13 @@ async def identify_execute(FBP_server,cmd):
         await FBP_server.send_message('ICS',rsp)
 
     if func == 'fbpmove':
-        reply_data=mkmsg.fbpmsg()
-        comment = 'Fiber positioners start to move'
-        reply_data.update(message=comment,process='Done')
-        rsp=json.dumps(reply_data)
-        await FBP_server.send_message('ICS',rsp)
+#        reply_data=mkmsg.fbpmsg()
+#        comment = 'Fiber positioners start to move'
+#        reply_data.update(message=comment,process='Done')
+#        rsp=json.dumps(reply_data)
+#        await FBP_server.send_message('ICS',rsp)
 
-        result=fbp_move()     ### Position of fiber postioner movement function
+        comment=fbp_move()     ### Position of fiber postioner movement function
         reply_data=mkmsg.fbpmsg()
         reply_data.update(message=comment,process='Done')
         rsp=json.dumps(reply_data)
@@ -102,15 +102,19 @@ def fbp_zero():
     return rspmsg
 
 def fbp_move():
-    ra,dec,xp,yp=np.loadtxt(fbpfilepath+'object.radec',dtype=float,unpack=True,usecols=(0,1,2,3))
-    time.sleep(5)
+    with open(fbpfilepath+'motion_alpha.info','r') as fs:
+        alpha=json.load(fs)
+    with open(fbpfilepath+'motion_alpha.info','r') as fs:
+        alpha=json.load(fs)
+
+    time.sleep(60)
     rspmsg=f'Fiber positioners movement finished.'
     return rspmsg
 
 def fbp_offset():
-    ra,dec,xp,yp=np.loadtxt(fbpfilepath+'object.radec',dtype=float,unpack=True,usecols=(0,1,2,3))
-    time.sleep(5)
-    rspmsg='Fiber positioners offset finished.'
+#    ra,dec,xp,yp=np.loadtxt(fbpfilepath+'object.radec',dtype=float,unpack=True,usecols=(0,1,2,3))
+    time.sleep(10)
+    rspmsg='Fiber positioners offset movement finished.'
     return rspmsg
 
 def fbp_status():

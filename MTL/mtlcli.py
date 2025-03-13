@@ -16,7 +16,7 @@ def create_mtl_command(func, **kwargs):
 def mtl_status(): return create_mtl_command('mtlstatus',message='Show Metrology status')
 def mtl_cal(): return create_mtl_command('mtlcal',message='Calculate offset between Target and Fiber position')
 def mtl_exp(exptime): 
-    return create_mtl_command('mtlexp',time=exptime,message='Exposure Metrology camera')
+    return create_mtl_command('mtlexp',time=exptime,message=f'Exposure Metrology camera {exptime} seconds')
 
 
 async def handle_mtl(arg, ICS_client):

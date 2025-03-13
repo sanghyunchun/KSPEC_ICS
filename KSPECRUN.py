@@ -65,12 +65,6 @@ class KSPECRunner:
         """Finds the category of a given command."""
         return next((cat for cat, cmds in self.command_list.items() if cmd in cmds), None)
 
-#    def find_category(self, cmd):
-#        for category, commands in self.command_list.items():
-#            if cmd in commands:
-#                return category
-#        return None
-
     async def wait_for_response(self):
         """
         Waits for responses from the K-SPEC sub-system and distributes then appropriately.
@@ -80,13 +74,13 @@ class KSPECRunner:
                 response = await self.ICS_client.receive_message("ICS")
                 response_data = json.loads(response)
                 message=response_data.get('message','No message')
- #               print(response_data)
+#                print(response_data)
 
                 if isinstance(message,dict):
                     message = json.dumps(message, indent=2)
-                    print(f'\033[94m[ICS] received: {message}\n\033[0m')
+                    print(f'\033[94m[ICS] received: {message}\033[0m', flush=True)
                 else:
-                    print('\033[94m' + '[ICS] received: ', response_data['message'] + '\n\033[0m')
+                    print('\033[94m' + '[ICS] received: ', response_data['message'] + '\033[0m', flush=True)
 
                 queue_map = {"GFA": self.GFA_response_queue, "ADC": self.ADC_response_queue}
                 if response_data['inst'] in queue_map and response_data['process'] == 'ING':
@@ -94,7 +88,7 @@ class KSPECRunner:
                 else:
                     await self.response_queue.put(response_data)
             except Exception as e:
-                print(f"Error in wait_for_response: {e}")
+                print(f"Error in wait_for_response: {e}", flush=True)
 
     async def send_udp_message(self, message):
         """
@@ -107,7 +101,7 @@ class KSPECRunner:
             remote_addr=(self.tcsagentIP, self.tcsagentPort)
         )
 
-        print(f"\033[32m[ICS] sent TCS message to TCS Agent: {message}\033[0m")
+        print(f"\033[32m[ICS] sent TCS message to TCS Agent: {message}\033[0m", flush=True)
         transport.sendto(message.encode())
         transport.close()        
 
@@ -132,7 +126,7 @@ class KSPECRunner:
         if category in handler_map:
             await handler_map[category](message, self.ICS_client)
         else:
-            print(f"Unknown command category: {category}")
+            print(f"Unknown command category: {category}",flush=True)
 
     async def user_input(self):
         """
@@ -140,7 +134,7 @@ class KSPECRunner:
         """
         while self.running:
             try:
-                message = await asyncio.get_event_loop().run_in_executor(None, input, "\nInput command: ")
+                message = await asyncio.get_event_loop().run_in_executor(None, input, "Input command: ")
                 if message.lower() == "quit":
                     print("Exiting user input mode.")
                     self.running = False
@@ -156,13 +150,13 @@ class KSPECRunner:
                         await self.send_udp_message(messagetcs)
                     elif category.lower() == 'telcom':
                         telcom_result = await self.send_telcom_command(message)
-                        print('\033[94m' + '[ICS] received: ', telcom_result.decode() + '\n\033[0m')
+                        print('\033[94m' + '[ICS] received: ', telcom_result.decode() + '\033[0m', flush=True)
                     elif category.lower() == "script":
                         await handle_script(message, self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue, self.GFA_response_queue, self.ADC_response_queue)
                     else:
                         await self.send_command(category, message)
                 else:
-                    print("Invalid command. Please enter a valid command.")
+                    print("Invalid command. Please enter a valid command.\n")
             except Exception as e:
                 print(f"Error in user_input: {e}")
 

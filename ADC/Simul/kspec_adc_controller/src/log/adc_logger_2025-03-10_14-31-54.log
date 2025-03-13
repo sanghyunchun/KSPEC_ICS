@@ -1,0 +1,21 @@
+2025-03-10 14:31:54 [INFO] Lookup table found: /media/shyunc/DATA/KSpec/KSPEC_ICS/ADC/Simul/kspec_adc_controller/src/etc/ADC_lookup.csv
+2025-03-10 14:31:54 [INFO] Interpolation function using pchip method created.
+2025-03-10 14:32:32 [INFO] Calculating from ZA.
+2025-03-10 14:32:32 [ERROR] Input zenith angle 77.55270831228184 is out of bounds (0.0, 60.0)
+2025-03-10 14:32:32 [ERROR] Error calculating from ZA: Input zenith angle 77.55270831228184 is out of bounds.
+2025-03-10 16:29:23 [INFO] Calculating from ZA.
+2025-03-10 16:29:23 [INFO] Calculation successful: -63.208824318832086
+2025-03-10 16:29:23 [INFO] Converting degrees to counts.
+2025-03-10 16:29:23 [INFO] Conversion successful: -2844
+2025-03-10 16:29:38 [INFO] Both motors moved successfully.
+2025-03-10 16:30:38 [INFO] Calculating from ZA.
+2025-03-10 16:30:38 [INFO] Calculation successful: -62.35246145457364
+2025-03-10 16:30:38 [INFO] Converting degrees to counts.
+2025-03-10 16:30:38 [INFO] Conversion successful: -2805
+2025-03-10 16:30:53 [INFO] Both motors moved successfully.
+2025-03-10 16:31:53 [INFO] Calculating from ZA.
+2025-03-10 16:31:53 [INFO] Calculation successful: -61.54527603645922
+2025-03-10 16:31:53 [INFO] Converting degrees to counts.
+2025-03-10 16:31:53 [INFO] Conversion successful: -2769
+2025-03-10 16:32:08 [INFO] Both motors moved successfully.
+2025-03-10 16:32:37 [INFO] Both motors stopped successfully.

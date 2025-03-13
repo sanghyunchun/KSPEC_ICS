@@ -1,7 +1,8 @@
-from .qhyccd import QHY_Camera
+#from kspec_metrology.exposure.qhyccd import QHY_Camera
 import numpy as np
 from astropy.io import fits
-from datetime import datetime
+from pathlib import Path
+import json
 import time
 
 def mtlexp(exptime
@@ -10,8 +11,12 @@ def mtlexp(exptime
            , gain=10
            , offset=30
            , nexposure=1
-           , data_dir='./MTL/data/'):              # Need edit by real observation
+           , data_dir='./MTL/data/'):
     
+    current_file_path = Path(__file__).resolve().parents[3]
+    print(current_file_path)
+
+
 #    qc = QHY_Camera()
 #    qc.sdk.InitQHYCCDResource()
 #    qc.OpenCam()
@@ -28,20 +33,10 @@ def mtlexp(exptime
 #        hdr['offset'] = offset
 #        hdr['texp'] = exptime
 
-#        utc=datatime.utcnow()
-#        surf=utc.strftime("%Y%m%d_%H%M%S")
-#        filename='M'+surf+'.fits'
-
 #        empty_primary = fits.PrimaryHDU(header=hdr, data=im)
-#        empty_primary.writeto(data_dir+filename, overwrite=True)     # Need edit by real observation
+#        empty_primary.writeto(data_dir+f'test{i}.fits', overwrite=True)
 
 #    qc.CamExit()
-
-    time.sleep(10)
-
+    time.sleep(exptime)
     msg=f'Metrology {exptime} seconds exposure finished'
     return msg
-
-
-if __name__ == "__main__":
-    mtlexp(4)

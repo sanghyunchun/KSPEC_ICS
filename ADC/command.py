@@ -108,8 +108,8 @@ async def identify_execute(ADC_server, adc_action, cmd):
             await ADC_server.send_message('ICS', rsp)
 
     elif func == 'adcadjust':
-        ra = float(dict_data['RA'])
-        dec = float(dict_data['DEC'])
+        ra = dict_data['RA']
+        dec = dict_data['DEC']
 
         # Cancel any running task before starting a new one
         if adcadjust_task and not adcadjust_task.done():
@@ -254,7 +254,7 @@ def calculate_zenith_distance(ra_obj, dec_obj):
         float: The zenith distance in degrees.
     """
     location = EarthLocation(lat=-31.27118, lon=149.06256, height=1165*u.m)  # AAO coordinates
-    object_coord = SkyCoord(ra=ra_obj * u.deg, dec=dec_obj * u.deg)
+    object_coord = SkyCoord(ra=ra_obj, dec=dec_obj, unit=(u.hourangle,u.deg))
     current_time = Time.now()
     times = current_time + np.arange(0, 2) * u.minute
     altaz_frame = AltAz(obstime=times, location=location)

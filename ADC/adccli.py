@@ -61,12 +61,12 @@ async def handle_adc(arg, ICS_client):
     # adcadjust command
     elif cmd == 'adcadjust':
         if len(params) != 2:
-            print("Error: 'adcadjust' command need RA an DEC parameters. ex) adcadjust 320.45 -31.34")
+            print("Error: 'adcadjust' command need RA an DEC parameters. ex) adcadjust 20:34:34.55 -31:13:45.67")
             return
         try:
-            ra, dec = float(params[0]), float(params[1])
+            ra, dec = str(params[0]), str(params[1])
         except ValueError:
-            print(f"Error: Parameters of 'adcadjust' should be float. input value: {params}")
+            print(f"Error: Parameters of 'adcadjust' should be string. input value: {params}")
             return
         command_map[cmd] = lambda: adc_adjust(ra, dec)
 

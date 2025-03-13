@@ -521,7 +521,8 @@ class AdcActions:
             self.logger.info(f"Calculation successful: {fn_za_adc}")
             return self._generate_response("success", fn_za_adc)
         except Exception as e:
-            self.logger.error(f"Error calculating from ZA: {str(e)}", exc_info=True)
+        #    self.logger.error(f"Error calculating from ZA: {str(e)}", exc_info=True)
+            self.logger.error(f"Error calculating from ZA: {str(e)}")
             return self._generate_response("error", str(e))
 
 

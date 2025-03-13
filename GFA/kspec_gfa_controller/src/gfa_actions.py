@@ -9,10 +9,10 @@ import os
 import asyncio
 from typing import Union, List, Dict, Any, Optional
 
-from gfa_logger import GFALogger
-from gfa_controller import GFAController
-from gfa_astrometry import GFAAstrometry
-from gfa_guider import GFAGuider
+from .gfa_logger import GFALogger
+from .gfa_controller import GFAController
+from .gfa_astrometry import GFAAstrometry
+from .gfa_guider import GFAGuider
 
 ###############################################################################
 # Global Config Paths

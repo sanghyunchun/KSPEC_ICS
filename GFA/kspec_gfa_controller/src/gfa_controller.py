@@ -18,7 +18,7 @@ import pypylon.pylon as py
 import yaml
 from pypylon import genicam
 
-from gfa_img import GFAImage
+from .gfa_img import GFAImage
 
 __all__ = ["gfa_controller"]
 

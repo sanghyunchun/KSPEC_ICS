@@ -19,9 +19,10 @@ class AMQclass():
         self.futures = {}
         self.stop_event = None
         self.mission = False
+        self.heartbeat_interval = 60
 
     async def connect(self):
-        self.connection = await aio_pika.connect_robust(host=self.ipaddr,login=self.id,password=self.pw)
+        self.connection = await aio_pika.connect_robust(host=self.ipaddr,login=self.id,password=self.pw,heartbeat=self.heartbeat_interval)
         self.channel = await self.connection.channel()
         print('RabbitMQ server connected')
 
@@ -56,7 +57,7 @@ class AMQclass():
                 routing_key=_routing_key,
             )
         dict_data=json.loads(message)
-        print(f"\n\033[32m[{self.im}] sent message to device '{_routing_key}'. message: {dict_data['message']}\033[0m")
+        print(f"\033[32m[{self.im}] sent message to device '{_routing_key}'. message: {dict_data['message']}\033[0m", flush=True)
 
     async def define_consumer(self):
         if self.queue is None:
@@ -68,7 +69,7 @@ class AMQclass():
         async with self.queue.iterator() as qiterator:
             async for message in qiterator:
                 async with message.process():
-                    print(f'{_routing_key} Server received message') #, message.body.decode())
+                    print(f'\n{_routing_key} Server received message') #, message.body.decode())
                     return message.body
 
 #    async def start_guidingloop(self, _routing_key,itmax,function,subserver):    ### For autoguiding

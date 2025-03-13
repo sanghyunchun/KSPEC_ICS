@@ -157,7 +157,7 @@ async def handle_guiding(GFA_server, gfa_actions):
             rsp=json.dumps(reply_data)
             await GFA_server.send_message('ICS',rsp)
 
-            await asyncio.sleep(30)
+            await asyncio.sleep(60)
 
     except asyncio.CancelledError:
         printing("handle_guiding task was cancelled.")

@@ -108,8 +108,8 @@ async def identify_execute(ADC_server, adc_action, cmd):
             await ADC_server.send_message('ICS', rsp)
 
     elif func == 'adcadjust':
-        ra = float(dict_data['RA'])
-        dec = float(dict_data['DEC'])
+        ra = dict_data['RA']
+        dec = dict_data['DEC']
 
         # Cancel any running task before starting a new one
         if adcadjust_task and not adcadjust_task.done():
@@ -196,10 +196,9 @@ async def handle_adcadjust(ADC_server, adc_action, ra, dec):
         Exception: For any unexpected errors during adjustment.
     """
     try:
-        ini_zdist = calculate_zenith_distance(ra, dec)
-        print(f'tttt: {ini_zdist}')
+        ini_zdist = calculate_zenith_distance(ra, dec) 
         result1=adc_action.calc_from_za(ini_zdist)
-        print(result1)
+#        print(result1)
         lensdegree=float(result1['message'])
         print(f'lends degree: {lensdegree}')
         result2 = adc_action.degree_to_count(lensdegree)
@@ -212,14 +211,14 @@ async def handle_adcadjust(ADC_server, adc_action, ra, dec):
             comment=f"ADC is now rotating by {delcount} counts."
             printing(comment)
             reply_data=mkmsg.adcmsg()
-            reply_data.update(message=comment)
+            reply_data.update(message=comment,process='ING')
             rsp=json.dumps(reply_data)
             await ADC_server.send_message('ICS',rsp)
 
             result = await adc_action.move(0,delcount)
             reply_data=mkmsg.adcmsg()
             reply_data.update(result)
-            reply_data.update(process='In process')
+            reply_data.update(process='ING')
             rsp=json.dumps(reply_data)
             print('\033[32m'+'[ADC]', comment+'\033[0m')
             await ADC_server.send_message('ICS',rsp)
@@ -259,13 +258,13 @@ def calculate_zenith_distance(ra_obj, dec_obj):
         float: The zenith distance in degrees.
     """
     location = EarthLocation(lat=-31.27118, lon=149.06256, height=1165*u.m)  # AAO coordinates
-    object_coord = SkyCoord(ra=ra_obj * u.deg, dec=dec_obj * u.deg)
+    object_coord = SkyCoord(ra=ra_obj, dec=dec_obj, unit=(u.hourangle,u.deg))
     current_time = Time.now()
     times = current_time + np.arange(0, 2) * u.minute
     altaz_frame = AltAz(obstime=times, location=location)
     zenith_distance = 90. - object_coord.transform_to(altaz_frame).alt.degree
     ele=object_coord.transform_to(altaz_frame).alt.degree
     print(f'Current UT time: {current_time}')
-    print(f'Mean Zenith distance for 1 min. : {zenith_distance} degree')
+    print(f'Mean Zenith distance for 1 min. : {np.mean(zenith_distance)} degree')
     return np.mean(zenith_distance)
 

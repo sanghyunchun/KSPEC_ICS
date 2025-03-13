@@ -1,7 +1,7 @@
 from ctypes import *
 import numpy as np
 from .libqhy import CONTROL_ID, QHYCCD_SUCCESS
-#from MTL.kspec_metrology.exposure.libqhy import CONTROL_ID, QHYCCD_SUCCESS
+from ..logging.log import get_logger
 import sys
 import os
 
@@ -43,18 +43,21 @@ class QHY_Camera:
         self.sdk.CancelQHYCCDExposingAndReadout.argtypes = [c_void_p]
 
     def OpenCam(self):
+        log = get_logger()
         #self.sdk.InitQHYCCDResource()
         num = self.sdk.ScanQHYCCD()
         if num < 1:
-            print("No Camera Connected")
+            log.critical("No Camera Connected")
             sys.exit()
         type_char_array_32 = c_char*32
         self.CamID = type_char_array_32()
         ret = self.sdk.GetQHYCCDId(c_int(0), self.CamID)
         if ret != QHYCCD_SUCCESS:
+            log.warning("QHYCCD ID not found")
             sys.exit()
         self.Cam = self.sdk.OpenQHYCCD(self.CamID)
         if self.Cam is None:
+            log.critical("QHYCCD not opened")
             sys.exit()
 
         self.chipw = c_double()
@@ -71,19 +74,18 @@ class QHY_Camera:
                                        , byref(self.pixelw), byref(self.pixelh)
                                        , byref(self.bpp))
 
-        print('Camera ID : ', self.CamID)
-        print(self.chipw.value, self.chiph.value)
-        print(self.w.value, self.h.value)
-        print(self.pixelw.value, self.pixelh.value)
-        print(self.bpp.value)
+        log.info(f'Camera ID : {self.CamID}')
+        log.info(f'Chip Width : {self.chipw.value}, Chip Height : {self.chiph.value}')
+        log.info(f'Chip Width : {self.w.value}, Chip Height : {self.h.value}')
+        log.info(f'Pixel size : {self.pixelw.value} x {self.pixelh.value}')
 
         self.ReadModeNumber = c_uint32()
         self.sdk.GetReadModesNumber(self.CamID, byref(self.ReadModeNumber))
-        print('Available Read modes are')
+        #print('Available Read modes are')
         for i in range(0, self.ReadModeNumber.value):
             ReadModeName = create_string_buffer(32)
             self.sdk.GetReadModeName(self.CamID, i, ReadModeName)
-            print(i, ReadModeName.value)
+            log.info(f"Read mode {i} : {ReadModeName.value}")
 
 
     def Initialize(self, ReadMode, USB_TRAFFIC, STREAM_MODE=0):
@@ -111,6 +113,7 @@ class QHY_Camera:
         self.sdk.SetQHYCCDParam(self.Cam, CONTROL_ID.CONTROL_EXPOSURE, c_double(texposure) )
 
     def CamCapture(self):
+        log.info("Exposure")
         self.sdk.GetQHYCCDMemLength(self.Cam)
         self.imgdata = (c_uint16 * self.w.value* self.h.value)()
         self.sdk.ExpQHYCCDSingleFrame(self.Cam)
@@ -122,9 +125,10 @@ class QHY_Camera:
         return np.asarray(self.imgdata)
        
     def CamExit(self):
+        log = get_logger()
         self.sdk.CloseQHYCCD(self.Cam)
         self.sdk.ReleaseQHYCCDResource()
-        print("Camera Closed Successfully!")
+        log.info("Camera Closed Successfully!")
 
     def ERROR(self, retVal):
         if retVal != QHYCCD_SUCCESS:

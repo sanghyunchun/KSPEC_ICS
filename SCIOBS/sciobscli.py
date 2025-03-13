@@ -33,14 +33,18 @@ class sciobscli:
         self.obsinfofile=kspecinfo['SCIOBS']['obsinfofile']
 
 # Read file information 
-    def loadfile(self,filename):
-        self.filename=filename
-        data=pd.read_csv(self.obsplanpath+self.filename)
+#    def loadfile(self,filename):
+#        self.filename=filename
 
-        wild=self.filename.split('_')
-        self.project=wild[0]
-        self.obsdate=wild[-1].split('.')[0]
-        return data
+#        with open(self.obsplanpath+self.filename,'r') as f:
+#            header = f.readline().strip().split()
+
+#        data=np.loadtxt(self.obsplanpath+self.filename,skiprows=1,dtype=str)
+
+#        wild=self.filename.split('_')
+#        self.project=wild[0]
+#        self.obsdate=wild[-1].split('.')[0]
+#        return data
 
     def obsstatus(self):
         with open(self.obsinfofile,'r') as f:

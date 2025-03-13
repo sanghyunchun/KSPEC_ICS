@@ -51,8 +51,10 @@ async def identify_execute(MTL_server,cmd):
         print('\033[32m'+'[MTL]', comment+'\033[0m')
         await MTL_server.send_message('ICS',rsp)
 
+
     if func == 'mtlcal':
-        offx,offy,comment = mtlcal.mtlcal()
+        offx,offy = mtlcal.mtlcal()
+        comment='Metrology analysis finished successfully. Offsets were calculated.'
         reply_data=mkmsg.mtlmsg()
         reply_data.update(savedata='True',filename='MTLresult.json',offsetx=offx.tolist(),offsety=offy.tolist(),message=comment)
         reply_data.update(process='Done')

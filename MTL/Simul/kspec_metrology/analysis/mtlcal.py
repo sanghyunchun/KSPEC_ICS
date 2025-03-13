@@ -2,11 +2,8 @@ import numpy as np
 from .findpeak import findpeak
 from .matchfiber import matchfiber
 from .fitdistortion import fitdistortion
-import time 
 
-
-def mtlcal():
-    data_dir='./MTL/data/'
+def mtlcal(data_dir='./MTL/data/'):
     # Load Fiber positions and Fiducial flag------------------------------------------------
     x, y, fid_flag = np.load(data_dir+"pos.npy")
     fid_flag = fid_flag.astype(bool)
@@ -18,5 +15,4 @@ def mtlcal():
 
     _, _, dx, dy, _ = fitdistortion(x, y, fid_flag, xobs, yobs, imatch, theta_guess)
 
-    comments='Metrology analysis finished. Offsets were calculated.'
-    return dx,dy, comments
+    return dx, dy 

@@ -22,7 +22,7 @@ autoguide_task = None
 
 def printing(message):
     """Utility function for consistent printingging."""
-    print(f"\033[32m[ICS] {message}\033[0m")
+    print(f"\033[32m[ICS] {message}\033[0m",flush=True)
 
 def convert_to_sexagesimal(ra_deg, dec_deg):
     """Converts RA and DEC from degrees to sexagesimal format."""
@@ -50,8 +50,12 @@ async def obs_initial(ICSclient,send_udp_message, send_telcom_command, response_
     await handle_gfa('gfastatus',ICSclient)
     await handle_fbp('fbpstatus',ICSclient)
     await handle_mtl('mtlstatus',ICSclient)
+    await handle_adc('adcconnect',ICSclient)
+    await response_queue.get()
     await handle_adc('adchome',ICSclient)
+    await response_queue.get()
     await handle_adc('adczero',ICSclient)
+    await response_queue.get()
     await handle_adc('adcstatus',ICSclient)
     await handle_spec('specstatus',ICSclient)
 
@@ -124,12 +128,13 @@ async def run_obs(ICSclient,send_udp_message, send_telcom_command, response_queu
     script_task = asyncio.create_task(handle_obs(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue))
 
 async def handle_obs(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue):
+    printing('###### Observation Script Start!!! ######')
     filename=input('\nPlease insert Observation sequence file (ex. ASPECS_obs_250217.txt): ')
     sciobs=sciobscli()
     wild=filename.split('_')
     sciobs.project=wild[0]
     sciobs.obsdate=wild[-1].split('.')[0]
-    print('\n')
+
     printing(f'Project Name: {sciobs.project}')
     printing(f'Observation Date: {sciobs.obsdate}')
     with open('./Lib/KSPEC.ini','r') as fs:
@@ -142,50 +147,63 @@ async def handle_obs(ICSclient,send_udp_message, send_telcom_command, response_q
 
     data=np.loadtxt(obsplanpath+filename,skiprows=1,dtype=str)
 
-#    data=pd.read_csv(obsplanpath+filename)
-
-    print('\n')
     print('### Load tile information ###')
     print("\t".join(header))
     for row in data:
-        print("\t".join(row))
+        print("\t".join(row), flush=True)
 
+    tile_ids = set(row[0] for row in data)
     while True:
         select_tile=input('\nPlease select Tile ID above you want to runscript.: ')
-        if select_tile.strip():
+        if select_tile.strip() in tile_ids:
             printing(f'Tile ID {select_tile} is selected from observation plan.')
+            for row in data:
+                if row[0] == select_tile:
+                    print(row)
+                    obs_num=row[2]
+                    print(f'Observation number of exposure: {obs_num}')
             break
         else:
-            print('Tile ID was not selected.')
+            print(f'Tile ID {select_tile} was not found. Please enter a valid ID.')
 
     tilemsg,guidemsg,objmsg,motionmsg1,motionmsg2=sciobs.loadtile(select_tile)
-
-
-    await ICSclient.send_message("GFA", guidemsg)
-
-
-    await ICSclient.send_message("MTL", objmsg)
-
-
-    await ICSclient.send_message("FBP", objmsg)
-
-
-    await ICSclient.send_message("FBP", motionmsg1)
-
-
-    await ICSclient.send_message("FBP", motionmsg2)
- 
-
-    await asyncio.sleep(1)
     tile_data=json.loads(tilemsg)
     ra,dec=convert_to_sexagesimal(tile_data['ra'],tile_data['dec'])
-#    print(ra,dec)
+
+    printing(f'RA and DEC of Tile ID {select_tile}: {ra} {dec}')
+
+    await ICSclient.send_message("GFA", guidemsg)
+    await response_queue.get()
+
+    await ICSclient.send_message("MTL", objmsg)
+    await response_queue.get()
+
+    await ICSclient.send_message("FBP", objmsg)
+    await response_queue.get()
+
+    await ICSclient.send_message("FBP", motionmsg1)
+    await response_queue.get()
+
+    await ICSclient.send_message("FBP", motionmsg2)
+    await response_queue.get()
+
+    await asyncio.sleep(3)
+    
     messagetcs = 'KSPEC>TC ' + 'tmradec ' + ra +' '+dec
-#    print(messagetcs)
+    printing(f'Slew Telescope to RA={ra}, DEC={dec}.')
     await send_udp_message(messagetcs)
 
     await asyncio.sleep(1)
-    print('\n')
+    printing(f'ADC Adjust Start')
+#    message=f'adcadjust {ra} {dec}'
+    message=f'adcadjust 23:34:56.44 -31:34:55.67'
+    await handle_adc(message,ICSclient)
+    await asyncio.sleep(3)
+
+    printing(f'Fiber positioner Moving Start')
+    await handle_fbp('fbpmove',ICSclient)
+    await response_queue.get()
+
     while True:
         user_input=input("Are you sure that telescope slewing finished? (yes/no): ")
         if user_input.lower() == "yes":
@@ -194,47 +212,29 @@ async def handle_obs(ICSclient,send_udp_message, send_telcom_command, response_q
         else:
             print("Wait until slewing finished and then insert 'yes'.")
 
+    printing(f'Autoguiding Start')
     await run_autoguide(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue)
-
-   
-
-#    ICSclient.stop_event = asyncio.Event()
-#    await handle_gfa('gfaguide',ICSclient)
-#    await ICSclient.stop_event.wait()
-
-#    print(f'Telescope is slewing to {ra}, {dec}...')
-#    await asyncio.sleep(15)
-#    print(f'Telescope slewing finished.')
-#    while True:
-#        resume=input('Move to next sequence (yes/no)? ')
-#        if resume == 'yes':
-#            break
-
     
-#    print('### Augoduding Start ###')
-#    gfamsg=gfa_autoguide()
-#    await ICS_client.send_message("GFA", gfamsg) 
+    await asyncio.sleep(2)
+    await handle_spec('illuon',ICSclient)
+    await response_queue.get()
+    await handle_lamp('fiducialon',ICSclient)
+    await response_queue.get()
+    await handle_mtl('mtlexp 10',ICSclient)
+    await response_queue.get()
+    await handle_mtl('mtlcal',ICSclient)
+    await response_queue.get()
+    await handle_fbp('fbpoffset',ICSclient)
+    await response_queue.get()
+    await handle_spec('illuoff',ICSclient)
+    await response_queue.get()
+    await handle_lamp('fiducialoff',ICSclient)
+    await response_queue.get()
 
-#    print('### Fiducial and illumination lamp on ###')
-#    lampmsg=fiducial_on()
-#    await ICS_client.send_message("LAMP",lampmsg)
+    await handle_spec(f'getobj 300 {obs_num}', ICSclient)
+    printing(' ###### Observation Script END!!! ######')
+#    await response_queue.get()
 
-#    specmsg=spec_illu_on()
-#    await ICS_client.send_message("SPEC",specmsg)
-
-#    mtlmsg=mtl_exp(3)
-#    await ICS_client.send_message("MTL", mtlmsg)
-
-#    ttt=tcscli.Telcomclass()
-#    ttt.TelcomConnect()
-#    RA=ttt.RequestRA()
-#    print(RA)
-
-#    gfamsg=gfa_allexp(10)
-#    await ICS_client.send_message("GFA", gfamsg)
-
-#    mtlmsg=mtl_exp()
-#    await ICS_client.send_message("MTL", mtlmsg)
 
 
 async def handle_script(arg, ICSclient, send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue):

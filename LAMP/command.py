@@ -72,31 +72,31 @@ def lamp_status():
     return rsp_msg
 
 def arc_on():
-    time.sleep(3)    # function to turn on the arc lamp'
+    time.sleep(5)    # function to turn on the arc lamp'
     rsp_msg='Arc lamp turns on.'
     return rsp_msg
 
 def arc_off():
-    time.sleep(3)    # function to turn off the arc lamp'
+    time.sleep(5)    # function to turn off the arc lamp'
     rsp_msg='Arc lamp turns off.'
     return rsp_msg
 
 def flat_on():
-    time.sleep(3)    # function to turn on the flat lamp'
+    time.sleep(5)    # function to turn on the flat lamp'
     rsp_msg='Flat lamp turns on.'
     return rsp_msg
 
 def flat_off():
-    time.sleep(3)    # function to turn on the flat lamp'
+    time.sleep(5)    # function to turn on the flat lamp'
     rsp_msg='Flat lamp turns off.'
     return rsp_msg
 
 def fiducial_on():
-    time.sleep(3)    # function to turn on the flat lamp'
+    time.sleep(5)    # function to turn on the flat lamp'
     rsp_msg='Fiducial lamp turns on.'
     return rsp_msg
 
 def fiducial_off():
-    time.sleep(3)    # function to turn on the flat lamp'
+    time.sleep(5)    # function to turn on the flat lamp'
     rsp_msg='Fiducial lamp turns off.'
     return rsp_msg
