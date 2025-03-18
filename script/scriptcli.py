@@ -16,13 +16,15 @@ import pandas as pd
 import json
 from astropy.coordinates import Angle, SkyCoord
 import astropy.units as u
+from astropy.io import fits
 
 
 autoguide_task = None
+script_task = None
 
 def printing(message):
     """Utility function for consistent printingging."""
-    print(f"\033[32m[ICS] {message}\033[0m",flush=True)
+    print(f"\033[32m[ICS] {message}\033[0m\n",flush=True)
 
 def convert_to_sexagesimal(ra_deg, dec_deg):
     """Converts RA and DEC from degrees to sexagesimal format."""
@@ -43,8 +45,22 @@ def apply_offset(ra: str, dec: str, offset_ra: float, offset_dec: float):
     )
     return new_coord.to_string('hmsdms',precision=2).replace('h', ':').replace('m', ':').replace('s', '').replace('d', ':')
 
+def update_fits(fits_file,updates,output_file=None):
+    with fits.open(fits_file, mode='update' if output_file is None else 'readonly') as hdul:
+        header = hdul[0].header
 
-async def obs_initial(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue):
+        for key, value in updates.items():
+            header[key] = value
+            print(f"Updated {key} to {value}")
+
+        if output_file:
+            hdul.writeto(output_file, overwrite=True)
+            print(f"Updated FITS file saved as {output_file}")
+        else:
+            hdul.flush()
+            print("Original FITS file updated.")
+
+async def obs_initial(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
     print('Start instruments intialize')
     await handle_endo('endostatus',ICSclient)
     await handle_gfa('gfastatus',ICSclient)
@@ -59,11 +75,11 @@ async def obs_initial(ICSclient,send_udp_message, send_telcom_command, response_
     await handle_adc('adcstatus',ICSclient)
     await handle_spec('specstatus',ICSclient)
 
-async def run_calib(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue):
+async def run_calib(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
     """Starts the calibration process asynchronously."""
-    script_task = asyncio.create_task(handle_calib(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue))
+    script_task = asyncio.create_task(handle_calib(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue))
 
-async def handle_calib(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue):
+async def handle_calib(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
     """Handles the calibration process by controlling lamps and spectrometers."""
     printing("New Calibration task started.")
 
@@ -71,7 +87,7 @@ async def handle_calib(ICSclient,send_udp_message, send_telcom_command, response
     await response_queue.get()
     
     await handle_spec('getflat 10 10',ICSclient)
-    await response_queue.get()
+    await SPEC_response_queue.get()
     
     await handle_lamp('flatoff',ICSclient)
     await response_queue.get()
@@ -80,10 +96,12 @@ async def handle_calib(ICSclient,send_udp_message, send_telcom_command, response
     await response_queue.get()
     
     await handle_spec('getarc 10 10',ICSclient)
-    await response_queue.get()
+    await SPEC_response_queue.get()
     
     await handle_lamp('arcoff',ICSclient)
     await response_queue.get()
+
+    printing("All Calibration images were obtained.")
 
 async def run_autoguide(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue):
     """Starts the autoguiding process asynchronously."""
@@ -123,13 +141,26 @@ async def autoguidestop(ICSclient):
     else:
         printing("No Autoguiding task is currently running.")
 
-async def run_obs(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue):
+async def run_obs(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
     global script_task
-    script_task = asyncio.create_task(handle_obs(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue))
+    script_task = asyncio.create_task(handle_obs(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue))
 
-async def handle_obs(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue):
+async def handle_obs(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
     printing('###### Observation Script Start!!! ######')
-    filename=input('\nPlease insert Observation sequence file (ex. ASPECS_obs_250217.txt): ')
+    with open('./Lib/KSPEC.ini','r') as fs:
+        kspecinfo=json.load(fs)
+    fs.close()
+    obsplanpath=kspecinfo['SCIOBS']['obsplanpath']
+
+    while True:
+        filename=input('\nPlease insert Observation sequence file (ex. ASPECS_obs_250217.txt): ')
+        filepath=os.path.join(obsplanpath,filename)
+        if not filename:
+            continue
+        if os.path.exists(filepath):
+            break
+        print(f'These is no {filename} in observation plan directory.')
+
     sciobs=sciobscli()
     wild=filename.split('_')
     sciobs.project=wild[0]
@@ -137,11 +168,7 @@ async def handle_obs(ICSclient,send_udp_message, send_telcom_command, response_q
 
     printing(f'Project Name: {sciobs.project}')
     printing(f'Observation Date: {sciobs.obsdate}')
-    with open('./Lib/KSPEC.ini','r') as fs:
-        kspecinfo=json.load(fs)
-    fs.close()
-
-    obsplanpath=kspecinfo['SCIOBS']['obsplanpath']
+    
     with open(obsplanpath+filename,'r') as f:
         header = f.readline().strip().split()
 
@@ -156,7 +183,7 @@ async def handle_obs(ICSclient,send_udp_message, send_telcom_command, response_q
     while True:
         select_tile=input('\nPlease select Tile ID above you want to runscript.: ')
         if select_tile.strip() in tile_ids:
-            printing(f'Tile ID {select_tile} is selected from observation plan.')
+            printing(f'\nTile ID {select_tile} is selected from observation plan.')
             for row in data:
                 if row[0] == select_tile:
                     print(row)
@@ -172,20 +199,20 @@ async def handle_obs(ICSclient,send_udp_message, send_telcom_command, response_q
 
     printing(f'RA and DEC of Tile ID {select_tile}: {ra} {dec}')
 
-    await ICSclient.send_message("GFA", guidemsg)
-    await response_queue.get()
+#    await ICSclient.send_message("GFA", guidemsg)
+#    await response_queue.get()
 
-    await ICSclient.send_message("MTL", objmsg)
-    await response_queue.get()
+#    await ICSclient.send_message("MTL", objmsg)
+#    await response_queue.get()
 
-    await ICSclient.send_message("FBP", objmsg)
-    await response_queue.get()
+#    await ICSclient.send_message("FBP", objmsg)
+#    await response_queue.get()
 
-    await ICSclient.send_message("FBP", motionmsg1)
-    await response_queue.get()
+#    await ICSclient.send_message("FBP", motionmsg1)
+#    await response_queue.get()
 
-    await ICSclient.send_message("FBP", motionmsg2)
-    await response_queue.get()
+#    await ICSclient.send_message("FBP", motionmsg2)
+#    await response_queue.get()
 
     await asyncio.sleep(3)
     
@@ -195,7 +222,7 @@ async def handle_obs(ICSclient,send_udp_message, send_telcom_command, response_q
 
     await asyncio.sleep(1)
     printing(f'ADC Adjust Start')
-#    message=f'adcadjust {ra} {dec}'
+    message=f'adcadjust {ra} {dec}'
     message=f'adcadjust 23:34:56.44 -31:34:55.67'
     await handle_adc(message,ICSclient)
     await asyncio.sleep(3)
@@ -217,7 +244,7 @@ async def handle_obs(ICSclient,send_udp_message, send_telcom_command, response_q
     
     await asyncio.sleep(2)
     await handle_spec('illuon',ICSclient)
-    await response_queue.get()
+    await SPEC_response_queue.get()
     await handle_lamp('fiducialon',ICSclient)
     await response_queue.get()
     await handle_mtl('mtlexp 10',ICSclient)
@@ -227,17 +254,35 @@ async def handle_obs(ICSclient,send_udp_message, send_telcom_command, response_q
     await handle_fbp('fbpoffset',ICSclient)
     await response_queue.get()
     await handle_spec('illuoff',ICSclient)
-    await response_queue.get()
+    await SPEC_response_queue.get()
     await handle_lamp('fiducialoff',ICSclient)
     await response_queue.get()
 
-    await handle_spec(f'getobj 300 {obs_num}', ICSclient)
+    ttt= await GFA_response_queue.get()
+    fwhm=ttt['fwhm']
+    print(f'FHWM is {fwhm}.')
+
+    printing(f'KSPEC starts {obs_num} exposures with 300 seconds.')
+    for i in range(int(obs_num)):
+        await handle_spec(f'getobj 20 1', ICSclient)
+        printing(f'{i+1}/{obs_num}: 20 seconds exposure start.')
+        spec_rsp=await SPEC_response_queue.get()
+        fram=f'{i+1}/{obs_num}'
+        header_data = {"PROJECT": sciobs.project, "EXPTIME": 20, "FRAME": fram, "Tile": select_tile, "PRORA": ra, "PRODEC": dec}
+        update_fits(spec_rsp["file"],header_data)
+        printing("Fits header updated")
+
+    await handle_adc('adcstop',ICSclient)
+    await autoguidestop(ICSclient)
+
+    await asyncio.sleep(3)
     printing(' ###### Observation Script END!!! ######')
-#    await response_queue.get()
+#    autoguidestop
 
 
 
-async def handle_script(arg, ICSclient, send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue):
+
+async def handle_script(arg, ICSclient, send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
     """ Handle script with error checking. """
     cmd, *params = arg.split()
     print(cmd)
@@ -247,7 +292,7 @@ async def handle_script(arg, ICSclient, send_udp_message, send_telcom_command, r
     }
 
     if cmd in command_map:
-        await command_map[cmd](ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue)
+        await command_map[cmd](ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue)
     elif cmd == 'autoguidestop':
         await autoguidestop(ICSclient)
     else:

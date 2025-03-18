@@ -22,6 +22,7 @@ class KSPECRunner:
         self.response_queue = asyncio.Queue()
         self.GFA_response_queue = asyncio.Queue()
         self.ADC_response_queue = asyncio.Queue()
+        self.SPEC_response_queue = asyncio.Queue()
 
         self.command_list = self.load_command_list()
         self.tcsagentIP, self.tcsagentPort, self.telcomIP, self.telcomPort = self.load_config()
@@ -78,13 +79,15 @@ class KSPECRunner:
 
                 if isinstance(message,dict):
                     message = json.dumps(message, indent=2)
-                    print(f'\033[94m[ICS] received: {message}\033[0m', flush=True)
+                    print(f'\033[94m[ICS] received: {message}\033[0m\n', flush=True)
                 else:
-                    print('\033[94m' + '[ICS] received: ', response_data['message'] + '\033[0m', flush=True)
+                    print('\033[94m' + '[ICS] received: ', response_data['message'] + '\033[0m\n', flush=True)
 
                 queue_map = {"GFA": self.GFA_response_queue, "ADC": self.ADC_response_queue}
                 if response_data['inst'] in queue_map and response_data['process'] == 'ING':
                     await queue_map[response_data['inst']].put(response_data)
+                elif response_data['inst'] == 'SPEC' and response_data['process'] == 'Done':
+                    await self.SPEC_response_queue.put(response_data)
                 else:
                     await self.response_queue.put(response_data)
             except Exception as e:
@@ -117,7 +120,6 @@ class KSPECRunner:
         """
         Sends a command using the respective handler.
         """
- #       print(f"Sending command: {message}")
         handler_map = {
             "adc": handle_adc, "gfa": handle_gfa, "fbp": handle_fbp,
             "endo": handle_endo, "mtl": handle_mtl, "lamp": handle_lamp,
@@ -134,6 +136,7 @@ class KSPECRunner:
         """
         while self.running:
             try:
+                await asyncio.sleep(0.5)
                 message = await asyncio.get_event_loop().run_in_executor(None, input, "Input command: ")
                 if message.lower() == "quit":
                     print("Exiting user input mode.")
@@ -152,7 +155,8 @@ class KSPECRunner:
                         telcom_result = await self.send_telcom_command(message)
                         print('\033[94m' + '[ICS] received: ', telcom_result.decode() + '\033[0m', flush=True)
                     elif category.lower() == "script":
-                        await handle_script(message, self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue, self.GFA_response_queue, self.ADC_response_queue)
+                        await handle_script(message, self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue, self.GFA_response_queue, self.ADC_response_queue, 
+                        self.SPEC_response_queue)
                     else:
                         await self.send_command(category, message)
                 else:
