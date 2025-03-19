@@ -74,14 +74,15 @@ class KSPECRunner:
             try:
                 response = await self.ICS_client.receive_message("ICS")
                 response_data = json.loads(response)
+                inst=response_data['inst']
                 message=response_data.get('message','No message')
 #                print(response_data)
 
                 if isinstance(message,dict):
                     message = json.dumps(message, indent=2)
-                    print(f'\033[94m[ICS] received: {message}\033[0m\n', flush=True)
+                    print(f'\033[94m[ICS] received from {inst}: {message}\033[0m\n', flush=True)
                 else:
-                    print('\033[94m' + '[ICS] received: ', response_data['message'] + '\033[0m\n', flush=True)
+                    print(f'\033[94m[ICS] received from {inst}: {response_data['message']}\033[0m\n', flush=True)
 
                 queue_map = {"GFA": self.GFA_response_queue, "ADC": self.ADC_response_queue}
                 if response_data['inst'] in queue_map and response_data['process'] == 'ING':
@@ -136,16 +137,18 @@ class KSPECRunner:
         """
         while self.running:
             try:
-                await asyncio.sleep(0.5)
-                message = await asyncio.get_event_loop().run_in_executor(None, input, "Input command: ")
+                await asyncio.sleep(0.1)
+                sys.stdout.flush()
+                message = await asyncio.get_running_loop().run_in_executor(None, input, "Input command: ")
                 if message.lower() == "quit":
-                    print("Exiting user input mode.")
+                    print("Exiting user input mode.", flush=True)
                     self.running = False
                     break
-
+                
+                await asyncio.sleep(1)
                 cmd = message.split(" ")[0]
                 category = self.find_category(cmd)
-                print(f'Command Category is {category}')
+                print(f'Command Category is {category}', flush=True)
 
                 if category:
                     if category.lower() == 'tcs':
@@ -160,9 +163,9 @@ class KSPECRunner:
                     else:
                         await self.send_command(category, message)
                 else:
-                    print("Invalid command. Please enter a valid command.\n")
+                    print("Invalid command. Please enter a valid command.\n", flush=True)
             except Exception as e:
-                print(f"Error in user_input: {e}")
+                print(f"Error in user_input: {e}", flush=True)
 
 async def main():
     """
@@ -185,10 +188,10 @@ async def main():
         runner = KSPECRunner(ICS_client)
         await asyncio.gather(runner.user_input(), runner.wait_for_response())
     except Exception as e:
-        print(f"Error in main: {e}")
+        print(f"Error in main: {e}", flush=True)
     finally:
         await ICS_client.disconnect()
-        print("Main finalized.")
+        print("Main finalized.", flush=True)
 
 if __name__ == "__main__":
     if sys.argv[1] == 'ics':

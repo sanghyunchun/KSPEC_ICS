@@ -60,12 +60,24 @@ def update_fits(fits_file,updates,output_file=None):
             hdul.flush()
             print("Original FITS file updated.")
 
+async def get_user_input(prompt):
+    loop=asyncio.get_event_loop()
+    return await loop.run_in_executor(None,input,prompt)
+#        user_input=await asyncio.to_thread(input, "\nAre you sure that telescope slewing finished? (yes/no): ")
+#        if user_input.strip().lower() == "yes":
+#            print('Continue next process.....')
+#            break
+
 async def obs_initial(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
     print('Start instruments intialize')
     await handle_endo('endostatus',ICSclient)
+    await response_queue.get()
     await handle_gfa('gfastatus',ICSclient)
+    await response_queue.get()
     await handle_fbp('fbpstatus',ICSclient)
+    await response_queue.get()
     await handle_mtl('mtlstatus',ICSclient)
+    await response_queue.get()
     await handle_adc('adcconnect',ICSclient)
     await response_queue.get()
     await handle_adc('adchome',ICSclient)
@@ -73,7 +85,9 @@ async def obs_initial(ICSclient,send_udp_message, send_telcom_command, response_
     await handle_adc('adczero',ICSclient)
     await response_queue.get()
     await handle_adc('adcstatus',ICSclient)
+    await response_queue.get()
     await handle_spec('specstatus',ICSclient)
+    await SPEC_response_queue.get()
 
 async def run_calib(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
     """Starts the calibration process asynchronously."""
@@ -199,45 +213,52 @@ async def handle_obs(ICSclient,send_udp_message, send_telcom_command, response_q
 
     printing(f'RA and DEC of Tile ID {select_tile}: {ra} {dec}')
 
-#    await ICSclient.send_message("GFA", guidemsg)
-#    await response_queue.get()
+    await ICSclient.send_message("GFA", guidemsg)
+    await response_queue.get()
+    await asyncio.sleep(2)
 
-#    await ICSclient.send_message("MTL", objmsg)
-#    await response_queue.get()
+    await ICSclient.send_message("MTL", objmsg)
+    await response_queue.get()
+    await asyncio.sleep(2)
 
-#    await ICSclient.send_message("FBP", objmsg)
-#    await response_queue.get()
+    await ICSclient.send_message("FBP", objmsg)
+    await response_queue.get()
+    await asyncio.sleep(2)
 
-#    await ICSclient.send_message("FBP", motionmsg1)
-#    await response_queue.get()
+    await ICSclient.send_message("FBP", motionmsg1)
+    await response_queue.get()
+    await asyncio.sleep(2)
 
-#    await ICSclient.send_message("FBP", motionmsg2)
-#    await response_queue.get()
-
-    await asyncio.sleep(3)
+    await ICSclient.send_message("FBP", motionmsg2)
+    await response_queue.get()
+    await asyncio.sleep(2)
     
     messagetcs = 'KSPEC>TC ' + 'tmradec ' + ra +' '+dec
     printing(f'Slew Telescope to RA={ra}, DEC={dec}.')
     await send_udp_message(messagetcs)
 
-    await asyncio.sleep(1)
+    await asyncio.sleep(2)
     printing(f'ADC Adjust Start')
     message=f'adcadjust {ra} {dec}'
-    message=f'adcadjust 23:34:56.44 -31:34:55.67'
+    message=f'adcadjust 04:34:56.44 -31:34:55.67'
     await handle_adc(message,ICSclient)
-    await asyncio.sleep(3)
+    await asyncio.sleep(2)
 
     printing(f'Fiber positioner Moving Start')
     await handle_fbp('fbpmove',ICSclient)
     await response_queue.get()
+    sys.stdout.flush()
+    await asyncio.sleep(0)
 
-    while True:
-        user_input=input("Are you sure that telescope slewing finished? (yes/no): ")
-        if user_input.lower() == "yes":
-            print('Continue next process.....')
-            break
-        else:
-            print("Wait until slewing finished and then insert 'yes'.")
+    uuu=await get_user_input("Are you sure that telescope slewing finished? (yes/no): ")
+#    await check
+#    while True:
+#        user_input=input("Are you sure that telescope slewing finished? (yes/no): ")
+#        if user_input.lower() == "yes":
+#            print('Continue next process.....')
+#            break
+#        else:
+#            print("Wait until slewing finished and then insert 'yes'.")
 
     printing(f'Autoguiding Start')
     await run_autoguide(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue)
@@ -245,22 +266,35 @@ async def handle_obs(ICSclient,send_udp_message, send_telcom_command, response_q
     await asyncio.sleep(2)
     await handle_spec('illuon',ICSclient)
     await SPEC_response_queue.get()
+    await asyncio.sleep(2)
+
     await handle_lamp('fiducialon',ICSclient)
     await response_queue.get()
+    await asyncio.sleep(2)
+
     await handle_mtl('mtlexp 10',ICSclient)
     await response_queue.get()
+    await asyncio.sleep(2)
+
     await handle_mtl('mtlcal',ICSclient)
     await response_queue.get()
+    await asyncio.sleep(2)
+
     await handle_fbp('fbpoffset',ICSclient)
     await response_queue.get()
+    await asyncio.sleep(2)
+
     await handle_spec('illuoff',ICSclient)
     await SPEC_response_queue.get()
+    await asyncio.sleep(2)
+
     await handle_lamp('fiducialoff',ICSclient)
     await response_queue.get()
+    await asyncio.sleep(2)
 
-    ttt= await GFA_response_queue.get()
-    fwhm=ttt['fwhm']
-    print(f'FHWM is {fwhm}.')
+#    ttt= await GFA_response_queue.get()
+#    fwhm=ttt['fwhm']
+#    print(f'FHWM is {fwhm}.')
 
     printing(f'KSPEC starts {obs_num} exposures with 300 seconds.')
     for i in range(int(obs_num)):
@@ -272,11 +306,13 @@ async def handle_obs(ICSclient,send_udp_message, send_telcom_command, response_q
         update_fits(spec_rsp["file"],header_data)
         printing("Fits header updated")
 
+
+    printing('All exposures are completed.')
     await handle_adc('adcstop',ICSclient)
     await autoguidestop(ICSclient)
 
     await asyncio.sleep(3)
-    printing(' ###### Observation Script END!!! ######')
+    printing(f'###### Observation Script for Tile ID {select_tile} END!!! ######')
 #    autoguidestop
 
 
