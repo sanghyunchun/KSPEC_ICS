@@ -47,6 +47,7 @@ class KSPECRunner:
             "ft", "dfocus", "dtilt", "fttgoto"],
 
             "telcom": ["getall", "getra", "getdec", "getha", "getel", "getaz", "getsecz", "mvstow", "mvelaz", "mvstop", "mvra", "mvdec", "track"],
+            "utils": ["obsstatus","loadtile"],
             "script": ["runcalib", "obsinitial", "autoguide", "autoguidestop", "runobs"]
             }
     
@@ -186,7 +187,7 @@ async def main():
         await ICS_client.define_consumer()
 
         runner = KSPECRunner(ICS_client)
-        await asyncio.gather(runner.user_input(), runner.wait_for_response())
+        await asyncio.gather(runner.wait_for_response(),runner.user_input())
     except Exception as e:
         print(f"Error in main: {e}", flush=True)
     finally:
