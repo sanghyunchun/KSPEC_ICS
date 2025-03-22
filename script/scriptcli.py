@@ -19,10 +19,8 @@ import astropy.units as u
 from astropy.io import fits
 
 
-
-
 def printing(message):
-    """Utility function for consistent printingging."""
+    """Utility function for consistent printinging."""
     print(f"\033[32m[ICS] {message}\033[0m\n",flush=True)
 
 def convert_to_sexagesimal(ra_deg, dec_deg):
@@ -42,7 +40,8 @@ def apply_offset(ra: str, dec: str, offset_ra: float, offset_dec: float):
         offset_ra * u.arcsec,  
         offset_dec * u.arcsec
     )
-    return new_coord.to_string('hmsdms',precision=2).replace('h', ':').replace('m', ':').replace('s', '').replace('d', ':')
+    return new_coord.to_string('hmsdms', sep=":", precision=2)
+#    return new_coord.to_string('hmsdms',precision=2).replace('h', ':').replace('m', ':').replace('s', '').replace('d', ':')
 
 def update_fits(fits_file,updates,output_file=None):
     with fits.open(fits_file, mode='update' if output_file is None else 'readonly') as hdul:
@@ -60,12 +59,21 @@ def update_fits(fits_file,updates,output_file=None):
             print("Original FITS file updated.")
 
 async def get_user_input(prompt):
-    loop=asyncio.get_event_loop()
-    return await loop.run_in_executor(None,input,prompt)
+    """Async wrapper for input."""
+    return await asyncio.to_thread(input, prompt)
+
+#async def get_user_input(prompt):
+#    loop=asyncio.get_event_loop()
+#    return await loop.run_in_executor(None,input,prompt)
 #        user_input=await asyncio.to_thread(input, "\nAre you sure that telescope slewing finished? (yes/no): ")
 #        if user_input.strip().lower() == "yes":
 #            print('Continue next process.....')
 #            break
+
+async def clear_queue(queue):
+    while not queue.empty():
+        queue.get_nowait()
+        queue.task_done()
 
 class script():
     def __init__(self):
@@ -124,8 +132,7 @@ class script():
 
     async def run_autoguide(self,ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue,SPEC_response_queue):
         """Starts the autoguiding process asynchronously."""
-        global autoguide_task
-        autoguide_task = asyncio.create_task(self.handle_autoguide(ICSclient, send_udp_message, send_telcom_command, response_queue, GFA_response_queue))
+        self.autoguide_task = asyncio.create_task(self.handle_autoguide(ICSclient, send_udp_message, send_telcom_command, response_queue, GFA_response_queue))
 
     async def handle_autoguide(self,ICSclient, send_udp_message, send_telcom_command, response_queue, GFA_response_queue):
         try:
@@ -148,23 +155,26 @@ class script():
 
     async def autoguidestop(self,ICSclient):
         """Stops the autoguiding process if it is running."""
-        global autoguide_task
-        if autoguide_task and not autoguide_task.done():
+        if self.autoguide_task and not self.autoguide_task.done():
             await handle_gfa("gfaguidestop", ICSclient)
             print("Stopping autoguiding task...")
-            autoguide_task.cancel()
+            self.autoguide_task.cancel()
             try:
-                await autoguide_task
+                await self.autoguide_task
             except asyncio.CancelledError:
                 printing("Autoguiding task stopped.")
         else:
             printing("No Autoguiding task is currently running.")
 
     async def run_obs(self,ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
-        global script_task
-        script_task = asyncio.create_task(self.handle_obs(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue))
+        self.script_task = asyncio.create_task(self.handle_obs(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue))
 
     async def handle_obs(self,ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
+        await clear_queue(response_queue)
+        await clear_queue(GFA_response_queue)
+        await clear_queue(ADC_response_queue)
+        await clear_queue(SPEC_response_queue)
+        
         printing('###### Observation Script Start!!! ######')
         with open('./Lib/KSPEC.ini','r') as fs:
             kspecinfo=json.load(fs)
@@ -245,7 +255,7 @@ class script():
         await asyncio.sleep(2)
         printing(f'ADC Adjust Start')
         message=f'adcadjust {ra} {dec}'
-        message=f'adcadjust 23:34:56.44 -31:34:55.67'
+        message=f'adcadjust 04:34:56.44 -31:34:55.67'
         await handle_adc(message,ICSclient)
         await asyncio.sleep(2)
 
