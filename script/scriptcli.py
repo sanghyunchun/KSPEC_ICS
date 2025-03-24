@@ -21,7 +21,7 @@ from astropy.io import fits
 
 def printing(message):
     """Utility function for consistent printinging."""
-    print(f"\033[32m[ICS] {message}\033[0m\n",flush=True)
+    print(f"\n\033[32m[ICS] {message}\033[0m\n",flush=True)
 
 def convert_to_sexagesimal(ra_deg, dec_deg):
     """Converts RA and DEC from degrees to sexagesimal format."""
@@ -79,6 +79,7 @@ class script():
     def __init__(self):
         self.autoguide_task = None
         self.script_task = None
+        self.fwhm = None
 
     async def obs_initial(self,ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
         print('Start instruments intialize')
@@ -99,7 +100,7 @@ class script():
         await handle_adc('adcstatus',ICSclient)
         await response_queue.get()
         await handle_spec('specstatus',ICSclient)
-        await SPEC_response_queue.get()
+        await response_queue.get()
 
     async def run_calib(self,ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
         """Starts the calibration process asynchronously."""
@@ -113,7 +114,7 @@ class script():
         await response_queue.get()
     
         await handle_spec('getflat 10 10',ICSclient)
-        await SPEC_response_queue.get()
+        await response_queue.get()
         
         await handle_lamp('flatoff',ICSclient)
         await response_queue.get()
@@ -122,7 +123,7 @@ class script():
         await response_queue.get()
         
         await handle_spec('getarc 10 10',ICSclient)
-        await SPEC_response_queue.get()
+        await response_queue.get()
         
         await handle_lamp('arcoff',ICSclient)
         await response_queue.get()
@@ -141,6 +142,7 @@ class script():
                 response_data = await GFA_response_queue.get()
                 fdx=response_data['fdx']
                 fdy=response_data['fdy']
+                self.fwhm=response_data['fwhm']
                 ra= await send_telcom_command('getra')
                 dec= await send_telcom_command('getdec')
                 ra=ra.decode()
@@ -155,16 +157,16 @@ class script():
 
     async def autoguidestop(self,ICSclient):
         """Stops the autoguiding process if it is running."""
-        if self.autoguide_task and not self.autoguide_task.done():
-            await handle_gfa("gfaguidestop", ICSclient)
-            print("Stopping autoguiding task...")
-            self.autoguide_task.cancel()
-            try:
-                await self.autoguide_task
-            except asyncio.CancelledError:
-                printing("Autoguiding task stopped.")
-        else:
-            printing("No Autoguiding task is currently running.")
+#        if self.autoguide_task and not self.autoguide_task.done():
+        await handle_gfa("gfaguidestop", ICSclient)
+        print("Stopping autoguiding task...")
+#            self.autoguide_task.cancel()
+#            try:
+#                await self.autoguide_task
+#            except asyncio.CancelledError:
+#                printing("Autoguiding task stopped.")
+#        else:
+#            printing("No Autoguiding task is currently running.")
 
     async def run_obs(self,ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
         self.script_task = asyncio.create_task(self.handle_obs(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue))
@@ -181,6 +183,7 @@ class script():
         fs.close()
         obsplanpath=kspecinfo['SCIOBS']['obsplanpath']
 
+        """
         while True:
             filename=input('\nPlease insert Observation sequence file (ex. ASPECS_obs_250217.txt): ')
             filepath=os.path.join(obsplanpath,filename)
@@ -212,7 +215,7 @@ class script():
         while True:
             select_tile=input('\nPlease select Tile ID above you want to runscript.: ')
             if select_tile.strip() in tile_ids:
-                printing(f'\nTile ID {select_tile} is selected from observation plan.')
+                printing(f'Tile ID {select_tile} is selected from observation plan.')
                 for row in data:
                     if row[0] == select_tile:
                         print(row)
@@ -222,6 +225,7 @@ class script():
             else:
                 print(f'Tile ID {select_tile} was not found. Please enter a valid ID.')
 
+        
         tilemsg,guidemsg,objmsg,motionmsg1,motionmsg2=sciobs.loadtile(select_tile)
         tile_data=json.loads(tilemsg)
         ra,dec=convert_to_sexagesimal(tile_data['ra'],tile_data['dec'])
@@ -255,7 +259,7 @@ class script():
         await asyncio.sleep(2)
         printing(f'ADC Adjust Start')
         message=f'adcadjust {ra} {dec}'
-        message=f'adcadjust 04:34:56.44 -31:34:55.67'
+        message=f'adcadjust 23:34:56.44 -31:34:55.67'
         await handle_adc(message,ICSclient)
         await asyncio.sleep(2)
 
@@ -265,22 +269,18 @@ class script():
         sys.stdout.flush()
         await asyncio.sleep(0)
 
-        uuu=await get_user_input("Are you sure that telescope slewing finished? (yes/no): ")
-    #    await check
-    #    while True:
-    #        user_input=input("Are you sure that telescope slewing finished? (yes/no): ")
-    #        if user_input.lower() == "yes":
-    #            print('Continue next process.....')
-    #            break
-    #        else:
-    #            print("Wait until slewing finished and then insert 'yes'.")
-
+        while True:
+            uuu=await get_user_input("Are you sure that telescope slewing finished? (yes/no): ")
+            if uuu.strip().lower() == "yes":
+                break
+            print("Wait until slewing finished and the insert 'yes'.")
+        """
         printing(f'Autoguiding Start')
         await self.run_autoguide(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue)
         
         await asyncio.sleep(2)
         await handle_spec('illuon',ICSclient)
-        await SPEC_response_queue.get()
+        await response_queue.get()
         await asyncio.sleep(2)
 
         await handle_lamp('fiducialon',ICSclient)
@@ -292,7 +292,8 @@ class script():
         await asyncio.sleep(2)
 
         await handle_mtl('mtlcal',ICSclient)
-        await response_queue.get()
+        aaa=await response_queue.get()
+        print(aaa['offsetx'])
         await asyncio.sleep(2)
 
         await handle_fbp('fbpoffset',ICSclient)
@@ -300,35 +301,45 @@ class script():
         await asyncio.sleep(2)
 
         await handle_spec('illuoff',ICSclient)
-        await SPEC_response_queue.get()
+        await response_queue.get()
         await asyncio.sleep(2)
 
         await handle_lamp('fiducialoff',ICSclient)
         await response_queue.get()
         await asyncio.sleep(2)
 
-    #    ttt= await GFA_response_queue.get()
-    #    fwhm=ttt['fwhm']
-    #    print(f'FHWM is {fwhm}.')
-
+        
+        print(f'FHWM is {self.fwhm:.5f}.')
+        """
+        obs_num=3
         printing(f'KSPEC starts {obs_num} exposures with 300 seconds.')
         for i in range(int(obs_num)):
-            await handle_spec(f'getobj 20 1', ICSclient)
-            printing(f'{i+1}/{obs_num}: 20 seconds exposure start.')
-            spec_rsp=await SPEC_response_queue.get()
+            await clear_queue(SPEC_response_queue)
+            await handle_spec(f'getobj 30 1', ICSclient)
+            printing(f'{i+1}/{obs_num}: 30 seconds exposure start.')
+            spec_rsp=await response_queue.get()
+#            print('spec_rsp',spec_rsp)
             fram=f'{i+1}/{obs_num}'
             header_data = {"PROJECT": sciobs.project, "EXPTIME": 20, "FRAME": fram, "Tile": select_tile, "PRORA": ra, "PRODEC": dec}
             update_fits(spec_rsp["file"],header_data)
             printing("Fits header updated")
 
 
+    #    await clear_queue(response_queue)
         printing('All exposures are completed.')
         await handle_adc('adcstop',ICSclient)
+        await response_queue.get()
+#        print(aaa)
         await self.autoguidestop(ICSclient)
+        await response_queue.get()
+        await handle_adc('adczero',ICSclient)
+        await response_queue.get()
+#        print(ccc)
 
         await asyncio.sleep(3)
         printing(f'###### Observation Script for Tile ID {select_tile} END!!! ######')
     #    autoguidestop
+        """
 
 
 async def handle_script(arg, ICSclient, send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):

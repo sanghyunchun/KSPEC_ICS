@@ -286,7 +286,7 @@ class GFAActions:
                 "success",
                 (f"Guiding completed successfully. "
                  f"Offsets: fdx={fdx}, fdy={fdy}, FWHM={fwhm:.5f} arcsec"),
-                fdx=0.033, fdy=0.122, fwhm=1.34
+                fdx=fdx, fdy=fdy, fwhm=fwhm
             )
         except Exception as e:
             self.env.logger.error(f"Error occurred during guiding: {str(e)}")

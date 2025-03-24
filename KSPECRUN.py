@@ -85,11 +85,11 @@ class KSPECRunner:
                 else:
                     print(f'\033[94m[ICS] received from {inst}: {response_data['message']}\033[0m\n', flush=True)
 
-                queue_map = {"GFA": self.GFA_response_queue, "ADC": self.ADC_response_queue}
+                queue_map = {"GFA": self.GFA_response_queue, "ADC": self.ADC_response_queue, "SPEC": self.SPEC_response_queue}
                 if response_data['inst'] in queue_map and response_data['process'] == 'ING':
                     await queue_map[response_data['inst']].put(response_data)
-                elif response_data['inst'] == 'SPEC' and response_data['process'] == 'Done':
-                    await self.SPEC_response_queue.put(response_data)
+#                elif response_data['inst'] == 'SPEC' and response_data['process'] == 'Done':
+#                    await self.SPEC_response_queue.put(response_data)
                 else:
                     await self.response_queue.put(response_data)
             except Exception as e:
@@ -138,7 +138,7 @@ class KSPECRunner:
         """
         while self.running:
             try:
-                await asyncio.sleep(0.1)
+#                await asyncio.sleep(0.1)
                 sys.stdout.flush()
                 message = await asyncio.get_running_loop().run_in_executor(None, input, "Input command: ")
                 if message.lower() == "quit":
@@ -146,7 +146,8 @@ class KSPECRunner:
                     self.running = False
                     break
                 
-                await asyncio.sleep(1)
+                print('\n')
+#                await asyncio.sleep(1)
                 cmd = message.split(" ")[0]
                 category = self.find_category(cmd)
                 print(f'Command Category is {category}', flush=True)

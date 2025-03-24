@@ -74,6 +74,10 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
                 printing("Guiding task stopped.")
         else:
             printing("No Guiding task is currently running.")
+            reply_data=mkmsg.gfamsg()
+            reply_data.update(process='Done',message='No Guiding task is currently running.')
+            rsp=json.dumps(reply_data)
+            await GFA_server.send_message('ICS',rsp)
 
     if func == 'loadguide':
         chipnum=dict_data['chipnum']
