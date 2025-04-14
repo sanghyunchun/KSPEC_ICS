@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "kspec-metrology"
+version = "0.2.0"
+description = ""
+authors = ["Dongkok Kim"]
+include = [
+	{path = "kspec_metrology/lib/*", format="wheel"}
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+scipy = "^1.6.2"
+numpy = "^1.21.2"
+photutils = "^1.9.0"
+astropy = "^5.0.4"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
