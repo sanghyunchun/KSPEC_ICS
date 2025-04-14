@@ -17,6 +17,7 @@ import json
 from astropy.coordinates import Angle, SkyCoord
 import astropy.units as u
 from astropy.io import fits
+import redis
 
 
 def printing(message):
@@ -183,7 +184,7 @@ class script():
         fs.close()
         obsplanpath=kspecinfo['SCIOBS']['obsplanpath']
 
-        """
+        
         while True:
             filename=input('\nPlease insert Observation sequence file (ex. ASPECS_obs_250217.txt): ')
             filepath=os.path.join(obsplanpath,filename)
@@ -252,14 +253,10 @@ class script():
         await response_queue.get()
         await asyncio.sleep(2)
         
-        messagetcs = 'KSPEC>TC ' + 'tmradec ' + ra +' '+dec
-        printing(f'Slew Telescope to RA={ra}, DEC={dec}.')
-        await send_udp_message(messagetcs)
-
         await asyncio.sleep(2)
         printing(f'ADC Adjust Start')
         message=f'adcadjust {ra} {dec}'
-        message=f'adcadjust 23:34:56.44 -31:34:55.67'
+        message=f'adcadjust 04:34:56.44 -31:34:55.67'
         await handle_adc(message,ICSclient)
         await asyncio.sleep(2)
 
@@ -269,12 +266,26 @@ class script():
         sys.stdout.flush()
         await asyncio.sleep(0)
 
+        messagetcs = 'KSPEC>TC ' + 'tmradec ' + ra +' '+dec
+        printing(f'Slew Telescope to RA={ra}, DEC={dec}.')
+        await send_udp_message(messagetcs)
+        print('Telescope is slewing now.', end=' ',flush=True)
+
         while True:
-            uuu=await get_user_input("Are you sure that telescope slewing finished? (yes/no): ")
-            if uuu.strip().lower() == "yes":
+            r=redis.Redis(host='localhost',port=6379,decode_responses=True)
+
+            value=r.get('dome_error')
+
+            if value == '0001':
+                print('Telescope slew finished')
                 break
-            print("Wait until slewing finished and the insert 'yes'.")
-        """
+            print('.',end=' ', flush=True)
+            await asyncio.sleep(5)
+#            uuu=await get_user_input("Are you sure that telescope slewing finished? (yes/no): ")
+#            if uuu.strip().lower() == "yes":
+#                break
+#            print("Wait until slewing finished and the insert 'yes'.")
+        
         printing(f'Autoguiding Start')
         await self.run_autoguide(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue)
         
@@ -310,7 +321,7 @@ class script():
 
         
         print(f'FHWM is {self.fwhm:.5f}.')
-        """
+        
         obs_num=3
         printing(f'KSPEC starts {obs_num} exposures with 300 seconds.')
         for i in range(int(obs_num)):
@@ -339,7 +350,7 @@ class script():
         await asyncio.sleep(3)
         printing(f'###### Observation Script for Tile ID {select_tile} END!!! ######')
     #    autoguidestop
-        """
+        
 
 
 async def handle_script(arg, ICSclient, send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
