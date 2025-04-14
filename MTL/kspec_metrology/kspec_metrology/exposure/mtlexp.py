@@ -10,7 +10,7 @@ def mtlexp(exptime
            , gain=10
            , offset=30
            , nexposure=1
-           , data_dir='./data/'):
+           , data_dir='./MTL/data/'):
     
     current_file_path = Path(__file__).resolve().parents[3]
     print(current_file_path)
