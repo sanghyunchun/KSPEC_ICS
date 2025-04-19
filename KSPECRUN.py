@@ -83,15 +83,17 @@ class KSPECRunner:
                     message = json.dumps(message, indent=2)
                     print(f'\033[94m[ICS] received from {inst}: {message}\033[0m\n', flush=True)
                 else:
-                    print(f'\033[94m[ICS] received from {inst}: {response_data['message']}\033[0m\n', flush=True)
+                    print(f'\033[94m[ICS] received from {inst}: {response_data["message"]}\033[0m\n', flush=True)
 
                 queue_map = {"GFA": self.GFA_response_queue, "ADC": self.ADC_response_queue, "SPEC": self.SPEC_response_queue}
                 if response_data['inst'] in queue_map and response_data['process'] == 'ING':
+#                    print(f'put in {response_data["inst"]}: {response_data}')
                     await queue_map[response_data['inst']].put(response_data)
 #                elif response_data['inst'] == 'SPEC' and response_data['process'] == 'Done':
 #                    await self.SPEC_response_queue.put(response_data)
                 else:
                     await self.response_queue.put(response_data)
+#                    print(f'response_queue formation: {response_data}')
             except Exception as e:
                 print(f"Error in wait_for_response: {e}", flush=True)
 

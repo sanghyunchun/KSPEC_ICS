@@ -1,14 +1,6 @@
 import os, sys
-import json
-import redis
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import asyncio
-import numpy as np
-import pandas as pd
-from astropy.coordinates import Angle, SkyCoord
-import astropy.units as u
-from astropy.io import fits
-
 from TCS import tcscli
 from GFA.gfacli import handle_gfa
 from MTL.mtlcli import handle_mtl
@@ -19,13 +11,18 @@ from SPECTRO.speccli import handle_spec
 from ENDO.ENDOcli import handle_endo
 from SCIOBS.sciobscli import sciobscli
 import Lib.process as processes
-
+import numpy as np
+import pandas as pd
+import json
+from astropy.coordinates import Angle, SkyCoord
+import astropy.units as u
+from astropy.io import fits
+import redis
 
 
 def printing(message):
     """Utility function for consistent printinging."""
     print(f"\n\033[32m[ICS] {message}\033[0m\n",flush=True)
-
 
 def convert_to_sexagesimal(ra_deg, dec_deg):
     """Converts RA and DEC from degrees to sexagesimal format."""
@@ -36,39 +33,48 @@ def convert_to_sexagesimal(ra_deg, dec_deg):
     dec_dms = dec.to_string(unit=u.degree, sep=':', alwayssign=True, precision=2)
     return ra_hms, dec_dms
 
-
 def apply_offset(ra: str, dec: str, offset_ra: float, offset_dec: float):
     """Applies an offset in arcseconds to the given RA and DEC coordinates."""
-    coord = SkyCoord(ra, dec, frame='icrs', unit=(u.hourangle, u.deg)) 
-    new_coord = coord.spherical_offsets_by(offset_ra * u.arcsec,offset_dec * u.arcsec)
+    coord = SkyCoord(ra, dec, frame='icrs', unit=(u.hourangle, u.deg))
+    
+    new_coord = coord.spherical_offsets_by(
+        offset_ra * u.arcsec,  
+        offset_dec * u.arcsec
+    )
     return new_coord.to_string('hmsdms', sep=":", precision=2)
-
+#    return new_coord.to_string('hmsdms',precision=2).replace('h', ':').replace('m', ':').replace('s', '').replace('d', ':')
 
 def update_fits(fits_file,updates,output_file=None):
-    """Update FITS file header with provided key-value pairs."""
-    try:
-        with fits.open(fits_file, mode='update' if output_file is None else 'readonly') as hdul:
-            header = hdul[0].header
-            for key, value in updates.items():
-                header[key] = value
-                print(f"Updated {key} to {value}")
+    with fits.open(fits_file, mode='update' if output_file is None else 'readonly') as hdul:
+        header = hdul[0].header
 
-            if output_file:
-                hdul.writeto(output_file, overwrite=True)
-                print(f"Updated FITS file saved as {output_file}")
-            else:
-                hdul.flush()
-                print("Original FITS file updated.")
-    except Exception as e:
-        print(f"FITS header update failed: {e}")
+        for key, value in updates.items():
+            header[key] = value
+            print(f"Updated {key} to {value}")
 
+        if output_file:
+            hdul.writeto(output_file, overwrite=True)
+            print(f"Updated FITS file saved as {output_file}")
+        else:
+            hdul.flush()
+            print("Original FITS file updated.")
+
+async def get_user_input(prompt):
+    """Async wrapper for input."""
+    return await asyncio.to_thread(input, prompt)
+
+#async def get_user_input(prompt):
+#    loop=asyncio.get_event_loop()
+#    return await loop.run_in_executor(None,input,prompt)
+#        user_input=await asyncio.to_thread(input, "\nAre you sure that telescope slewing finished? (yes/no): ")
+#        if user_input.strip().lower() == "yes":
+#            print('Continue next process.....')
+#            break
 
 async def clear_queue(queue):
-    """Clear all items from an asyncio Queue."""
     while not queue.empty():
         queue.get_nowait()
         queue.task_done()
-
 
 class script():
     def __init__(self):
@@ -76,10 +82,8 @@ class script():
         self.script_task = None
         self.fwhm = None
 
-    async def obs_initial(self,ICSclient,send_udp_message, send_telcom_command, 
-            response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
-        """Initialize all instruments."""
-        print('Start instruments intialization')
+    async def obs_initial(self,ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
+        print('Start instruments intialize')
         await handle_endo('endostatus',ICSclient)
         await response_queue.get()
         await handle_gfa('gfastatus',ICSclient)
@@ -99,12 +103,9 @@ class script():
         await handle_spec('specstatus',ICSclient)
         await response_queue.get()
 
-    async def run_calib(self,ICSclient,send_udp_message, send_telcom_command, 
-            response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
+    async def run_calib(self,ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
         """Starts the calibration process asynchronously."""
-        self.script_task = asyncio.create_task(
-                self.handle_calib(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue)
-        )
+        self.script_task = asyncio.create_task(self.handle_calib(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue))
 
     async def handle_calib(self,ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
         """Handles the calibration process by controlling lamps and spectrometers."""
@@ -131,12 +132,9 @@ class script():
         printing("All Calibration images were obtained.")
     
 
-    async def run_autoguide(self,ICSclient,send_udp_message, send_telcom_command, 
-            response_queue, GFA_response_queue, ADC_response_queue,SPEC_response_queue):
+    async def run_autoguide(self,ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue,SPEC_response_queue):
         """Starts the autoguiding process asynchronously."""
-        self.autoguide_task = asyncio.create_task(
-                self.handle_autoguide(ICSclient, send_udp_message, send_telcom_command, response_queue, GFA_response_queue)
-        )
+        self.autoguide_task = asyncio.create_task(self.handle_autoguide(ICSclient, send_udp_message, send_telcom_command, response_queue, GFA_response_queue))
 
     async def handle_autoguide(self,ICSclient, send_udp_message, send_telcom_command, response_queue, GFA_response_queue):
         try:
@@ -160,6 +158,7 @@ class script():
 
     async def autoguidestop(self,ICSclient):
         """Stops the autoguiding process if it is running."""
+#        if self.autoguide_task and not self.autoguide_task.done():
         await handle_gfa("gfaguidestop", ICSclient)
         print("Stopping autoguiding task...")
 
@@ -284,6 +283,10 @@ class script():
                 break
             print('.',end=' ', flush=True)
             await asyncio.sleep(5)
+#            uuu=await get_user_input("Are you sure that telescope slewing finished? (yes/no): ")
+#            if uuu.strip().lower() == "yes":
+#                break
+#            print("Wait until slewing finished and the insert 'yes'.")
         
         printing(f'Autoguiding Start')
         await self.run_autoguide(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue)
@@ -320,6 +323,7 @@ class script():
         
         print(f'FHWM is {self.fwhm:.5f}.')
 
+        """
         obs_num=3
         printing(f'KSPEC starts {obs_num} exposures with 300 seconds.')
         for i in range(int(obs_num)):
@@ -327,11 +331,13 @@ class script():
             await handle_spec(f'getobj 30 1', ICSclient)
             printing(f'{i+1}/{obs_num}: 30 seconds exposure start.')
             spec_rsp=await response_queue.get()
+#            print('spec_rsp',spec_rsp)
             fram=f'{i+1}/{obs_num}'
             header_data = {"PROJECT": sciobs.project, "EXPTIME": 20, "FRAME": fram, "Tile": select_tile, "PRORA": ra, "PRODEC": dec}
             update_fits(spec_rsp["file"],header_data)
             printing("Fits header updated")
 
+        """
 
         printing('All exposures are completed.')
         await handle_adc('adcstop',ICSclient)
@@ -346,18 +352,18 @@ class script():
         
 
 
-async def handle_script(arg, ICSclient, send_udp_message, send_telcom_command, 
-        response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
+async def handle_script(arg, ICSclient, send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
     """ Handle script with error checking. """
     cmd, *params = arg.split()
+#    print(cmd)
+#    global script_task
     scriptrun=script()
     command_map = {
             'obsinitial': scriptrun.obs_initial, 'runcalib': scriptrun.run_calib, 'runobs': scriptrun.run_obs, 'autoguide': scriptrun.run_autoguide
     }
 
     if cmd in command_map:
-        await command_map[cmd](ICSclient,send_udp_message, send_telcom_command, 
-                response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue)
+        await command_map[cmd](ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue)
     elif cmd == 'autoguidestop':
         await scriptrun.autoguidestop(ICSclient)
     else:
