@@ -66,6 +66,7 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
             reply_data=mkmsg.gfamsg()
             reply_data.update(process='Done',message='Autoguide Stop')
             rsp=json.dumps(reply_data)
+            print(rsp)
             await GFA_server.send_message('ICS',rsp)
 
             try:
