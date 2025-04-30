@@ -1,0 +1,33 @@
+2025-03-21 14:59:07 [INFO] Lookup table found: /media/shyunc/DATA/KSpec/KSPEC_ICS/ADC/Simul/kspec_adc_controller/src/etc/ADC_lookup.csv
+2025-03-21 14:59:07 [INFO] Interpolation function using pchip method created.
+2025-03-22 15:11:01 [INFO] Calculating from ZA.
+2025-03-22 15:11:01 [INFO] Calculation successful: -5.167168749786641
+2025-03-22 15:11:01 [INFO] Converting degrees to counts.
+2025-03-22 15:11:01 [INFO] Conversion successful: -232
+2025-03-22 15:11:16 [INFO] Both motors moved successfully.
+2025-03-22 15:12:16 [INFO] Calculating from ZA.
+2025-03-22 15:12:16 [INFO] Calculation successful: -4.9308016171128015
+2025-03-22 15:12:16 [INFO] Converting degrees to counts.
+2025-03-22 15:12:16 [INFO] Conversion successful: -221
+2025-03-22 15:12:31 [INFO] Both motors moved successfully.
+2025-03-22 15:13:31 [INFO] Calculating from ZA.
+2025-03-22 15:13:31 [INFO] Calculation successful: -4.7006807705787015
+2025-03-22 15:13:31 [INFO] Converting degrees to counts.
+2025-03-22 15:13:31 [INFO] Conversion successful: -211
+2025-03-22 15:13:32 [INFO] Both motors stopped successfully.
+2025-03-22 15:17:04 [INFO] Calculating from ZA.
+2025-03-22 15:17:04 [INFO] Calculation successful: -4.044009027200443
+2025-03-22 15:17:04 [INFO] Converting degrees to counts.
+2025-03-22 15:17:04 [INFO] Conversion successful: -181
+2025-03-22 15:17:19 [INFO] Both motors moved successfully.
+2025-03-22 15:18:19 [INFO] Calculating from ZA.
+2025-03-22 15:18:19 [INFO] Calculation successful: -3.813225623413612
+2025-03-22 15:18:19 [INFO] Converting degrees to counts.
+2025-03-22 15:18:19 [INFO] Conversion successful: -171
+2025-03-22 15:18:34 [INFO] Both motors moved successfully.
+2025-03-22 15:19:34 [INFO] Calculating from ZA.
+2025-03-22 15:19:34 [INFO] Calculation successful: -3.5825758539196784
+2025-03-22 15:19:34 [INFO] Converting degrees to counts.
+2025-03-22 15:19:34 [INFO] Conversion successful: -161
+2025-03-22 15:19:49 [INFO] Both motors moved successfully.
+2025-03-22 15:20:28 [INFO] Both motors stopped successfully.

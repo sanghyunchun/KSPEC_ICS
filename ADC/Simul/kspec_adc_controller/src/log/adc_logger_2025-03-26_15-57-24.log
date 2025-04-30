@@ -1,0 +1,20 @@
+2025-03-26 15:57:24 [INFO] Lookup table found: /media/shyunc/DATA/KSpec/KSPEC_ICS/ADC/Simul/kspec_adc_controller/src/etc/ADC_lookup.csv
+2025-03-26 15:57:24 [INFO] Interpolation function using pchip method created.
+2025-03-26 15:59:50 [INFO] Calculating from ZA.
+2025-03-26 15:59:50 [INFO] Calculation successful: -6.72016119750275
+2025-03-26 15:59:50 [INFO] Converting degrees to counts.
+2025-03-26 15:59:50 [INFO] Conversion successful: -302
+2025-03-26 16:00:05 [INFO] Both motors moved successfully.
+2025-03-26 16:01:05 [INFO] Calculating from ZA.
+2025-03-26 16:01:05 [INFO] Calculation successful: -6.954793901374437
+2025-03-26 16:01:05 [INFO] Converting degrees to counts.
+2025-03-26 16:01:05 [INFO] Conversion successful: -312
+2025-03-26 16:01:21 [INFO] Both motors moved successfully.
+2025-03-26 16:02:21 [INFO] Calculating from ZA.
+2025-03-26 16:02:21 [INFO] Calculation successful: -7.187576818384452
+2025-03-26 16:02:21 [INFO] Converting degrees to counts.
+2025-03-26 16:02:21 [INFO] Conversion successful: -323
+2025-03-26 16:02:36 [INFO] Both motors moved successfully.
+2025-03-26 16:03:28 [INFO] Both motors stopped successfully.
+2025-03-26 16:03:28 [INFO] Starting zeroing operation with velocity 1 RPM.
+2025-03-26 16:03:38 [INFO] Zeroing operation completed successfully.

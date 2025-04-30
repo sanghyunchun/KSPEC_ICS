@@ -1,0 +1,142 @@
+2025-04-14 13:07:08 [INFO] Lookup table found: /media/shyunc/DATA/KSpec/KSPEC_ICS/ADC/Simul/kspec_adc_controller/src/etc/ADC_lookup.csv
+2025-04-14 13:07:08 [INFO] Interpolation function using pchip method created.
+2025-04-14 13:10:48 [INFO] Calculating from ZA.
+2025-04-14 13:10:48 [INFO] Calculation successful: -10.898304397680443
+2025-04-14 13:10:48 [INFO] Converting degrees to counts.
+2025-04-14 13:10:48 [INFO] Conversion successful: -490
+2025-04-14 13:11:03 [INFO] Both motors moved successfully.
+2025-04-14 13:11:08 [INFO] Both motors stopped successfully.
+2025-04-14 13:40:25 [INFO] Calculating from ZA.
+2025-04-14 13:40:25 [INFO] Calculation successful: -5.18930815745374
+2025-04-14 13:40:25 [INFO] Converting degrees to counts.
+2025-04-14 13:40:25 [INFO] Conversion successful: -233
+2025-04-14 13:40:40 [INFO] Both motors moved successfully.
+2025-04-14 13:41:40 [INFO] Calculating from ZA.
+2025-04-14 13:41:40 [INFO] Calculation successful: -4.959525258429847
+2025-04-14 13:41:40 [INFO] Converting degrees to counts.
+2025-04-14 13:41:40 [INFO] Conversion successful: -223
+2025-04-14 13:41:44 [INFO] Both motors stopped successfully.
+2025-04-14 13:48:56 [INFO] Calculating from ZA.
+2025-04-14 13:48:56 [INFO] Calculation successful: -3.6184326265328464
+2025-04-14 13:48:56 [INFO] Converting degrees to counts.
+2025-04-14 13:48:56 [INFO] Conversion successful: -162
+2025-04-14 13:49:11 [INFO] Both motors moved successfully.
+2025-04-14 13:50:11 [INFO] Calculating from ZA.
+2025-04-14 13:50:11 [INFO] Calculation successful: -3.3880707924430795
+2025-04-14 13:50:11 [INFO] Converting degrees to counts.
+2025-04-14 13:50:11 [INFO] Conversion successful: -152
+2025-04-14 13:50:26 [INFO] Both motors moved successfully.
+2025-04-14 13:51:26 [INFO] Calculating from ZA.
+2025-04-14 13:51:26 [INFO] Calculation successful: -3.1578848513839706
+2025-04-14 13:51:26 [INFO] Converting degrees to counts.
+2025-04-14 13:51:26 [INFO] Conversion successful: -142
+2025-04-14 13:51:41 [INFO] Both motors moved successfully.
+2025-04-14 13:52:41 [INFO] Calculating from ZA.
+2025-04-14 13:52:41 [INFO] Calculation successful: -2.927919046647717
+2025-04-14 13:52:41 [INFO] Converting degrees to counts.
+2025-04-14 13:52:41 [INFO] Conversion successful: -131
+2025-04-14 13:52:47 [INFO] Both motors stopped successfully.
+2025-04-14 13:52:48 [INFO] Starting zeroing operation with velocity 1 RPM.
+2025-04-14 13:52:58 [INFO] Zeroing operation completed successfully.
+2025-04-14 14:16:58 [INFO] Calculating from ZA.
+2025-04-14 14:16:58 [INFO] Calculation successful: -1.5464028638464917
+2025-04-14 14:16:58 [INFO] Converting degrees to counts.
+2025-04-14 14:16:58 [INFO] Conversion successful: -69
+2025-04-14 14:17:13 [INFO] Both motors moved successfully.
+2025-04-14 14:18:13 [INFO] Calculating from ZA.
+2025-04-14 14:18:13 [INFO] Calculation successful: -1.773989217354511
+2025-04-14 14:18:13 [INFO] Converting degrees to counts.
+2025-04-14 14:18:13 [INFO] Conversion successful: -79
+2025-04-14 14:18:28 [INFO] Both motors moved successfully.
+2025-04-14 14:19:29 [INFO] Calculating from ZA.
+2025-04-14 14:19:29 [INFO] Calculation successful: -2.0021838907168625
+2025-04-14 14:19:29 [INFO] Converting degrees to counts.
+2025-04-14 14:19:29 [INFO] Conversion successful: -90
+2025-04-14 14:19:44 [INFO] Both motors moved successfully.
+2025-04-14 14:19:59 [INFO] Both motors stopped successfully.
+2025-04-14 14:19:59 [INFO] Starting zeroing operation with velocity 1 RPM.
+2025-04-14 14:20:09 [INFO] Zeroing operation completed successfully.
+2025-04-14 14:22:11 [INFO] Calculating from ZA.
+2025-04-14 14:22:11 [INFO] Calculation successful: -2.499137872205357
+2025-04-14 14:22:11 [INFO] Converting degrees to counts.
+2025-04-14 14:22:11 [INFO] Conversion successful: -112
+2025-04-14 14:22:26 [INFO] Both motors moved successfully.
+2025-04-14 14:23:26 [INFO] Calculating from ZA.
+2025-04-14 14:23:26 [INFO] Calculation successful: -2.728583814057308
+2025-04-14 14:23:26 [INFO] Converting degrees to counts.
+2025-04-14 14:23:26 [INFO] Conversion successful: -122
+2025-04-14 14:23:40 [INFO] Both motors stopped successfully.
+2025-04-14 14:26:38 [INFO] Calculating from ZA.
+2025-04-14 14:26:38 [INFO] Calculation successful: -3.315033933482497
+2025-04-14 14:26:38 [INFO] Converting degrees to counts.
+2025-04-14 14:26:38 [INFO] Conversion successful: -149
+2025-04-14 14:26:53 [INFO] Both motors moved successfully.
+2025-04-14 14:27:53 [INFO] Calculating from ZA.
+2025-04-14 14:27:53 [INFO] Calculation successful: -3.545343513770037
+2025-04-14 14:27:53 [INFO] Converting degrees to counts.
+2025-04-14 14:27:53 [INFO] Conversion successful: -159
+2025-04-14 14:28:08 [INFO] Both motors moved successfully.
+2025-04-14 14:29:08 [INFO] Calculating from ZA.
+2025-04-14 14:29:08 [INFO] Calculation successful: -3.7759328012468742
+2025-04-14 14:29:08 [INFO] Converting degrees to counts.
+2025-04-14 14:29:08 [INFO] Conversion successful: -169
+2025-04-14 14:29:23 [INFO] Both motors moved successfully.
+2025-04-14 14:29:27 [INFO] Both motors stopped successfully.
+2025-04-14 14:29:27 [INFO] Starting zeroing operation with velocity 1 RPM.
+2025-04-14 14:29:37 [INFO] Zeroing operation completed successfully.
+2025-04-14 14:32:07 [INFO] Calculating from ZA.
+2025-04-14 14:32:07 [INFO] Calculation successful: -4.327349237334939
+2025-04-14 14:32:07 [INFO] Converting degrees to counts.
+2025-04-14 14:32:07 [INFO] Conversion successful: -194
+2025-04-14 14:32:22 [INFO] Both motors moved successfully.
+2025-04-14 14:33:22 [INFO] Calculating from ZA.
+2025-04-14 14:33:22 [INFO] Calculation successful: -4.5580455919591785
+2025-04-14 14:33:22 [INFO] Converting degrees to counts.
+2025-04-14 14:33:22 [INFO] Conversion successful: -205
+2025-04-14 14:33:37 [INFO] Both motors moved successfully.
+2025-04-14 14:34:37 [INFO] Calculating from ZA.
+2025-04-14 14:34:37 [INFO] Calculation successful: -4.78837601268422
+2025-04-14 14:34:37 [INFO] Converting degrees to counts.
+2025-04-14 14:34:37 [INFO] Conversion successful: -215
+2025-04-14 14:34:52 [INFO] Both motors moved successfully.
+2025-04-14 14:35:52 [INFO] Calculating from ZA.
+2025-04-14 14:35:52 [INFO] Calculation successful: -5.018292856977129
+2025-04-14 14:35:52 [INFO] Converting degrees to counts.
+2025-04-14 14:35:52 [INFO] Conversion successful: -225
+2025-04-14 14:36:07 [INFO] Both motors moved successfully.
+2025-04-14 14:37:07 [INFO] Calculating from ZA.
+2025-04-14 14:37:07 [INFO] Calculation successful: -5.248120447269317
+2025-04-14 14:37:07 [INFO] Converting degrees to counts.
+2025-04-14 14:37:07 [INFO] Conversion successful: -236
+2025-04-14 14:37:22 [INFO] Both motors moved successfully.
+2025-04-14 14:38:22 [INFO] Calculating from ZA.
+2025-04-14 14:38:22 [INFO] Calculation successful: -5.477726761262096
+2025-04-14 14:38:22 [INFO] Converting degrees to counts.
+2025-04-14 14:38:22 [INFO] Conversion successful: -246
+2025-04-14 14:38:37 [INFO] Both motors moved successfully.
+2025-04-14 14:39:37 [INFO] Calculating from ZA.
+2025-04-14 14:39:37 [INFO] Calculation successful: -5.707451279893009
+2025-04-14 14:39:37 [INFO] Converting degrees to counts.
+2025-04-14 14:39:37 [INFO] Conversion successful: -256
+2025-04-14 14:39:52 [INFO] Both motors moved successfully.
+2025-04-14 14:40:52 [INFO] Calculating from ZA.
+2025-04-14 14:40:52 [INFO] Calculation successful: -5.937240888121816
+2025-04-14 14:40:52 [INFO] Converting degrees to counts.
+2025-04-14 14:40:52 [INFO] Conversion successful: -267
+2025-04-14 14:41:07 [INFO] Both motors moved successfully.
+2025-04-14 14:42:07 [INFO] Calculating from ZA.
+2025-04-14 14:42:07 [INFO] Calculation successful: -6.167380598459098
+2025-04-14 14:42:07 [INFO] Converting degrees to counts.
+2025-04-14 14:42:07 [INFO] Conversion successful: -277
+2025-04-14 14:42:22 [INFO] Both motors moved successfully.
+2025-04-14 14:43:22 [INFO] Calculating from ZA.
+2025-04-14 14:43:22 [INFO] Calculation successful: -6.397819984617167
+2025-04-14 14:43:22 [INFO] Converting degrees to counts.
+2025-04-14 14:43:22 [INFO] Conversion successful: -287
+2025-04-14 14:43:37 [INFO] Both motors moved successfully.
+2025-04-14 14:44:37 [INFO] Calculating from ZA.
+2025-04-14 14:44:37 [INFO] Calculation successful: -6.628850668069888
+2025-04-14 14:44:37 [INFO] Converting degrees to counts.
+2025-04-14 14:44:37 [INFO] Conversion successful: -298
+2025-04-14 14:44:52 [INFO] Both motors moved successfully.
+2025-04-14 14:44:56 [INFO] Both motors stopped successfully.

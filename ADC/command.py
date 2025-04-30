@@ -131,7 +131,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
         reply_data.update(process='Done')
         rsp = json.dumps(reply_data)
         printing(reply_data['message'])
-        await ADC_server.send_message('ICS', rsp)
+#        await ADC_server.send_message('ICS', rsp)
 
         # Cancel the adcadjust task if it's running
         if adcadjust_task and not adcadjust_task.done():
@@ -143,6 +143,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
                 printing("adcadjust task stopped.")
         else:
             printing("No adcadjust task is currently running.")
+        await ADC_server.send_message('ICS', rsp)
 
     elif func in {'adcrotate1', 'adcrotate2', 'adcrotateop','adcrotatesame'}:
         count = int(dict_data['pcount'])
