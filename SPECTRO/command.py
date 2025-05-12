@@ -108,17 +108,19 @@ async def get_obj(SPEC_server, exptime, nframe):
 def get_next_filename(prefix: str = "250314", extension: str = "fits"):
     index = 1
     while True:
-        filename = f"./RAWDATA/{prefix}{index:04d}.{extension}"
-        if not os.path.exists(filename):
-            return filename
+        filepath='../RAWDATA/'
+        filename = f"{prefix}{index:04d}.{extension}"
+        if not os.path.exists(filepath+filename):
+            return filepath,filename
         index += 1
 
 async def create_fits_image(exptime,shape: tuple = (100, 100), data_type=np.float32):
     data = np.random.random(shape).astype(data_type)
     hdu = fits.PrimaryHDU(data)
-    filename = get_next_filename()
+    filepath,filename = get_next_filename()
+    print(filepath+filename)
     hdul = fits.HDUList([hdu])
-    hdul.writeto(filename, overwrite=True)
+    hdul.writeto(filepath+filename, overwrite=True)
     await asyncio.sleep(exptime)
     msg=f'FITS file {filename} is created.'
     response = {"status": "success", "message": msg, "file": filename, "process": 'Done'}
@@ -141,6 +143,7 @@ def spec_status():
     return msg
 
 def get_bias(nframe):
+    time.sleep(5)
     msg=f'Bias exposure finished. {nframe} Bias Frames are obtained.'
     return msg
 
