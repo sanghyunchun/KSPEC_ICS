@@ -1,0 +1,39 @@
+2025-05-14 16:46:26 [INFO] Lookup table found: /media/shyunc/DATA/KSpec/KSPEC_ICS/ADC/Simul/kspec_adc_controller/src/etc/ADC_lookup.csv
+2025-05-14 16:46:26 [INFO] Interpolation function using pchip method created.
+2025-05-15 16:29:59 [INFO] Starting homing operation.
+2025-05-15 16:30:09 [INFO] Homing completed successfully.
+2025-05-15 16:30:17 [INFO] Starting zeroing operation with velocity 1 RPM.
+2025-05-15 16:30:27 [INFO] Zeroing operation completed successfully.
+2025-05-15 16:32:18 [INFO] Calculating from ZA.
+2025-05-15 16:32:18 [INFO] Calculation successful: -64.38002180632333
+2025-05-15 16:32:18 [INFO] Converting degrees to counts.
+2025-05-15 16:32:18 [INFO] Conversion successful: -2897
+2025-05-15 16:32:33 [INFO] Both motors moved successfully.
+2025-05-15 16:33:33 [INFO] Calculating from ZA.
+2025-05-15 16:33:33 [INFO] Calculation successful: -66.79751172229471
+2025-05-15 16:33:33 [INFO] Converting degrees to counts.
+2025-05-15 16:33:33 [INFO] Conversion successful: -3005
+2025-05-15 16:33:48 [INFO] Both motors moved successfully.
+2025-05-15 16:34:48 [INFO] Calculating from ZA.
+2025-05-15 16:34:48 [INFO] Calculation successful: -67.96492138842171
+2025-05-15 16:34:48 [INFO] Converting degrees to counts.
+2025-05-15 16:34:48 [INFO] Conversion successful: -3058
+2025-05-15 16:35:03 [INFO] Both motors moved successfully.
+2025-05-15 16:36:03 [INFO] Calculating from ZA.
+2025-05-15 16:36:03 [INFO] Calculation successful: -69.19055992415105
+2025-05-15 16:36:03 [INFO] Converting degrees to counts.
+2025-05-15 16:36:03 [INFO] Conversion successful: -3113
+2025-05-15 16:36:18 [INFO] Both motors moved successfully.
+2025-05-15 16:36:26 [INFO] Both motors stopped successfully.
+2025-05-16 09:06:23 [INFO] Calculating from ZA.
+2025-05-16 09:06:23 [INFO] Calculation successful: -34.49503580963036
+2025-05-16 09:06:23 [INFO] Converting degrees to counts.
+2025-05-16 09:06:23 [INFO] Conversion successful: -1552
+2025-05-16 09:06:38 [INFO] Both motors moved successfully.
+2025-05-16 09:06:46 [INFO] Both motors stopped successfully.
+2025-05-16 09:14:42 [INFO] Calculating from ZA.
+2025-05-16 09:14:42 [INFO] Calculation successful: -8.812888582631336
+2025-05-16 09:14:42 [INFO] Converting degrees to counts.
+2025-05-16 09:14:42 [INFO] Conversion successful: -396
+2025-05-16 09:14:57 [INFO] Both motors moved successfully.
+2025-05-16 09:15:05 [INFO] Both motors stopped successfully.

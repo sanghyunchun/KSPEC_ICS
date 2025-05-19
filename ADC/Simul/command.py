@@ -7,7 +7,7 @@ from astropy.time import Time
 import astropy.units as u
 import numpy as np
 #from .kspec_adc_controller.src.adc_calc_angle import ADCCalc
-#from .kspec_adc_controller.src.adc_logger import AdcLogger
+from .kspec_adc_controller.src.adc_logger import AdcLogger
 
 """Command module for handling ADC-related functionalities.
 

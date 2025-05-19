@@ -6,8 +6,8 @@ from astropy.coordinates import EarthLocation, SkyCoord, AltAz
 from astropy.time import Time
 import astropy.units as u
 import numpy as np
-from .kspec_adc_controller.src.adc_calc_angle import ADCCalc
-from .kspec_adc_controller.src.adc_logger import AdcLogger
+from ADC.kspec_adc_controller.src.adc_calc_angle import ADCCalc
+from ADC.kspec_adc_controller.src.adc_logger import AdcLogger
 
 """Command module for handling ADC-related functionalities.
 
@@ -198,7 +198,7 @@ async def handle_adcadjust(ADC_server, adc_action, ra, dec):
     """
     try:
         ini_zdist = calculate_zenith_distance(ra, dec)
-        logger = AdcLogger(__file__)
+        logger = AdcLogger()
         calculator = ADCCalc(logger)
         ini_count = calculator.degree_to_count(calculator.calc_from_za(ini_zdist))
         delcount = ini_count
