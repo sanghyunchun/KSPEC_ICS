@@ -24,7 +24,7 @@ class AMQclass():
     async def connect(self):
         self.connection = await aio_pika.connect_robust(host=self.ipaddr,login=self.id,password=self.pw,heartbeat=self.heartbeat_interval)
         self.channel = await self.connection.channel()
-        print('RabbitMQ server connected')
+        print('RabbitMQ server connected', flush=True)
 
     async def disconnect(self):
         """Safely disconnect the RabbitMQ connection and close channels."""
@@ -33,23 +33,23 @@ class AMQclass():
             if self.queue:
                 await self.queue.unbind(self.cmd_exchange)
                 await self.queue.delete()
-                print("Queue unbound and deleted.")
+                print("Queue unbound and deleted.", flush=True)
 
             # Close the channel if it exists
             if self.channel:
                 await self.channel.close()
-                print("Channel closed.")
+                print("Channel closed.", flush=True)
 
             # Close the connection if it exists
             if self.connection:
                 await self.connection.close()
-                print("RabbitMQ connection closed.")
+                print("RabbitMQ connection closed.", flush=True)
         except Exception as e:
-            print(f"Error during RabbitMQ disconnect: {e}")
+            print(f"Error during RabbitMQ disconnect: {e}", flush=True)
 
     async def define_producer(self):
         self.cmd_exchange = await self.channel.declare_exchange(self.exchange, aio_pika.ExchangeType.DIRECT)
-        print(f'{self.exchange} exchange was defined')
+        print(f'{self.exchange} exchange was defined', flush=True)
 
     async def send_message(self, _routing_key, message):
         await self.cmd_exchange.publish(
@@ -69,7 +69,7 @@ class AMQclass():
         async with self.queue.iterator() as qiterator:
             async for message in qiterator:
                 async with message.process():
-                    print(f'\n{_routing_key} Server received message') #, message.body.decode())
+                    print(f'\n{_routing_key} Server received message', flush=True) #, message.body.decode())
                     return message.body
 
 #    async def start_guidingloop(self, _routing_key,itmax,function,subserver):    ### For autoguiding
