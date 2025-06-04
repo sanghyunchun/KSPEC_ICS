@@ -5,6 +5,7 @@ import json
 import asyncio
 import time
 import random
+import shutil
 #from .kspec_gfa_controller.src.gfa_actions import GFAActions
 #from KSPEC_Server.GFA.kspec_gfa_controller.src.gfa_actions import gfa_actions
 
@@ -25,6 +26,9 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
     func=dict_data['func']
 #    endoaction=endo_actions()
 #    endoaction.endo_connect()
+
+    with open('./Lib/KSPEC.ini','r') as f:
+        kspecinfo=json.load(f)
 
     if func == 'gfastatus':
         result=gfa_actions.status()
@@ -67,10 +71,13 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
             reply_data.update(process='Done',message='Autoguide Stop')
             rsp=json.dumps(reply_data)
             await GFA_server.send_message('ICS',rsp)
+            path_astroimg=kspecinfo['GFA']['Simul_astrometry_images']
+            shutil.rmtree(path_astroimg)
+            os.makedirs(path_astroimg, exist_ok=True)
             try:
                 await guiding_task
             except asyncio.CancelledError:
-                printing("Guiding task stopped.")
+                printing("Guiding task stopped. Fits files with astrometry are removed")
         else:
             printing("No Guiding task is currently running.")
             reply_data=mkmsg.gfamsg()
