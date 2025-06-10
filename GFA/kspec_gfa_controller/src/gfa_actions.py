@@ -174,8 +174,8 @@ class GFAActions:
                         Binning=Binning,
                         output_dir=grab_save_path,
                         packet_size=packet_size,
-                        ipd=ipd,
-                        ftd_base=ftd_base,
+                        ipd=cam_ipd,
+                        ftd_base=cam_ftd_base,
                     )
                     timeout_cameras.extend(res)
 
@@ -209,6 +209,10 @@ class GFAActions:
 
             self.env.logger.info("Calculating guider offsets...")
             fdx, fdy, fwhm = self.env.guider.exe_cal()
+
+            # Deleting raw and processed files
+            self.env.logger.info("Clearing raw and processed files after guiding...")
+            self.env.astrometry.clear_raw_and_processed_files()
 
             msg = f"Offsets: fdx={fdx}, fdy={fdy}, FWHM={fwhm:.5f} arcsec"
             return self._generate_response("success", msg, fdx=fdx, fdy=fdy, fwhm=fwhm)

@@ -114,12 +114,6 @@ class GFAAstrometry:
         ]:
             os.makedirs(directory, exist_ok=True)
 
-        # Load raw image files
-        filepre = glob.glob(os.path.join(self.dir_path, '*.fits'))
-        self.raws = [os.path.basename(file) for file in filepre]
-        self.raws = sorted(self.raws)
-        self.logger.debug(f"Loaded {len(self.raws)} FITS files.")
-
     def process_file(self, flname: str):
         """
         Processes a FITS file: subtracts sky values, crops the image, 
@@ -354,6 +348,41 @@ class GFAAstrometry:
         self.logger.info(f"Combined function completed for {flname}. CRVAL1: {crval1}, CRVAL2: {crval2}.")
         return crval1, crval2
 
+    def delete_all_files_in_dir(self, dir_path: str) -> int:
+        """
+        Delete all files in the specified directory using self.logger.
+
+        Parameters
+        ----------
+        dir_path : str
+            Path to the directory whose contents will be deleted.
+
+        Returns
+        -------
+        int
+            Number of files successfully deleted.
+        """
+        deleted_count = 0
+
+        if not os.path.isdir(dir_path):
+            self.logger.warning(f"Directory not found: {dir_path}")
+            return deleted_count
+
+        for filename in os.listdir(dir_path):
+            file_path = os.path.join(dir_path, filename)
+            try:
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+                    deleted_count += 1
+                    self.logger.debug(f"Deleted file: {file_path}")
+                else:
+                    self.logger.debug(f"Skipped non-file item: {file_path}")
+            except Exception as e:
+                self.logger.error(f"Failed to delete file {file_path}: {e}")
+
+        self.logger.info(f"Deleted {deleted_count} files in directory: {dir_path}")
+        return deleted_count
+
     def preproc(self):
         """
         Preprocess raw FITS files by:
@@ -364,6 +393,12 @@ class GFAAstrometry:
         - Cleans up temporary files at the end.
         """
         start_time = time.time()
+
+        # Load raw image files
+        filepre = glob.glob(os.path.join(self.dir_path, '*.fits'))
+        self.raws = [os.path.basename(file) for file in filepre]
+        self.raws = sorted(self.raws)
+        self.logger.debug(f"Loaded {len(self.raws)} FITS files.")
 
         if not self.raws:
             self.logger.warning("No FITS files found. Exiting preprocessing.")
@@ -444,4 +479,19 @@ class GFAAstrometry:
         end_time = time.time()
         running_time = end_time - start_time
         self.logger.info(f"All files processed in {running_time:.2f} seconds.")
+
+        # Final log message
         self.logger.info("Preprocessing completed.")
+
+    def clear_raw_and_processed_files(self) -> None:
+        """
+        Delete all files in self.dir_path and self.processed_dir, and log the results.
+        """
+        self.logger.info("Deleting raw and processed files.")
+
+        deleted_raw = self.delete_all_files_in_dir(self.dir_path)
+        deleted_processed = self.delete_all_files_in_dir(self.processed_dir)
+
+        self.logger.info(
+            f"Deleted {deleted_raw} raw files and {deleted_processed} processed files."
+        )

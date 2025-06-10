@@ -68,7 +68,7 @@ class GFALogger:
         if self.file_name in GFALogger._initialized_loggers:
             return
 
-        self.logger.setLevel(logging.INFO)  # Capture all messages >= INFO
+        self.logger.setLevel(logging.DEBUG)  # Capture all messages >= INFO
 
         # Ensure the log directory exists
         os.makedirs(log_dir, exist_ok=True)
