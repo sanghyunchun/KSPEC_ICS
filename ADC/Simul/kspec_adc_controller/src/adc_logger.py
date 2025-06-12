@@ -7,86 +7,90 @@
 
 import logging
 import os
-import datetime
+from datetime import datetime
+from typing import Set, Optional
+
+__all__ = ["AdcLogger"]
 
 class AdcLogger:
     """
-    A logging utility class for managing console and optional file logging with distinct levels.
+    A custom logging system for the ADC project, modeled after GFALogger.
 
-    This class supports simultaneous logging to the console and, optionally, to a file.
+    Supports stream and file logging with customizable paths and prevents
+    duplicate logger initialization using a class-level registry.
+
+    Attributes
+    ----------
+    file_name : str
+        The base filename for which the logger is created.
+    logger : logging.Logger
+        The underlying logger instance.
     """
 
-    _initialized_loggers = set()  # Class-level set to track initialized loggers
+    _initialized_loggers: Set[str] = set()
 
-    def __init__(self, stream_level=logging.INFO, enable_file_logging=True):
+    def __init__(
+        self,
+        file: str,
+        stream_level: int = logging.INFO,
+        log_dir: Optional[str] = None
+    ) -> None:
         """
-        Initialize the logger with configurable log levels and optional file logging.
+        Initialize a logger with stream and file handlers.
 
         Parameters
         ----------
+        file : str
+            File name to derive logger identity (e.g., __file__).
         stream_level : int, optional
-            Logging level for console output. Defaults to logging.DEBUG.
-        enable_file_logging : bool, optional
-            Whether to enable file logging. Defaults to False.
+            Logging level for console output (default: logging.INFO).
+        log_dir : str, optional
+            Custom log directory path. Defaults to 'log/' next to script.
         """
-        # base_dir: 현재 스크립트 파일(adc_logger.py)이 위치한 디렉토리의 절대 경로
-        base_dir = os.path.abspath(os.path.dirname(__file__))
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        if log_dir is None:
+            log_dir = os.path.join(script_dir, "log")
 
-        # logger_name: 스크립트 파일 이름만 추출 (adc_logger.py)
-        logger_name = os.path.basename(__file__)
-        
-        # 중복 초기화 방지
-        if logger_name in AdcLogger._initialized_loggers:
+        self.file_name = os.path.basename(file)
+        self.logger = logging.getLogger(self.file_name)
+
+        if self.file_name in AdcLogger._initialized_loggers:
             return
-        AdcLogger._initialized_loggers.add(logger_name)
 
-        # Logger 생성
-        self.logger = logging.getLogger(logger_name)
-        self.logger.setLevel(logging.INFO)
+        self.logger.setLevel(logging.DEBUG)
+        os.makedirs(log_dir, exist_ok=True)
 
-        # Formatter 설정
-        formatter = logging.Formatter(
-            "%(asctime)s [%(levelname)s] %(message)s", "%Y-%m-%d %H:%M:%S"
-        )
+        log_filename = f"adc_{datetime.now().strftime('%Y-%m-%d')}.log"
+        log_file_path = os.path.join(log_dir, log_filename)
 
-        # 콘솔 핸들러
+        formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+
+        # Console handler
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(formatter)
-        stream_handler.setLevel(stream_level)  # INFO 혹은 DEBUG 등으로 세팅 가능
-        if not self.logger.hasHandlers():
-            self.logger.addHandler(stream_handler)
+        stream_handler.setLevel(stream_level)
+        self.logger.addHandler(stream_handler)
 
-        # 파일 로깅 활성화
-        if enable_file_logging:
-            # 1) 스크립트 파일이 있는 디렉토리에 log 폴더 생성
-            log_dir = os.path.join(base_dir, "log")
-            os.makedirs(log_dir, exist_ok=True)
+        # File handler
+        file_handler = logging.FileHandler(log_file_path, mode="a", encoding="utf-8")
+        file_handler.setFormatter(formatter)
+        file_handler.setLevel(logging.DEBUG)
+        self.logger.addHandler(file_handler)
 
-            # 2) 날짜/시간 정보를 파일 이름에 포함: adc_logger_YYYY-MM-DD_HH-MM-SS.log
-            timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-            log_file_name = f"adc_logger_{timestamp}.log"  # adc_logger.log 대신 시분초 포함
+        AdcLogger._initialized_loggers.add(self.file_name)
 
-            # 3) 최종 파일 경로
-            log_file_path = os.path.join(log_dir, log_file_name)
+    def info(self, message: str) -> None:
+        """Log an INFO-level message."""
+        self.logger.info(f"{message} (at {self.file_name})")
 
-            # 파일 핸들러 생성
-            file_handler = logging.FileHandler(log_file_path)
-            file_handler.setFormatter(formatter)
-            file_handler.setLevel(logging.DEBUG)  # 파일에는 상세 정보까지 기록
-            self.logger.addHandler(file_handler)
+    def debug(self, message: str) -> None:
+        """Log a DEBUG-level message."""
+        self.logger.debug(f"{message} (at {self.file_name})")
 
-    def debug(self, message):
-        """Log a debug message."""
-        self.logger.debug(message)
+    def warning(self, message: str) -> None:
+        """Log a WARNING-level message."""
+        self.logger.warning(f"{message} (at {self.file_name})")
 
-    def info(self, message):
-        """Log an informational message."""
-        self.logger.info(message)
-
-    def warning(self, message):
-        """Log a warning message."""
-        self.logger.warning(message)
-
-    def error(self, message):
-        """Log an error message."""
-        self.logger.error(message)
+    def error(self, message: str) -> None:
+        """Log an ERROR-level message."""
+        self.logger.error(f"{message} (at {self.file_name})")
