@@ -132,15 +132,15 @@ class script():
     
 
     async def run_autoguide(self,ICSclient,send_udp_message, send_telcom_command, 
-            response_queue, GFA_response_queue, ADC_response_queue,SPEC_response_queue):
+            response_queue, GFA_response_queue, exptime: float = 1.0):
         """Starts the autoguiding process asynchronously."""
         self.autoguide_task = asyncio.create_task(
-                self.handle_autoguide(ICSclient, send_udp_message, send_telcom_command, response_queue, GFA_response_queue)
+                self.handle_autoguide(exptime,ICSclient, send_udp_message, send_telcom_command, response_queue, GFA_response_queue)
         )
 
-    async def handle_autoguide(self,ICSclient, send_udp_message, send_telcom_command, response_queue, GFA_response_queue):
+    async def handle_autoguide(self,exptime,ICSclient, send_udp_message, send_telcom_command, response_queue, GFA_response_queue):
         try:
-            await handle_gfa('gfaguide',ICSclient)
+            await handle_gfa(f'gfaguide {exptime}',ICSclient)
             while True:
                 response_data = await GFA_response_queue.get()
                 fdx=response_data['fdx']
@@ -279,14 +279,14 @@ class script():
 
             value=r.get('dome_error')
 
-            if value == '0001':
+            if value.decode() == '0001':
                 print('Telescope slew finished')
                 break
             print('.',end=' ', flush=True)
             await asyncio.sleep(5)
         
         printing(f'Autoguiding Start')
-        await self.run_autoguide(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue)
+        await self.run_autoguide(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue)
         
         await asyncio.sleep(2)
         await handle_spec('illuon',ICSclient)
@@ -352,19 +352,21 @@ async def handle_script(arg, ICSclient, send_udp_message, send_telcom_command,
     cmd, *params = arg.split()
     scriptrun=script()
     command_map = {
-            'obsinitial': scriptrun.obs_initial, 'runcalib': scriptrun.run_calib, 'runobs': scriptrun.run_obs, 'autoguide': scriptrun.run_autoguide
+            'obsinitial': scriptrun.obs_initial, 'runcalib': scriptrun.run_calib, 'runobs': scriptrun.run_obs
     }
 
     if cmd in command_map:
         await command_map[cmd](ICSclient,send_udp_message, send_telcom_command, 
                 response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue)
+    elif cmd == 'autoguide':
+        if not params:
+            await scriptrun.run_autoguide(ICSclient, send_udp_message, send_telcom_command, response_queue, GFA_response_queue)
+        else:
+            await scriptrun.run_autoguide(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, params[0])
+
     elif cmd == 'autoguidestop':
         await scriptrun.autoguidestop(ICSclient)
     else:
         print(f"Error: '{cmd}' is not right command for SCRIPT")
-
-
-
-
 
 

@@ -107,7 +107,7 @@ def fbp_move():
     with open(fbpfilepath+'motion_alpha.info','r') as fs:
         alpha=json.load(fs)
 
-    time.sleep(60)
+    time.sleep(20)
     rspmsg=f'Fiber positioners movement finished.'
     return rspmsg
 

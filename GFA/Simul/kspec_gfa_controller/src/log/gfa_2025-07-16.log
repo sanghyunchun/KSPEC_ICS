@@ -1,0 +1,279 @@
+2025-07-16 14:12:23,901 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2025-07-16 14:12:23,901 [INFO] Initializing gfa_astrometry class.
+2025-07-16 14:12:23,901 [INFO] Initializing GFAGuider...
+2025-07-16 14:12:23,902 [DEBUG] Processed dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg
+2025-07-16 14:12:23,902 [DEBUG] Final astro dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/
+2025-07-16 14:12:23,902 [DEBUG] Cutout dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/cutout
+2025-07-16 14:12:23,902 [INFO] GFAGuider setup complete.
+2025-07-16 14:17:08,079 [INFO] Image save path: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/grab/2025-07-16
+2025-07-16 14:17:08,080 [INFO] Grabbing from camera 1 (ExpTime=4.0, Binning=4)
+2025-07-16 14:55:39,328 [INFO] Starting guiding sequence...
+2025-07-16 14:55:39,329 [INFO] Grabbing raw image...
+2025-07-16 14:55:39,330 [ERROR] Guiding failed: name 'src_dir' is not defined
+2025-07-16 15:19:30,573 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2025-07-16 15:19:30,573 [INFO] Initializing gfa_astrometry class.
+2025-07-16 15:19:30,574 [INFO] Initializing GFAGuider...
+2025-07-16 15:19:30,574 [DEBUG] Processed dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg
+2025-07-16 15:19:30,574 [DEBUG] Final astro dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/
+2025-07-16 15:19:30,574 [DEBUG] Cutout dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/cutout
+2025-07-16 15:19:30,574 [INFO] GFAGuider setup complete.
+2025-07-16 15:19:38,090 [INFO] Starting guiding sequence...
+2025-07-16 15:19:38,091 [INFO] Grabbing raw image...
+2025-07-16 15:19:38,091 [ERROR] Guiding failed: 'GFAActions' object has no attribute 'file_index'
+2025-07-16 15:20:36,376 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2025-07-16 15:20:36,376 [INFO] Initializing gfa_astrometry class.
+2025-07-16 15:20:36,376 [INFO] Initializing GFAGuider...
+2025-07-16 15:20:36,376 [DEBUG] Processed dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg
+2025-07-16 15:20:36,376 [DEBUG] Final astro dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/
+2025-07-16 15:20:36,376 [DEBUG] Cutout dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/cutout
+2025-07-16 15:20:36,377 [INFO] GFAGuider setup complete.
+2025-07-16 15:20:40,729 [INFO] Starting guiding sequence...
+2025-07-16 15:20:40,730 [INFO] Grabbing raw image...
+2025-07-16 15:20:45,757 [INFO] Running astrometry preprocessing...
+2025-07-16 15:20:45,760 [DEBUG] Loaded 3 FITS files.
+2025-07-16 15:20:45,760 [INFO] Starting preprocessing for 3 files.
+2025-07-16 15:20:45,761 [INFO] No astrometry results found. Running full astrometric solution.
+2025-07-16 15:20:45,762 [DEBUG] Starting combined function for file: KMTNge.20230905T094050.0001.fits.
+2025-07-16 15:20:45,763 [DEBUG] Processing file: KMTNge.20230905T094050.0001.fits
+2025-07-16 15:20:45,763 [DEBUG] Starting combined function for file: KMTNgn.20230905T094050.0001.fits.
+2025-07-16 15:20:45,764 [DEBUG] Processing file: KMTNgn.20230905T094050.0001.fits
+2025-07-16 15:20:45,765 [DEBUG] Starting combined function for file: KMTNgs.20230905T094050.0001.fits.
+2025-07-16 15:20:45,766 [DEBUG] Processing file: KMTNgs.20230905T094050.0001.fits
+2025-07-16 15:20:45,805 [INFO] Starting astrometry process for proc_KMTNgs.20230905T094050.0001.fits.
+2025-07-16 15:20:45,805 [INFO] Starting astrometry process for proc_KMTNge.20230905T094050.0001.fits.
+2025-07-16 15:20:45,805 [INFO] Starting astrometry process for proc_KMTNgn.20230905T094050.0001.fits.
+2025-07-16 15:20:45,806 [ERROR] Error processing KMTNgs.20230905T094050.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-16 15:20:45,806 [ERROR] Error processing KMTNge.20230905T094050.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-16 15:20:45,806 [ERROR] Error processing KMTNgn.20230905T094050.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-16 15:20:45,806 [WARNING] 3 files failed: ['KMTNgs.20230905T094050.0001.fits', 'KMTNge.20230905T094050.0001.fits', 'KMTNgn.20230905T094050.0001.fits']
+2025-07-16 15:20:45,806 [INFO] Starting star catalog generation.
+2025-07-16 15:20:45,806 [DEBUG] Found 0 .corr files in /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/tempfiles.
+2025-07-16 15:20:45,806 [ERROR] No .corr files found in the temp directory.
+2025-07-16 15:20:45,806 [INFO] Removing temporary files.
+2025-07-16 15:20:45,807 [DEBUG] Temporary files removed from /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/tempfiles.
+2025-07-16 15:20:45,807 [INFO] Preprocessing completed in 0.05 seconds.
+2025-07-16 15:20:45,807 [INFO] Executing guider offset calculation...
+2025-07-16 15:20:45,807 [INFO] ========== Starting guide star calibration process ==========
+2025-07-16 15:20:45,807 [ERROR] No astrometry FITS files found in /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/.
+2025-07-16 15:20:45,807 [INFO] Clearing temp astrometry data...
+2025-07-16 15:20:45,807 [INFO] Deleting raw and processed files.
+2025-07-16 15:20:45,807 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNge.20230905T094050.0001.fits
+2025-07-16 15:20:45,808 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNgn.20230905T094050.0001.fits
+2025-07-16 15:20:45,808 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNgs.20230905T094050.0001.fits
+2025-07-16 15:20:45,808 [INFO] Deleted 3 files in directory: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw
+2025-07-16 15:20:45,808 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNge.20230905T094050.0001.fits
+2025-07-16 15:20:45,808 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgn.20230905T094050.0001.fits
+2025-07-16 15:20:45,808 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgs.20230905T094050.0001.fits
+2025-07-16 15:20:45,809 [INFO] Deleted 3 files in directory: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg
+2025-07-16 15:20:45,809 [INFO] Deleted 3 raw files and 3 processed files.
+2025-07-16 15:21:45,820 [INFO] Starting guiding sequence...
+2025-07-16 15:21:45,821 [INFO] Grabbing raw image...
+2025-07-16 15:21:50,848 [INFO] Running astrometry preprocessing...
+2025-07-16 15:21:50,850 [DEBUG] Loaded 3 FITS files.
+2025-07-16 15:21:50,850 [INFO] Starting preprocessing for 3 files.
+2025-07-16 15:21:50,851 [INFO] No astrometry results found. Running full astrometric solution.
+2025-07-16 15:21:50,851 [DEBUG] Starting combined function for file: KMTNge.20230905T094259.0001.fits.
+2025-07-16 15:21:50,852 [DEBUG] Starting combined function for file: KMTNgn.20230905T094259.0001.fits.
+2025-07-16 15:21:50,852 [DEBUG] Processing file: KMTNge.20230905T094259.0001.fits
+2025-07-16 15:21:50,853 [DEBUG] Starting combined function for file: KMTNgs.20230905T094259.0001.fits.
+2025-07-16 15:21:50,853 [DEBUG] Processing file: KMTNgn.20230905T094259.0001.fits
+2025-07-16 15:21:50,854 [DEBUG] Processing file: KMTNgs.20230905T094259.0001.fits
+2025-07-16 15:21:50,881 [INFO] Starting astrometry process for proc_KMTNge.20230905T094259.0001.fits.
+2025-07-16 15:21:50,881 [ERROR] Error processing KMTNge.20230905T094259.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-16 15:21:50,885 [INFO] Starting astrometry process for proc_KMTNgn.20230905T094259.0001.fits.
+2025-07-16 15:21:50,885 [INFO] Starting astrometry process for proc_KMTNgs.20230905T094259.0001.fits.
+2025-07-16 15:21:50,885 [ERROR] Error processing KMTNgn.20230905T094259.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-16 15:21:50,886 [ERROR] Error processing KMTNgs.20230905T094259.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-16 15:21:50,886 [WARNING] 3 files failed: ['KMTNge.20230905T094259.0001.fits', 'KMTNgn.20230905T094259.0001.fits', 'KMTNgs.20230905T094259.0001.fits']
+2025-07-16 15:21:50,886 [INFO] Starting star catalog generation.
+2025-07-16 15:21:50,886 [DEBUG] Found 0 .corr files in /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/tempfiles.
+2025-07-16 15:21:50,886 [ERROR] No .corr files found in the temp directory.
+2025-07-16 15:21:50,886 [INFO] Removing temporary files.
+2025-07-16 15:21:50,886 [DEBUG] Temporary files removed from /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/tempfiles.
+2025-07-16 15:21:50,886 [INFO] Preprocessing completed in 0.04 seconds.
+2025-07-16 15:21:50,886 [INFO] Executing guider offset calculation...
+2025-07-16 15:21:50,886 [INFO] ========== Starting guide star calibration process ==========
+2025-07-16 15:21:50,886 [ERROR] No astrometry FITS files found in /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/.
+2025-07-16 15:21:50,886 [INFO] Clearing temp astrometry data...
+2025-07-16 15:21:50,887 [INFO] Deleting raw and processed files.
+2025-07-16 15:21:50,887 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNge.20230905T094259.0001.fits
+2025-07-16 15:21:50,887 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNgn.20230905T094259.0001.fits
+2025-07-16 15:21:50,887 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNgs.20230905T094259.0001.fits
+2025-07-16 15:21:50,887 [INFO] Deleted 3 files in directory: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw
+2025-07-16 15:21:50,887 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNge.20230905T094259.0001.fits
+2025-07-16 15:21:50,887 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgn.20230905T094259.0001.fits
+2025-07-16 15:21:50,888 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgs.20230905T094259.0001.fits
+2025-07-16 15:21:50,888 [INFO] Deleted 3 files in directory: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg
+2025-07-16 15:21:50,888 [INFO] Deleted 3 raw files and 3 processed files.
+2025-07-16 15:22:50,904 [INFO] Starting guiding sequence...
+2025-07-16 15:22:50,906 [INFO] Grabbing raw image...
+2025-07-16 15:22:55,933 [INFO] Running astrometry preprocessing...
+2025-07-16 15:22:55,935 [DEBUG] Loaded 3 FITS files.
+2025-07-16 15:22:55,935 [INFO] Starting preprocessing for 3 files.
+2025-07-16 15:22:55,936 [INFO] No astrometry results found. Running full astrometric solution.
+2025-07-16 15:22:55,937 [DEBUG] Starting combined function for file: KMTNge.20230905T094503.0001.fits.
+2025-07-16 15:22:55,937 [DEBUG] Starting combined function for file: KMTNgn.20230905T094503.0001.fits.
+2025-07-16 15:22:55,937 [DEBUG] Processing file: KMTNge.20230905T094503.0001.fits
+2025-07-16 15:22:55,938 [DEBUG] Processing file: KMTNgn.20230905T094503.0001.fits
+2025-07-16 15:22:55,938 [DEBUG] Starting combined function for file: KMTNgs.20230905T094503.0001.fits.
+2025-07-16 15:22:55,940 [DEBUG] Processing file: KMTNgs.20230905T094503.0001.fits
+2025-07-16 15:22:55,972 [INFO] Starting astrometry process for proc_KMTNgn.20230905T094503.0001.fits.
+2025-07-16 15:22:55,972 [INFO] Starting astrometry process for proc_KMTNge.20230905T094503.0001.fits.
+2025-07-16 15:22:55,973 [ERROR] Error processing KMTNgn.20230905T094503.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-16 15:22:55,973 [INFO] Starting astrometry process for proc_KMTNgs.20230905T094503.0001.fits.
+2025-07-16 15:22:55,973 [ERROR] Error processing KMTNge.20230905T094503.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-16 15:22:55,974 [ERROR] Error processing KMTNgs.20230905T094503.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-16 15:22:55,974 [WARNING] 3 files failed: ['KMTNgn.20230905T094503.0001.fits', 'KMTNge.20230905T094503.0001.fits', 'KMTNgs.20230905T094503.0001.fits']
+2025-07-16 15:22:55,974 [INFO] Starting star catalog generation.
+2025-07-16 15:22:55,974 [DEBUG] Found 0 .corr files in /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/tempfiles.
+2025-07-16 15:22:55,974 [ERROR] No .corr files found in the temp directory.
+2025-07-16 15:22:55,974 [INFO] Removing temporary files.
+2025-07-16 15:22:55,975 [DEBUG] Temporary files removed from /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/tempfiles.
+2025-07-16 15:22:55,975 [INFO] Preprocessing completed in 0.04 seconds.
+2025-07-16 15:22:55,975 [INFO] Executing guider offset calculation...
+2025-07-16 15:22:55,975 [INFO] ========== Starting guide star calibration process ==========
+2025-07-16 15:22:55,975 [ERROR] No astrometry FITS files found in /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/.
+2025-07-16 15:22:55,975 [INFO] Clearing temp astrometry data...
+2025-07-16 15:22:55,975 [INFO] Deleting raw and processed files.
+2025-07-16 15:22:55,975 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNge.20230905T094503.0001.fits
+2025-07-16 15:22:55,975 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNgn.20230905T094503.0001.fits
+2025-07-16 15:22:55,975 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNgs.20230905T094503.0001.fits
+2025-07-16 15:22:55,975 [INFO] Deleted 3 files in directory: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw
+2025-07-16 15:22:55,976 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNge.20230905T094503.0001.fits
+2025-07-16 15:22:55,976 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgn.20230905T094503.0001.fits
+2025-07-16 15:22:55,976 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgs.20230905T094503.0001.fits
+2025-07-16 15:22:55,976 [INFO] Deleted 3 files in directory: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg
+2025-07-16 15:22:55,976 [INFO] Deleted 3 raw files and 3 processed files.
+2025-07-16 15:23:55,997 [INFO] Starting guiding sequence...
+2025-07-16 15:23:55,998 [INFO] Grabbing raw image...
+2025-07-16 15:23:55,999 [ERROR] Guiding failed: list index out of range
+2025-07-16 15:24:56,022 [INFO] Starting guiding sequence...
+2025-07-16 15:24:56,024 [INFO] Grabbing raw image...
+2025-07-16 15:24:56,025 [ERROR] Guiding failed: list index out of range
+2025-07-16 15:25:29,336 [INFO] Starting guiding sequence...
+2025-07-16 15:25:29,337 [INFO] Grabbing raw image...
+2025-07-16 15:25:29,338 [ERROR] Guiding failed: list index out of range
+2025-07-16 15:25:40,332 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2025-07-16 15:25:40,332 [INFO] Initializing gfa_astrometry class.
+2025-07-16 15:25:40,333 [INFO] Initializing GFAGuider...
+2025-07-16 15:25:40,333 [DEBUG] Processed dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg
+2025-07-16 15:25:40,333 [DEBUG] Final astro dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/
+2025-07-16 15:25:40,333 [DEBUG] Cutout dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/cutout
+2025-07-16 15:25:40,333 [INFO] GFAGuider setup complete.
+2025-07-16 15:25:42,767 [INFO] Starting guiding sequence...
+2025-07-16 15:25:42,767 [INFO] Grabbing raw image...
+2025-07-16 15:25:47,789 [INFO] Running astrometry preprocessing...
+2025-07-16 15:25:47,792 [DEBUG] Loaded 3 FITS files.
+2025-07-16 15:25:47,792 [INFO] Starting preprocessing for 3 files.
+2025-07-16 15:25:47,793 [INFO] No astrometry results found. Running full astrometric solution.
+2025-07-16 15:25:47,794 [DEBUG] Starting combined function for file: KMTNge.20230905T094050.0001.fits.
+2025-07-16 15:25:47,795 [DEBUG] Starting combined function for file: KMTNgn.20230905T094050.0001.fits.
+2025-07-16 15:25:47,795 [DEBUG] Processing file: KMTNge.20230905T094050.0001.fits
+2025-07-16 15:25:47,796 [DEBUG] Starting combined function for file: KMTNgs.20230905T094050.0001.fits.
+2025-07-16 15:25:47,796 [DEBUG] Processing file: KMTNgn.20230905T094050.0001.fits
+2025-07-16 15:25:47,797 [DEBUG] Processing file: KMTNgs.20230905T094050.0001.fits
+2025-07-16 15:25:47,830 [INFO] Starting astrometry process for proc_KMTNgs.20230905T094050.0001.fits.
+2025-07-16 15:25:47,831 [ERROR] Error processing KMTNgs.20230905T094050.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-16 15:25:47,834 [INFO] Starting astrometry process for proc_KMTNgn.20230905T094050.0001.fits.
+2025-07-16 15:25:47,834 [INFO] Starting astrometry process for proc_KMTNge.20230905T094050.0001.fits.
+2025-07-16 15:25:47,834 [ERROR] Error processing KMTNgn.20230905T094050.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-16 15:25:47,834 [ERROR] Error processing KMTNge.20230905T094050.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-16 15:25:47,834 [WARNING] 3 files failed: ['KMTNgs.20230905T094050.0001.fits', 'KMTNgn.20230905T094050.0001.fits', 'KMTNge.20230905T094050.0001.fits']
+2025-07-16 15:25:47,834 [INFO] Starting star catalog generation.
+2025-07-16 15:25:47,835 [DEBUG] Found 0 .corr files in /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/tempfiles.
+2025-07-16 15:25:47,835 [ERROR] No .corr files found in the temp directory.
+2025-07-16 15:25:47,835 [INFO] Removing temporary files.
+2025-07-16 15:25:47,835 [DEBUG] Temporary files removed from /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/tempfiles.
+2025-07-16 15:25:47,835 [INFO] Preprocessing completed in 0.04 seconds.
+2025-07-16 15:25:47,835 [INFO] Executing guider offset calculation...
+2025-07-16 15:25:47,835 [INFO] ========== Starting guide star calibration process ==========
+2025-07-16 15:25:47,835 [ERROR] No astrometry FITS files found in /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/.
+2025-07-16 15:25:47,835 [INFO] Clearing temp astrometry data...
+2025-07-16 15:25:47,835 [INFO] Deleting raw and processed files.
+2025-07-16 15:25:47,835 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNge.20230905T094050.0001.fits
+2025-07-16 15:25:47,836 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNgn.20230905T094050.0001.fits
+2025-07-16 15:25:47,836 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNgs.20230905T094050.0001.fits
+2025-07-16 15:25:47,836 [INFO] Deleted 3 files in directory: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw
+2025-07-16 15:25:47,836 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNge.20230905T094050.0001.fits
+2025-07-16 15:25:47,836 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgn.20230905T094050.0001.fits
+2025-07-16 15:25:47,836 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgs.20230905T094050.0001.fits
+2025-07-16 15:25:47,836 [INFO] Deleted 3 files in directory: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg
+2025-07-16 15:25:47,836 [INFO] Deleted 3 raw files and 3 processed files.
+2025-07-16 15:26:47,846 [INFO] Starting guiding sequence...
+2025-07-16 15:26:47,848 [INFO] Grabbing raw image...
+2025-07-16 15:26:52,874 [INFO] Running astrometry preprocessing...
+2025-07-16 15:26:52,877 [DEBUG] Loaded 3 FITS files.
+2025-07-16 15:26:52,878 [INFO] Starting preprocessing for 3 files.
+2025-07-16 15:26:52,879 [INFO] No astrometry results found. Running full astrometric solution.
+2025-07-16 15:26:52,879 [DEBUG] Starting combined function for file: KMTNge.20230905T094259.0001.fits.
+2025-07-16 15:26:52,880 [DEBUG] Starting combined function for file: KMTNgn.20230905T094259.0001.fits.
+2025-07-16 15:26:52,880 [DEBUG] Processing file: KMTNge.20230905T094259.0001.fits
+2025-07-16 15:26:52,881 [DEBUG] Starting combined function for file: KMTNgs.20230905T094259.0001.fits.
+2025-07-16 15:26:52,882 [DEBUG] Processing file: KMTNgn.20230905T094259.0001.fits
+2025-07-16 15:26:52,883 [DEBUG] Processing file: KMTNgs.20230905T094259.0001.fits
+2025-07-16 15:26:52,949 [INFO] Starting astrometry process for proc_KMTNge.20230905T094259.0001.fits.
+2025-07-16 15:26:52,949 [ERROR] Error processing KMTNge.20230905T094259.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-16 15:26:52,954 [INFO] Starting astrometry process for proc_KMTNgs.20230905T094259.0001.fits.
+2025-07-16 15:26:52,954 [INFO] Starting astrometry process for proc_KMTNgn.20230905T094259.0001.fits.
+2025-07-16 15:26:52,954 [ERROR] Error processing KMTNgs.20230905T094259.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-16 15:26:52,954 [ERROR] Error processing KMTNgn.20230905T094259.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-16 15:26:52,955 [WARNING] 3 files failed: ['KMTNge.20230905T094259.0001.fits', 'KMTNgs.20230905T094259.0001.fits', 'KMTNgn.20230905T094259.0001.fits']
+2025-07-16 15:26:52,955 [INFO] Starting star catalog generation.
+2025-07-16 15:26:52,955 [DEBUG] Found 0 .corr files in /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/tempfiles.
+2025-07-16 15:26:52,955 [ERROR] No .corr files found in the temp directory.
+2025-07-16 15:26:52,955 [INFO] Removing temporary files.
+2025-07-16 15:26:52,955 [DEBUG] Temporary files removed from /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/tempfiles.
+2025-07-16 15:26:52,955 [INFO] Preprocessing completed in 0.08 seconds.
+2025-07-16 15:26:52,955 [INFO] Executing guider offset calculation...
+2025-07-16 15:26:52,955 [INFO] ========== Starting guide star calibration process ==========
+2025-07-16 15:26:52,955 [ERROR] No astrometry FITS files found in /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/.
+2025-07-16 15:26:52,955 [INFO] Clearing temp astrometry data...
+2025-07-16 15:26:52,955 [INFO] Deleting raw and processed files.
+2025-07-16 15:26:52,956 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNge.20230905T094259.0001.fits
+2025-07-16 15:26:52,956 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNgn.20230905T094259.0001.fits
+2025-07-16 15:26:52,956 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNgs.20230905T094259.0001.fits
+2025-07-16 15:26:52,956 [INFO] Deleted 3 files in directory: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw
+2025-07-16 15:26:52,956 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNge.20230905T094259.0001.fits
+2025-07-16 15:26:52,956 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgn.20230905T094259.0001.fits
+2025-07-16 15:26:52,956 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgs.20230905T094259.0001.fits
+2025-07-16 15:26:52,957 [INFO] Deleted 3 files in directory: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg
+2025-07-16 15:26:52,957 [INFO] Deleted 3 raw files and 3 processed files.
+2025-07-16 15:27:52,971 [INFO] Starting guiding sequence...
+2025-07-16 15:27:52,973 [INFO] Grabbing raw image...
+2025-07-16 15:27:57,999 [INFO] Running astrometry preprocessing...
+2025-07-16 15:27:58,002 [DEBUG] Loaded 3 FITS files.
+2025-07-16 15:27:58,002 [INFO] Starting preprocessing for 3 files.
+2025-07-16 15:27:58,003 [INFO] No astrometry results found. Running full astrometric solution.
+2025-07-16 15:27:58,004 [DEBUG] Starting combined function for file: KMTNge.20230905T094503.0001.fits.
+2025-07-16 15:27:58,005 [DEBUG] Starting combined function for file: KMTNgn.20230905T094503.0001.fits.
+2025-07-16 15:27:58,005 [DEBUG] Starting combined function for file: KMTNgs.20230905T094503.0001.fits.
+2025-07-16 15:27:58,006 [DEBUG] Processing file: KMTNge.20230905T094503.0001.fits
+2025-07-16 15:27:58,007 [DEBUG] Processing file: KMTNgn.20230905T094503.0001.fits
+2025-07-16 15:27:58,007 [DEBUG] Processing file: KMTNgs.20230905T094503.0001.fits
+2025-07-16 15:27:58,040 [INFO] Starting astrometry process for proc_KMTNge.20230905T094503.0001.fits.
+2025-07-16 15:27:58,040 [ERROR] Error processing KMTNge.20230905T094503.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-16 15:27:58,043 [INFO] Starting astrometry process for proc_KMTNgn.20230905T094503.0001.fits.
+2025-07-16 15:27:58,043 [INFO] Starting astrometry process for proc_KMTNgs.20230905T094503.0001.fits.
+2025-07-16 15:27:58,043 [ERROR] Error processing KMTNgn.20230905T094503.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-16 15:27:58,043 [ERROR] Error processing KMTNgs.20230905T094503.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-16 15:27:58,044 [WARNING] 3 files failed: ['KMTNge.20230905T094503.0001.fits', 'KMTNgn.20230905T094503.0001.fits', 'KMTNgs.20230905T094503.0001.fits']
+2025-07-16 15:27:58,044 [INFO] Starting star catalog generation.
+2025-07-16 15:27:58,044 [DEBUG] Found 0 .corr files in /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/tempfiles.
+2025-07-16 15:27:58,044 [ERROR] No .corr files found in the temp directory.
+2025-07-16 15:27:58,044 [INFO] Removing temporary files.
+2025-07-16 15:27:58,044 [DEBUG] Temporary files removed from /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/tempfiles.
+2025-07-16 15:27:58,044 [INFO] Preprocessing completed in 0.04 seconds.
+2025-07-16 15:27:58,044 [INFO] Executing guider offset calculation...
+2025-07-16 15:27:58,045 [INFO] ========== Starting guide star calibration process ==========
+2025-07-16 15:27:58,045 [ERROR] No astrometry FITS files found in /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/.
+2025-07-16 15:27:58,045 [INFO] Clearing temp astrometry data...
+2025-07-16 15:27:58,045 [INFO] Deleting raw and processed files.
+2025-07-16 15:27:58,045 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNge.20230905T094503.0001.fits
+2025-07-16 15:27:58,045 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNgn.20230905T094503.0001.fits
+2025-07-16 15:27:58,045 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNgs.20230905T094503.0001.fits
+2025-07-16 15:27:58,045 [INFO] Deleted 3 files in directory: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw
+2025-07-16 15:27:58,046 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNge.20230905T094503.0001.fits
+2025-07-16 15:27:58,046 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgn.20230905T094503.0001.fits
+2025-07-16 15:27:58,046 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgs.20230905T094503.0001.fits
+2025-07-16 15:27:58,046 [INFO] Deleted 3 files in directory: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg
+2025-07-16 15:27:58,046 [INFO] Deleted 3 raw files and 3 processed files.

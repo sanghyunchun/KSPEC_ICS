@@ -20,7 +20,7 @@ async def identify_execute(server,cmd):
     if func == 'arcon':
         comment=arc_on()
         reply_data=mkmsg.lampmsg()
-        reply_data.update(message=comment,process='Done')
+        reply_data.update(message=comment,process='Done',status='success')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[LAMP]', comment+'\033[0m')
         await server.send_message('ICS',rsp)
@@ -28,7 +28,7 @@ async def identify_execute(server,cmd):
     if func == 'arcoff':
         comment=arc_off()
         reply_data=mkmsg.lampmsg()
-        reply_data.update(message=comment,process='Done')
+        reply_data.update(message=comment,process='Done',status='normal')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[LAMP]', comment+'\033[0m')
         await server.send_message('ICS',rsp)
@@ -36,7 +36,7 @@ async def identify_execute(server,cmd):
     if func == 'flaton':
         comment=flat_on()
         reply_data=mkmsg.lampmsg()
-        reply_data.update(message=comment,process='Done')
+        reply_data.update(message=comment,process='Done',status='success')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[LAMP]', comment+'\033[0m')
         await server.send_message('ICS',rsp)
@@ -44,7 +44,7 @@ async def identify_execute(server,cmd):
     if func == 'flatoff':
         comment=flat_off()
         reply_data=mkmsg.lampmsg()
-        reply_data.update(message=comment,process='Done')
+        reply_data.update(message=comment,process='Done',status='normal')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[LAMP]', comment+'\033[0m')
         await server.send_message('ICS',rsp)
@@ -52,7 +52,7 @@ async def identify_execute(server,cmd):
     if func == 'fiducialon':
         comment=fiducial_on()
         reply_data=mkmsg.lampmsg()
-        reply_data.update(message=comment,process='Done')
+        reply_data.update(message=comment,process='Done',status='success')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[LAMP]', comment+'\033[0m')
         await server.send_message('ICS',rsp)
@@ -60,7 +60,7 @@ async def identify_execute(server,cmd):
     if func == 'fiducialoff':
         comment=fiducial_off()
         reply_data=mkmsg.lampmsg()
-        reply_data.update(message=comment,process='Done')
+        reply_data.update(message=comment,process='Done',status='normal')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[LAMP]', comment+'\033[0m')
         await server.send_message('ICS',rsp)

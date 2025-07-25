@@ -13,17 +13,25 @@ from qasync import QEventLoop, asyncSlot
 from astropy.io import fits
 from astropy.coordinates import Angle, SkyCoord
 import astropy.units as u
-from Lib.AMQ import AMQclass
 import Lib.mkmessage as mkmsg
 import Lib.zscale as zs
-#from LAMP.lampcli import handle_lamp
 import json
+from datetime import datetime, timezone
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-from SPECTRO.speccli import handle_spec
 import numpy as np
-from SCIOBS.sciobscli import sciobscli
+from Lib.AMQ import AMQclass, UDPClientProtocol, TCPClient
+from ADC.adccli import handle_adc
+from GFA.gfacli import handle_gfa
+from FBP.fbpcli import handle_fbp
+from ENDO.ENDOcli import handle_endo
+from MTL.mtlcli import handle_mtl
 from LAMP.lampcli import handle_lamp
+from SPECTRO.speccli import handle_spec
+from TCS.tcscli import handle_telcom
+from script.scriptcli import handle_script
+from SCIOBS.sciobscli import sciobscli
+
 
 
 class MplCanvas(FigureCanvas):
@@ -155,10 +163,23 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
+
+        ### All Response queue of asyncio ###
         self.response_queue = asyncio.Queue()
         self.GFA_response_queue = asyncio.Queue()
         self.ADC_response_queue = asyncio.Queue()
         self.SPEC_response_queue = asyncio.Queue()
+
+
+        ### Observation Setting ###
+        self.observer = None
+        self.obsdir = None
+        self.command_list = self.load_command_list()
+        self.tcsagentIP, self.tcsagentPort, self.telcomIP, self.telcomPort = self.load_config()
+
+        self.gfaexpt = 1
+        self.gfacam = 0
+
 
 
 #Make timer (LT & UTC) 
@@ -173,13 +194,23 @@ class MainWindow(QMainWindow):
 
 
         ##### Button setting #####
-        # Connect RabbitMQ server
-        self.ui.pushbtn_connect.clicked.connect(self.rabbitmq_define)
+        # Setting Initial observation
+        self.ui.pushbtn_connect.clicked.connect(self.rabbitmq_connect)
         self.ui.pushbtn_connect.setCheckable(True)
+        self.ui.pushbtn_observer.clicked.connect(self.save_observer)
+        self.ui.pushbtn_directory.clicked.connect(self.set_directory)
 
 
-        # Guiding
-        self.ui.pushbtn_Guiding.clicked.connect(self.autoguiding)
+        # GFA & Guiding
+        self.ui.pushbtn_GFAapply.clicked.connect(self.GFAapply_button_clicked)
+        self.ui.pushbtn_Guiding.setCheckable(True)
+        self.ui.pushbtn_Guiding.clicked.connect(self.Guiding_button_clicked)
+        self.ui.pushbtn_GFArun.clicked.connect(self.GFArun_button_clicked)
+
+
+        # ADC adjust
+        self.ui.pushbtn_ADCadjust.setCheckable(True)
+        self.ui.pushbtn_ADCadjust.clicked.connect(self.ADCadjust_button_clicked)
 
         # Load Sequence
         self.ui.pushbtn_load_sequence.clicked.connect(self.load_file)
@@ -191,15 +222,19 @@ class MainWindow(QMainWindow):
 
 
         # Subsystem function
-        self.ui.pushbtn_Flat.clicked.connect(self.flat_button_clicked)
         self.ui.pushbtn_Flat.setCheckable(True)
-        self.ui.pushbtn_Arc.clicked.connect(self.arc_button_clicked)
-        self.ui.pushbtn_Arc.setCheckable(True)
-        self.ui.pushbtn_Flat_2.clicked.connect(self.flat_button_clicked)
         self.ui.pushbtn_Flat_2.setCheckable(True)
-        self.ui.pushbtn_Arc_2.clicked.connect(self.arc_button_clicked)
-        self.ui.pushbtn_Arc_2.setCheckable(True)
+        self.ui.pushbtn_Flat.clicked.connect(self.flat_button_clicked)
+        self.ui.pushbtn_Flat_2.clicked.connect(self.flat_button_clicked)
 
+        self.ui.pushbtn_Arc.setCheckable(True)
+        self.ui.pushbtn_Arc_2.setCheckable(True)
+        self.ui.pushbtn_Arc.clicked.connect(self.arc_button_clicked)
+        self.ui.pushbtn_Arc_2.clicked.connect(self.arc_button_clicked)
+
+
+        # Individual command 
+        self.ui.pushbtn_send_cmd.clicked.connect(self.user_input)
 
 
         ##### Canvas setting #####
@@ -237,99 +272,197 @@ class MainWindow(QMainWindow):
         self.G6_layout.addWidget(self.canvas_G6)
 
 
+    def logging(self,message, level: str="info"):
+        color_map = {
+                "send": "green",
+                "recieve": "blue",
+                "error" : "red"
+                }
+        color = color_map.get(level,"black")
+        self.ui.log1.append(f'<span style="color:{color};">[ICS] {message}</span>')
+        self.ui.log2.append(f'<span style="color:{color};">[ICS] {message}</span>')
 
-    def logging(self,message):
-        self.ui.log.appendPlainText(message)
-        self.ui.log_2.appendPlainText(message)
+### Observation Set function ###
+    def save_observer(self):
+        self.observer=self.ui.lineEdit_observer.text()
+        self.logging(f"Observer '{self.observer}' Saved",level='normal')
+
+### Set Save directory ###
+    def set_directory(self):
+        current_dir=os.getcwd()
+        parent_dir = os.path.dirname(current_dir)
+        dir_name=self.ui.lineEdit_directory.text()
+        self.dir_path=os.path.join(parent_dir,"RAWDATA",dir_name)
+
+        if os.path.exists(self.dir_path):
+            self.logging(f"Directory '{self.dir_path}' already exists.", level='normal')
+            return
+        else:
+            os.makedirs(self.dir_path, exist_ok=True)
+            self.logging(f"Create directory '{self.dir_path}'.",level='normal')
+
+
+
+
+#### Calling Status #####
+    def QWidgetLabelColor(self, widget, textcolor, bgcolor=None):
+        if bgcolor == None:
+            label = "QLabel {color:%s}" % textcolor
+            widget.setStyleSheet(label)
+        else:
+            label = "QLabel {color:%s;background:%s}" % (textcolor, bgcolor)
+            widget.setStyleSheet(label)
+
+    def show_status(self,inst,stat):
+        color_map = {
+        'success': 'green',
+        'normal': 'black',
+        'fail': 'red'
+        }
+
+        label_map = {
+            'LAMP': self.ui.ok_status_lamp,
+            'GFA': self.ui.ok_status_gfa,
+            'ADC': self.ui.ok_status_adc,
+            'FBP': self.ui.ok_status_fiber,
+            'ENDO': self.ui.ok_status_endo,
+            'MTL' : self.ui.ok_status_metrology,
+            'SPEC' : self.ui.ok_status_spectrograph
+        }   
+        label_map2 = {
+            'LAMP': self.ui.ok_status_lamp_2,
+            'GFA': self.ui.ok_status_gfa_2,
+            'ADC': self.ui.ok_status_adc_2,
+            'FBP': self.ui.ok_status_fiber_2,
+            'ENDO': self.ui.ok_status_endo_2,
+            'MTL' : self.ui.ok_status_metrology_2,
+            'SPEC' : self.ui.ok_status_spectrograph_2
+        }   
+
+        if inst in label_map and stat in color_map:
+            self.QWidgetLabelColor(label_map[inst], color_map[stat])
+            self.QWidgetLabelColor(label_map2[inst], color_map[stat])
+
 
 ##### Main Functions corresponding to the GUI action #####
+    ## GFA ##
+    def GFAapply_button_clicked(self):
+        if not self.ui.lineEdit_GFA_exptime.text():
+            self.ui.lineEdit_GFA_exptime.setText('1')
+        if not self.ui.lineEdit_GFA_cam.text():
+            self.ui.lineEdit_GFA_cam.setText('0')
+
+        self.gfaexpt = float(self.ui.lineEdit_GFA_exptime.text())
+        self.gfacam = int(self.ui.lineEdit_GFA_cam.text())
+
+    @asyncSlot()
+    async def GFArun_button_clicked(self):
+        await handle_gfa(f'gfagrab {self.gfacam} {self.gfaexpt}',self.ICS_client)
+        if self.gfacam == 0:
+            self.logging(f'Sent Expose all GFA cameras for {self.gfaexpt} seconds.', level='send')
+        else:
+            self.logging(f'Sent Expose GFA camera {self.gfacam} for {self.gfaexpt} seconds.', level='send')
+
+    @asyncSlot()
+    async def Guiding_button_clicked(self):
+        if self.ui.pushbtn_Guiding.isChecked():
+            self.ui.pushbtn_Guiding.setStyleSheet("color: green; font-weight:900;")
+            await handle_script('autoguide', self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue,
+                    self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue)
+            self.logging('Sent Autoguiding Start', level='send')
+        else:
+            self.ui.pushbtn_Guiding.setStyleSheet("color: black;")
+            await handle_script('autoguidestop', self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue,
+                    self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue )
+            self.logging('Sent Autoguiding Stop', level='send')
+
+        await asyncio.sleep(5)
+        cutimgpath='/media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/kspec_gfa_controller/src/img/cutout/'
+        guidenum=['1','2','3','4']
+        G_canvas=[self.canvas_G1,self.canvas_G2,self.canvas_G3,self.canvas_G4]
+
+        for i,can in enumerate(G_canvas):
+            with fits.open(cutimgpath+'cutout_fluxmax_'+str(i+1)+'.fits') as hdul:
+                data=hdul[0].data
+
+            self.G_zmin, self.G_zmax = zs.zscale(data)
+            can.imshows(data,vmin=self.G_zmin,vmax=self.G_zmax,cmap='gray',origin='lower')
+
+
+    ### Flat Button ###
     @asyncSlot()
     async def flat_button_clicked(self):
-        if self.ui.pushbtn_Flat.isChecked():
-            self.ui.pushbtn_Flat.setStyleSheet("color: green; font-weight:900;")
-            await handle_lamp('flaton', self.ICS_client)
-            self.logging('Sent Flat ON')
-#            self.ui.log.appendPlainText('Sent Flat ON')
-        else:
-            self.ui.pushbtn_Flat.setStyleSheet("color: black;")
-            await handle_lamp('flatoff', self.ICS_client)
-            self.logging('Sent Flat OFF')
-#            self.ui.log.appendPlainText('Sent Flat OFF')
-
-    @asyncSlot()
-    async def arc_button_clicked(self):
-        if self.ui.pushbtn_Arc.isChecked():
-            self.ui.pushbtn_Arc.setStyleSheet("color: green; font-weight:900;")
-            await handle_lamp('arcon', self.ICS_client)
-            self.ui.log.appendPlainText('Sent Arc ON')
-        else:
-            self.ui.pushbtn_Arc.setStyleSheet("color: black;")
-            await handle_lamp('arcoff', self.ICS_client)
-            self.ui.log.appendPlainText('Sent Arc OFF')
-
-
-
-
-
-    @asyncSlot()
-    async def rabbitmq_define(self):
-        # Connect RabbitMQ
-        with open('./Lib/KSPEC.ini', 'r') as f:
-            kspecinfo = json.load(f)
-
-        self.ICS_client = AMQclass(
-            kspecinfo['RabbitMQ']['ip_addr'],
-            kspecinfo['RabbitMQ']['idname'],
-            kspecinfo['RabbitMQ']['pwd'],
-            'ICS', 'ics.ex'
-        )
-
-        react = await self.ICS_client.connect()
-        self.ui.log.appendPlainText(react)
-#        self.ui.log_2.appendPlainText(react)
-        #self.processlog.append(react)
-        react = await self.ICS_client.define_producer()
-        self.ui.log.appendPlainText(react)
-        await self.ICS_client.define_consumer()
-        asyncio.create_task(self.wait_for_response())
-
-
-    def load_file(self):
-        file_path, _ = QFileDialog.getOpenFileName(self)
-
-        if not file_path:
+        if not self.check_connection():
+            self.logging('ICS_client is not initialized.', level='error')
             return
 
-        if file_path:
-            with open(file_path,'r') as f:
-                lines=f.readlines()
+        self.flat_state = not getattr(self, "flat_state", False)
 
-        header = lines[0].strip().split()
-        tile_lines = lines[1:]
+        # sync two button
+        self.ui.pushbtn_Flat.setChecked(self.flat_state)
+        self.ui.pushbtn_Flat_2.setChecked(self.flat_state)
+
+        # Set colors
+        style_on = "color: green; font-weight:900;"
+        style_off = "color: black;"
+        style = style_on if self.flat_state else style_off
+
+        self.ui.pushbtn_Flat.setStyleSheet(style)
+        self.ui.pushbtn_Flat_2.setStyleSheet(style)
+
+        # command and log
+        if self.flat_state:
+            await handle_lamp('flaton', self.ICS_client)
+            self.logging('Sent Flat ON', level='send')
+        else:
+            await handle_lamp('flatoff', self.ICS_client)
+            self.logging('Sent Flat OFF', level='send')
 
 
-        dialog = SelectTile(header[:4], tile_lines, self)
-        if dialog.exec() == QDialog.Accepted and dialog.selected_values:
-            self.select_tile=dialog.selected_values[0]
-            self.obsnum=dialog.selected_values[2]
-            self.expT=dialog.selected_values[3]
+    ### Arc Button ###
+    @asyncSlot()
+    async def arc_button_clicked(self):
+        if not self.check_connection():
+            self.logging('ICS_client is not initialized.', level='error')
+            return
+
+        self.arc_state = not getattr(self, "arc_state", False)
+
+        # sync two button
+        self.ui.pushbtn_Arc.setChecked(self.arc_state)
+        self.ui.pushbtn_Arc_2.setChecked(self.arc_state)
+
+        # Set colors
+        style_on = "color: green; font-weight:900;"
+        style_off = "color: black;"
+        style = style_on if self.arc_state else style_off
+
+        self.ui.pushbtn_Arc.setStyleSheet(style)
+        self.ui.pushbtn_Arc_2.setStyleSheet(style)
+
+        # command and log
+        if self.arc_state:
+            await handle_lamp('arcon', self.ICS_client)
+            self.logging('Sent Arc ON', level='send')
+        else:
+            await handle_lamp('arcoff', self.ICS_client)
+            self.logging('Sent Arc OFF', level='send')
+
+    
+    @asyncSlot()
+    async def ADCadjust_button_clicked(self):
+        if self.ui.pushbtn_ADCadjust.isChecked():
+            self.ui.pushbtn_ADCadjust.setStyleSheet("color: green; font-weight:900;")
+            ra='12:34:43.2'
+            dec='-31:34:56.4'
+            await handle_adc(f'adcadjust {ra} {dec}',self.ICS_client)
+            self.logging('Sent ADC adjusting Start', level='send')
+        else:
+            self.ui.pushbtn_ADCadjust.setStyleSheet("color: black;")
+            await handle_adc('adcstop',self.ICS_client)
+            self.logging('Sent ADC adjusting Stop', level='send')
 
 
-        sciobs=sciobscli()
-        filename=os.path.basename(file_path)
-        wild=filename.split('_')
-        sciobs.project=wild[0]
-        sciobs.obsdate=wild[-1].split('.')[0]
-        self.project=wild[0]
-        self.obsdate=wild[-1].split('.')[0]
-        self.tilemsg,self.guidemsg,self.objmsg,self.motionmsg1,self.motionmsg2=sciobs.loadtile(self.select_tile)
-        self.ra,self.dec=self.convert_to_sexagesimal(sciobs.ra,sciobs.dec)
-
-        self.ui.lineEdit_TileID.setText(f'{self.select_tile}')
-        self.ui.lineEdit_ra_1.setText(f'{self.ra}')
-        self.ui.lineEdit_dec_1.setText(f'{self.dec}')
-        self.ui.lineEdit_exp_time_1.setText(f'{self.expT}')
-        self.ui.lineEdit_n_exp_1.setText(f'{self.obsnum}')
 
 
     @asyncSlot()
@@ -357,31 +490,60 @@ class MainWindow(QMainWindow):
         await asyncio.sleep(2)
 
 
-    def autoguiding(self):
-        cutimgpath='/media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/kspec_gfa_controller/src/img/cutout/'
-        guidenum=['1','2','3','4']
-        G_canvas=[self.canvas_G1,self.canvas_G2,self.canvas_G3,self.canvas_G4]
-
-        for i,can in enumerate(G_canvas):
-            with fits.open(cutimgpath+'cutout_fluxmax_'+str(i+1)+'.fits') as hdul:
-                data=hdul[0].data
-
-            self.G_zmin, self.G_zmax = zs.zscale(data)
-            can.imshows(data,vmin=self.G_zmin,vmax=self.G_zmax,cmap='gray',origin='lower')
         
-
 
     @asyncSlot()
     async def take_image(self):
-        await handle_spec('getobj 3 1', self.ICS_client)
-        self.ui.log.appendPlainText("sent message to device 'SPEC'. message: Get 1 bias images.")
-        msg=await self.response_queue.get()
+        if not self.check_connection():
+            self.logging('ICS_client is not initialized.', level='error')
+            return
+#        await handle_spec('getobj 3 1', self.ICS_client)
+#        self.ui.log1.append("sent message to device 'SPEC'. message: Get 1 bias images.")
+#        self.ui.log1.append("sent message to device 'SPEC'. message: Get 1 bias images.")
+#        msg=await self.response_queue.get()
 #        self.ui.log.appendPlainText(f"{msg['file']}")
 
         filename=msg['file']
 
         self.reload_img(filename)
 
+
+
+    def load_file(self):
+        file_path, _ = QFileDialog.getOpenFileName(self)
+
+        if not file_path:
+            return
+
+        if file_path:
+            with open(file_path,'r') as f:
+                lines=f.readlines()
+
+        header = lines[0].strip().split()
+        tile_lines = lines[1:]
+
+
+        dialog = SelectTile(header[:4], tile_lines, self)
+        if dialog.exec() == QDialog.Accepted and dialog.selected_values:
+            self.select_tile=dialog.selected_values[0]
+            self.obsnum=dialog.selected_values[2]
+            self.expT=dialog.selected_values[3]
+
+        sciobs=sciobscli()
+        filename=os.path.basename(file_path)
+        wild=filename.split('_')
+        sciobs.project=wild[0]
+        sciobs.obsdate=wild[-1].split('.')[0]
+        self.project=wild[0]
+        self.obsdate=wild[-1].split('.')[0]
+        self.tilemsg,self.guidemsg,self.objmsg,self.motionmsg1,self.motionmsg2=sciobs.loadtile(self.select_tile)
+        self.ra,self.dec=self.convert_to_sexagesimal(sciobs.ra,sciobs.dec)
+
+        self.ui.lineEdit_TileID.setText(f'{self.select_tile}')
+        self.ui.lineEdit_ra_1.setText(f'{self.ra}')
+        self.ui.lineEdit_dec_1.setText(f'{self.dec}')
+        self.ui.lineEdit_exp_time_1.setText(f'{self.expT}')
+        self.ui.lineEdit_n_exp_1.setText(f'{self.obsnum}')
 
     def reload_img(self,filename):
         rawdir='/media/shyunc/DATA/KSpec/RAWDATA/'
@@ -414,11 +576,13 @@ class MainWindow(QMainWindow):
 #            self.canvas.ax.axis('off')
 #            self.canvas.draw()
 
-            self.ui.log.appendPlainText(f"Loaded image: {filename}")
+            self.logging(f"Loaded image: {filename}",level='normal')
+            self.logging(f"Loaded image: {filename}",level='normal')
 
         except Exception as e:
             print(f"[ERROR] Could not load image {filepath}: {e}")
-            self.ui.log.appendPlainText(f"Failed to load image: {e}")
+            self.logging(f"Failed to load image: {e}",level='error')
+            self.logging(f"Failed to load image: {e}",level='error')
             
 
     def convert_to_sexagesimal(self,ra_deg, dec_deg):
@@ -432,6 +596,36 @@ class MainWindow(QMainWindow):
 
 
 
+
+### Functions related with RabbitMQ ###
+    ### Connect RabbitMQ Server ###
+    @asyncSlot()
+    async def rabbitmq_connect(self):
+        print(self.observer)
+        # Connect RabbitMQ
+        with open('./Lib/KSPEC.ini', 'r') as f:
+            kspecinfo = json.load(f)
+
+        self.ICS_client = AMQclass(
+            kspecinfo['RabbitMQ']['ip_addr'],
+            kspecinfo['RabbitMQ']['idname'],
+            kspecinfo['RabbitMQ']['pwd'],
+            'ICS', 'ics.ex'
+        )
+
+        react = await self.ICS_client.connect()
+        self.logging(react,level='AMQ')
+        react = await self.ICS_client.define_producer()
+        self.logging(react,level='AMQ')
+        await self.ICS_client.define_consumer()
+        asyncio.create_task(self.wait_for_response())
+
+
+    ### check connection to RabbitMQ Server ###
+    def check_connection(self):
+        return hasattr(self, "ICS_client") and self.ICS_client is not None
+
+    ### Waiting for response through RabbitMQ ###
     async def wait_for_response(self):
         """
         Waits for responses from the K-SPEC sub-system and distributes then appropriately.
@@ -440,15 +634,20 @@ class MainWindow(QMainWindow):
             try:
                 response = await self.ICS_client.receive_message("ICS")
                 response_data = json.loads(response)
+                print(response_data)
                 inst=response_data['inst']
                 message=response_data.get('message','No message')
-                self.logging(message)
+#                self.logging(message,level='normal')
+
+                self.show_status(response_data['inst'],response_data['status'])
 
                 if isinstance(message,dict):
                     message = json.dumps(message, indent=2)
                     print(f'\033[94m[ICS] received from {inst}: {message}\033[0m\n', flush=True)
+                    self.logging(f'received from {inst}: {message}',level='recieve')
                 else:
                     print(f'\033[94m[ICS] received from {inst}: {response_data["message"]}\033[0m\n', flush=True)
+                    self.logging(f'received from {inst}: {response_data["message"]}',level='recieve')
 
                 queue_map = {"GFA": self.GFA_response_queue, "ADC": self.ADC_response_queue, "SPEC": self.SPEC_response_queue}
                 if response_data['inst'] in queue_map and response_data['process'] == 'ING':
@@ -461,7 +660,128 @@ class MainWindow(QMainWindow):
 #                    print(f'response_queue formation: {response_data}')
             except Exception as e:
                 print(f"Error in wait_for_response: {e}", flush=True)
-        
+                self.logging(f"Error in wait_for_response: {e}",level='error')
+
+
+    ### Sending command to udp, telcom and rabbitmq ###
+    async def send_udp_message(self, message):
+        """
+        Sends a message to the TCS Agent via UDP using UDPClientProtocol 
+        """
+        loop = asyncio.get_running_loop()
+        on_con_lost = loop.create_future()
+        transport, protocol = await loop.create_datagram_endpoint(
+            lambda: UDPClientProtocol(on_con_lost),
+            remote_addr=(self.tcsagentIP, self.tcsagentPort)
+        )
+
+        print(f"\033[32m[ICS] sent TCS message to TCS Agent: {message}\033[0m", flush=True)
+        self.logging(f'sent TCS message to TCS Agent: {message}',level='send')
+        transport.sendto(message.encode())
+        transport.close()
+
+    async def send_telcom_command(self,message):
+        """Sends a command to the Telcom system via TCP."""
+        telcom_client = TCPClient(self.telcomIP,self.telcomPort)
+        await telcom_client.connect()
+        result = await handle_telcom(message,telcom_client)
+        await telcom_client.close()
+        return result
+
+    async def send_command(self, category, message):
+        """
+        Sends a command using the respective handler.
+        """
+        handler_map = {
+            "adc": handle_adc, "gfa": handle_gfa, "fbp": handle_fbp,
+            "endo": handle_endo, "mtl": handle_mtl, "lamp": handle_lamp,
+            "spec": handle_spec, "script": handle_script
+        }
+        if category in handler_map:
+            await handler_map[category](message, self.ICS_client)
+        else:
+            print(f"Unknown command category: {category}",flush=True)
+
+
+    ### User input command like CLI ###
+    @asyncSlot()
+    async def user_input(self):
+        """
+        Handles user input asynchronously, allowing immediate command sending.
+        """
+        try:
+            sys.stdout.flush()
+#                message = await asyncio.get_running_loop().run_in_executor(None, input, "Input command: ")
+#                if message.lower() == "quit":
+#                    print("Exiting user input mode.", flush=True)
+#                    self.running = False
+#                    break
+
+            message=self.ui.lineEdit_cmd.text()
+            cmd = message.split(" ")[0]
+            category = self.find_category(cmd)
+            print(f'Command Category is {category}', flush=True)
+
+            if category:
+                if category.lower() == 'tcs':
+                    messagetcs = 'KSPEC>TC ' + message
+                    await self.send_udp_message(messagetcs)
+                elif category.lower() == 'telcom':
+                    telcom_result = await self.send_telcom_command(message)
+                    print('\033[94m' + '[ICS] received: ', telcom_result.decode() + '\033[0m', flush=True)
+                    self.logging(f'<span style="color:green;">[ICS] received from {inst}: {message}</span>',level='recieve')
+                elif category.lower() == "script":
+                    await handle_script(message, self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue, self.GFA_response_queue, self.ADC_response_queue,
+                        self.SPEC_response_queue)
+                else:
+                    await self.send_command(category, message)
+            else:
+                print("Invalid command. Please enter a valid command.\n", flush=True)
+        except Exception as e:
+            print(f"Error in user_input: {e}", flush=True)
+
+
+    def load_command_list(self):
+        return {
+            "adc": ["adcstatus", "adcactivate", "adcadjust", "adcinit", "adcconnect", "adcdisconnect", "adchome", "adczero",
+            "adcpoweroff", "adcrotate1", "adcrotate2", "adcstop", "adcpark", "adcrotateop", "adcrotatesame"],
+            "gfa": ["gfastatus", "gfagrab", "gfaguidestop", "gfaguide"],
+            "fbp": ["fbpstatus", "fbpzero", "fbpmove", "fbpoffset"],
+            "endo": ["endoguide", "endotest", "endofocus", "endostop","endoexpset","endoclear","endostatus"],
+            "mtl": ["mtlstatus", "mtlexp", "mtlcal"],
+            "lamp": ["lampstatus", "arcon", "arcoff", "flaton", "flatoff","fiducialon","fiducialoff"],
+            "spec": ["specstatus", "illuon", "illuoff", "getobj", "getbias", "getflat","getar"],
+            "tcs": ["tmradec", "start", "stop", "tcsint", "tcsreset", "tcsclose",
+            "tcsarc", "tcsstatus", "tstat", "traw", "tsync", "tcmd",
+            "treg", "tmradec", "tmr", "tmobject", "tmo", "tmelaz",
+            "tme", "tmoffset", "toff", "tstop", "tstow", "tdi",
+            "cc", "oo", "nstset", "nston", "nstoff", "auxinit",
+            "auxreset", "auxclose", "auxarc", "auxstatus",
+            "astat", "acmd", "fsastat", "fs", "fttstat",
+            "ft", "dfocus", "dtilt", "fttgoto"],
+
+            "telcom": ["getall", "getra", "getdec", "getha", "getel", "getaz", "getsecz", "mvstow", "mvelaz", "mvstop", "mvra", "mvdec", "track"],
+            "utils": ["obsstatus","loadtile"],
+            "script": ["runcalib", "obsinitial", "autoguide", "autoguidestop", "runobs"]
+            }
+
+    def load_config(self):
+        """Loads configuration settings from KSPEC.ini."""
+        with open('./Lib/KSPEC.ini', 'r') as f:
+            kspecinfo = json.load(f)
+
+        return (
+            kspecinfo['TCS']['TCSagentIP'],
+            kspecinfo['TCS']['TCSagentPort'],
+            kspecinfo['TCS']['TelcomIP'],
+            kspecinfo['TCS']['TelcomPort']
+        )
+
+    def find_category(self, cmd):
+        """Finds the category of a given command."""
+        return next((cat for cat, cmds in self.command_list.items() if cmd in cmds), None)
+
+
 
 #Close Event : to prevent to close the window easily
     def closeEvent(self, QCloseEvent):

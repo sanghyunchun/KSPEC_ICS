@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1611</width>
-    <height>1013</height>
+    <height>1008</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -56,7 +56,7 @@
      <enum>QTabWidget::Triangular</enum>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <property name="elideMode">
      <enum>Qt::ElideLeft</enum>
@@ -90,43 +90,12 @@
        </font>
       </property>
       <property name="title">
-       <string> Message Log</string>
+       <string>Message Log</string>
       </property>
-      <widget class="QPlainTextEdit" name="log">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>30</y>
-         <width>601</width>
-         <height>191</height>
-        </rect>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="font">
-        <font>
-         <family>Arial</family>
-         <pointsize>14</pointsize>
-         <weight>50</weight>
-         <bold>false</bold>
-         <strikeout>false</strikeout>
-        </font>
-       </property>
-       <property name="readOnly">
-        <bool>true</bool>
-       </property>
-      </widget>
       <widget class="QLabel" name="label_comment">
        <property name="geometry">
         <rect>
-         <x>12</x>
+         <x>10</x>
          <y>230</y>
          <width>191</width>
          <height>23</height>
@@ -184,6 +153,25 @@
        </property>
        <property name="text">
         <string>Send</string>
+       </property>
+      </widget>
+      <widget class="QTextEdit" name="log1">
+       <property name="geometry">
+        <rect>
+         <x>5</x>
+         <y>30</y>
+         <width>611</width>
+         <height>201</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+         <strikeout>false</strikeout>
+        </font>
        </property>
       </widget>
      </widget>
@@ -266,7 +254,7 @@
         <rect>
          <x>830</x>
          <y>373</y>
-         <width>110</width>
+         <width>111</width>
          <height>110</height>
         </rect>
        </property>
@@ -280,7 +268,7 @@
       <widget class="QLabel" name="label_gfa1">
        <property name="geometry">
         <rect>
-         <x>734</x>
+         <x>730</x>
          <y>53</y>
          <width>71</width>
          <height>16</height>
@@ -340,7 +328,7 @@
       <widget class="QLabel" name="label_gfa2">
        <property name="geometry">
         <rect>
-         <x>854</x>
+         <x>850</x>
          <y>53</y>
          <width>71</width>
          <height>16</height>
@@ -362,7 +350,7 @@
       <widget class="QFrame" name="Guide2">
        <property name="geometry">
         <rect>
-         <x>834</x>
+         <x>830</x>
          <y>73</y>
          <width>110</width>
          <height>110</height>
@@ -378,7 +366,7 @@
       <widget class="QFrame" name="Guide4">
        <property name="geometry">
         <rect>
-         <x>831</x>
+         <x>830</x>
          <y>223</y>
          <width>110</width>
          <height>110</height>
@@ -394,7 +382,7 @@
       <widget class="QFrame" name="Guide1">
        <property name="geometry">
         <rect>
-         <x>714</x>
+         <x>711</x>
          <y>73</y>
          <width>110</width>
          <height>110</height>
@@ -563,9 +551,9 @@
      <widget class="QLineEdit" name="lineEdit_cmd">
       <property name="geometry">
        <rect>
-        <x>70</x>
+        <x>60</x>
         <y>900</y>
-        <width>561</width>
+        <width>491</width>
         <height>30</height>
        </rect>
       </property>
@@ -1645,6 +1633,14 @@
          </item>
          <item>
           <widget class="QLineEdit" name="lineEdit_observer">
+           <property name="font">
+            <font>
+             <pointsize>14</pointsize>
+             <weight>50</weight>
+             <bold>false</bold>
+             <strikeout>false</strikeout>
+            </font>
+           </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
@@ -1672,6 +1668,14 @@
          </item>
          <item>
           <widget class="QLineEdit" name="lineEdit_directory">
+           <property name="font">
+            <font>
+             <pointsize>14</pointsize>
+             <weight>50</weight>
+             <bold>false</bold>
+             <strikeout>false</strikeout>
+            </font>
+           </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
@@ -1699,25 +1703,6 @@
         </widget>
        </item>
        <item row="1" column="2">
-        <widget class="QPushButton" name="pushbtn_disconnect">
-         <property name="font">
-          <font>
-           <family>Arial</family>
-           <pointsize>14</pointsize>
-           <weight>75</weight>
-           <bold>true</bold>
-           <strikeout>false</strikeout>
-          </font>
-         </property>
-         <property name="toolTip">
-          <string/>
-         </property>
-         <property name="text">
-          <string>Disconnect</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="2">
         <widget class="QPushButton" name="pushbtn_initialize">
          <property name="font">
           <font>
@@ -1736,10 +1721,41 @@
          </property>
         </widget>
        </item>
-       <item row="3" column="2">
-        <widget class="QToolButton" name="toolButton_directory">
+       <item row="2" column="2">
+        <widget class="QPushButton" name="pushbtn_observer">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+           <strikeout>false</strikeout>
+          </font>
+         </property>
+         <property name="toolTip">
+          <string/>
+         </property>
          <property name="text">
-          <string>...</string>
+          <string>Save</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="2">
+        <widget class="QPushButton" name="pushbtn_directory">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+           <strikeout>false</strikeout>
+          </font>
+         </property>
+         <property name="toolTip">
+          <string/>
+         </property>
+         <property name="text">
+          <string>Set</string>
          </property>
         </widget>
        </item>
@@ -1782,7 +1798,7 @@
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap>../KSPECICS_GUI/kspec_logo_small.png</pixmap>
+        <pixmap>kspec_logo_small.png</pixmap>
        </property>
        <property name="scaledContents">
         <bool>true</bool>
@@ -2142,6 +2158,65 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="horizontalLayoutWidget_13">
+       <property name="geometry">
+        <rect>
+         <x>610</x>
+         <y>50</y>
+         <width>73</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_status_lamp">
+        <property name="spacing">
+         <number>2</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="ok_status_lamp">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="font">
+           <font>
+            <family>Arial</family>
+            <pointsize>18</pointsize>
+            <weight>50</weight>
+            <bold>false</bold>
+            <strikeout>false</strikeout>
+           </font>
+          </property>
+          <property name="text">
+           <string>⚫</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_status_lamp">
+          <property name="font">
+           <font>
+            <family>Arial</family>
+            <pointsize>14</pointsize>
+            <weight>50</weight>
+            <bold>false</bold>
+            <strikeout>false</strikeout>
+           </font>
+          </property>
+          <property name="text">
+           <string>Lamp</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
      </widget>
      <widget class="QGroupBox" name="group_subsytem">
       <property name="geometry">
@@ -2264,7 +2339,7 @@
         <string>MTL Exp.</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushbtn_ENDO_exp">
+      <widget class="QPushButton" name="pushbtn_Finder_exp">
        <property name="geometry">
         <rect>
          <x>610</x>
@@ -2286,7 +2361,7 @@
         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
-        <string>ENDO Exp.</string>
+        <string>Finder Exp.</string>
        </property>
       </widget>
       <widget class="QPushButton" name="pushbtn_Flat">
@@ -2435,7 +2510,7 @@
         <property name="geometry">
          <rect>
           <x>360</x>
-          <y>80</y>
+          <y>90</y>
           <width>121</width>
           <height>41</height>
          </rect>
@@ -2632,22 +2707,6 @@
            </property>
           </widget>
          </item>
-         <item row="3" column="1">
-          <widget class="QLineEdit" name="lineEdit_obs_type_1">
-           <property name="enabled">
-            <bool>true</bool>
-           </property>
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="readOnly">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
          <item row="4" column="1">
           <widget class="QLineEdit" name="lineEdit_exp_time_1">
            <property name="enabled">
@@ -2680,16 +2739,46 @@
            </property>
           </widget>
          </item>
+         <item row="3" column="1">
+          <widget class="QComboBox" name="obstype_1">
+           <item>
+            <property name="text">
+             <string>None</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Bias</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Arc</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Flat</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Object</string>
+            </property>
+           </item>
+          </widget>
+         </item>
          <item row="6" column="1">
-          <widget class="QLineEdit" name="lineEdit_obs_status_1">
-           <property name="enabled">
-            <bool>true</bool>
+          <widget class="QProgressBar" name="progressBar_svc">
+           <property name="font">
+            <font>
+             <pointsize>9</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
            </property>
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
+           <property name="value">
+            <number>24</number>
            </property>
           </widget>
          </item>
@@ -2934,22 +3023,6 @@
            </property>
           </widget>
          </item>
-         <item row="3" column="1">
-          <widget class="QLineEdit" name="lineEdit_obs_type_2">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="readOnly">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
          <item row="4" column="0">
           <widget class="QLabel" name="label_exp_time_2">
            <property name="font">
@@ -3030,19 +3103,47 @@
            </property>
           </widget>
          </item>
+         <item row="3" column="1">
+          <widget class="QComboBox" name="obstype">
+           <item>
+            <property name="text">
+             <string>None</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Bias</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Arc</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Flat</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Object</string>
+            </property>
+           </item>
+          </widget>
+         </item>
          <item row="6" column="1">
-          <widget class="QLineEdit" name="lineEdit_obs_status_2">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
+          <widget class="QProgressBar" name="progressBar_svc_2">
+           <property name="font">
+            <font>
+             <pointsize>9</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+             <strikeout>false</strikeout>
+            </font>
            </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="readOnly">
-            <bool>true</bool>
+           <property name="value">
+            <number>24</number>
            </property>
           </widget>
          </item>
@@ -3052,7 +3153,7 @@
         <property name="geometry">
          <rect>
           <x>360</x>
-          <y>80</y>
+          <y>90</y>
           <width>121</width>
           <height>41</height>
          </rect>
@@ -3128,7 +3229,7 @@
      <widget class="QLabel" name="label_cmd">
       <property name="geometry">
        <rect>
-        <x>17</x>
+        <x>10</x>
         <y>903</y>
         <width>51</width>
         <height>23</height>
@@ -3145,6 +3246,31 @@
       </property>
       <property name="text">
        <string>CMD:</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushbtn_send_cmd">
+      <property name="geometry">
+       <rect>
+        <x>560</x>
+        <y>900</y>
+        <width>71</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Arial</family>
+        <pointsize>14</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <strikeout>false</strikeout>
+       </font>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="text">
+       <string>Send</string>
       </property>
      </widget>
     </widget>
@@ -9342,8 +9468,14 @@
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
+       <property name="opaqueResize">
+        <bool>false</bool>
+       </property>
        <property name="handleWidth">
         <number>0</number>
+       </property>
+       <property name="childrenCollapsible">
+        <bool>false</bool>
        </property>
        <widget class="QWidget" name="layoutWidget_80">
         <layout class="QVBoxLayout" name="group_Z">
@@ -9807,6 +9939,15 @@
         </item>
         <item row="0" column="1">
          <widget class="QLineEdit" name="lineEdit_aligned">
+          <property name="font">
+           <font>
+            <family>Arial</family>
+            <pointsize>14</pointsize>
+            <weight>50</weight>
+            <bold>false</bold>
+            <strikeout>false</strikeout>
+           </font>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -9833,6 +9974,15 @@
         </item>
         <item row="1" column="1">
          <widget class="QLineEdit" name="lineEdit_failed">
+          <property name="font">
+           <font>
+            <family>Arial</family>
+            <pointsize>14</pointsize>
+            <weight>50</weight>
+            <bold>false</bold>
+            <strikeout>false</strikeout>
+           </font>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -13521,8 +13671,8 @@
        <rect>
         <x>10</x>
         <y>0</y>
-        <width>211</width>
-        <height>171</height>
+        <width>311</width>
+        <height>141</height>
        </rect>
       </property>
       <property name="font">
@@ -13541,20 +13691,38 @@
        <property name="geometry">
         <rect>
          <x>80</x>
-         <y>40</y>
+         <y>42</y>
          <width>111</width>
          <height>21</height>
         </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+         <strikeout>false</strikeout>
+        </font>
        </property>
       </widget>
       <widget class="QLineEdit" name="lineEdit_adc2">
        <property name="geometry">
         <rect>
          <x>80</x>
-         <y>70</y>
+         <y>72</y>
          <width>111</width>
          <height>21</height>
         </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+         <strikeout>false</strikeout>
+        </font>
        </property>
        <property name="text">
         <string/>
@@ -13607,10 +13775,10 @@
       <widget class="QPushButton" name="pushbtn_adc_initialize">
        <property name="geometry">
         <rect>
-         <x>90</x>
+         <x>10</x>
          <y>100</y>
-         <width>101</width>
-         <height>51</height>
+         <width>81</width>
+         <height>31</height>
         </rect>
        </property>
        <property name="font">
@@ -13626,17 +13794,92 @@
         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
-        <string>Initialize</string>
+        <string>Home</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushbtn_adc_initialize_2">
+       <property name="geometry">
+        <rect>
+         <x>210</x>
+         <y>40</y>
+         <width>81</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="text">
+        <string>Rotate</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushbtn_adc_initialize_4">
+       <property name="geometry">
+        <rect>
+         <x>110</x>
+         <y>100</y>
+         <width>81</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="text">
+        <string>Park</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushbtn_adc_initialize_5">
+       <property name="geometry">
+        <rect>
+         <x>210</x>
+         <y>100</y>
+         <width>81</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="text">
+        <string>Zero</string>
        </property>
       </widget>
      </widget>
      <widget class="QGroupBox" name="group_metrology">
       <property name="geometry">
        <rect>
-        <x>250</x>
+        <x>330</x>
         <y>0</y>
-        <width>381</width>
-        <height>171</height>
+        <width>301</width>
+        <height>141</height>
        </rect>
       </property>
       <property name="font">
@@ -13651,36 +13894,93 @@
       <property name="title">
        <string>Metrology</string>
       </property>
-     </widget>
-     <widget class="QGroupBox" name="group_spectrograph">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>170</y>
-        <width>621</width>
-        <height>151</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Arial</family>
-        <pointsize>14</pointsize>
-        <weight>75</weight>
-        <bold>true</bold>
-        <strikeout>false</strikeout>
-       </font>
-      </property>
-      <property name="title">
-       <string>Spectrograph</string>
-      </property>
+      <widget class="QLabel" name="label_MTL_exptime">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>40</y>
+         <width>97</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="text">
+        <string>Exp. Time</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEdit_MTL_exptime">
+       <property name="geometry">
+        <rect>
+         <x>100</x>
+         <y>40</y>
+         <width>111</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushbtn_MTL_cal">
+       <property name="geometry">
+        <rect>
+         <x>140</x>
+         <y>100</y>
+         <width>111</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>MTL Cal</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushbtn_MTL_exp_3">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>100</y>
+         <width>111</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="text">
+        <string>MTL Exp.</string>
+       </property>
+      </widget>
      </widget>
      <widget class="QGroupBox" name="group_gfa">
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>320</y>
-        <width>621</width>
-        <height>211</height>
+        <y>150</y>
+        <width>311</width>
+        <height>241</height>
        </rect>
       </property>
       <property name="font">
@@ -13695,6 +13995,150 @@
       <property name="title">
        <string>GFA</string>
       </property>
+      <widget class="QPushButton" name="pushbtn_GFAapply">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>120</y>
+         <width>101</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="text">
+        <string>Apply</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEdit_GFA_exptime">
+       <property name="geometry">
+        <rect>
+         <x>110</x>
+         <y>40</y>
+         <width>111</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_GFA_exptime">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>40</y>
+         <width>97</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="text">
+        <string>Exp. Time</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_GFA_exptime_2">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>80</y>
+         <width>97</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="text">
+        <string>Cam #</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEdit_GFA_cam">
+       <property name="geometry">
+        <rect>
+         <x>110</x>
+         <y>80</y>
+         <width>111</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushbtn_GFArun">
+       <property name="geometry">
+        <rect>
+         <x>140</x>
+         <y>120</y>
+         <width>101</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="text">
+        <string>Run</string>
+       </property>
+      </widget>
      </widget>
      <widget class="QLineEdit" name="lineEdit_terminal_2">
       <property name="geometry">
@@ -13727,31 +14171,6 @@
       <property name="title">
        <string>Message Log</string>
       </property>
-      <widget class="QPlainTextEdit" name="log_2">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>30</y>
-         <width>601</width>
-         <height>191</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <family>Arial</family>
-         <pointsize>14</pointsize>
-         <weight>50</weight>
-         <bold>false</bold>
-         <strikeout>false</strikeout>
-        </font>
-       </property>
-       <property name="readOnly">
-        <bool>true</bool>
-       </property>
-      </widget>
       <widget class="QLabel" name="label_comment_2">
        <property name="geometry">
         <rect>
@@ -13809,201 +14228,23 @@
         <string>Send</string>
        </property>
       </widget>
-     </widget>
-     <widget class="QGroupBox" name="group_subsytem_2">
-      <property name="geometry">
-       <rect>
-        <x>640</x>
-        <y>100</y>
-        <width>961</width>
-        <height>81</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Arial</family>
-        <pointsize>14</pointsize>
-        <weight>75</weight>
-        <bold>true</bold>
-        <strikeout>false</strikeout>
-       </font>
-      </property>
-      <property name="title">
-       <string> Subsystem Functions</string>
-      </property>
-      <widget class="QPushButton" name="pushbtn_Guiding_2">
+      <widget class="QTextEdit" name="log2">
        <property name="geometry">
         <rect>
-         <x>10</x>
-         <y>37</y>
-         <width>151</width>
-         <height>31</height>
+         <x>5</x>
+         <y>30</y>
+         <width>611</width>
+         <height>201</height>
         </rect>
        </property>
        <property name="font">
         <font>
          <family>Arial</family>
          <pointsize>14</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
+         <weight>50</weight>
+         <bold>false</bold>
          <strikeout>false</strikeout>
         </font>
-       </property>
-       <property name="toolTip">
-        <string/>
-       </property>
-       <property name="text">
-        <string>Guiding/Stop</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushbtn_ADCadjust_2">
-       <property name="geometry">
-        <rect>
-         <x>170</x>
-         <y>37</y>
-         <width>171</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <family>Arial</family>
-         <pointsize>14</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-         <strikeout>false</strikeout>
-        </font>
-       </property>
-       <property name="toolTip">
-        <string/>
-       </property>
-       <property name="text">
-        <string>ADC Adjust/Stop</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushbtn_Fiber_assign_2">
-       <property name="geometry">
-        <rect>
-         <x>350</x>
-         <y>37</y>
-         <width>131</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <family>Arial</family>
-         <pointsize>14</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-         <strikeout>false</strikeout>
-        </font>
-       </property>
-       <property name="toolTip">
-        <string/>
-       </property>
-       <property name="text">
-        <string>Fiber Assign</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushbtn_MTL_exp_2">
-       <property name="geometry">
-        <rect>
-         <x>490</x>
-         <y>37</y>
-         <width>111</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <family>Arial</family>
-         <pointsize>14</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-         <strikeout>false</strikeout>
-        </font>
-       </property>
-       <property name="toolTip">
-        <string/>
-       </property>
-       <property name="text">
-        <string>MTL Exp.</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushbtn_ENDO_exp_2">
-       <property name="geometry">
-        <rect>
-         <x>610</x>
-         <y>37</y>
-         <width>121</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <family>Arial</family>
-         <pointsize>14</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-         <strikeout>false</strikeout>
-        </font>
-       </property>
-       <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-       </property>
-       <property name="text">
-        <string>ENDO Exp.</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushbtn_Flat_2">
-       <property name="geometry">
-        <rect>
-         <x>740</x>
-         <y>37</y>
-         <width>101</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <family>Arial</family>
-         <pointsize>14</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-         <strikeout>false</strikeout>
-        </font>
-       </property>
-       <property name="toolTip">
-        <string/>
-       </property>
-       <property name="text">
-        <string>Flat</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushbtn_Arc_2">
-       <property name="geometry">
-        <rect>
-         <x>850</x>
-         <y>37</y>
-         <width>101</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <family>Arial</family>
-         <pointsize>14</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-         <strikeout>false</strikeout>
-        </font>
-       </property>
-       <property name="toolTip">
-        <string/>
-       </property>
-       <property name="text">
-        <string>Arc</string>
        </property>
       </widget>
      </widget>
@@ -14044,7 +14285,7 @@
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap>../KSPECICS_GUI/kspec_logo_small.png</pixmap>
+        <pixmap>kspec_logo_small.png</pixmap>
        </property>
        <property name="scaledContents">
         <bool>true</bool>
@@ -14403,6 +14644,489 @@
          </widget>
         </item>
        </layout>
+      </widget>
+      <widget class="QWidget" name="horizontalLayoutWidget_14">
+       <property name="geometry">
+        <rect>
+         <x>610</x>
+         <y>50</y>
+         <width>73</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_status_lamp_2">
+        <property name="spacing">
+         <number>2</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="ok_status_lamp_2">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="font">
+           <font>
+            <family>Arial</family>
+            <pointsize>18</pointsize>
+            <weight>50</weight>
+            <bold>false</bold>
+            <strikeout>false</strikeout>
+           </font>
+          </property>
+          <property name="text">
+           <string>⚫</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_status_lamp_2">
+          <property name="font">
+           <font>
+            <family>Arial</family>
+            <pointsize>14</pointsize>
+            <weight>50</weight>
+            <bold>false</bold>
+            <strikeout>false</strikeout>
+           </font>
+          </property>
+          <property name="text">
+           <string>Lamp</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="group_subsytem_2">
+      <property name="geometry">
+       <rect>
+        <x>640</x>
+        <y>100</y>
+        <width>961</width>
+        <height>81</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Arial</family>
+        <pointsize>14</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <strikeout>false</strikeout>
+       </font>
+      </property>
+      <property name="title">
+       <string> Subsystem Functions</string>
+      </property>
+      <widget class="QPushButton" name="pushbtn_Guiding_2">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>37</y>
+         <width>151</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="text">
+        <string>Guiding/Stop</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushbtn_ADCadjust_2">
+       <property name="geometry">
+        <rect>
+         <x>170</x>
+         <y>37</y>
+         <width>171</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="text">
+        <string>ADC Adjust/Stop</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushbtn_Fiber_assign_2">
+       <property name="geometry">
+        <rect>
+         <x>350</x>
+         <y>37</y>
+         <width>131</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="text">
+        <string>Fiber Assign</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushbtn_MTL_exp_2">
+       <property name="geometry">
+        <rect>
+         <x>490</x>
+         <y>37</y>
+         <width>111</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="text">
+        <string>MTL Exp.</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushbtn_Finder_exp_2">
+       <property name="geometry">
+        <rect>
+         <x>610</x>
+         <y>37</y>
+         <width>121</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="text">
+        <string>Finder Exp.</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushbtn_Flat_2">
+       <property name="geometry">
+        <rect>
+         <x>740</x>
+         <y>37</y>
+         <width>101</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="text">
+        <string>Flat</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushbtn_Arc_2">
+       <property name="geometry">
+        <rect>
+         <x>850</x>
+         <y>37</y>
+         <width>101</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="text">
+        <string>Arc</string>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="group_gfa_2">
+      <property name="geometry">
+       <rect>
+        <x>330</x>
+        <y>270</y>
+        <width>301</width>
+        <height>121</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Arial</family>
+        <pointsize>14</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <strikeout>false</strikeout>
+       </font>
+      </property>
+      <property name="title">
+       <string>Fiber Positioner</string>
+      </property>
+      <widget class="QPushButton" name="pushbtn_FBP_offset">
+       <property name="geometry">
+        <rect>
+         <x>120</x>
+         <y>80</y>
+         <width>71</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="text">
+        <string>Offset</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEdit">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>40</y>
+         <width>151</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushbtn_FBP_mp_load">
+       <property name="geometry">
+        <rect>
+         <x>170</x>
+         <y>36</y>
+         <width>121</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Load Motion</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushbtn_adc_initialize_3">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>80</y>
+         <width>101</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="text">
+        <string>Initialize</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushbtn_FBP_offset_2">
+       <property name="geometry">
+        <rect>
+         <x>210</x>
+         <y>80</y>
+         <width>71</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="text">
+        <string>Park</string>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="group_spectrograph">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>390</y>
+        <width>621</width>
+        <height>151</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Arial</family>
+        <pointsize>14</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <strikeout>false</strikeout>
+       </font>
+      </property>
+      <property name="title">
+       <string>Spectrograph</string>
+      </property>
+     </widget>
+     <widget class="QGroupBox" name="group_metrology_2">
+      <property name="geometry">
+       <rect>
+        <x>330</x>
+        <y>150</y>
+        <width>301</width>
+        <height>121</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Arial</family>
+        <pointsize>14</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <strikeout>false</strikeout>
+       </font>
+      </property>
+      <property name="title">
+       <string>Finder</string>
+      </property>
+      <widget class="QLabel" name="label_MTL_exptime_3">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>40</y>
+         <width>97</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="text">
+        <string>Exp. Time</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEdit_MTL_exptime_3">
+       <property name="geometry">
+        <rect>
+         <x>100</x>
+         <y>40</y>
+         <width>111</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushbtn_MTL_cal_3">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>70</y>
+         <width>111</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Finder Run</string>
+       </property>
       </widget>
      </widget>
     </widget>

@@ -1,0 +1,251 @@
+2025-07-25 10:11:38,629 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2025-07-25 10:11:38,629 [INFO] Initializing gfa_astrometry class.
+2025-07-25 10:11:38,629 [INFO] Initializing GFAGuider...
+2025-07-25 10:11:38,629 [DEBUG] Processed dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg
+2025-07-25 10:11:38,629 [DEBUG] Final astro dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/
+2025-07-25 10:11:38,629 [DEBUG] Cutout dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/cutout
+2025-07-25 10:11:38,629 [INFO] GFAGuider setup complete.
+2025-07-25 10:11:56,636 [INFO] Image save path: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/grab/2025-07-25
+2025-07-25 10:11:56,637 [INFO] Grabbing from camera 1 (ExpTime=10.0, Binning=4)
+2025-07-25 10:12:27,440 [INFO] Starting guiding sequence...
+2025-07-25 10:12:27,441 [INFO] Grabbing raw image...
+2025-07-25 10:12:32,471 [INFO] Running astrometry preprocessing...
+2025-07-25 10:12:32,473 [DEBUG] Loaded 7 FITS files.
+2025-07-25 10:12:32,474 [INFO] Starting preprocessing for 7 files.
+2025-07-25 10:12:32,474 [INFO] Astrometry data already exists. Processing raw images separately.
+2025-07-25 10:12:32,476 [DEBUG] Processing file: KMTNge.20230905T094050.0001.fits
+2025-07-25 10:12:32,476 [DEBUG] Processing file: KMTNge.20231211T102558.0001.fits
+2025-07-25 10:12:32,478 [DEBUG] Processing file: KMTNgn.20230905T094050.0001.fits
+2025-07-25 10:12:32,479 [DEBUG] Processing file: KMTNgn.20231211T102558.0001.fits
+2025-07-25 10:12:32,480 [DEBUG] Processing file: KMTNgs.20230905T094050.0001.fits
+2025-07-25 10:12:32,481 [DEBUG] Processing file: KMTNgs.20231211T102558.0001.fits
+2025-07-25 10:12:32,482 [DEBUG] Processing file: KMTNgw.20231211T102558.0001.fits
+2025-07-25 10:12:32,555 [DEBUG] Processed KMTNge.20231211T102558.0001.fits
+2025-07-25 10:12:32,562 [DEBUG] Processed KMTNgs.20231211T102558.0001.fits
+2025-07-25 10:12:32,566 [DEBUG] Processed KMTNgn.20230905T094050.0001.fits
+2025-07-25 10:12:32,571 [DEBUG] Processed KMTNge.20230905T094050.0001.fits
+2025-07-25 10:12:32,574 [DEBUG] Processed KMTNgs.20230905T094050.0001.fits
+2025-07-25 10:12:32,578 [DEBUG] Processed KMTNgn.20231211T102558.0001.fits
+2025-07-25 10:12:32,578 [DEBUG] Processed KMTNgw.20231211T102558.0001.fits
+2025-07-25 10:12:32,579 [INFO] Preprocessing completed in 0.11 seconds.
+2025-07-25 10:12:32,579 [INFO] Executing guider offset calculation...
+2025-07-25 10:12:32,579 [INFO] ========== Starting guide star calibration process ==========
+2025-07-25 10:12:32,579 [INFO] Found 4 astrometry and 16 processed files.
+2025-07-25 10:12:32,579 [INFO] 
+-- Processing pair #1:
+2025-07-25 10:12:32,579 [INFO]   Astrometry file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/astro_proc_KMTNge.20231211T102558.0001.fits
+2025-07-25 10:12:32,579 [INFO]   Processed file:  /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNge.20230905T094050.0001.fits
+2025-07-25 10:12:32,579 [DEBUG] Loading image and WCS from: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/astro_proc_KMTNge.20231211T102558.0001.fits
+2025-07-25 10:12:32,586 [DEBUG]   CRVAL1: 66.908554, CRVAL2: -46.512164
+2025-07-25 10:12:32,586 [DEBUG] Loading image data from file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNge.20230905T094050.0001.fits
+2025-07-25 10:12:32,588 [INFO] Performing sigma clipping to derive background and stddev.
+2025-07-25 10:12:32,786 [DEBUG] Background subtraction done. Stddev=63.3381
+2025-07-25 10:12:32,787 [DEBUG]   Background stddev: 63.3381
+2025-07-25 10:12:32,788 [DEBUG] Using star catalog file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/combined_star.fits
+2025-07-25 10:12:32,791 [DEBUG] Star catalog loaded with 257 stars from /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/combined_star.fits.
+2025-07-25 10:12:32,791 [DEBUG]   Loaded 257 stars from catalog.
+2025-07-25 10:12:32,791 [DEBUG] Selecting stars based on angular distance and flux.
+2025-07-25 10:12:32,791 [DEBUG] Selected 0 stars after filtering.
+2025-07-25 10:12:32,791 [DEBUG]   Selected 0 guide stars after filtering.
+2025-07-25 10:12:32,791 [DEBUG] Converting RA/DEC arrays to X/Y pixel positions via WCS (np.round).
+2025-07-25 10:12:32,791 [DEBUG] Conversion to X/Y positions completed (vectorized).
+2025-07-25 10:12:32,791 [DEBUG]   Converted RA/DEC to pixel coordinates.
+2025-07-25 10:12:32,791 [DEBUG] ==== Starting centroid offset calculation ====
+2025-07-25 10:12:32,791 [DEBUG] Number of input stars: 0
+2025-07-25 10:12:32,791 [DEBUG] Standard deviation for thresholding: 63.338
+2025-07-25 10:12:32,791 [DEBUG] Box size: 40
+2025-07-25 10:12:32,791 [DEBUG] Max flux among stars (cutoff 30000): None
+2025-07-25 10:12:32,791 [DEBUG] ==== Finished centroid offset calculation ====
+2025-07-25 10:12:32,791 [DEBUG]   Centroid offset returned 0 stars.
+2025-07-25 10:12:32,791 [DEBUG] Selecting guide stars based on peak values.
+2025-07-25 10:12:32,792 [DEBUG] Selected 0 guide stars after peak filtering.
+2025-07-25 10:12:32,792 [DEBUG]   After peak filtering: 0 offsets retained.
+2025-07-25 10:12:32,792 [INFO] 
+-- Processing pair #2:
+2025-07-25 10:12:32,792 [INFO]   Astrometry file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/astro_proc_KMTNgn.20231211T102558.0001.fits
+2025-07-25 10:12:32,792 [INFO]   Processed file:  /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNge.20230905T094259.0001.fits
+2025-07-25 10:12:32,792 [DEBUG] Loading image and WCS from: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/astro_proc_KMTNgn.20231211T102558.0001.fits
+2025-07-25 10:12:32,798 [DEBUG]   CRVAL1: 64.989084, CRVAL2: -45.243184
+2025-07-25 10:12:32,798 [DEBUG] Loading image data from file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNge.20230905T094259.0001.fits
+2025-07-25 10:12:32,799 [INFO] Performing sigma clipping to derive background and stddev.
+2025-07-25 10:12:33,014 [DEBUG] Background subtraction done. Stddev=99.2148
+2025-07-25 10:12:33,015 [DEBUG]   Background stddev: 99.2148
+2025-07-25 10:12:33,015 [DEBUG] Using star catalog file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/combined_star.fits
+2025-07-25 10:12:33,018 [DEBUG] Star catalog loaded with 257 stars from /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/combined_star.fits.
+2025-07-25 10:12:33,018 [DEBUG]   Loaded 257 stars from catalog.
+2025-07-25 10:12:33,018 [DEBUG] Selecting stars based on angular distance and flux.
+2025-07-25 10:12:33,018 [DEBUG] Selected 0 stars after filtering.
+2025-07-25 10:12:33,018 [DEBUG]   Selected 0 guide stars after filtering.
+2025-07-25 10:12:33,018 [DEBUG] Converting RA/DEC arrays to X/Y pixel positions via WCS (np.round).
+2025-07-25 10:12:33,018 [DEBUG] Conversion to X/Y positions completed (vectorized).
+2025-07-25 10:12:33,018 [DEBUG]   Converted RA/DEC to pixel coordinates.
+2025-07-25 10:12:33,018 [DEBUG] ==== Starting centroid offset calculation ====
+2025-07-25 10:12:33,019 [DEBUG] Number of input stars: 0
+2025-07-25 10:12:33,019 [DEBUG] Standard deviation for thresholding: 99.215
+2025-07-25 10:12:33,019 [DEBUG] Box size: 40
+2025-07-25 10:12:33,019 [DEBUG] Max flux among stars (cutoff 30000): None
+2025-07-25 10:12:33,019 [DEBUG] ==== Finished centroid offset calculation ====
+2025-07-25 10:12:33,019 [DEBUG]   Centroid offset returned 0 stars.
+2025-07-25 10:12:33,019 [DEBUG] Selecting guide stars based on peak values.
+2025-07-25 10:12:33,019 [DEBUG] Selected 0 guide stars after peak filtering.
+2025-07-25 10:12:33,019 [DEBUG]   After peak filtering: 0 offsets retained.
+2025-07-25 10:12:33,019 [INFO] 
+-- Processing pair #3:
+2025-07-25 10:12:33,019 [INFO]   Astrometry file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/astro_proc_KMTNgs.20231211T102558.0001.fits
+2025-07-25 10:12:33,019 [INFO]   Processed file:  /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNge.20230905T094503.0001.fits
+2025-07-25 10:12:33,019 [DEBUG] Loading image and WCS from: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/astro_proc_KMTNgs.20231211T102558.0001.fits
+2025-07-25 10:12:33,025 [DEBUG]   CRVAL1: 65.038293, CRVAL2: -47.850948
+2025-07-25 10:12:33,025 [DEBUG] Loading image data from file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNge.20230905T094503.0001.fits
+2025-07-25 10:12:33,026 [INFO] Performing sigma clipping to derive background and stddev.
+2025-07-25 10:12:33,216 [DEBUG] Background subtraction done. Stddev=103.7279
+2025-07-25 10:12:33,217 [DEBUG]   Background stddev: 103.7279
+2025-07-25 10:12:33,218 [DEBUG] Using star catalog file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/combined_star.fits
+2025-07-25 10:12:33,220 [DEBUG] Star catalog loaded with 257 stars from /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/combined_star.fits.
+2025-07-25 10:12:33,221 [DEBUG]   Loaded 257 stars from catalog.
+2025-07-25 10:12:33,221 [DEBUG] Selecting stars based on angular distance and flux.
+2025-07-25 10:12:33,221 [DEBUG] Selected 0 stars after filtering.
+2025-07-25 10:12:33,221 [DEBUG]   Selected 0 guide stars after filtering.
+2025-07-25 10:12:33,221 [DEBUG] Converting RA/DEC arrays to X/Y pixel positions via WCS (np.round).
+2025-07-25 10:12:33,221 [DEBUG] Conversion to X/Y positions completed (vectorized).
+2025-07-25 10:12:33,221 [DEBUG]   Converted RA/DEC to pixel coordinates.
+2025-07-25 10:12:33,221 [DEBUG] ==== Starting centroid offset calculation ====
+2025-07-25 10:12:33,221 [DEBUG] Number of input stars: 0
+2025-07-25 10:12:33,221 [DEBUG] Standard deviation for thresholding: 103.728
+2025-07-25 10:12:33,221 [DEBUG] Box size: 40
+2025-07-25 10:12:33,221 [DEBUG] Max flux among stars (cutoff 30000): None
+2025-07-25 10:12:33,222 [DEBUG] ==== Finished centroid offset calculation ====
+2025-07-25 10:12:33,222 [DEBUG]   Centroid offset returned 0 stars.
+2025-07-25 10:12:33,222 [DEBUG] Selecting guide stars based on peak values.
+2025-07-25 10:12:33,222 [DEBUG] Selected 0 guide stars after peak filtering.
+2025-07-25 10:12:33,222 [DEBUG]   After peak filtering: 0 offsets retained.
+2025-07-25 10:12:33,222 [INFO] 
+-- Processing pair #4:
+2025-07-25 10:12:33,222 [INFO]   Astrometry file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/astro_proc_KMTNgw.20231211T102558.0001.fits
+2025-07-25 10:12:33,222 [INFO]   Processed file:  /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNge.20231211T102558.0001.fits
+2025-07-25 10:12:33,222 [DEBUG] Loading image and WCS from: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/astro_proc_KMTNgw.20231211T102558.0001.fits
+2025-07-25 10:12:33,227 [DEBUG]   CRVAL1: 63.115571, CRVAL2: -46.547596
+2025-07-25 10:12:33,228 [DEBUG] Loading image data from file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNge.20231211T102558.0001.fits
+2025-07-25 10:12:33,229 [INFO] Performing sigma clipping to derive background and stddev.
+2025-07-25 10:12:33,327 [DEBUG] Background subtraction done. Stddev=12.3999
+2025-07-25 10:12:33,328 [DEBUG]   Background stddev: 12.3999
+2025-07-25 10:12:33,328 [DEBUG] Using star catalog file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/combined_star.fits
+2025-07-25 10:12:33,331 [DEBUG] Star catalog loaded with 257 stars from /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/combined_star.fits.
+2025-07-25 10:12:33,332 [DEBUG]   Loaded 257 stars from catalog.
+2025-07-25 10:12:33,332 [DEBUG] Selecting stars based on angular distance and flux.
+2025-07-25 10:12:33,332 [DEBUG] Selected 0 stars after filtering.
+2025-07-25 10:12:33,332 [DEBUG]   Selected 0 guide stars after filtering.
+2025-07-25 10:12:33,332 [DEBUG] Converting RA/DEC arrays to X/Y pixel positions via WCS (np.round).
+2025-07-25 10:12:33,332 [DEBUG] Conversion to X/Y positions completed (vectorized).
+2025-07-25 10:12:33,332 [DEBUG]   Converted RA/DEC to pixel coordinates.
+2025-07-25 10:12:33,332 [DEBUG] ==== Starting centroid offset calculation ====
+2025-07-25 10:12:33,332 [DEBUG] Number of input stars: 0
+2025-07-25 10:12:33,332 [DEBUG] Standard deviation for thresholding: 12.400
+2025-07-25 10:12:33,332 [DEBUG] Box size: 40
+2025-07-25 10:12:33,332 [DEBUG] Max flux among stars (cutoff 30000): None
+2025-07-25 10:12:33,332 [DEBUG] ==== Finished centroid offset calculation ====
+2025-07-25 10:12:33,332 [DEBUG]   Centroid offset returned 0 stars.
+2025-07-25 10:12:33,332 [DEBUG] Selecting guide stars based on peak values.
+2025-07-25 10:12:33,332 [DEBUG] Selected 0 guide stars after peak filtering.
+2025-07-25 10:12:33,332 [DEBUG]   After peak filtering: 0 offsets retained.
+2025-07-25 10:12:33,332 [INFO] Total valid guide star offsets: 0
+2025-07-25 10:12:33,332 [DEBUG] Calculating final offset using selected guide stars.
+2025-07-25 10:12:33,332 [WARNING] No guide stars available for offset calculation.
+2025-07-25 10:12:33,332 [ERROR] Guiding failed: Unknown format code 'f' for object of type 'str'
+2025-07-25 10:13:39,259 [INFO] Starting guiding sequence...
+2025-07-25 10:13:39,260 [INFO] Grabbing raw image...
+2025-07-25 10:13:44,287 [INFO] Running astrometry preprocessing...
+2025-07-25 10:13:44,290 [DEBUG] Loaded 10 FITS files.
+2025-07-25 10:13:44,290 [INFO] Starting preprocessing for 10 files.
+2025-07-25 10:13:44,291 [INFO] No astrometry results found. Running full astrometric solution.
+2025-07-25 10:13:44,291 [DEBUG] Starting combined function for file: KMTNge.20230905T094050.0001.fits.
+2025-07-25 10:13:44,292 [DEBUG] Starting combined function for file: KMTNge.20230905T094259.0001.fits.
+2025-07-25 10:13:44,292 [DEBUG] Processing file: KMTNge.20230905T094050.0001.fits
+2025-07-25 10:13:44,293 [DEBUG] Starting combined function for file: KMTNge.20231211T102558.0001.fits.
+2025-07-25 10:13:44,293 [DEBUG] Processing file: KMTNge.20230905T094259.0001.fits
+2025-07-25 10:13:44,294 [DEBUG] Starting combined function for file: KMTNgn.20230905T094050.0001.fits.
+2025-07-25 10:13:44,294 [DEBUG] Starting combined function for file: KMTNgn.20230905T094259.0001.fits.
+2025-07-25 10:13:44,295 [DEBUG] Processing file: KMTNge.20231211T102558.0001.fits
+2025-07-25 10:13:44,295 [DEBUG] Starting combined function for file: KMTNgn.20231211T102558.0001.fits.
+2025-07-25 10:13:44,295 [DEBUG] Starting combined function for file: KMTNgs.20230905T094050.0001.fits.
+2025-07-25 10:13:44,295 [DEBUG] Processing file: KMTNgn.20230905T094050.0001.fits
+2025-07-25 10:13:44,295 [DEBUG] Starting combined function for file: KMTNgs.20230905T094259.0001.fits.
+2025-07-25 10:13:44,295 [DEBUG] Processing file: KMTNgn.20230905T094259.0001.fits
+2025-07-25 10:13:44,296 [DEBUG] Processing file: KMTNgn.20231211T102558.0001.fits
+2025-07-25 10:13:44,297 [DEBUG] Processing file: KMTNgs.20230905T094050.0001.fits
+2025-07-25 10:13:44,297 [DEBUG] Processing file: KMTNgs.20230905T094259.0001.fits
+2025-07-25 10:13:44,365 [INFO] Starting astrometry process for proc_KMTNge.20230905T094259.0001.fits.
+2025-07-25 10:13:44,365 [DEBUG] Starting combined function for file: KMTNgs.20231211T102558.0001.fits.
+2025-07-25 10:13:44,365 [ERROR] Error processing KMTNge.20230905T094259.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-25 10:13:44,365 [DEBUG] Processing file: KMTNgs.20231211T102558.0001.fits
+2025-07-25 10:13:44,370 [INFO] Starting astrometry process for proc_KMTNgn.20230905T094050.0001.fits.
+2025-07-25 10:13:44,370 [INFO] Starting astrometry process for proc_KMTNge.20231211T102558.0001.fits.
+2025-07-25 10:13:44,370 [INFO] Starting astrometry process for proc_KMTNge.20230905T094050.0001.fits.
+2025-07-25 10:13:44,370 [DEBUG] Starting combined function for file: KMTNgw.20231211T102558.0001.fits.
+2025-07-25 10:13:44,370 [ERROR] Error processing KMTNgn.20230905T094050.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-25 10:13:44,371 [DEBUG] Processing file: KMTNgw.20231211T102558.0001.fits
+2025-07-25 10:13:44,371 [ERROR] Error processing KMTNge.20231211T102558.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-25 10:13:44,371 [ERROR] Error processing KMTNge.20230905T094050.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-25 10:13:44,371 [INFO] Starting astrometry process for proc_KMTNgn.20230905T094259.0001.fits.
+2025-07-25 10:13:44,371 [INFO] Starting astrometry process for proc_KMTNgn.20231211T102558.0001.fits.
+2025-07-25 10:13:44,372 [ERROR] Error processing KMTNgn.20230905T094259.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-25 10:13:44,372 [INFO] Starting astrometry process for proc_KMTNgs.20230905T094259.0001.fits.
+2025-07-25 10:13:44,372 [ERROR] Error processing KMTNgn.20231211T102558.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-25 10:13:44,373 [ERROR] Error processing KMTNgs.20230905T094259.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-25 10:13:44,373 [INFO] Starting astrometry process for proc_KMTNgs.20230905T094050.0001.fits.
+2025-07-25 10:13:44,373 [ERROR] Error processing KMTNgs.20230905T094050.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-25 10:13:44,386 [INFO] Starting astrometry process for proc_KMTNgs.20231211T102558.0001.fits.
+2025-07-25 10:13:44,386 [ERROR] Error processing KMTNgs.20231211T102558.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-25 10:13:44,390 [INFO] Starting astrometry process for proc_KMTNgw.20231211T102558.0001.fits.
+2025-07-25 10:13:44,390 [ERROR] Error processing KMTNgw.20231211T102558.0001.fits: solve-field not found! Ensure it is installed and in PATH.
+2025-07-25 10:13:44,391 [WARNING] 10 files failed: ['KMTNge.20230905T094259.0001.fits', 'KMTNgn.20230905T094050.0001.fits', 'KMTNge.20231211T102558.0001.fits', 'KMTNge.20230905T094050.0001.fits', 'KMTNgn.20230905T094259.0001.fits', 'KMTNgn.20231211T102558.0001.fits', 'KMTNgs.20230905T094259.0001.fits', 'KMTNgs.20230905T094050.0001.fits', 'KMTNgs.20231211T102558.0001.fits', 'KMTNgw.20231211T102558.0001.fits']
+2025-07-25 10:13:44,391 [INFO] Starting star catalog generation.
+2025-07-25 10:13:44,391 [DEBUG] Found 0 .corr files in /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/tempfiles.
+2025-07-25 10:13:44,391 [ERROR] No .corr files found in the temp directory.
+2025-07-25 10:13:44,391 [INFO] Removing temporary files.
+2025-07-25 10:13:44,391 [DEBUG] Temporary files removed from /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/tempfiles.
+2025-07-25 10:13:44,391 [INFO] Preprocessing completed in 0.10 seconds.
+2025-07-25 10:13:44,391 [INFO] Executing guider offset calculation...
+2025-07-25 10:13:44,392 [INFO] ========== Starting guide star calibration process ==========
+2025-07-25 10:13:44,392 [ERROR] No astrometry FITS files found in /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/.
+2025-07-25 10:13:44,392 [INFO] Clearing temp astrometry data...
+2025-07-25 10:13:44,392 [INFO] Deleting raw and processed files.
+2025-07-25 10:13:44,392 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/filelist.dat
+2025-07-25 10:13:44,392 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNge.20230905T094050.0001.fits
+2025-07-25 10:13:44,393 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNge.20230905T094259.0001.fits
+2025-07-25 10:13:44,393 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNge.20231211T102558.0001.fits
+2025-07-25 10:13:44,393 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNgn.20230905T094050.0001.fits
+2025-07-25 10:13:44,393 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNgn.20230905T094259.0001.fits
+2025-07-25 10:13:44,393 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNgn.20231211T102558.0001.fits
+2025-07-25 10:13:44,394 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNgs.20230905T094050.0001.fits
+2025-07-25 10:13:44,394 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNgs.20230905T094259.0001.fits
+2025-07-25 10:13:44,394 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNgs.20231211T102558.0001.fits
+2025-07-25 10:13:44,394 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw/KMTNgw.20231211T102558.0001.fits
+2025-07-25 10:13:44,394 [INFO] Deleted 11 files in directory: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw
+2025-07-25 10:13:44,395 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNge.20230905T094050.0001.fits
+2025-07-25 10:13:44,395 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNge.20230905T094259.0001.fits
+2025-07-25 10:13:44,395 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNge.20230905T094503.0001.fits
+2025-07-25 10:13:44,396 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNge.20231211T102558.0001.fits
+2025-07-25 10:13:44,396 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgn.20230905T094050.0001.fits
+2025-07-25 10:13:44,396 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgn.20230905T094259.0001.fits
+2025-07-25 10:13:44,396 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgn.20230905T094503.0001.fits
+2025-07-25 10:13:44,396 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgn.20231211T102558.0001.fits
+2025-07-25 10:13:44,397 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgs.20230905T094050.0001.fits
+2025-07-25 10:13:44,397 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgs.20230905T094259.0001.fits
+2025-07-25 10:13:44,397 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgs.20230905T094503.0001.fits
+2025-07-25 10:13:44,397 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgs.20231211T102558.0001.fits
+2025-07-25 10:13:44,397 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgw.20230905T094050.0001.fits
+2025-07-25 10:13:44,398 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgw.20230905T094259.0001.fits
+2025-07-25 10:13:44,398 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgw.20230905T094503.0001.fits
+2025-07-25 10:13:44,398 [DEBUG] Deleted file: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg/proc_KMTNgw.20231211T102558.0001.fits
+2025-07-25 10:13:44,398 [INFO] Deleted 16 files in directory: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg
+2025-07-25 10:13:44,398 [INFO] Deleted 11 raw files and 16 processed files.
+2025-07-25 15:56:14,387 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2025-07-25 15:56:14,387 [INFO] Initializing gfa_astrometry class.
+2025-07-25 15:56:14,388 [INFO] Initializing GFAGuider...
+2025-07-25 15:56:14,388 [DEBUG] Processed dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg
+2025-07-25 15:56:14,388 [DEBUG] Final astro dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/
+2025-07-25 15:56:14,388 [DEBUG] Cutout dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/cutout
+2025-07-25 15:56:14,388 [INFO] GFAGuider setup complete.
+2025-07-25 15:56:14,388 [INFO] Initialized GFAEnvironment with role 'finder' and cameras [7]
+2025-07-25 15:58:04,718 [INFO] Saving finder image to: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/grab_finder/2025-07-25
+2025-07-25 15:58:04,719 [INFO] Grabbing from Cam7 (ExpTime=4.0, Binning=1)

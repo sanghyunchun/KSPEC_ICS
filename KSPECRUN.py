@@ -18,6 +18,7 @@ class KSPECRunner:
         Initializes the KSPEC runner with the ICS client.
         """
         self.ICS_client = ICS_client
+        self.observer = None
         self.running = True
         self.response_queue = asyncio.Queue()
         self.GFA_response_queue = asyncio.Queue()
@@ -31,7 +32,7 @@ class KSPECRunner:
         return {
             "adc": ["adcstatus", "adcactivate", "adcadjust", "adcinit", "adcconnect", "adcdisconnect", "adchome", "adczero",
             "adcpoweroff", "adcrotate1", "adcrotate2", "adcstop", "adcpark", "adcrotateop", "adcrotatesame"],
-            "gfa": ["gfastatus", "gfagrab", "gfaguidestop", "gfaguide"],
+            "gfa": ["gfastatus", "gfagrab", "gfaguidestop", "gfaguide","fdgrab"],
             "fbp": ["fbpstatus", "fbpzero", "fbpmove", "fbpoffset"],
             "endo": ["endoguide", "endotest", "endofocus", "endostop","endoexpset","endoclear","endostatus"],
             "mtl": ["mtlstatus", "mtlexp", "mtlcal"],
@@ -140,7 +141,6 @@ class KSPECRunner:
         """
         while self.running:
             try:
-#                await asyncio.sleep(0.1)
                 sys.stdout.flush()
                 message = await asyncio.get_running_loop().run_in_executor(None, input, "Input command: ")
                 if message.lower() == "quit":
@@ -149,7 +149,6 @@ class KSPECRunner:
                     break
                 
                 print('\n')
-#                await asyncio.sleep(1)
                 cmd = message.split(" ")[0]
                 category = self.find_category(cmd)
                 print(f'Command Category is {category}', flush=True)
@@ -249,3 +248,7 @@ if __name__ == "__main__":
     if sys.argv[1] == 'MTLsimul':
         from MTL.Simul import MTL_server
         asyncio.run(MTL_server.main())
+
+    if sys.argv[1] == 'SPECimul':
+        from SPECTRO.Simul import SPEC_server
+        asyncio.run(SPEC_server.main())

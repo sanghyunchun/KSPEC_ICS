@@ -25,6 +25,8 @@ class AMQclass():
         self.connection = await aio_pika.connect_robust(host=self.ipaddr,login=self.id,password=self.pw,heartbeat=self.heartbeat_interval)
         self.channel = await self.connection.channel()
         print('RabbitMQ server connected', flush=True)
+        react='RabbitMQ server connected'
+        return react
 
     async def disconnect(self):
         """Safely disconnect the RabbitMQ connection and close channels."""
@@ -50,6 +52,8 @@ class AMQclass():
     async def define_producer(self):
         self.cmd_exchange = await self.channel.declare_exchange(self.exchange, aio_pika.ExchangeType.DIRECT)
         print(f'{self.exchange} exchange was defined', flush=True)
+        react=f'{self.exchange} exchange was defined'
+        return react
 
     async def send_message(self, _routing_key, message):
         await self.cmd_exchange.publish(

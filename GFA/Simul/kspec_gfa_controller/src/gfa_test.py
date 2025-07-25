@@ -19,24 +19,77 @@ sys.path.append(project_root)
 # 확인용 출력 (필요시 주석 처리 가능)
 print(f"[INFO] sys.path includes project root: {project_root}")
 
-# GFAActions 클래스 임포트
+import asyncio
+from gfa_environment import create_environment
+from gfa_controller import GFAController
 from gfa_actions import GFAActions
+from finder_actions import FinderGFAActions
 
 
-async def main():
-    action = GFAActions()
+async def test_gfa_controller():
+    print("Testing GFAController (plate)...")
+    controller = GFAController()
+    controller.open_all_cameras()
 
-    # 테스트용 액션 실행
-    try:
-        msg = await action.grab(0, 0.01)  # 예: 카메라 ID 1, 노출 시간 0.01초
-        #msg = action.status()
-        #print(f"[SUCCESS] status result: {msg}")
-        #msg = action.ping()
-        #print(f"[SUCCESS] ping result: {msg}")
-        action.shutdown()
-    except Exception as e:
-        print(f"[ERROR] Exception occurred during grab: {e}")
+    print("Status check:")
+    status = controller.status()
+    print(status)
+
+    print("Pinging Cam1:")
+    controller.ping(1)
+
+    print("Retrieving Cam1 params:")
+    param = controller.cam_params(1)
+    print(param)
+
+    print("Grabbing image from Cam1:")
+    timeout = await controller.grabone(CamNum=1, ExpTime=0.5, Binning=2, packet_size=8192, ipd=360000, ftd_base=0)
+    print("Timeout:", timeout)
+
+    controller.close_all_cameras()
+
+
+async def test_gfa_actions():
+    print("\nTesting GFAActions...")
+    env = create_environment(role="plate")
+    actions = GFAActions(env)
+
+    print("Grabbing from Cam1:")
+    result = await actions.grab(CamNum=1, ExpTime=0.5, Binning=2)
+    print(result)
+
+    print("Guiding test (simulate offset calc):")
+    result = await actions.guiding(ExpTime=0.5, save=True)
+    print(result)
+
+    print("Ping all:")
+    print(actions.ping())
+
+    print("Retrieve all cam params:")
+    print(actions.cam_params())
+
+
+async def test_finder_actions():
+    print("\nTesting FinderGFAActions...")
+    env = create_environment(role="finder")
+    actions = FinderGFAActions(env)
+
+    print("Grab image:")
+    #result = await actions.grab(ExpTime=0.3)
+    #print(result)
+
+    print("Focusing (guiding) frame:")
+    #result = await actions.guiding(ExpTime=0.3, save=True)
+    #print(result)
+
+    #print("Ping finder:")
+    #print(actions.ping())
+
+    #print("Cam params:")
+    #print(actions.cam_params())
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    #asyncio.run(test_gfa_controller())
+    #asyncio.run(test_gfa_actions())
+    asyncio.run(test_finder_actions())

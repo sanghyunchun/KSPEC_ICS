@@ -6,7 +6,9 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath("/home/kspec/mingyeong/kspec_gfa_controller/controller/src"))
+sys.path.insert(
+    0, os.path.abspath("/home/kspec/mingyeong/kspec_gfa_controller/controller/src")
+)
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -20,8 +22,8 @@ author = "Mingyeong Yang"
 
 # Add Napoleon extension
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon',  # Add this line
+    "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",  # Add this line
     # ... other extensions
 ]
 

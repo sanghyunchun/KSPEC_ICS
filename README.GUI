@@ -1,0 +1,1 @@
+pyside6-uic KSPECGUI.ui -o ui_mainwindow.py

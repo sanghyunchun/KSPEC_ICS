@@ -13,16 +13,18 @@ def create_gfa_command(func, **kwargs):
     return json.dumps(cmd_data)
 
 def gfa_status() : return create_gfa_command('gfastatus', message ='Show GFA status')
-def gfa_guiding() : return create_gfa_command('gfaguide', message ='Autoguiding Start!')
+def gfa_guiding(expt: float = 1.0) : 
+    return create_gfa_command('gfaguide', ExpTime=expt,message ='Autoguiding Start!')
 def gfa_guidestop() : return create_gfa_command('gfaguidestop',message='Stop autoguiding')
 def gfa_grab(cam,expt):
-    return create_gfa_command('gfagrab',CamNum=cam,ExpTime=expt,message=f'Exposure camera {cam} with exposure time {expt} seconds.')
+    return create_gfa_command('gfagrab',CamNum=cam,ExpTime=expt,message=f'Expose camera {cam} for {expt} seconds.')
+def fd_grab(expt):
+    return create_gfa_command('fdgrab',ExpTime=expt,message=f'Expose finder camera for {expt} seconds.')
 
 async def handle_gfa(arg, ICS_client):
     cmd, *params = arg.split()
     command_map = {
         'gfastatus': gfa_status,
-        'gfaguide' : gfa_guiding,
         'gfaguidestop' : gfa_guidestop
     }
 
@@ -37,8 +39,26 @@ async def handle_gfa(arg, ICS_client):
             return
         command_map[cmd] = lambda: gfa_grab(camNum, ExpT)
 
+    elif cmd == 'gfaguide':
+        if not params:
+            command_map[cmd] = lambda: gfa_guiding()
+        else:
+            command_map[cmd] = lambda: gfa_guiding(params[0])
+
+    elif cmd == 'fdgrab':
+        if len(params) != 1:
+            print("Error: 'fdgrab' needs one parameter: Exposure time value. ex) fdgrab 10 ")
+            return
+        try:
+            ExpT = float(params[0])
+        except ValueError:
+            print(f"Error: Input parameters of 'fdgrab' should be float. input value: {params[0]}")
+            return
+        command_map[cmd] = lambda: fd_grab(ExpT)
+
     if cmd in command_map:
         gfamsg = command_map[cmd]()
+        print(gfamsg)
         await ICS_client.send_message("GFA", gfamsg)
     else:
         print(f"Error: '{cmd}' is not right command for GFA.")
