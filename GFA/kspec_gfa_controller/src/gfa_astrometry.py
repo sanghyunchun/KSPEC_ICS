@@ -14,12 +14,13 @@ import numpy as np
 import shutil
 import subprocess
 import logging
+from typing import Optional, List, Union
+from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from astropy.io import fits
 from astropy.table import Table, vstack
 from astropy.utils.data import get_pkg_data_filename
-
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 def _get_default_config_path() -> str:
@@ -91,18 +92,31 @@ class GFAAstrometry:
         self.logger.info("Initializing gfa_astrometry class.")
 
         # Load parameters from JSON config
-        with open(config, 'r') as file:
+        with open(config, "r") as file:
             self.inpar = json.load(file)
 
         base_dir = os.path.abspath(os.path.dirname(__file__))
 
         # Extract directories from config
-        self.dir_path = os.path.join(base_dir, self.inpar['paths']['directories']['raw_images'])
-        self.processed_dir = os.path.join(base_dir, self.inpar['paths']['directories']['processed_images'])
-        self.temp_dir = os.path.join(base_dir, self.inpar['paths']['directories']['temp_files'])
-        self.final_astrometry_dir = os.path.join(base_dir, self.inpar['paths']['directories']['final_astrometry_images'])
-        self.star_catalog_path = os.path.join(base_dir, self.inpar['paths']['directories']['star_catalog'])
-        self.cutout_path = os.path.join(base_dir, self.inpar['paths']['directories'].get('cutout_directory', 'cutout'))
+        self.dir_path = os.path.join(
+            base_dir, self.inpar["paths"]["directories"]["raw_images"]
+        )
+        self.processed_dir = os.path.join(
+            base_dir, self.inpar["paths"]["directories"]["processed_images"]
+        )
+        self.temp_dir = os.path.join(
+            base_dir, self.inpar["paths"]["directories"]["temp_files"]
+        )
+        self.final_astrometry_dir = os.path.join(
+            base_dir, self.inpar["paths"]["directories"]["final_astrometry_images"]
+        )
+        self.star_catalog_path = os.path.join(
+            base_dir, self.inpar["paths"]["directories"]["star_catalog"]
+        )
+        self.cutout_path = os.path.join(
+            base_dir,
+            self.inpar["paths"]["directories"].get("cutout_directory", "cutout"),
+        )
 
         # Create directories if they don't exist
         for directory in [
@@ -110,13 +124,13 @@ class GFAAstrometry:
             self.processed_dir,
             self.temp_dir,
             self.final_astrometry_dir,
-            self.cutout_path
+            self.cutout_path,
         ]:
             os.makedirs(directory, exist_ok=True)
 
     def process_file(self, flname: str):
         """
-        Processes a FITS file: subtracts sky values, crops the image, 
+        Processes a FITS file: subtracts sky values, crops the image,
         and saves the processed file.
 
         Parameters
@@ -130,47 +144,66 @@ class GFAAstrometry:
             A tuple (ra_in, dec_in, dir_out, newname) if successful,
             otherwise None if the file was not found or an error occurred.
         """
+        full_path = next(
+            (p for p in self.input_paths if os.path.basename(p) == flname), None
+        )
+        if full_path is None:
+            self.logger.error(f"Full path for {flname} not found.")
+            return None
+
         # This might happen for each file, so let's move it to debug.
         self.logger.debug(f"Processing file: {flname}")
-        data_in_path = os.path.join(self.dir_path, flname)
+        data_in_path = full_path
 
         if not os.path.exists(data_in_path):
             self.logger.error(f"File not found: {data_in_path}")
             return None
 
-        with fits.open(data_in_path, mode='update') as hdu_list:
+        with fits.open(data_in_path, mode="update") as hdu_list:
             ori = hdu_list[0].data
             header = hdu_list[0].header
-            ra_in, dec_in = header.get('RA'), header.get('DEC')
+            ra_in, dec_in = header.get("RA"), header.get("DEC")
 
             # Extract sky values safely
             try:
                 sky1 = ori[
-                    self.inpar['settings']['image_processing']['skycoord']['pre_skycoord1'][0],
-                    self.inpar['settings']['image_processing']['skycoord']['pre_skycoord1'][1]
+                    self.inpar["settings"]["image_processing"]["skycoord"][
+                        "pre_skycoord1"
+                    ][0],
+                    self.inpar["settings"]["image_processing"]["skycoord"][
+                        "pre_skycoord1"
+                    ][1],
                 ]
                 sky2 = ori[
-                    self.inpar['settings']['image_processing']['skycoord']['pre_skycoord2'][0],
-                    self.inpar['settings']['image_processing']['skycoord']['pre_skycoord2'][1]
+                    self.inpar["settings"]["image_processing"]["skycoord"][
+                        "pre_skycoord2"
+                    ][0],
+                    self.inpar["settings"]["image_processing"]["skycoord"][
+                        "pre_skycoord2"
+                    ][1],
                 ]
             except IndexError:
                 raise ValueError("Invalid sky coordinate indices in config.")
 
             # Subtract sky values in specified regions
-            sub1 = tuple(self.inpar['settings']['image_processing']['sub_indices']['sub_ind1'])
-            sub2 = tuple(self.inpar['settings']['image_processing']['sub_indices']['sub_ind2'])
+            sub1 = tuple(
+                self.inpar["settings"]["image_processing"]["sub_indices"]["sub_ind1"]
+            )
+            sub2 = tuple(
+                self.inpar["settings"]["image_processing"]["sub_indices"]["sub_ind2"]
+            )
 
-            ori[sub1[0]:sub1[1], sub1[2]:sub1[3]] -= sky1
-            ori[sub2[0]:sub2[1], sub2[2]:sub2[3]] -= sky2
+            ori[sub1[0] : sub1[1], sub1[2] : sub1[3]] -= sky1
+            ori[sub2[0] : sub2[1], sub2[2] : sub2[3]] -= sky2
 
             # Crop the image
-            crop = tuple(self.inpar['settings']['image_processing']['crop_indices'])
-            orif = ori[crop[0]:crop[1], crop[2]:crop[3]]
+            crop = tuple(self.inpar["settings"]["image_processing"]["crop_indices"])
+            orif = ori[crop[0] : crop[1], crop[2] : crop[3]]
 
             # Define output directory and filename
             dir_out = self.processed_dir
             os.makedirs(dir_out, exist_ok=True)
-            newname = f'proc_{flname}'
+            newname = f"proc_{flname}"
             data_file_path = os.path.join(dir_out, newname)
 
             # Write to a new FITS file
@@ -189,19 +222,25 @@ class GFAAstrometry:
 
         solve_field_path = shutil.which("solve-field")
         if not solve_field_path:
-            raise FileNotFoundError("solve-field not found! Ensure it is installed and in PATH.")
+            raise FileNotFoundError(
+                "solve-field not found! Ensure it is installed and in PATH."
+            )
 
         # Detailed path -> debug
         self.logger.debug(f"Using solve-field from: {solve_field_path}")
 
-        scale_low, scale_high = self.inpar['astrometry']['scale_range']
-        radius = self.inpar['astrometry']['radius']
-        cpu_limit = self.inpar['settings']['cpu']['limit']
+        scale_low, scale_high = self.inpar["astrometry"]["scale_range"]
+        radius = self.inpar["astrometry"]["radius"]
+        cpu_limit = self.inpar["settings"]["cpu"]["limit"]
 
         input_file_path = os.path.join(dir_out, newname)
         if not os.path.exists(input_file_path):
-            self.logger.error(f"Input file for solve-field not found: {input_file_path}")
-            raise FileNotFoundError(f"Input file for solve-field not found: {input_file_path}")
+            self.logger.error(
+                f"Input file for solve-field not found: {input_file_path}"
+            )
+            raise FileNotFoundError(
+                f"Input file for solve-field not found: {input_file_path}"
+            )
 
         # This is the actual system command => debug
         input_command = (
@@ -213,29 +252,41 @@ class GFAAstrometry:
         self.logger.debug(f"Running command: {input_command}")
 
         try:
-            result = subprocess.run(input_command, shell=True, capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                input_command, shell=True, capture_output=True, text=True, check=True
+            )
         except subprocess.CalledProcessError as e:
             self.logger.error(f"solve-field execution failed for {newname}")
             self.logger.error(f"solve-field stderr: {e.stderr}")
             raise RuntimeError(f"solve-field execution failed for {newname}") from e
 
         # Checking generated files => debug
-        self.logger.debug(f"Checking generated files in {self.temp_dir} after solve-field execution.")
+        self.logger.debug(
+            f"Checking generated files in {self.temp_dir} after solve-field execution."
+        )
         list_files_command = f"ls -lh {self.temp_dir}"
-        list_files = subprocess.run(list_files_command, shell=True, capture_output=True, text=True)
+        list_files = subprocess.run(
+            list_files_command, shell=True, capture_output=True, text=True
+        )
         self.logger.debug(f"Files in temp directory:\n{list_files.stdout}")
 
-        solved_file_pattern = os.path.join(self.temp_dir, newname.replace('.fits', '.new'))
+        solved_file_pattern = os.path.join(
+            self.temp_dir, newname.replace(".fits", ".new")
+        )
         solved_files = glob.glob(solved_file_pattern)
 
         if not solved_files:
-            self.logger.error(f"Astrometry output file not found in {self.temp_dir}. "
-                              f"Expected pattern: {solved_file_pattern}")
+            self.logger.error(
+                f"Astrometry output file not found in {self.temp_dir}. "
+                f"Expected pattern: {solved_file_pattern}"
+            )
             self.logger.error(f"Files in directory: {os.listdir(self.temp_dir)}")
-            raise FileNotFoundError(f"Astrometry output file not found: {solved_file_pattern}")
+            raise FileNotFoundError(
+                f"Astrometry output file not found: {solved_file_pattern}"
+            )
 
         new_fits_file = solved_files[0]
-        converted_fits_file = new_fits_file.replace('.new', '.fits')
+        converted_fits_file = new_fits_file.replace(".new", ".fits")
 
         # Renaming can be debug
         self.logger.debug(f"Renaming {new_fits_file} to {converted_fits_file}")
@@ -251,13 +302,17 @@ class GFAAstrometry:
         # Read the FITS header and extract CRVAL1, CRVAL2
         try:
             image_data_p, header = fits.getdata(dest_path, ext=0, header=True)
-            crval1 = header['CRVAL1']
-            crval2 = header['CRVAL2']
+            crval1 = header["CRVAL1"]
+            crval2 = header["CRVAL2"]
         except Exception as e:
             self.logger.error(f"Failed to read CRVAL1, CRVAL2 from {dest_path}: {e}")
-            raise RuntimeError(f"Failed to extract astrometry data from {dest_path}") from e
+            raise RuntimeError(
+                f"Failed to extract astrometry data from {dest_path}"
+            ) from e
 
-        self.logger.info(f"Astrometry completed with CRVAL1: {crval1}, CRVAL2: {crval2}.")
+        self.logger.info(
+            f"Astrometry completed with CRVAL1: {crval1}, CRVAL2: {crval2}."
+        )
         return crval1, crval2
 
     def star_catalog(self):
@@ -274,7 +329,7 @@ class GFAAstrometry:
             self.logger.error("Star catalog path is not set.")
             return
 
-        filepre = glob.glob(os.path.join(self.temp_dir, '*.corr'))
+        filepre = glob.glob(os.path.join(self.temp_dir, "*.corr"))
         # Move to debug so it's not spammy
         self.logger.debug(f"Found {len(filepre)} .corr files in {self.temp_dir}.")
 
@@ -300,9 +355,13 @@ class GFAAstrometry:
         if tables:
             combined_table = vstack(tables)
             combined_table.write(self.star_catalog_path, overwrite=True)
-            self.logger.info(f"Star catalog generated and saved to {self.star_catalog_path}.")
+            self.logger.info(
+                f"Star catalog generated and saved to {self.star_catalog_path}."
+            )
         else:
-            self.logger.warning("No valid tables found for stacking. Skipping star catalog generation.")
+            self.logger.warning(
+                "No valid tables found for stacking. Skipping star catalog generation."
+            )
 
     def rm_tempfiles(self):
         """
@@ -345,7 +404,9 @@ class GFAAstrometry:
                 f"Unexpected result format from astrometry({newname}): {astrometry_result}. Error: {e}"
             ) from e
 
-        self.logger.info(f"Combined function completed for {flname}. CRVAL1: {crval1}, CRVAL2: {crval2}.")
+        self.logger.info(
+            f"Combined function completed for {flname}. CRVAL1: {crval1}, CRVAL2: {crval2}."
+        )
         return crval1, crval2
 
     def delete_all_files_in_dir(self, dir_path: str) -> int:
@@ -383,39 +444,54 @@ class GFAAstrometry:
         self.logger.info(f"Deleted {deleted_count} files in directory: {dir_path}")
         return deleted_count
 
-    def preproc(self):
+    def preproc(self, input_files: Optional[List[Union[str, Path]]] = None):
         """
-        Preprocess raw FITS files by:
-        - Checking for existing astrometry files.
-        - If none found, processes all files (combined_function) in parallel 
-          and runs the star catalog creation.
-        - If existing files are found, only processes raw files (no astrometry).
-        - Cleans up temporary files at the end.
+        Preprocess FITS files.
+
+        Parameters
+        ----------
+        input_files : list of str or Path, optional
+            Full paths to FITS files to process. If not given, defaults to self.dir_path.
+
+        Behavior
+        --------
+        - If astrometry results don't exist, performs astrometric processing via combined_function.
+        - Otherwise, processes raw files via process_file.
+        - Builds star catalog and removes temp files if full astrometry was run.
         """
+
         start_time = time.time()
 
-        # Load raw image files
-        filepre = glob.glob(os.path.join(self.dir_path, '*.fits'))
-        self.raws = [os.path.basename(file) for file in filepre]
-        self.raws = sorted(self.raws)
+        if input_files is None:
+            filepre = glob.glob(os.path.join(self.dir_path, "*.fits"))
+        else:
+            filepre = [str(f) for f in input_files]
+            self.dir_path = os.path.dirname(filepre[0])  # ✅ 여기에 위치해야 안전
+
+        self.input_paths = sorted(filepre)  # full path
+        self.raws = [os.path.basename(f) for f in filepre]
         self.logger.debug(f"Loaded {len(self.raws)} FITS files.")
 
         if not self.raws:
-            self.logger.warning("No FITS files found. Exiting preprocessing.")
+            self.logger.warning("No FITS files provided or found.")
             return
 
         self.logger.info(f"Starting preprocessing for {len(self.raws)} files.")
 
-        if not os.path.exists(self.final_astrometry_dir) or not os.listdir(self.final_astrometry_dir):
-            self.logger.info(f"No astrometry files found in {self.final_astrometry_dir}, "
-                             "starting astrometric processing.")
+        # CASE 1: No astrometry output exists → run combined_function
+        if not os.path.exists(self.final_astrometry_dir) or not os.listdir(
+            self.final_astrometry_dir
+        ):
+            self.logger.info(
+                "No astrometry results found. Running full astrometric solution."
+            )
 
             crval1_results, crval2_results = [], []
             failed_files = []
 
             with ThreadPoolExecutor(max_workers=8) as executor:
                 futures = {
-                    executor.submit(self.combined_function, flname): flname 
+                    executor.submit(self.combined_function, flname): flname
                     for flname in self.raws
                 }
 
@@ -428,33 +504,33 @@ class GFAAstrometry:
                             crval1_results.append(crval1)
                             crval2_results.append(crval2)
                             self.logger.debug(
-                                f"Processed {flname} successfully. "
-                                f"CRVAL1: {crval1}, CRVAL2: {crval2}"
+                                f"Processed {flname} → CRVAL1: {crval1}, CRVAL2: {crval2}"
                             )
                         else:
-                            self.logger.warning(f"Skipping {flname} due to errors.")
+                            self.logger.warning(
+                                f"Skipping {flname} due to processing error."
+                            )
                             failed_files.append(flname)
                     except Exception as e:
                         self.logger.error(f"Error processing {flname}: {e}")
                         failed_files.append(flname)
 
-            # Too detailed => debug
-            self.logger.debug(f"CRVAL1 results: {crval1_results}")
-            self.logger.debug(f"CRVAL2 results: {crval2_results}")
-
             if failed_files:
-                self.logger.warning(f"Failed to process {len(failed_files)} files: {failed_files}")
+                self.logger.warning(f"{len(failed_files)} files failed: {failed_files}")
 
             self.star_catalog()
             self.rm_tempfiles()
 
+        # CASE 2: astrometry 이미 있음 → process_file만 실행
         else:
-            self.logger.info("Astrometry data exists. Processing raw files separately.")
-
+            self.logger.info(
+                "Astrometry data already exists. Processing raw images separately."
+            )
             failed_files = []
+
             with ThreadPoolExecutor(max_workers=8) as executor:
                 futures = {
-                    executor.submit(self.process_file, flname): flname 
+                    executor.submit(self.process_file, flname): flname
                     for flname in self.raws
                 }
 
@@ -463,25 +539,20 @@ class GFAAstrometry:
                     try:
                         result = future.result()
                         if result is not None:
-                            # Repeated event => debug
-                            self.logger.debug(f"Processed {flname} successfully.")
-                            self.logger.debug(f"Result: {result}")
+                            self.logger.debug(f"Processed {flname}")
                         else:
-                            self.logger.warning(f"Skipping {flname} due to errors.")
+                            self.logger.warning(f"Skipping {flname} due to error.")
                             failed_files.append(flname)
                     except Exception as e:
                         self.logger.error(f"Error processing {flname}: {e}")
                         failed_files.append(flname)
 
             if failed_files:
-                self.logger.warning(f"Failed to process {len(failed_files)} files: {failed_files}")
+                self.logger.warning(f"{len(failed_files)} files failed: {failed_files}")
 
-        end_time = time.time()
-        running_time = end_time - start_time
-        self.logger.info(f"All files processed in {running_time:.2f} seconds.")
-
-        # Final log message
-        self.logger.info("Preprocessing completed.")
+        self.logger.info(
+            f"Preprocessing completed in {time.time() - start_time:.2f} seconds."
+        )
 
     def clear_raw_and_processed_files(self) -> None:
         """

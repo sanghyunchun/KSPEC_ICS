@@ -15,7 +15,7 @@ import pandas as pd
 project_root = os.path.join(os.getcwd(), "kspec_gfa_controller", "src")
 sys.path.append(project_root)
 
-from gfa_actions import GFAActions
+from .gfa_actions import GFAActions
 
 # ------------------------------------------------------------------------------
 async def test_ipd_ftd_matrix(action,

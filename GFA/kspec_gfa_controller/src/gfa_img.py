@@ -107,6 +107,8 @@ class GFAImage:
         if not filename.lower().endswith(".fits"):
             filename += ".fits"
 
+        filename = filename.replace(":", "-")  # Windows-safe
+
         filepath = os.path.join(output_directory, filename)
         self.logger.debug(f"FITS file will be saved to: {filepath}")
         self.logger.debug(f"Image array shape: {image_array.shape}")
