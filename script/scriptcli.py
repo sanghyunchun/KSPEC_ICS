@@ -134,41 +134,61 @@ class script():
     async def run_autoguide(self,ICSclient,send_udp_message, send_telcom_command, 
             response_queue, GFA_response_queue, exptime: float = 1.0):
         """Starts the autoguiding process asynchronously."""
+        if self.autoguide_task and not self.autoguide_task.done():
+            print("Autoguide task is already running. Ignoring duplicate start.")
+            return
         self.autoguide_task = asyncio.create_task(
-                self.handle_autoguide(exptime,ICSclient, send_udp_message, send_telcom_command, response_queue, GFA_response_queue)
+                self.handle_autoguide(exptime, ICSclient, send_udp_message, send_telcom_command, response_queue, GFA_response_queue)
         )
 
     async def handle_autoguide(self,exptime,ICSclient, send_udp_message, send_telcom_command, response_queue, GFA_response_queue):
         try:
             await handle_gfa(f'gfaguide {exptime}',ICSclient)
             while True:
-                response_data = await GFA_response_queue.get()
+                try:
+                    response_data = await asyncio.wait_for(GFA_response_queue.get(),timeout=70)
+                except asyncio.TimeoutError:
+                    print("No GFA response")
+                    continue
+
                 fdx=response_data['fdx']
                 fdy=response_data['fdy']
                 self.fwhm=response_data['fwhm']
-                ra= await send_telcom_command('getra')
-                dec= await send_telcom_command('getdec')
-                ra=ra.decode()
-                dec=dec.decode()
-                rahms,decdms=convert_to_sexagesimal(ra,dec)
-                new_coord=apply_offset(rahms,decdms,fdx,fdy)
-                messagetcs = 'KSPEC>TC ' + 'tmradec ' + new_coord
-                await send_udp_message(messagetcs)
+         #       ra= await send_telcom_command('getra')
+         #       dec= await send_telcom_command('getdec')
+         #       ra=ra.decode()
+         #       dec=dec.decode()
+         #       rahms,decdms=convert_to_sexagesimal(ra,dec)
+         #       new_coord=apply_offset(rahms,decdms,fdx,fdy)
+         #       messagetcs = 'KSPEC>TC ' + 'tmradec ' + new_coord
+                print('ttttt')
+              #  await send_udp_message(messagetcs)
 
         except asyncio.CancelledError:
             print("Autoguide task was cancelled.")
+            raise
+
+        finally:
+            print("Autoguide task finished.")
+            self.autoguide_task = None
 
     async def autoguidestop(self,ICSclient):
         """Stops the autoguiding process if it is running."""
         await handle_gfa("gfaguidestop", ICSclient)
         print("Stopping autoguiding task...")
 
-        if self.autoguide_task and not self.autoguide_task.done():
-            self.autoguide_task.cancel()
-            try:
-                await self.autoguide_task
-            except asyncio.CancelledError:
-                printing("Autoguiding task stopped.")
+        if self.autoguide_task:
+            if not self.autoguide_task.done():
+                printing("Cancelling autoguiding task...")
+                self.autoguide_task.cancel()
+                try:
+                    await self.autoguide_task
+                  #  await clear_queue(GFA_response_queue)
+                except asyncio.CancelledError:
+                    printing("Autoguiding task was successfully cancelled.")
+            else:
+                printing("Autoguiding task already completed.")
+            self.autoguide_task = None
         else:
             printing("No Autoguiding task is currently running.")
 

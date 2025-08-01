@@ -31,7 +31,7 @@ class KSPECRunner:
     def load_command_list(self):
         return {
             "adc": ["adcstatus", "adcactivate", "adcadjust", "adcinit", "adcconnect", "adcdisconnect", "adchome", "adczero",
-            "adcpoweroff", "adcrotate1", "adcrotate2", "adcstop", "adcpark", "adcrotateop", "adcrotatesame"],
+            "adcpoweroff", "adcrotate1", "adcrotate2", "adcstop", "adcpark", "adcctrotate", "adccorotate"],
             "gfa": ["gfastatus", "gfagrab", "gfaguidestop", "gfaguide","fdgrab"],
             "fbp": ["fbpstatus", "fbpzero", "fbpmove", "fbpoffset"],
             "endo": ["endoguide", "endotest", "endofocus", "endostop","endoexpset","endoclear","endostatus"],
@@ -143,8 +143,8 @@ class KSPECRunner:
             try:
                 sys.stdout.flush()
                 message = await asyncio.get_running_loop().run_in_executor(None, input, "Input command: ")
-                if message.lower() == "quit":
-                    print("Exiting user input mode.", flush=True)
+                if message.lower() in ["quit", "exit", "shutdown"]:
+                    print("Exiting user input mode and shutting down", flush=True)
                     self.running = False
                     break
                 
@@ -193,6 +193,14 @@ async def main():
     except Exception as e:
         print(f"Error in main: {e}", flush=True)
     finally:
+        runner.running = False
+        if hasattr(runner,"autoguide_task") and runner.autoguide_task  and not runner.autoguide_task.done():
+            runner.autoguide_task.cancel()
+            try:
+                await runner.autoguide_task
+            except asyncio.CancelledError:
+                print("Autoguide task was cancelled on shutdown", flush=True)
+
         await ICS_client.disconnect()
         print("Main finalized.", flush=True)
 
