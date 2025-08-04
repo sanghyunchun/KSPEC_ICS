@@ -11,6 +11,7 @@ from LAMP.lampcli import handle_lamp
 from SPECTRO.speccli import handle_spec
 from TCS.tcscli import handle_telcom
 from script.scriptcli import handle_script
+from script.scriptcli import script
 
 class KSPECRunner:
     def __init__(self, ICS_client):
@@ -27,6 +28,7 @@ class KSPECRunner:
 
         self.command_list = self.load_command_list()
         self.tcsagentIP, self.tcsagentPort, self.telcomIP, self.telcomPort = self.load_config()
+        self.scriptrun = script()
         
     def load_command_list(self):
         return {
@@ -162,7 +164,7 @@ class KSPECRunner:
                         print('\033[94m' + '[ICS] received: ', telcom_result.decode() + '\033[0m', flush=True)
                     elif category.lower() == "script":
                         await handle_script(message, self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue, self.GFA_response_queue, self.ADC_response_queue, 
-                        self.SPEC_response_queue)
+                        self.SPEC_response_queue,self.scriptrun)
                     else:
                         await self.send_command(category, message)
                 else:

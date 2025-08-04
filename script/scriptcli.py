@@ -100,35 +100,53 @@ class script():
         await response_queue.get()
 
     async def run_calib(self,ICSclient,send_udp_message, send_telcom_command, 
-            response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
+            response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue, logging):
         """Starts the calibration process asynchronously."""
         self.script_task = asyncio.create_task(
-                self.handle_calib(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue)
+                self.handle_calib(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue, logging)
         )
 
-    async def handle_calib(self,ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
+    async def handle_calib(self,ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue, logging):
         """Handles the calibration process by controlling lamps and spectrometers."""
         printing("New Calibration task started.")
 
+        if logging != None:
+            logging('Sent Flat on.', level='send')
         await handle_lamp('flaton',ICSclient)
         await response_queue.get()
     
+        if logging != None:
+            logging('Sent getflat 10 10.', level='send')
         await handle_spec('getflat 10 10',ICSclient)
         await response_queue.get()
         
+        if logging != None:
+            logging('Sent Flat off.', level='send')
         await handle_lamp('flatoff',ICSclient)
         await response_queue.get()
         
+        if logging != None:
+            logging('Sent Arc on.',level='send')
         await handle_lamp('arcon',ICSclient)
         await response_queue.get()
         
+        if logging != None:
+            logging('Sent getarc 10 10.',level='send')
         await handle_spec('getarc 10 10',ICSclient)
         await response_queue.get()
         
+        if logging != None:
+            logging('Sent Arc off.',level='send')
         await handle_lamp('arcoff',ICSclient)
         await response_queue.get()
 
         printing("All Calibration images were obtained.")
+        self.scrpt_task = None
+        if logging != None:
+            logging("All Calibration images were obtained.", level='send')
+            logging('Run Calibration Task finished', level='send')
+
+
     
 
     async def run_autoguide(self,ICSclient,send_udp_message, send_telcom_command, 
@@ -367,17 +385,16 @@ class script():
 
 
 async def handle_script(arg, ICSclient, send_udp_message, send_telcom_command, 
-        response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue):
+        response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue, scriptrun, logging=None):
     """ Handle script with error checking. """
     cmd, *params = arg.split()
-    scriptrun=script()
     command_map = {
             'obsinitial': scriptrun.obs_initial, 'runcalib': scriptrun.run_calib, 'runobs': scriptrun.run_obs
     }
 
     if cmd in command_map:
         await command_map[cmd](ICSclient,send_udp_message, send_telcom_command, 
-                response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue)
+                response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue, logging)
     elif cmd == 'autoguide':
         if not params:
             await scriptrun.run_autoguide(ICSclient, send_udp_message, send_telcom_command, response_queue, GFA_response_queue)

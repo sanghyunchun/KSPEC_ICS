@@ -31,6 +31,7 @@ from SPECTRO.speccli import handle_spec
 from TCS.tcscli import handle_telcom
 from script.scriptcli import handle_script
 from SCIOBS.sciobscli import sciobscli
+from script.scriptcli import script
 
 
 
@@ -164,6 +165,9 @@ class MainWindow(QMainWindow):
         self.ui.setupUi(self)
 
 
+
+        self.scriptrun=script()
+
         ### All Response queue of asyncio ###
         self.response_queue = asyncio.Queue()
         self.GFA_response_queue = asyncio.Queue()
@@ -177,8 +181,12 @@ class MainWindow(QMainWindow):
         self.command_list = self.load_command_list()
         self.tcsagentIP, self.tcsagentPort, self.telcomIP, self.telcomPort = self.load_config()
 
-        self.gfaexpt = 1
+        self.gfaexpt = 3
         self.gfacam = 0
+
+        self.adc = 0
+
+        self.obstype = None
 
 
 
@@ -202,15 +210,22 @@ class MainWindow(QMainWindow):
 
 
         # GFA & Guiding
-        self.ui.pushbtn_GFAapply.clicked.connect(self.GFAapply_button_clicked)
         self.ui.pushbtn_Guiding.setCheckable(True)
         self.ui.pushbtn_Guiding.clicked.connect(self.Guiding_button_clicked)
+        self.ui.pushbtn_Guiding_2.setCheckable(True)
+        self.ui.pushbtn_Guiding_2.clicked.connect(self.Guiding_button_clicked)
+
+
         self.ui.pushbtn_GFArun.clicked.connect(self.GFArun_button_clicked)
 
 
         # ADC adjust
         self.ui.pushbtn_ADCadjust.setCheckable(True)
         self.ui.pushbtn_ADCadjust.clicked.connect(self.ADCadjust_button_clicked)
+        self.ui.pushbtn_adc_rotate.clicked.connect(self.adcrotate_button_clicked)
+        self.ui.pushbtn_adc_park.clicked.connect(self.adcpark_button_clicked)
+        self.ui.pushbtn_adc_home.clicked.connect(self.adchome_button_clicked)
+        self.ui.pushbtn_adc_zero.clicked.connect(self.adczero_button_clicked)
 
         # Load Sequence
         self.ui.pushbtn_load_sequence.clicked.connect(self.load_file)
@@ -218,8 +233,10 @@ class MainWindow(QMainWindow):
 
 
         # Take Image
-        self.ui.pushbtn_start_sequence.clicked.connect(self.take_image)
+        self.ui.pushbtn_run_obs.clicked.connect(self.take_image)
+        self.ui.pushbtn_run_calib.clicked.connect(self.take_calib)
 
+#        self.ui.pushbtn_exp_start.clicked.connect(self.take_calib)
 
         # Subsystem function
         self.ui.pushbtn_Flat.setCheckable(True)
@@ -303,7 +320,6 @@ class MainWindow(QMainWindow):
 
 
 
-
 #### Calling Status #####
     def QWidgetLabelColor(self, widget, textcolor, bgcolor=None):
         if bgcolor == None:
@@ -345,8 +361,39 @@ class MainWindow(QMainWindow):
 
 
 ##### Main Functions corresponding to the GUI action #####
+    async def _onoff_button_clicked(self, state_attr, btn1, btn2, command_on, command_off, label):
+        if not self.check_connection():
+            self.logging('ICS_client is not initialized.', level='error')
+            return
+
+        # call state and convert
+        state = not getattr(self, state_attr, False)
+        setattr(self, state_attr, state)
+
+        # sync two button
+        btn1.setChecked(state)
+        btn2.setChecked(state)
+
+        # set style
+        style_on = "color: green; font-weight:900;"
+        style_off = "color: black;"
+        style = style_on if state else style_off
+        btn1.setStyleSheet(style)
+        btn2.setStyleSheet(style)
+
+        # command and logging
+        command = command_on if state else command_off
+        await handle_lamp(command, self.ICS_client)
+        self.logging(f"Sent {label} {'ON' if state else 'OFF'}", level='send')
+
+
     ## GFA ##
-    def GFAapply_button_clicked(self):
+    @asyncSlot()
+    async def GFArun_button_clicked(self):
+        if not self.check_connection():
+            self.logging('ICS_client is not initialized.', level='error')
+            return
+
         if not self.ui.lineEdit_GFA_exptime.text():
             self.ui.lineEdit_GFA_exptime.setText('1')
         if not self.ui.lineEdit_GFA_cam.text():
@@ -355,8 +402,6 @@ class MainWindow(QMainWindow):
         self.gfaexpt = float(self.ui.lineEdit_GFA_exptime.text())
         self.gfacam = int(self.ui.lineEdit_GFA_cam.text())
 
-    @asyncSlot()
-    async def GFArun_button_clicked(self):
         await handle_gfa(f'gfagrab {self.gfacam} {self.gfaexpt}',self.ICS_client)
         if self.gfacam == 0:
             self.logging(f'Sent Expose all GFA cameras for {self.gfaexpt} seconds.', level='send')
@@ -365,15 +410,36 @@ class MainWindow(QMainWindow):
 
     @asyncSlot()
     async def Guiding_button_clicked(self):
-        if self.ui.pushbtn_Guiding.isChecked():
-            self.ui.pushbtn_Guiding.setStyleSheet("color: green; font-weight:900;")
-            await handle_script('autoguide', self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue,
-                    self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue)
+        if not self.check_connection():
+            self.logging('ICS_client is not initialized.', level='error')
+            return
+
+        if not self.ui.lineEdit_GFA_exptime.text():
+            self.ui.lineEdit_GFA_exptime.setText('5')
+
+        self.gfaexpt = float(self.ui.lineEdit_GFA_exptime.text())
+
+        self.guiding_state = not getattr(self,"guiding_state",False)
+
+        # sync two button
+        self.ui.pushbtn_Guiding.setChecked(self.guiding_state)
+        self.ui.pushbtn_Guiding_2.setChecked(self.guiding_state)
+
+        # Set colors
+        style_on = "color: green; font-weight:900;"
+        style_off = "color: black;"
+        style = style_on if self.guiding_state else style_off
+        self.ui.pushbtn_Guiding.setStyleSheet(style)
+        self.ui.pushbtn_Guiding_2.setStyleSheet(style)
+
+        # Command and log
+        if self.guiding_state:
+            await handle_script(f'autoguide {self.gfaexpt}', self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue,
+                    self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue,self.scriptrun)
             self.logging('Sent Autoguiding Start', level='send')
         else:
-            self.ui.pushbtn_Guiding.setStyleSheet("color: black;")
             await handle_script('autoguidestop', self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue,
-                    self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue )
+                    self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue,self.scriptrun)
             self.logging('Sent Autoguiding Stop', level='send')
 
         await asyncio.sleep(5)
@@ -389,66 +455,7 @@ class MainWindow(QMainWindow):
             can.imshows(data,vmin=self.G_zmin,vmax=self.G_zmax,cmap='gray',origin='lower')
 
 
-    ### Flat Button ###
-    @asyncSlot()
-    async def flat_button_clicked(self):
-        if not self.check_connection():
-            self.logging('ICS_client is not initialized.', level='error')
-            return
-
-        self.flat_state = not getattr(self, "flat_state", False)
-
-        # sync two button
-        self.ui.pushbtn_Flat.setChecked(self.flat_state)
-        self.ui.pushbtn_Flat_2.setChecked(self.flat_state)
-
-        # Set colors
-        style_on = "color: green; font-weight:900;"
-        style_off = "color: black;"
-        style = style_on if self.flat_state else style_off
-
-        self.ui.pushbtn_Flat.setStyleSheet(style)
-        self.ui.pushbtn_Flat_2.setStyleSheet(style)
-
-        # command and log
-        if self.flat_state:
-            await handle_lamp('flaton', self.ICS_client)
-            self.logging('Sent Flat ON', level='send')
-        else:
-            await handle_lamp('flatoff', self.ICS_client)
-            self.logging('Sent Flat OFF', level='send')
-
-
-    ### Arc Button ###
-    @asyncSlot()
-    async def arc_button_clicked(self):
-        if not self.check_connection():
-            self.logging('ICS_client is not initialized.', level='error')
-            return
-
-        self.arc_state = not getattr(self, "arc_state", False)
-
-        # sync two button
-        self.ui.pushbtn_Arc.setChecked(self.arc_state)
-        self.ui.pushbtn_Arc_2.setChecked(self.arc_state)
-
-        # Set colors
-        style_on = "color: green; font-weight:900;"
-        style_off = "color: black;"
-        style = style_on if self.arc_state else style_off
-
-        self.ui.pushbtn_Arc.setStyleSheet(style)
-        self.ui.pushbtn_Arc_2.setStyleSheet(style)
-
-        # command and log
-        if self.arc_state:
-            await handle_lamp('arcon', self.ICS_client)
-            self.logging('Sent Arc ON', level='send')
-        else:
-            await handle_lamp('arcoff', self.ICS_client)
-            self.logging('Sent Arc OFF', level='send')
-
-    
+    ### ADC ###
     @asyncSlot()
     async def ADCadjust_button_clicked(self):
         if self.ui.pushbtn_ADCadjust.isChecked():
@@ -461,6 +468,124 @@ class MainWindow(QMainWindow):
             self.ui.pushbtn_ADCadjust.setStyleSheet("color: black;")
             await handle_adc('adcstop',self.ICS_client)
             self.logging('Sent ADC adjusting Stop', level='send')
+
+    @asyncSlot()
+    async def adcrotate_button_clicked(self):
+        if not self.ui.lineEdit_adc_counts.text():
+            self.ui.lineEdit_adc_counts.setText('0')
+
+        self.adc = int(self.ui.lineEdit_adc_counts.text())
+
+        adccmd=self.rotate_mode()
+        print(adccmd)
+        if adccmd == None:
+            return
+        else:
+            fcmd = adccmd + ' '+ str(self.adc)
+            self.logging(f'Sent ADC {fcmd}', level='send')
+            await handle_adc(fcmd, self.ICS_client)
+
+    @asyncSlot()
+    async def adcpark_button_clicked(self):
+        self.logging(f'Sent ADC adcpark', level='send')
+        await handle_adc('adcpark', self.ICS_client)
+
+    @asyncSlot()
+    async def adchome_button_clicked(self):
+        self.logging(f'Sent ADC adchome', level='send')
+        await handle_adc('adchome', self.ICS_client)
+
+    @asyncSlot()
+    async def adczero_button_clicked(self):
+        self.logging(f'Sent ADC adczero', level='send')
+        await handle_adc('adczero', self.ICS_client)
+
+
+    def rotate_mode(self):
+        chk1=self.ui.adc_checkBox1.isChecked()
+        chk2=self.ui.adc_checkBox2.isChecked()
+        chk3=self.ui.adc_checkBox_corotate.isChecked()
+
+        if chk1 and chk2 and chk3:
+            cmd = 'adccorotate'
+        elif chk1 and chk2:
+            cmd = 'adcctrotate'
+        elif chk1 and not chk3:
+            cmd = 'adcrotate1'
+        elif chk2 and not chk3:
+            cmd = 'adcrotate2'
+        else:
+            self.logging('Wrong checkbox. Check right ADC lens and rotation direction.', level='error')
+            return
+
+        return cmd
+
+    ### Flat Button ###
+    @asyncSlot()
+    async def flat_button_clicked(self):
+        await self._onoff_button_clicked(state_attr="flat_state", btn1=self.ui.pushbtn_Flat, btn2=self.ui.pushbtn_Flat_2,
+        command_on="flaton",command_off="flatoff",label="Flat")
+
+#        if not self.check_connection():
+#            self.logging('ICS_client is not initialized.', level='error')
+#            return
+
+#        self.flat_state = not getattr(self, "flat_state", False)
+
+        # sync two button
+#        self.ui.pushbtn_Flat.setChecked(self.flat_state)
+#        self.ui.pushbtn_Flat_2.setChecked(self.flat_state)
+
+        # Set colors
+#        style_on = "color: green; font-weight:900;"
+#        style_off = "color: black;"
+#        style = style_on if self.flat_state else style_off
+
+#        self.ui.pushbtn_Flat.setStyleSheet(style)
+#        self.ui.pushbtn_Flat_2.setStyleSheet(style)
+
+        # command and log
+#        if self.flat_state:
+#            await handle_lamp('flaton', self.ICS_client)
+#            self.logging('Sent Flat ON', level='send')
+#        else:
+#            await handle_lamp('flatoff', self.ICS_client)
+#            self.logging('Sent Flat OFF', level='send')
+
+
+    ### Arc Button ###
+    @asyncSlot()
+    async def arc_button_clicked(self):
+        await self._onoff_button_clicked(state_attr="arc_state", btn1=self.ui.pushbtn_Arc, btn2=self.ui.pushbtn_Arc_2,
+        command_on="arcon",command_off="arcoff",label="Arc")
+
+#        if not self.check_connection():
+#            self.logging('ICS_client is not initialized.', level='error')
+#            return
+
+#        self.arc_state = not getattr(self, "arc_state", False)
+
+        # sync two button
+#        self.ui.pushbtn_Arc.setChecked(self.arc_state)
+#        self.ui.pushbtn_Arc_2.setChecked(self.arc_state)
+
+        # Set colors
+#        style_on = "color: green; font-weight:900;"
+#        style_off = "color: black;"
+#        style = style_on if self.arc_state else style_off
+
+#        self.ui.pushbtn_Arc.setStyleSheet(style)
+#        self.ui.pushbtn_Arc_2.setStyleSheet(style)
+
+        # command and log
+#        if self.arc_state:
+#            await handle_lamp('arcon', self.ICS_client)
+#            self.logging('Sent Arc ON', level='send')
+#        else:
+#            await handle_lamp('arcoff', self.ICS_client)
+#            self.logging('Sent Arc OFF', level='send')
+
+    
 
 
 
@@ -497,17 +622,33 @@ class MainWindow(QMainWindow):
         if not self.check_connection():
             self.logging('ICS_client is not initialized.', level='error')
             return
+
+#        self.obstype1=self.ui.obstype_1
+        self.ui.obstype_1.setCurrentText('Bias')
 #        await handle_spec('getobj 3 1', self.ICS_client)
 #        self.ui.log1.append("sent message to device 'SPEC'. message: Get 1 bias images.")
 #        self.ui.log1.append("sent message to device 'SPEC'. message: Get 1 bias images.")
 #        msg=await self.response_queue.get()
 #        self.ui.log.appendPlainText(f"{msg['file']}")
 
-        filename=msg['file']
+#        filename=msg['file']
 
-        self.reload_img(filename)
+#        self.reload_img(filename)
+        print(self.obstype)
+        self.obstype=self.ui.obstype_1.currentText()
+
+        print(self.obstype)
 
 
+    @asyncSlot()
+    async def take_calib(self):
+        if not self.check_connection():
+            self.logging('ICS_client is not initialized.', level='error')
+            return
+
+        await handle_script(f'runcalib', self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue,
+                self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue, self.scriptrun, logging=self.logging)
+        self.logging('Sent Calibration Start', level='send')
 
     def load_file(self):
         file_path, _ = QFileDialog.getOpenFileName(self)
@@ -637,7 +778,6 @@ class MainWindow(QMainWindow):
                 print(response_data)
                 inst=response_data['inst']
                 message=response_data.get('message','No message')
-#                self.logging(message,level='normal')
 
                 self.show_status(response_data['inst'],response_data['status'])
 
@@ -651,13 +791,13 @@ class MainWindow(QMainWindow):
 
                 queue_map = {"GFA": self.GFA_response_queue, "ADC": self.ADC_response_queue, "SPEC": self.SPEC_response_queue}
                 if response_data['inst'] in queue_map and response_data['process'] == 'ING':
-#                    print(f'put in {response_data["inst"]}: {response_data}')
                     await queue_map[response_data['inst']].put(response_data)
-#                elif response_data['inst'] == 'SPEC' and response_data['process'] == 'Done':
-#                    await self.SPEC_response_queue.put(response_data)
+                    if response_data['inst'] == 'GFA':
+                        fwhm=response_data['fwhm']
+                        self.ui.lineEdit_seeing.setText(f'{fwhm}')
+                        print(f'tttt {fwhm}')
                 else:
                     await self.response_queue.put(response_data)
-#                    print(f'response_queue formation: {response_data}')
             except Exception as e:
                 print(f"Error in wait_for_response: {e}", flush=True)
                 self.logging(f"Error in wait_for_response: {e}",level='error')
@@ -732,7 +872,7 @@ class MainWindow(QMainWindow):
                     self.logging(f'<span style="color:green;">[ICS] received from {inst}: {message}</span>',level='recieve')
                 elif category.lower() == "script":
                     await handle_script(message, self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue, self.GFA_response_queue, self.ADC_response_queue,
-                        self.SPEC_response_queue)
+                        self.SPEC_response_queue,self.scriptrun)
                 else:
                     await self.send_command(category, message)
             else:
