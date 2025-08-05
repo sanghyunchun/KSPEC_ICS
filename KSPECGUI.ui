@@ -56,7 +56,7 @@
      <enum>QTabWidget::Triangular</enum>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <property name="elideMode">
      <enum>Qt::ElideLeft</enum>
@@ -214,6 +214,27 @@
        <property name="currentIndex">
         <number>0</number>
        </property>
+       <widget class="QWidget" name="finder">
+        <attribute name="title">
+         <string>Finder</string>
+        </attribute>
+        <widget class="QFrame" name="frame_finder">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>10</y>
+           <width>658</width>
+           <height>658</height>
+          </rect>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+        </widget>
+       </widget>
        <widget class="QWidget" name="Blue">
         <attribute name="title">
          <string>Blue</string>
@@ -488,7 +509,7 @@
        </property>
        <layout class="QFormLayout" name="formLayout_2">
         <item row="0" column="0">
-         <widget class="QLabel" name="label_airmass_1">
+         <widget class="QLabel" name="label_airmass">
           <property name="font">
            <font>
             <family>Arial</family>
@@ -504,7 +525,7 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QLineEdit" name="lineEdit_airmass_1">
+         <widget class="QLineEdit" name="lineEdit_airmass">
           <property name="text">
            <string/>
           </property>
@@ -517,7 +538,16 @@
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QLineEdit" name="lineEdit_seeing_1">
+         <widget class="QLineEdit" name="lineEdit_seeing">
+          <property name="font">
+           <font>
+            <family>Arial</family>
+            <pointsize>14</pointsize>
+            <weight>50</weight>
+            <bold>false</bold>
+            <strikeout>false</strikeout>
+           </font>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -530,7 +560,7 @@
          </widget>
         </item>
         <item row="1" column="0">
-         <widget class="QLabel" name="label_seeing_1">
+         <widget class="QLabel" name="label_seeing">
           <property name="font">
            <font>
             <family>Arial</family>
@@ -2425,7 +2455,7 @@
        </rect>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab_queue">
        <attribute name="title">
@@ -2460,7 +2490,7 @@
         <property name="geometry">
          <rect>
           <x>490</x>
-          <y>140</y>
+          <y>280</y>
           <width>121</width>
           <height>41</height>
          </rect>
@@ -2481,7 +2511,7 @@
          <string>Stop</string>
         </property>
        </widget>
-       <widget class="QPushButton" name="pushbtn_start_sequence">
+       <widget class="QPushButton" name="pushbtn_run_obs">
         <property name="geometry">
          <rect>
           <x>360</x>
@@ -2503,7 +2533,7 @@
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
-         <string>Script Start</string>
+         <string>Run OBS</string>
         </property>
        </widget>
        <widget class="QPushButton" name="pushbtn_set_sequence">
@@ -2865,6 +2895,31 @@
           </widget>
          </item>
         </layout>
+       </widget>
+       <widget class="QPushButton" name="pushbtn_run_calib">
+        <property name="geometry">
+         <rect>
+          <x>490</x>
+          <y>140</y>
+          <width>121</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>Arial</family>
+          <pointsize>14</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+          <strikeout>false</strikeout>
+         </font>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="text">
+         <string>Run Calib</string>
+        </property>
        </widget>
       </widget>
       <widget class="QWidget" name="tab_single">
@@ -13687,142 +13742,29 @@
       <property name="title">
        <string>ADC</string>
       </property>
-      <widget class="QLineEdit" name="lineEdit_adc1">
-       <property name="geometry">
-        <rect>
-         <x>80</x>
-         <y>42</y>
-         <width>111</width>
-         <height>21</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <family>Arial</family>
-         <pointsize>14</pointsize>
-         <weight>50</weight>
-         <bold>false</bold>
-         <strikeout>false</strikeout>
-        </font>
-       </property>
-      </widget>
-      <widget class="QLineEdit" name="lineEdit_adc2">
-       <property name="geometry">
-        <rect>
-         <x>80</x>
-         <y>72</y>
-         <width>111</width>
-         <height>21</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <family>Arial</family>
-         <pointsize>14</pointsize>
-         <weight>50</weight>
-         <bold>false</bold>
-         <strikeout>false</strikeout>
-        </font>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_adc1">
-       <property name="geometry">
-        <rect>
-         <x>20</x>
-         <y>40</y>
-         <width>97</width>
-         <height>23</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <family>Arial</family>
-         <pointsize>14</pointsize>
-         <weight>50</weight>
-         <bold>false</bold>
-         <strikeout>false</strikeout>
-        </font>
-       </property>
-       <property name="text">
-        <string>ADC 1</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_adc2">
-       <property name="geometry">
-        <rect>
-         <x>20</x>
-         <y>70</y>
-         <width>97</width>
-         <height>23</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <family>Arial</family>
-         <pointsize>14</pointsize>
-         <weight>50</weight>
-         <bold>false</bold>
-         <strikeout>false</strikeout>
-        </font>
-       </property>
-       <property name="text">
-        <string>ADC 2</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushbtn_adc_initialize">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>100</y>
-         <width>81</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <family>Arial</family>
-         <pointsize>14</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-         <strikeout>false</strikeout>
-        </font>
-       </property>
-       <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-       </property>
-       <property name="text">
-        <string>Home</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushbtn_adc_initialize_2">
+      <widget class="QLineEdit" name="lineEdit_adc_counts">
        <property name="geometry">
         <rect>
          <x>210</x>
-         <y>40</y>
+         <y>62</y>
          <width>81</width>
-         <height>31</height>
+         <height>25</height>
         </rect>
        </property>
        <property name="font">
         <font>
          <family>Arial</family>
          <pointsize>14</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
+         <weight>50</weight>
+         <bold>false</bold>
          <strikeout>false</strikeout>
         </font>
        </property>
-       <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-       </property>
-       <property name="text">
-        <string>Rotate</string>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushbtn_adc_initialize_4">
+      <widget class="QPushButton" name="pushbtn_adc_home">
        <property name="geometry">
         <rect>
          <x>110</x>
@@ -13844,10 +13786,35 @@
         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
+        <string>Home</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushbtn_adc_park">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>100</y>
+         <width>81</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="text">
         <string>Park</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushbtn_adc_initialize_5">
+      <widget class="QPushButton" name="pushbtn_adc_zero">
        <property name="geometry">
         <rect>
          <x>210</x>
@@ -13870,6 +13837,110 @@
        </property>
        <property name="text">
         <string>Zero</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="adc_checkBox1">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>30</y>
+         <width>71</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="text">
+        <string>ADC1</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="adc_checkBox2">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>64</y>
+         <width>71</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="text">
+        <string>ADC2</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="adc_checkBox_corotate">
+       <property name="geometry">
+        <rect>
+         <x>100</x>
+         <y>30</y>
+         <width>91</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="text">
+        <string>corotate</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_2">
+       <property name="geometry">
+        <rect>
+         <x>219</x>
+         <y>33</y>
+         <width>71</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Counts</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushbtn_adc_rotate">
+       <property name="geometry">
+        <rect>
+         <x>110</x>
+         <y>60</y>
+         <width>81</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="text">
+        <string>Rotate</string>
        </property>
       </widget>
      </widget>
@@ -13922,7 +13993,7 @@
          <x>100</x>
          <y>40</y>
          <width>111</width>
-         <height>21</height>
+         <height>25</height>
         </rect>
        </property>
        <property name="font">
@@ -13978,9 +14049,9 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>150</y>
+        <y>144</y>
         <width>311</width>
-        <height>241</height>
+        <height>121</height>
        </rect>
       </property>
       <property name="font">
@@ -13995,38 +14066,13 @@
       <property name="title">
        <string>GFA</string>
       </property>
-      <widget class="QPushButton" name="pushbtn_GFAapply">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>120</y>
-         <width>101</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <family>Arial</family>
-         <pointsize>14</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-         <strikeout>false</strikeout>
-        </font>
-       </property>
-       <property name="toolTip">
-        <string/>
-       </property>
-       <property name="text">
-        <string>Apply</string>
-       </property>
-      </widget>
       <widget class="QLineEdit" name="lineEdit_GFA_exptime">
        <property name="geometry">
         <rect>
          <x>110</x>
          <y>40</y>
-         <width>111</width>
-         <height>21</height>
+         <width>81</width>
+         <height>25</height>
         </rect>
        </property>
        <property name="font">
@@ -14094,8 +14140,8 @@
         <rect>
          <x>110</x>
          <y>80</y>
-         <width>111</width>
-         <height>21</height>
+         <width>81</width>
+         <height>25</height>
         </rect>
        </property>
        <property name="font">
@@ -14117,8 +14163,8 @@
       <widget class="QPushButton" name="pushbtn_GFArun">
        <property name="geometry">
         <rect>
-         <x>140</x>
-         <y>120</y>
+         <x>200</x>
+         <y>70</y>
          <width>101</width>
          <height>31</height>
         </rect>
@@ -14136,7 +14182,7 @@
         <string/>
        </property>
        <property name="text">
-        <string>Run</string>
+        <string>Exp. Start</string>
        </property>
       </widget>
      </widget>
@@ -14906,9 +14952,9 @@
       <property name="geometry">
        <rect>
         <x>330</x>
-        <y>270</y>
+        <y>144</y>
         <width>301</width>
-        <height>121</height>
+        <height>246</height>
        </rect>
       </property>
       <property name="font">
@@ -14954,7 +15000,7 @@
          <x>10</x>
          <y>40</y>
          <width>151</width>
-         <height>23</height>
+         <height>25</height>
         </rect>
        </property>
        <property name="font">
@@ -15035,7 +15081,7 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>390</y>
+        <y>388</y>
         <width>621</width>
         <height>151</height>
        </rect>
@@ -15056,9 +15102,9 @@
      <widget class="QGroupBox" name="group_metrology_2">
       <property name="geometry">
        <rect>
-        <x>330</x>
-        <y>150</y>
-        <width>301</width>
+        <x>10</x>
+        <y>268</y>
+        <width>311</width>
         <height>121</height>
        </rect>
       </property>
@@ -15074,6 +15120,38 @@
       <property name="title">
        <string>Finder</string>
       </property>
+      <widget class="QPushButton" name="pushbtn_MTL_cal_3">
+       <property name="geometry">
+        <rect>
+         <x>200</x>
+         <y>80</y>
+         <width>101</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Exp. Start</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEdit_MTL_exptime_3">
+       <property name="geometry">
+        <rect>
+         <x>110</x>
+         <y>40</y>
+         <width>81</width>
+         <height>25</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+      </widget>
       <widget class="QLabel" name="label_MTL_exptime_3">
        <property name="geometry">
         <rect>
@@ -15094,38 +15172,6 @@
        </property>
        <property name="text">
         <string>Exp. Time</string>
-       </property>
-      </widget>
-      <widget class="QLineEdit" name="lineEdit_MTL_exptime_3">
-       <property name="geometry">
-        <rect>
-         <x>100</x>
-         <y>40</y>
-         <width>111</width>
-         <height>21</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <family>Arial</family>
-         <pointsize>14</pointsize>
-         <weight>50</weight>
-         <bold>false</bold>
-         <strikeout>false</strikeout>
-        </font>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushbtn_MTL_cal_3">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>70</y>
-         <width>111</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Finder Run</string>
        </property>
       </widget>
      </widget>
