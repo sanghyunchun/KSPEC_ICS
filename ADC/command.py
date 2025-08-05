@@ -145,7 +145,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
             printing("No adcadjust task is currently running.")
         await ADC_server.send_message('ICS', rsp)
 
-    elif func in {'adcrotate1', 'adcrotate2', 'adcrotateop','adcrotatesame'}:
+    elif func in {'adcrotate1', 'adcrotate2', 'adcctrotate','adccorotate'}:
         count = int(dict_data['pcount'])
         lens = dict_data['lens']
         result = await adc_action.move(lens, count)

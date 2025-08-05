@@ -46,7 +46,7 @@ async def handle_adc(arg, ICS_client):
     }
 
     # Command rotating counts 
-    if cmd in ['adcrotate1', 'adcrotate2', 'adcrotateop', 'adcrotatesame']:
+    if cmd in ['adcrotate1', 'adcrotate2', 'adcctrotate', 'adccorotate']:
         if len(params) != 1:
             print(f"Error: '{cmd}' command needs one integer parameter (count). ex) {cmd} 342")
             return
@@ -55,7 +55,7 @@ async def handle_adc(arg, ICS_client):
         except ValueError:
             print(f"Error: '{cmd}' command need one integer parameter. input value: {params[0]}")
             return
-        lens_map = {'adcrotate1': 1, 'adcrotate2': 2, 'adcrotateop': 0, 'adcrotatesame': -1}
+        lens_map = {'adcrotate1': 1, 'adcrotate2': 2, 'adcctrotate': 0, 'adccorotate': -1}
         command_map[cmd] = lambda: adc_rotate(lens_map[cmd], count, cmd)
 
     # adcadjust command
