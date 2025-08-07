@@ -808,12 +808,8 @@ class MainWindow(QMainWindow):
             self.logging(react,level='AMQ')
             react = await self.ICS_client.define_producer()
             self.logging(react,level='AMQ')
-
-
-            print('hellow')
-            await self.ICS_client.define_consumer('ICS',self.on_ics_message)
-            print('Are you there?')
-#            asyncio.create_task(self.wait_for_response())
+            await self.ICS_client.define_consumer()
+            asyncio.create_task(self.wait_for_response())
 
         else:
             self.ui.pushbtn_connect.setText('connect')
@@ -827,12 +823,15 @@ class MainWindow(QMainWindow):
         return hasattr(self, "ICS_client") and self.ICS_client is not None
 
     ### Waiting for response through RabbitMQ ###
-    async def on_ics_message(self, message: IncomingMessage):
-        async with message.process():
+    async def wait_for_response(self):
+        """
+        Waits for responses from the K-SPEC sub-system and distributes then appropriately.
+        """
+        while True:
             try:
-#                response = await self.ICS_client.receive_message("ICS")
-                response_data = json.loads(message.body)
-#                print(response_data)
+                response = await self.ICS_client.receive_message("ICS")
+                response_data = json.loads(response)
+                print(response_data)
                 inst=response_data['inst']
                 message=response_data.get('message','No message')
 
@@ -852,6 +851,7 @@ class MainWindow(QMainWindow):
                     if response_data['inst'] == 'GFA':
                         fwhm=response_data['fwhm']
                         self.ui.lineEdit_seeing.setText(f'{fwhm}')
+                        print(f'tttt {fwhm}')
                 else:
                     await self.response_queue.put(response_data)
             except Exception as e:

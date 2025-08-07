@@ -16,8 +16,6 @@ import astropy.units as u
 import Lib.mkmessage as mkmsg
 import Lib.zscale as zs
 import json
-from aio_pika import IncomingMessage
-
 from datetime import datetime, timezone
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -152,12 +150,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
 
         super(MainWindow, self).__init__()
-        self.showMaximized()
-
         screen = QGuiApplication.primaryScreen()
         geometry = screen.availableGeometry()
-
-        self.setWindowTitle("K-SPEC ICS")
 
         # Window size
         screen_width = geometry.width()
@@ -169,6 +163,8 @@ class MainWindow(QMainWindow):
         self.resize(window_width, window_height)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+
+
 
         self.scriptrun=script()
 
@@ -333,34 +329,12 @@ class MainWindow(QMainWindow):
             label = "QLabel {color:%s;background:%s}" % (textcolor, bgcolor)
             widget.setStyleSheet(label)
 
-    def QWidgetLabelStyle(self, widget, textcolor, bgcolor=None, fontsize=15, bold=True):
-        style = f"QLabel {{ color: {textcolor};"
-
-        if textcolor == 'black':
-            style += f" font-size: 14pt;"
-            style += " font-weight: normal;"
-        else:
-            style += f" font-size: {fontsize}pt;"
-            style += " font-weight: bold;"
-
-        style += " }"
-
-
-        widget.setStyleSheet(style)
-
-
     def show_status(self,inst,stat):
         color_map = {
         'success': 'green',
         'normal': 'black',
         'fail': 'red'
         }
-
-        font_map = {
-            'success' : 'True',
-            'noraml': 'False',
-            'fail': 'True'
-            }
 
         label_map = {
             'LAMP': self.ui.ok_status_lamp,
@@ -380,36 +354,16 @@ class MainWindow(QMainWindow):
             'MTL' : self.ui.ok_status_metrology_2,
             'SPEC' : self.ui.ok_status_spectrograph_2
         }   
-        inst_map1 = {
-            'LAMP': self.ui.label_status_lamp,
-            'GFA': self.ui.label_status_gfa,
-            'ADC': self.ui.label_status_adc,
-            'FBP': self.ui.label_status_fiber,
-            'ENDO': self.ui.label_status_endo,
-            'MTL' : self.ui.label_status_metrology,
-            'SPEC' : self.ui.label_status_spectrograph
-        }
-        inst_map2 = {
-            'LAMP': self.ui.label_status_lamp_2,
-            'GFA': self.ui.label_status_gfa_2,
-            'ADC': self.ui.label_status_adc_2,
-            'FBP': self.ui.label_status_fiber_2,
-            'ENDO': self.ui.label_status_endo_2,
-            'MTL' : self.ui.label_status_metrology_2,
-            'SPEC' : self.ui.label_status_spectrograph_2
-        }
-        
+
         if inst in label_map and stat in color_map:
             self.QWidgetLabelColor(label_map[inst], color_map[stat])
             self.QWidgetLabelColor(label_map2[inst], color_map[stat])
-            self.QWidgetLabelStyle(inst_map1[inst], color_map[stat])
-            self.QWidgetLabelStyle(inst_map2[inst], color_map[stat])
 
 
 ##### Main Functions corresponding to the GUI action #####
     async def _onoff_button_clicked(self, state_attr, btn1, btn2, command_on, command_off, label):
         if not self.check_connection():
-            self.logging("ICS_client is not connected to RabbitMQ server. Please click 'connect' button.", level='error')
+            self.logging('ICS_client is not initialized.', level='error')
             return
 
         # call state and convert
@@ -437,7 +391,7 @@ class MainWindow(QMainWindow):
     @asyncSlot()
     async def GFArun_button_clicked(self):
         if not self.check_connection():
-            self.logging("ICS_client is not connected to RabbitMQ server. Please click 'connect' button.", level='error')
+            self.logging('ICS_client is not initialized.', level='error')
             return
 
         if not self.ui.lineEdit_GFA_exptime.text():
@@ -457,7 +411,7 @@ class MainWindow(QMainWindow):
     @asyncSlot()
     async def Guiding_button_clicked(self):
         if not self.check_connection():
-            self.logging("ICS_client is not connected to RabbitMQ server. Please click 'connect' button.", level='error')
+            self.logging('ICS_client is not initialized.', level='error')
             return
 
         if not self.ui.lineEdit_GFA_exptime.text():
@@ -666,7 +620,7 @@ class MainWindow(QMainWindow):
     @asyncSlot()
     async def take_image(self):
         if not self.check_connection():
-            self.logging("ICS_client is not connected to RabbitMQ server. Please click 'connect' button.", level='error')
+            self.logging('ICS_client is not initialized.', level='error')
             return
 
 #        self.obstype1=self.ui.obstype_1
@@ -689,7 +643,7 @@ class MainWindow(QMainWindow):
     @asyncSlot()
     async def take_calib(self):
         if not self.check_connection():
-            self.logging("ICS_client is not connected to RabbitMQ server. Please click 'connect' button.", level='error')
+            self.logging('ICS_client is not initialized.', level='error')
             return
 
         await handle_script(f'runcalib', self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue,
@@ -788,38 +742,24 @@ class MainWindow(QMainWindow):
     ### Connect RabbitMQ Server ###
     @asyncSlot()
     async def rabbitmq_connect(self):
-        if self.ui.pushbtn_connect.isChecked():
-            self.ui.pushbtn_connect.setText('connected')
-            self.ui.pushbtn_connect.setStyleSheet('color: green;')
+        print(self.observer)
+        # Connect RabbitMQ
+        with open('./Lib/KSPEC.ini', 'r') as f:
+            kspecinfo = json.load(f)
 
-            print(f'Observer Name: {self.observer}')
-            # Connect RabbitMQ
-            with open('./Lib/KSPEC.ini', 'r') as f:
-                kspecinfo = json.load(f)
+        self.ICS_client = AMQclass(
+            kspecinfo['RabbitMQ']['ip_addr'],
+            kspecinfo['RabbitMQ']['idname'],
+            kspecinfo['RabbitMQ']['pwd'],
+            'ICS', 'ics.ex'
+        )
 
-            self.ICS_client = AMQclass(
-                kspecinfo['RabbitMQ']['ip_addr'],
-                kspecinfo['RabbitMQ']['idname'],
-                kspecinfo['RabbitMQ']['pwd'],
-                'ICS', 'ics.ex'
-            )
-
-            react = await self.ICS_client.connect()
-            self.logging(react,level='AMQ')
-            react = await self.ICS_client.define_producer()
-            self.logging(react,level='AMQ')
-
-
-            print('hellow')
-            await self.ICS_client.define_consumer('ICS',self.on_ics_message)
-            print('Are you there?')
-#            asyncio.create_task(self.wait_for_response())
-
-        else:
-            self.ui.pushbtn_connect.setText('connect')
-            self.ui.pushbtn_connect.setStyleSheet('color: black;')
-            await self.ICS_client.disconnect()
-
+        react = await self.ICS_client.connect()
+        self.logging(react,level='AMQ')
+        react = await self.ICS_client.define_producer()
+        self.logging(react,level='AMQ')
+        await self.ICS_client.define_consumer()
+        asyncio.create_task(self.wait_for_response())
 
 
     ### check connection to RabbitMQ Server ###
@@ -827,12 +767,15 @@ class MainWindow(QMainWindow):
         return hasattr(self, "ICS_client") and self.ICS_client is not None
 
     ### Waiting for response through RabbitMQ ###
-    async def on_ics_message(self, message: IncomingMessage):
-        async with message.process():
+    async def wait_for_response(self):
+        """
+        Waits for responses from the K-SPEC sub-system and distributes then appropriately.
+        """
+        while True:
             try:
-#                response = await self.ICS_client.receive_message("ICS")
-                response_data = json.loads(message.body)
-#                print(response_data)
+                response = await self.ICS_client.receive_message("ICS")
+                response_data = json.loads(response)
+                print(response_data)
                 inst=response_data['inst']
                 message=response_data.get('message','No message')
 
@@ -852,6 +795,7 @@ class MainWindow(QMainWindow):
                     if response_data['inst'] == 'GFA':
                         fwhm=response_data['fwhm']
                         self.ui.lineEdit_seeing.setText(f'{fwhm}')
+                        print(f'tttt {fwhm}')
                 else:
                     await self.response_queue.put(response_data)
             except Exception as e:

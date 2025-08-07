@@ -1,6 +1,8 @@
 import sys
 import asyncio
 import json
+from aio_pika import IncomingMessage
+
 from Lib.AMQ import AMQclass, UDPClientProtocol, TCPClient
 from ADC.adccli import handle_adc
 from GFA.gfacli import handle_gfa
@@ -70,14 +72,10 @@ class KSPECRunner:
         """Finds the category of a given command."""
         return next((cat for cat, cmds in self.command_list.items() if cmd in cmds), None)
 
-    async def wait_for_response(self):
-        """
-        Waits for responses from the K-SPEC sub-system and distributes then appropriately.
-        """
-        while self.running:
+    async def on_ics_message(self, message: IncomingMessage):
+        async with message.process():
             try:
-                response = await self.ICS_client.receive_message("ICS")
-                response_data = json.loads(response)
+                response_data = json.loads(message.body)
                 inst=response_data['inst']
                 message=response_data.get('message','No message')
 #                print(response_data)
@@ -90,13 +88,9 @@ class KSPECRunner:
 
                 queue_map = {"GFA": self.GFA_response_queue, "ADC": self.ADC_response_queue, "SPEC": self.SPEC_response_queue}
                 if response_data['inst'] in queue_map and response_data['process'] == 'ING':
-#                    print(f'put in {response_data["inst"]}: {response_data}')
                     await queue_map[response_data['inst']].put(response_data)
-#                elif response_data['inst'] == 'SPEC' and response_data['process'] == 'Done':
-#                    await self.SPEC_response_queue.put(response_data)
                 else:
                     await self.response_queue.put(response_data)
-#                    print(f'response_queue formation: {response_data}')
             except Exception as e:
                 print(f"Error in wait_for_response: {e}", flush=True)
 
@@ -148,6 +142,7 @@ class KSPECRunner:
                 if message.lower() in ["quit", "exit", "shutdown"]:
                     print("Exiting user input mode and shutting down", flush=True)
                     self.running = False
+                    await self.ICS_client.disconnect()
                     break
                 
                 print('\n')
@@ -188,10 +183,11 @@ async def main():
         )
         await ICS_client.connect()
         await ICS_client.define_producer()
-        await ICS_client.define_consumer()
 
         runner = KSPECRunner(ICS_client)
-        await asyncio.gather(runner.wait_for_response(),runner.user_input())
+        await ICS_client.define_consumer('ICS',runner.on_ics_message)
+        await asyncio.gather(runner.user_input())
+
     except Exception as e:
         print(f"Error in main: {e}", flush=True)
     finally:

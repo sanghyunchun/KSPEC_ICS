@@ -37,16 +37,33 @@ async def main():
         print('\033[32m'+'[ADC] ADC device is found and ready.'+'\033[0m')
 
         await ADC_server.connect()
-        await ADC_server.define_consumer()
+
+        sync def on_adc_message(message: aio_pika.IncomingMessage):
+        async with message.process():
+            try:
+                dict_data = json.loads(message.body)
+                message_text = dict_data['message']
+                print('\033[94m'+'[ADC] received: ' + message_text + '\033[0m')
+
+                await identify_execute(ADC_server, message.body)
+
+            except Exception as e:
+                print(f"Error in on_gfa_message: {e}", flush=True)
+
+            print('Waiting for message from client......')
+
+
+        await ADC_server.define_consumer('ADC',on_adc_message)
+        print('Waiting for message from client......')
 
         while True:
-            print('Waiting for message from client......')
-            msg = await ADC_server.receive_message("ADC")
-            dict_data=json.loads(msg)
-            message=dict_data['message']
-            print('\033[94m'+'[ADC] received: ', message+'\033[0m')
+            await asyncio.sleep(1)
+#            msg = await ADC_server.receive_message("ADC")
+#            dict_data=json.loads(msg)
+#            message=dict_data['message']
+#            print('\033[94m'+'[ADC] received: ', message+'\033[0m')
 
-            await identify_execute(ADC_server,action,msg)               # For real observation
+#            await identify_execute(ADC_server,action,msg)               # For real observation
 
     except FileNotFoundError as e:
         print(f"Configuration file not found: {e}")

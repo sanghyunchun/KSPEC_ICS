@@ -34,7 +34,7 @@ class AMQclass():
             # Unbind and delete the queue if it exists
             if self.queue:
                 try:
-                    await self.queue.cancel(self.consumer_tag)
+                    await self.queue.cancel()
                 except Exception as ce:
                     print(f"Warning: queue cancel failed: {ce}", flush=True)
 
@@ -76,21 +76,18 @@ class AMQclass():
         dict_data=json.loads(message)
         print(f"\033[32m[{self.im}] sent message to device '{_routing_key}'. message: {dict_data['message']}\033[0m", flush=True)
 
-    async def define_consumer(self,_routing_key,callback):
+    async def define_consumer(self):
         if self.queue is None:
             self.cmd_exchange = await self.channel.declare_exchange(self.exchange, aio_pika.ExchangeType.DIRECT)
             self.queue = await self.channel.declare_queue(f'{self.im}_queue',durable=True)
-            await self.queue.bind(self.cmd_exchange,routing_key=_routing_key)
 
-        self.consumer_tag = await self.queue.consume(callback)
-
-#    async def receive_message(self,_routing_key):
-#        await self.queue.bind(self.cmd_exchange,routing_key=_routing_key)
-#        async with self.queue.iterator() as qiterator:
-#            async for message in qiterator:
-#                async with message.process():
-#                    print(f'\n{_routing_key} Server received message', flush=True) #, message.body.decode())
-#                    return message.body
+    async def receive_message(self,_routing_key):
+        await self.queue.bind(self.cmd_exchange,routing_key=_routing_key)
+        async with self.queue.iterator() as qiterator:
+            async for message in qiterator:
+                async with message.process():
+                    print(f'\n{_routing_key} Server received message', flush=True) #, message.body.decode())
+                    return message.body
 
 #    async def start_guidingloop(self, _routing_key,itmax,function,subserver):    ### For autoguiding
 #        itn=0

@@ -109,34 +109,45 @@ class script():
     async def handle_calib(self,ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue, logging):
         """Handles the calibration process by controlling lamps and spectrometers."""
         printing("New Calibration task started.")
+        await clear_queue(response_queue)
+        await clear_queue(GFA_response_queue)
+        await clear_queue(ADC_response_queue)
+        await clear_queue(SPEC_response_queue)
+        
 
         if logging != None:
             logging('Sent Flat on.', level='send')
+
         await handle_lamp('flaton',ICSclient)
         await response_queue.get()
     
         if logging != None:
             logging('Sent getflat 10 10.', level='send')
+
         await handle_spec('getflat 10 10',ICSclient)
         await response_queue.get()
         
         if logging != None:
             logging('Sent Flat off.', level='send')
+            \
         await handle_lamp('flatoff',ICSclient)
         await response_queue.get()
         
         if logging != None:
             logging('Sent Arc on.',level='send')
+
         await handle_lamp('arcon',ICSclient)
         await response_queue.get()
         
         if logging != None:
             logging('Sent getarc 10 10.',level='send')
+
         await handle_spec('getarc 10 10',ICSclient)
         await response_queue.get()
         
         if logging != None:
             logging('Sent Arc off.',level='send')
+
         await handle_lamp('arcoff',ICSclient)
         await response_queue.get()
 

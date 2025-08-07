@@ -31,15 +31,31 @@ async def main():
     print('MTL Server Started!!!')
     MTL_server=AMQclass(ip_addr,idname,pwd,'MTL','ics.ex')
     await MTL_server.connect()
-    await MTL_server.define_consumer()
-    while True:
-        print('Waiting for message from client......')
-        msg=await MTL_server.receive_message("MTL")
-        dict_data=json.loads(msg)
-        message=dict_data['message']
-        print('\033[94m'+'[MTL] received: ', message+'\033[0m')
 
-        await identify_execute(MTL_server,msg)
+    async def on_mtl_message(message: aio_pika.IncomingMessage):
+        async with message.process():
+            try:
+                dict_data = json.loads(message.body)
+                message_text = dict_data['message']
+                print('\033[94m' + '[MTL received: ' + message_text + '\033[0m')
+
+                await identify_execute(MTL_server, message.body)
+
+            except Exception as e:
+                print(f"Error in on_gfa_message: {e}", flush=True)
+
+        print('Waiting for message from client......')
+
+    await MTL_server.define_consumer('MTL',on_mtl_message)
+    print('Waiting for message from client......')
+    while True:
+        await asyncio.sleep(1)
+#        msg=await MTL_server.receive_message("MTL")
+#        dict_data=json.loads(msg)
+#        message=dict_data['message']
+#        print('\033[94m'+'[MTL] received: ', message+'\033[0m')
+
+#        await identify_execute(MTL_server,msg)
 
 
 if __name__ == "__main__":

@@ -96,7 +96,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>230</y>
+         <y>234</y>
          <width>191</width>
          <height>23</height>
         </rect>
@@ -1837,9 +1837,9 @@
       <widget class="QWidget" name="horizontalLayoutWidget_2">
        <property name="geometry">
         <rect>
-         <x>340</x>
+         <x>380</x>
          <y>50</y>
-         <width>109</width>
+         <width>121</width>
          <height>31</height>
         </rect>
        </property>
@@ -1896,9 +1896,9 @@
       <widget class="QWidget" name="horizontalLayoutWidget_3">
        <property name="geometry">
         <rect>
-         <x>10</x>
+         <x>30</x>
          <y>50</y>
-         <width>63</width>
+         <width>71</width>
          <height>31</height>
         </rect>
        </property>
@@ -1955,9 +1955,9 @@
       <widget class="QWidget" name="horizontalLayoutWidget_4">
        <property name="geometry">
         <rect>
-         <x>90</x>
+         <x>110</x>
          <y>50</y>
-         <width>66</width>
+         <width>71</width>
          <height>31</height>
         </rect>
        </property>
@@ -2014,9 +2014,9 @@
       <widget class="QWidget" name="horizontalLayoutWidget">
        <property name="geometry">
         <rect>
-         <x>170</x>
+         <x>190</x>
          <y>50</y>
-         <width>71</width>
+         <width>81</width>
          <height>31</height>
         </rect>
        </property>
@@ -2073,9 +2073,9 @@
       <widget class="QWidget" name="horizontalLayoutWidget_5">
        <property name="geometry">
         <rect>
-         <x>250</x>
+         <x>280</x>
          <y>50</y>
-         <width>81</width>
+         <width>91</width>
          <height>31</height>
         </rect>
        </property>
@@ -2132,9 +2132,9 @@
       <widget class="QWidget" name="horizontalLayoutWidget_6">
        <property name="geometry">
         <rect>
-         <x>460</x>
+         <x>510</x>
          <y>50</y>
-         <width>141</width>
+         <width>151</width>
          <height>31</height>
         </rect>
        </property>
@@ -2191,9 +2191,9 @@
       <widget class="QWidget" name="horizontalLayoutWidget_13">
        <property name="geometry">
         <rect>
-         <x>610</x>
+         <x>670</x>
          <y>50</y>
-         <width>73</width>
+         <width>81</width>
          <height>31</height>
         </rect>
        </property>
@@ -2811,6 +2811,7 @@
              <pointsize>9</pointsize>
              <weight>75</weight>
              <bold>true</bold>
+             <strikeout>false</strikeout>
             </font>
            </property>
            <property name="value">
@@ -14227,7 +14228,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>230</y>
+         <y>234</y>
          <width>191</width>
          <height>23</height>
         </rect>
@@ -14346,9 +14347,9 @@
       <widget class="QWidget" name="horizontalLayoutWidget_7">
        <property name="geometry">
         <rect>
-         <x>340</x>
+         <x>380</x>
          <y>50</y>
-         <width>109</width>
+         <width>121</width>
          <height>31</height>
         </rect>
        </property>
@@ -14405,9 +14406,9 @@
       <widget class="QWidget" name="horizontalLayoutWidget_8">
        <property name="geometry">
         <rect>
-         <x>10</x>
+         <x>30</x>
          <y>50</y>
-         <width>63</width>
+         <width>71</width>
          <height>31</height>
         </rect>
        </property>
@@ -14464,9 +14465,9 @@
       <widget class="QWidget" name="horizontalLayoutWidget_9">
        <property name="geometry">
         <rect>
-         <x>90</x>
+         <x>110</x>
          <y>50</y>
-         <width>66</width>
+         <width>71</width>
          <height>31</height>
         </rect>
        </property>
@@ -14523,9 +14524,9 @@
       <widget class="QWidget" name="horizontalLayoutWidget_10">
        <property name="geometry">
         <rect>
-         <x>170</x>
+         <x>190</x>
          <y>50</y>
-         <width>71</width>
+         <width>81</width>
          <height>31</height>
         </rect>
        </property>
@@ -14582,9 +14583,9 @@
       <widget class="QWidget" name="horizontalLayoutWidget_11">
        <property name="geometry">
         <rect>
-         <x>250</x>
+         <x>280</x>
          <y>50</y>
-         <width>81</width>
+         <width>91</width>
          <height>31</height>
         </rect>
        </property>
@@ -14641,9 +14642,9 @@
       <widget class="QWidget" name="horizontalLayoutWidget_12">
        <property name="geometry">
         <rect>
-         <x>460</x>
+         <x>510</x>
          <y>50</y>
-         <width>141</width>
+         <width>151</width>
          <height>31</height>
         </rect>
        </property>
@@ -14700,9 +14701,9 @@
       <widget class="QWidget" name="horizontalLayoutWidget_14">
        <property name="geometry">
         <rect>
-         <x>610</x>
+         <x>670</x>
          <y>50</y>
-         <width>73</width>
+         <width>81</width>
          <height>31</height>
         </rect>
        </property>
@@ -15183,16 +15184,6 @@
      </widget>
     </widget>
    </widget>
-  </widget>
-  <widget class="QMenuBar" name="menubar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>1625</width>
-     <height>20</height>
-    </rect>
-   </property>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>

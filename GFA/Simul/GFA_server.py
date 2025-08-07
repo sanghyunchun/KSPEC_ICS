@@ -11,6 +11,8 @@ from GFA.Simul.kspec_gfa_controller.src.finder_actions import FinderGFAActions
 #import configparser as cp
 
 
+
+
 async def main():
 
     with open('./Lib/KSPEC.ini','r') as f:
@@ -22,19 +24,36 @@ async def main():
 
     print('GFA Sever Started!!!')
     GFA_server=AMQclass(ip_addr,idname,pwd,'GFA','ics.ex')
-    gfa_action=GFAActions()
-    finder_action=FinderGFAActions()
+    gfa_actions=GFAActions()
+    finder_actions=FinderGFAActions()
     await GFA_server.connect()
-    await GFA_server.define_consumer()
-    while True:
-        print('Waiting for message from client......')
-#        msgtot,msg=await GFA_server.receive_message('GFA.q')
-        msg=await GFA_server.receive_message('GFA')
-        dict_data=json.loads(msg)
-        message=dict_data['message']
-        print('\033[94m'+'[GFA] received: ', message+'\033[0m')
 
-        await identify_execute(GFA_server,gfa_action,finder_action,msg)
+    async def on_gfa_message(message: aio_pika.IncomingMessage):
+        async with message.process():
+            try:
+                dict_data = json.loads(message.body)
+                message_text = dict_data['message']
+                print('\033[94m' + '[GFA] received: ' + message_text + '\033[0m')
+
+                await identify_execute(GFA_server, gfa_actions, finder_actions, message.body)
+
+            except Exception as e:
+                print(f"Error in on_gfa_message: {e}", flush=True)
+
+        print('Waiting for message from client......')
+
+
+    await GFA_server.define_consumer('GFA',on_gfa_message)
+    print('Waiting for message from client......')
+    while True:
+        await asyncio.sleep(1)
+#        msgtot,msg=await GFA_server.receive_message('GFA.q')
+#        msg=await GFA_server.receive_message('GFA')
+#        dict_data=json.loads(msg)
+#        message=dict_data['message']
+#        print('\033[94m'+'[GFA] received: ', message+'\033[0m')
+
+#        await identify_execute(GFA_server,gfa_action,finder_action,msg)
 
 
 if __name__ == "__main__":

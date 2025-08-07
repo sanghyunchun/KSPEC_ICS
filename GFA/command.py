@@ -140,15 +140,15 @@ def savedata(ra,dec,xp,yp,mag):
 
 async def handle_guiding(GFA_server, gfa_actions, expt):
     try:
-        while True:
-            result = await gfa_actions.guiding(expt)
-            reply_data = mkmsg.gfamsg()
-            reply_data.update(result)
-            reply_data.update(process='ING')
-            rsp=json.dumps(reply_data)
-            await GFA_server.send_message('ICS',rsp)
+#        while True:
+        result = await gfa_actions.guiding(expt)
+        reply_data = mkmsg.gfamsg()
+        reply_data.update(result)
+        reply_data.update(process='ING')
+        rsp=json.dumps(reply_data)
+        await GFA_server.send_message('ICS',rsp)
 
-            await asyncio.sleep(30)
+        await asyncio.sleep(30)
 
     except asyncio.CancelledError:
         printing("handle_guiding task was cancelled.")

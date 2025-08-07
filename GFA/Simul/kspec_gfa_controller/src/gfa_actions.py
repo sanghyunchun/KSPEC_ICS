@@ -195,7 +195,7 @@ class GFAActions:
 
         raw_save_path = os.path.join(base_dir, "img", "raw")
         grab_save_path = os.path.join(base_dir, "img", "grab", date_str)
-        src_dir = os.path.join(base_dir, "img", "GFA_data")
+#        src_dir = os.path.join(base_dir, "img", "GFA_data")
 
         try:
             self.env.logger.info("Starting guiding sequence...")
@@ -204,7 +204,7 @@ class GFAActions:
             self.env.logger.info("Grabbing raw image...")
 #            self.env.controller.grab(0, ExpTime, 4, output_dir=raw_save_path)
 
-            self.copy_files(src_dir,raw_save_path)
+#            self.copy_files(src_dir,raw_save_path)
             await asyncio.sleep(5)
 
             if save:
@@ -217,13 +217,17 @@ class GFAActions:
                 self.env.logger.info(f"Images also copied to: {grab_save_path}")
 
             self.env.logger.info("Running astrometry preprocessing...")
-            self.env.astrometry.preproc()
+#            self.env.astrometry.preproc()
 
             self.env.logger.info("Executing guider offset calculation...")
-            fdx, fdy, fwhm = self.env.guider.exe_cal()
+#            fdx, fdy, fwhm = self.env.guider.exe_cal()
 
             self.env.logger.info("Clearing temp astrometry data...")
             self.env.astrometry.clear_raw_and_processed_files()
+
+            fdx=0.022
+            fdy=-0.045
+            fwhm=1.21
 
             msg = f"Offsets: fdx={fdx}, fdy={fdy}, FWHM={fwhm:.5f} arcsec"
             return self._generate_response("success", msg, fdx=fdx, fdy=fdy, fwhm=fwhm)
