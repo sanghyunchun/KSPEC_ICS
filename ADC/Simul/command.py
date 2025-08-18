@@ -47,7 +47,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
     if func == 'adcinit':
         comment = 'ADC initialized.'
         reply_data = mkmsg.adcmsg()
-        reply_data.update(message=comment, process='Done')
+        reply_data.update(message=comment, process='Done', status='success')
         rsp = json.dumps(reply_data)
         printing(comment)
         await ADC_server.send_message('ICS', rsp)
@@ -56,7 +56,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
         reply_data = mkmsg.adcmsg()
         result = adc_action.connect()
         reply_data.update(result)
-        reply_data.update(process='Done')
+        reply_data.update(process='Done',status=success)
         rsp = json.dumps(reply_data)
         printing(reply_data['message'])
         await ADC_server.send_message('ICS', rsp)
@@ -65,7 +65,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
         reply_data = mkmsg.adcmsg()
         result = adc_action.disconnect()
         reply_data.update(result)
-        reply_data.update(process='Done')
+        reply_data.update(process='Done',status=success)
         rsp = json.dumps(reply_data)
         printing(reply_data['message'])
         await ADC_server.send_message('ICS', rsp)
@@ -74,7 +74,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
         reply_data = mkmsg.adcmsg()
         result = adc_action.power_off()
         reply_data.update(result)
-        reply_data.update(process='Done')
+        reply_data.update(process='Done',status=success)
         rsp = json.dumps(reply_data)
         printing(reply_data['message'])
         await ADC_server.send_message('ICS', rsp)
@@ -83,7 +83,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
         reply_data = mkmsg.adcmsg()
         result = adc_action.status()
         reply_data.update(result)
-        reply_data.update(process='Done')
+        reply_data.update(process='Done',status=success)
         rsp = json.dumps(reply_data)
         printing(reply_data['message'])
         await ADC_server.send_message('ICS', rsp)
@@ -93,7 +93,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
             comment="Please cancel first the running task..."
             printing("Please cancel first the running task...")
             reply_data = mkmsg.adcmsg()
-            reply_data.update(message=comment, process='Done')
+            reply_data.update(message=comment, process='Done',status=success)
             rsp = json.dumps(reply_data)
             await ADC_server.send_message('ICS', rsp)
         
@@ -128,7 +128,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
         reply_data = mkmsg.adcmsg()
         result = await adc_action.stop(0)
         reply_data.update(result)
-        reply_data.update(process='Done',status='normal')
+        reply_data.update(process='Done',status='success')
         rsp = json.dumps(reply_data)
         printing(reply_data['message'])
         await ADC_server.send_message('ICS', rsp)
@@ -211,7 +211,7 @@ async def handle_adcadjust(ADC_server, adc_action, ra, dec):
             comment=f"ADC is now rotating by {delcount} counts."
             printing(comment)
             reply_data=mkmsg.adcmsg()
-            reply_data.update(message=comment,process='ING')
+            reply_data.update(message=comment,process='ING',status='success')
             rsp=json.dumps(reply_data)
             await ADC_server.send_message('ICS',rsp)
 
@@ -240,7 +240,7 @@ async def handle_adcadjust(ADC_server, adc_action, ra, dec):
         comment=f"Error in handle_adcadjust: {e}"
         printing(comment)
         reply_data=mkmsg.adcmsg()
-        reply_data.update(message=comment,process='Done')
+        reply_data.update(message=comment,process='Done',status='fail')
         rsp=json.dumps(reply_data)
         await ADC_server.send_message('ICS',rsp)
     else:

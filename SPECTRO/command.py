@@ -16,7 +16,7 @@ async def identify_execute(SPEC_server,cmd):
         numframe=dict_data['numframe']
         comment=get_bias(numframe) ### Position of back illumination light on function
         reply_data=mkmsg.specmsg()
-        reply_data.update(message=comment,process='Done')
+        reply_data.update(message=comment,process='Done',status='success')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[SPEC]', comment+'\033[0m')
         await SPEC_server.send_message('ICS',rsp)
@@ -26,7 +26,7 @@ async def identify_execute(SPEC_server,cmd):
         numframe=dict_data['numframe']
         comment=get_flat(exptime,numframe) ### Position of back illumination light on function
         reply_data=mkmsg.specmsg()
-        reply_data.update(message=comment,process='Done')
+        reply_data.update(message=comment,process='Done',status='success')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[SPEC]', comment+'\033[0m')
         await SPEC_server.send_message('ICS',rsp)
@@ -36,7 +36,7 @@ async def identify_execute(SPEC_server,cmd):
         numframe=dict_data['numframe']
         comment=get_arc(exptime,numframe) ### Position of back illumination light on function
         reply_data=mkmsg.specmsg()
-        reply_data.update(message=comment,process='Done')
+        reply_data.update(message=comment,process='Done',status='success')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[SPEC]', comment+'\033[0m')
         await SPEC_server.send_message('ICS',rsp)
@@ -44,7 +44,7 @@ async def identify_execute(SPEC_server,cmd):
     if func == 'illuon':
         comment=illu_on() ### Position of back illumination light on function
         reply_data=mkmsg.specmsg()
-        reply_data.update(message=comment,process='Done')
+        reply_data.update(message=comment,process='Done',status='success')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[SPEC]', comment+'\033[0m')
         await SPEC_server.send_message('ICS',rsp)
@@ -52,7 +52,7 @@ async def identify_execute(SPEC_server,cmd):
     if func == 'illuoff':
         comment=illu_off()                      ### Position of back illumination light off function
         reply_data=mkmsg.specmsg()
-        reply_data.update(message=comment,process='Done')
+        reply_data.update(message=comment,process='Done',status='success')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[SPEC]', comment+'\033[0m')
         await SPEC_server.send_message('ICS',rsp)
@@ -65,7 +65,7 @@ async def identify_execute(SPEC_server,cmd):
     if func == 'specstatus':
         comment=spec_status()
         reply_data=mkmsg.specmsg()
-        reply_data.update(message=comment,process='Done')
+        reply_data.update(message=comment,process='Done',status='success')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[SPEC]', comment+'\033[0m')
         await SPEC_server.send_message('ICS',rsp)
@@ -85,7 +85,7 @@ def illu_off():
 async def get_obj(SPEC_server, exptime, nframe):
     msg=f'Exposure Start!!!'
     reply_data=mkmsg.specmsg()
-    reply_data.update(message=msg,process='ING')
+    reply_data.update(message=msg,process='ING',status='success')
     rsp=json.dumps(reply_data)
     print('\033[32m'+'[SPEC]', msg+'\033[0m')
     await SPEC_server.send_message('ICS', rsp)
@@ -93,7 +93,7 @@ async def get_obj(SPEC_server, exptime, nframe):
     result= await asyncio.gather(create_fits_image(exptime),remaining(SPEC_server,exptime))
     msg=f'Exposure finished'
     reply_data=mkmsg.specmsg()
-    reply_data.update(message=msg,process='ING')
+    reply_data.update(message=msg,process='ING',status='success')
     rsp=json.dumps(reply_data)
     print('\033[32m'+'[SPEC]', msg+'\033[0m')
     await SPEC_server.send_message('ICS', rsp)
@@ -123,7 +123,7 @@ async def create_fits_image(exptime,shape: tuple = (100, 100), data_type=np.floa
     hdul.writeto(filepath+filename, overwrite=True)
     await asyncio.sleep(exptime)
     msg=f'FITS file {filename} is created.'
-    response = {"status": "success", "message": msg, "file": filename, "process": 'Done'}
+    response = {"status": "success", "message": msg, "file": filepath+filename, "process": 'Done'}
     return response
 
 async def remaining(SPEC_server, exptime):
@@ -134,7 +134,7 @@ async def remaining(SPEC_server, exptime):
         msg = f'Remaining exposure time: {remaining_time} seconds.'
         print('\033[32m' + '[SPEC]', msg + '\033[0m')
         reply_data=mkmsg.specmsg()
-        reply_data.update(message=msg,process='ING')
+        reply_data.update(message=msg,process='ING',status='success')
         rsp=json.dumps(reply_data)
         await SPEC_server.send_message('ICS', rsp)
 

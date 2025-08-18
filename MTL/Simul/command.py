@@ -6,10 +6,6 @@ import asyncio
 from MTL.Simul.kspec_metrology.exposure import mtlexp
 from MTL.Simul.kspec_metrology.analysis import mtlcal
 
-with open('./Lib/KSPEC.ini','r') as fs:
-    kspecinfo=json.load(fs)
-
-mtlfilepath=kspecinfo['MTL']['mtlfilepath']
 
 async def identify_execute(MTL_server,cmd):
     receive_msg=json.loads(cmd)
@@ -31,36 +27,51 @@ async def identify_execute(MTL_server,cmd):
         yp=receive_msg['yp']
         clss=receive_msg['class']
 
-        file_path=(mtlfilepath+'object.info')
-        with open(file_path,"w") as f:
-            json.dump(receive_msg,f)
-
-        comment="'Objects are loaded in MTL server.'"
+        status, comment=savedata(receive_msg)
         reply_data=mkmsg.mtlmsg()
-        reply_data.update(message=comment,process='Done')
+        reply_data.update(message=comment,process='Done',status=status)
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[MTL]', comment+'\033[0m')
         await MTL_server.send_message('ICS',rsp)
 
     if func == 'mtlexp':
         exptime=float(receive_msg['time'])
-        comment=mtlexp.mtlexp(exptime)
+        status, comment=mtlexp.mtlexp(exptime)
         reply_data=mkmsg.mtlmsg()
-        reply_data.update(message=comment,process='Done')
+        reply_data.update(message=comment,process='Done',status=status)
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[MTL]', comment+'\033[0m')
         await MTL_server.send_message('ICS',rsp)
 
 
     if func == 'mtlcal':
-        offx,offy = mtlcal.mtlcal()
+        status, offx,offy = mtlcal.mtlcal()
         comment='Metrology analysis finished successfully. Offsets were calculated.'
         reply_data=mkmsg.mtlmsg()
-        reply_data.update(savedata='True',filename='MTLresult.json',offsetx=offx.tolist(),offsety=offy.tolist(),message=comment)
+        reply_data.update(savedata='True',filename='MTLresult.json',offsetx=offx.tolist(),offsety=offy.tolist(),message=comment,status=status)
         reply_data.update(process='Done')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[MTL]', comment+'\033[0m')
         await MTL_server.send_message('ICS',rsp)
+
+
+def savedata(data):
+    with open('./Lib/KSPEC.ini','r') as fs:
+        kspecinfo=json.load(fs)
+
+    mtlfilepath=kspecinfo['MTL']['mtlfilepath']
+
+    try:
+        with open(mtlfilepath+'object.info','w') as savefile:
+            json.dump(data,savefile)
+    except TypeError:
+        return 'fail', "Non-numeric values encountered while formatting output."
+    except OSError as e:
+        return 'fail', f"Failed to write file: {e}"
+
+    msg="'Objects are loaded in MTL server.'"
+    return 'success', msg
+
 
 
 # Below functions are for simulation. When connect the instruments, pleas annotate.

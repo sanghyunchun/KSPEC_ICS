@@ -91,10 +91,11 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
         mag=dict_data['mag']
         xp=dict_data['xp']
         yp=dict_data['yp']
-        comment=savedata(ra,dec,xp,yp,mag)
+        status, comment=savedata(ra,dec,xp,yp,mag)
 #        dict_data={'inst': 'GFA', 'savedata': 'False','filename': 'None','message': message}
         reply_data=mkmsg.gfamsg()
-        reply_data.update(message=comment,process='Done')
+        reply_data.update(message=comment,process='Done',status=status)
+        print(reply_data)
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[GFA]', comment+'\033[0m')
         await GFA_server.send_message('ICS',rsp)
@@ -116,13 +117,17 @@ def savedata(ra,dec,xp,yp,mag):
 
     gfafilepath=inidata['GFA']['gfafilepath']
 
-    savefile=open(gfafilepath+'position.radec','w')
-    for i in range(len(ra)):
-        savefile.write("%12.6f %12.6f %12.6f %12.6f %9.4f\n" % (ra[i],dec[i],xp[i],yp[i],mag[i]))
-    savefile.close
+    try:
+        with open(gfafilepath+'position.radec','w') as savefile:
+            for i in range(len(ra)):
+                savefile.write("%12.6f %12.6f %12.6f %12.6f %9.4f\n" % (ra[i],dec[i],xp[i],yp[i],mag[i]))
+    except TypeError:
+        return 'fail', "Non-numeric values encountered while formatting output."
+    except OSError as e:
+        return 'fail', f"Failed to write file: {e}"
 
     msg="'Guide stars are loaded.'"
-    return msg
+    return 'success', msg
 
 # Below functions are for simulation. When connect the instruments, please annotate.
 

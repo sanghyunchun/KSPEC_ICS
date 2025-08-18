@@ -41,7 +41,7 @@ async def main():
                 await identify_execute(MTL_server, message.body)
 
             except Exception as e:
-                print(f"Error in on_gfa_message: {e}", flush=True)
+                print(f"Error in on_mtl_message: {e}", flush=True)
 
         print('Waiting for message from client......')
         

@@ -45,7 +45,7 @@ async def main():
                 message_text = dict_data['message']
                 print('\033[94m'+'[ADC] received: ' + message_text + '\033[0m')
 
-                await identify_execute(ADC_server, message.body)
+                await identify_execute(ADC_server, action, message.body)
 
             except Exception as e:
                 print(f"Error in on_gfa_message: {e}", flush=True)

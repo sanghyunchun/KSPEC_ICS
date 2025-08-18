@@ -32,8 +32,8 @@ from LAMP.lampcli import handle_lamp
 from SPECTRO.speccli import handle_spec
 from TCS.tcscli import handle_telcom
 from script.scriptcli import handle_script
-from SCIOBS.sciobscli import sciobscli
 from script.scriptcli import script
+from SCIOBS.sciobscli import sciobscli
 
 
 
@@ -152,7 +152,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
 
         super(MainWindow, self).__init__()
-        self.showMaximized()
+#        self.showMaximized()
 
         screen = QGuiApplication.primaryScreen()
         geometry = screen.availableGeometry()
@@ -211,6 +211,7 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_connect.setCheckable(True)
         self.ui.pushbtn_observer.clicked.connect(self.save_observer)
         self.ui.pushbtn_directory.clicked.connect(self.set_directory)
+        self.ui.pushbtn_syscheck.clicked.connect(self.syscheck)
 
 
         # GFA & Guiding
@@ -237,7 +238,7 @@ class MainWindow(QMainWindow):
 
 
         # Take Image
-        self.ui.pushbtn_run_obs.clicked.connect(self.take_image)
+        self.ui.pushbtn_run_obs.clicked.connect(self.run_obs_clicked)
         self.ui.pushbtn_run_calib.clicked.connect(self.take_calib)
 
 #        self.ui.pushbtn_exp_start.clicked.connect(self.take_calib)
@@ -293,12 +294,18 @@ class MainWindow(QMainWindow):
         self.G6_layout.addWidget(self.canvas_G6)
 
 
-    def logging(self,message, level: str="info"):
+    def logging(self, message, status: str='success', level: str="send"):
+        if isinstance(message, dict):
+            message = json.dumps(message)
+
         color_map = {
                 "send": "green",
-                "recieve": "blue",
+                "receive": "blue",
                 "error" : "red"
                 }
+        if status == 'fail':
+            level = 'error'
+
         color = color_map.get(level,"black")
         self.ui.log1.append(f'<span style="color:{color};">[ICS] {message}</span>')
         self.ui.log2.append(f'<span style="color:{color};">[ICS] {message}</span>')
@@ -333,7 +340,11 @@ class MainWindow(QMainWindow):
             label = "QLabel {color:%s;background:%s}" % (textcolor, bgcolor)
             widget.setStyleSheet(label)
 
-    def QWidgetLabelStyle(self, widget, textcolor, bgcolor=None, fontsize=15, bold=True):
+    def QWidgetLabelStyle(self, widget, textcolor, bgcolor=None, fontsize=16, bold=True):
+        current_style = widget.styleSheet().replace(" ","").lower()
+        if "color:red" in current_style:
+            return
+
         style = f"QLabel {{ color: {textcolor};"
 
         if textcolor == 'black':
@@ -341,10 +352,9 @@ class MainWindow(QMainWindow):
             style += " font-weight: normal;"
         else:
             style += f" font-size: {fontsize}pt;"
-            style += " font-weight: bold;"
+            style += " font-weight: bold;" if bold else "font-weight: normal;"
 
         style += " }"
-
 
         widget.setStyleSheet(style)
 
@@ -400,8 +410,8 @@ class MainWindow(QMainWindow):
         }
         
         if inst in label_map and stat in color_map:
-            self.QWidgetLabelColor(label_map[inst], color_map[stat])
-            self.QWidgetLabelColor(label_map2[inst], color_map[stat])
+            self.QWidgetLabelStyle(label_map[inst], color_map[stat])
+            self.QWidgetLabelStyle(label_map2[inst], color_map[stat])
             self.QWidgetLabelStyle(inst_map1[inst], color_map[stat])
             self.QWidgetLabelStyle(inst_map2[inst], color_map[stat])
 
@@ -480,12 +490,17 @@ class MainWindow(QMainWindow):
 
         # Command and log
         if self.guiding_state:
-            await handle_script(f'autoguide {self.gfaexpt}', self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue,
-                    self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue,self.scriptrun)
+#            await self.scriptrun.run_autoguide(self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue,
+#                    self.GFA_response_queue,self.gfaexpt)
+#            await handle_script(f'autoguide {self.gfaexpt}', self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue,
+#                    self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue,self.scriptrun)
+            await handle_script(f'autoguide {self.gfaexpt}', scriptrun=self.scriptrun)
             self.logging('Sent Autoguiding Start', level='send')
         else:
-            await handle_script('autoguidestop', self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue,
-                    self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue,self.scriptrun)
+#            await self.scriptrun.autoguidestop(self.ICS_client)
+#            await handle_script('autoguidestop', self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue,
+#                    self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue,self.scriptrun)
+            await handle_script('autoguidestop', scriptrun=self.scriptrun)
             self.logging('Sent Autoguiding Stop', level='send')
 
         await asyncio.sleep(5)
@@ -631,37 +646,65 @@ class MainWindow(QMainWindow):
 #            await handle_lamp('arcoff', self.ICS_client)
 #            self.logging('Sent Arc OFF', level='send')
 
-    
-
-
 
 
     @asyncSlot()
     async def load_tile(self):
         self.ui.lineEdit_CProj.setText(f'{self.project}')
         self.ui.lineEdit_CTile.setText(f'{self.select_tile}')
+        self.logging('Sent Guide stars information to GFA',level='send')
         await self.ICS_client.send_message("GFA", self.guidemsg)
         await self.response_queue.get()
         await asyncio.sleep(2)
 
+        self.logging('Sent Target information to MTL',level='send')
         await self.ICS_client.send_message("MTL", self.objmsg)
         await self.response_queue.get()
         await asyncio.sleep(2)
 
+        self.logging('Sent Target information to FBP',level='send')
         await self.ICS_client.send_message("FBP", self.objmsg)
         await self.response_queue.get()
         await asyncio.sleep(2)
 
+        self.logging('Sent Motion plan of alpha motor to FBP',level='send')
         await self.ICS_client.send_message("FBP", self.motionmsg1)
         await self.response_queue.get()
         await asyncio.sleep(2)
 
+        self.logging('Sent Motion plan of beta motor to FBP',level='send')
         await self.ICS_client.send_message("FBP", self.motionmsg2)
         await self.response_queue.get()
         await asyncio.sleep(2)
 
+        self.logging(f'All accessary files for observation of Tile ID {self.select_tile} are successfully loaded', level='receive')
+        await asyncio.sleep(2)
+        self.show_status('GFA','normal')
+        self.show_status('MTL','normal')
+        self.show_status('FBP','normal')
 
+
+
+    #### Run observation script ####
+    @asyncSlot()
+    async def run_obs_clicked(self):
+        if not self.check_connection():
+            self.logging("ICS_client is not connected to RabbitMQ server. Please click 'connect' button.", level='error')
+            return
+
+#        await self.scriptrun.run_obs(self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue,
+#                self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue, logging=self.logging)
+
+        await handle_script(f'runobs',scriptrun=self.scriptrun,logging=self.logging)
         
+        print('KKKKKKKKKKKKKKKKKKKKKKK')
+        self.show_status('ADC','normal')
+        self.show_status('GFA','normal')
+        self.show_status('MTL','normal')
+        self.show_status('FBP','normal')
+        self.show_status('LAMP','normal')
+        self.show_status('SPEC','normal')
+
 
     @asyncSlot()
     async def take_image(self):
@@ -692,8 +735,10 @@ class MainWindow(QMainWindow):
             self.logging("ICS_client is not connected to RabbitMQ server. Please click 'connect' button.", level='error')
             return
 
-        await handle_script(f'runcalib', self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue,
-                self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue, self.scriptrun, logging=self.logging)
+#        await self.scriptrun.run_calib(self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue,
+#                self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue, logging=self.logging)
+
+        await handle_script(f'runcalib', scriptrun=self.scriptrun,logging=self.logging)
         self.logging('Sent Calibration Start', level='send')
 
     def load_file(self):
@@ -724,13 +769,16 @@ class MainWindow(QMainWindow):
         self.project=wild[0]
         self.obsdate=wild[-1].split('.')[0]
         self.tilemsg,self.guidemsg,self.objmsg,self.motionmsg1,self.motionmsg2=sciobs.loadtile(self.select_tile)
-        self.ra,self.dec=self.convert_to_sexagesimal(sciobs.ra,sciobs.dec)
+        self.ra, self.dec=self.convert_to_sexagesimal(sciobs.ra,sciobs.dec)
+
+        self.scriptrun.configure_cordinate(self.project, self.obsdate, self.select_tile, self.ra, self.dec)
 
         self.ui.lineEdit_TileID.setText(f'{self.select_tile}')
         self.ui.lineEdit_ra_1.setText(f'{self.ra}')
         self.ui.lineEdit_dec_1.setText(f'{self.dec}')
         self.ui.lineEdit_exp_time_1.setText(f'{self.expT}')
         self.ui.lineEdit_n_exp_1.setText(f'{self.obsnum}')
+
 
     def reload_img(self,filename):
         rawdir='/media/shyunc/DATA/KSpec/RAWDATA/'
@@ -783,6 +831,19 @@ class MainWindow(QMainWindow):
 
 
 
+###  Check instrument connection and initializing
+    @asyncSlot()
+    async def syscheck(self):
+        if not self.check_connection():
+            self.logging("ICS_client is not connected to RabbitMQ server. Please click 'connect' button.", level='error')
+            return
+
+        self.logging('System check start. Initialize dependencies',level='normal')
+        self.scriptrun.initialize_dependencies(self.ICS_client, self.send_udp_message, self.send_telcom_command,
+            self.response_queue, self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue, self.show_status)
+        self.logging('System check finished. All systems are OK.',level='normal')
+
+
 
 ### Functions related with RabbitMQ ###
     ### Connect RabbitMQ Server ###
@@ -810,9 +871,7 @@ class MainWindow(QMainWindow):
             self.logging(react,level='AMQ')
 
 
-            print('hellow')
             await self.ICS_client.define_consumer('ICS',self.on_ics_message)
-            print('Are you there?')
 #            asyncio.create_task(self.wait_for_response())
 
         else:
@@ -830,33 +889,37 @@ class MainWindow(QMainWindow):
     async def on_ics_message(self, message: IncomingMessage):
         async with message.process():
             try:
-#                response = await self.ICS_client.receive_message("ICS")
                 response_data = json.loads(message.body)
-#                print(response_data)
-                inst=response_data['inst']
-                message=response_data.get('message','No message')
+                print(response_data)
+                inst = response_data.get('inst', 'None')
+                process = response_data.get('process', 'None')
+                message =response_data.get('message','None')
+                status = response_data.get('status', 'fail')
 
-                self.show_status(response_data['inst'],response_data['status'])
+                self.show_status(inst,status)
 
                 if isinstance(message,dict):
                     message = json.dumps(message, indent=2)
                     print(f'\033[94m[ICS] received from {inst}: {message}\033[0m\n', flush=True)
-                    self.logging(f'received from {inst}: {message}',level='recieve')
+                  #  self.logging(f'received from {inst}: {message}',level='receive')
+                    self.logging(message, status, level='receive')
                 else:
                     print(f'\033[94m[ICS] received from {inst}: {response_data["message"]}\033[0m\n', flush=True)
-                    self.logging(f'received from {inst}: {response_data["message"]}',level='recieve')
+                  #  self.logging(f'received from {inst}: {response_data["message"]}',level='receive')
+                    self.logging(message, status, level='receive')
 
                 queue_map = {"GFA": self.GFA_response_queue, "ADC": self.ADC_response_queue, "SPEC": self.SPEC_response_queue}
-                if response_data['inst'] in queue_map and response_data['process'] == 'ING':
-                    await queue_map[response_data['inst']].put(response_data)
-                    if response_data['inst'] == 'GFA':
+                if inst in queue_map and process == 'ING':
+                    await queue_map[inst].put(response_data)
+                    if inst == 'GFA':
                         fwhm=response_data['fwhm']
                         self.ui.lineEdit_seeing.setText(f'{fwhm}')
                 else:
+                    print('put response_data to response_queue')
                     await self.response_queue.put(response_data)
             except Exception as e:
                 print(f"Error in wait_for_response: {e}", flush=True)
-                self.logging(f"Error in wait_for_response: {e}",level='error')
+                self.logging(f"Error in wait_for_response: {e}", 'fail', level='error')
 
 
     ### Sending command to udp, telcom and rabbitmq ###
@@ -925,10 +988,9 @@ class MainWindow(QMainWindow):
                 elif category.lower() == 'telcom':
                     telcom_result = await self.send_telcom_command(message)
                     print('\033[94m' + '[ICS] received: ', telcom_result.decode() + '\033[0m', flush=True)
-                    self.logging(f'<span style="color:green;">[ICS] received from {inst}: {message}</span>',level='recieve')
+                    self.logging(f'<span style="color:green;">[ICS] received from {inst}: {message}</span>',level='receive')
                 elif category.lower() == "script":
-                    await handle_script(message, self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue, self.GFA_response_queue, self.ADC_response_queue,
-                        self.SPEC_response_queue,self.scriptrun)
+                    await handle_script(message, scriptrun=self.scriptrun)
                 else:
                     await self.send_command(category, message)
             else:

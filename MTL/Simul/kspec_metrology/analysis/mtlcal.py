@@ -15,4 +15,4 @@ def mtlcal(data_dir='./MTL/data/'):
 
     _, _, dx, dy, _ = fitdistortion(x, y, fid_flag, xobs, yobs, imatch, theta_guess)
 
-    return dx, dy 
+    return 'success', dx, dy 

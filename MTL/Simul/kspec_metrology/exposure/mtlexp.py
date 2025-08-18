@@ -39,4 +39,4 @@ def mtlexp(exptime
 #    qc.CamExit()
     time.sleep(exptime)
     msg=f'Metrology {exptime} seconds exposure finished'
-    return msg
+    return 'success', msg

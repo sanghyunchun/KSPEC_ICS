@@ -2,7 +2,7 @@ import asyncio
 
 # Async TCP Server
 class AsyncTCPServer:
-    def __init__(self, host='127.0.0.1', port=8888):
+    def __init__(self, host='127.0.0.1', port=8889):
         self.host = host
         self.port = port
 
