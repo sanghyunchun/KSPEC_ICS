@@ -77,8 +77,10 @@ class KSPECRunner:
             try:
                 response_data = json.loads(message.body)
                 print(response_data)
-                inst=response_data['inst']
-                message=response_data.get('message','No message')
+                inst = response_data.get('inst', 'None')
+                process = response_data.get('process', 'None')
+                message =response_data.get('message','None')
+                status = response_data.get('status', 'fail')
 
                 if isinstance(message,dict):
                     message = json.dumps(message, indent=2)
@@ -87,14 +89,15 @@ class KSPECRunner:
                     print(f'\033[94m[ICS] received from {inst}: {response_data["message"]}\033[0m\n', flush=True)
 
                 queue_map = {"GFA": self.GFA_response_queue, "ADC": self.ADC_response_queue, "SPEC": self.SPEC_response_queue}
-                if response_data['inst'] in queue_map and response_data['process'] == 'ING':
-                    await queue_map[response_data['inst']].put(response_data)
+                if inst in queue_map and process == 'ING':
+                    await queue_map[inst].put(response_data)
                 else:
                     print('put response_data to response_queue')
-                    await self.response_queue.put(response_data)
+                    await self.response_queue.put(response_data)                   
             except Exception as e:
                 print(f"Error in wait_for_response: {e}", flush=True)
 
+    ### Sending command to udp, telcom and rabbitmq ###
     async def send_udp_message(self, message):
         """
         Sends a message to the TCS Agent via UDP using UDPClientProtocol 
@@ -150,7 +153,7 @@ class KSPECRunner:
                 cmd = message.split(" ")[0]
                 category = self.find_category(cmd)
                 print(f'Command Category is {category}', flush=True)
-
+g
                 if category:
                     if category.lower() == 'tcs':
                         messagetcs = 'KSPEC>TC ' + message
@@ -159,8 +162,9 @@ class KSPECRunner:
                         telcom_result = await self.send_telcom_command(message)
                         print('\033[94m' + '[ICS] received: ', telcom_result.decode() + '\033[0m', flush=True)
                     elif category.lower() == "script":
-                        await handle_script(message, self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue, self.GFA_response_queue, self.ADC_response_queue, 
-                        self.SPEC_response_queue, self.scriptrun)
+                        await handle_script(message, scriptrun=self.scriptrun)
+                    #    await handle_script(message, self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue, self.GFA_response_queue, self.ADC_response_queue, 
+                    #    self.SPEC_response_queue, self.scriptrun)
                     else:
                         await self.send_command(category, message)
                 else:
