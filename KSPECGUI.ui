@@ -56,7 +56,7 @@
      <enum>QTabWidget::Triangular</enum>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <property name="elideMode">
      <enum>Qt::ElideLeft</enum>
@@ -2033,7 +2033,7 @@
         <set>Qt::AlignCenter</set>
        </property>
       </widget>
-      <widget class="QLabel" name="label_status_endo">
+      <widget class="QLabel" name="label_status_finder">
        <property name="geometry">
         <rect>
          <x>291</x>
@@ -2052,7 +2052,7 @@
         </font>
        </property>
        <property name="text">
-        <string>ENDO</string>
+        <string>Finder</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -14150,7 +14150,7 @@
        <property name="geometry">
         <rect>
          <x>200</x>
-         <y>70</y>
+         <y>80</y>
          <width>101</width>
          <height>31</height>
         </rect>
@@ -14169,6 +14169,28 @@
        </property>
        <property name="text">
         <string>Exp. Start</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="gfa_checkBox">
+       <property name="geometry">
+        <rect>
+         <x>220</x>
+         <y>40</y>
+         <width>71</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="text">
+        <string>save</string>
        </property>
       </widget>
      </widget>
@@ -14525,7 +14547,7 @@
         <set>Qt::AlignCenter</set>
        </property>
       </widget>
-      <widget class="QLabel" name="label_status_endo_2">
+      <widget class="QLabel" name="label_status_finder_2">
        <property name="geometry">
         <rect>
          <x>282</x>
@@ -14544,7 +14566,7 @@
         </font>
        </property>
        <property name="text">
-        <string>ENDO</string>
+        <string>Finder</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
