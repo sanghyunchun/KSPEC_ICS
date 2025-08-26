@@ -7,7 +7,7 @@ from Lib.AMQ import AMQclass, UDPClientProtocol, TCPClient
 from ADC.adccli import handle_adc
 from GFA.gfacli import handle_gfa
 from FBP.fbpcli import handle_fbp
-from ENDO.ENDOcli import handle_endo
+#from ENDO.ENDOcli import handle_endo
 from MTL.mtlcli import handle_mtl
 from LAMP.lampcli import handle_lamp
 from SPECTRO.speccli import handle_spec
@@ -38,7 +38,7 @@ class KSPECRunner:
             "adcpoweroff", "adcrotate1", "adcrotate2", "adcstop", "adcpark", "adcctrotate", "adccorotate"],
             "gfa": ["gfastatus", "gfagrab", "gfaguidestop", "gfaguide","fdgrab"],
             "fbp": ["fbpstatus", "fbpzero", "fbpmove", "fbpoffset"],
-            "endo": ["endoguide", "endotest", "endofocus", "endostop","endoexpset","endoclear","endostatus"],
+#            "endo": ["endoguide", "endotest", "endofocus", "endostop","endoexpset","endoclear","endostatus"],
             "mtl": ["mtlstatus", "mtlexp", "mtlcal"],
             "lamp": ["lampstatus", "arcon", "arcoff", "flaton", "flatoff","fiducialon","fiducialoff"],
             "spec": ["specstatus", "illuon", "illuoff", "getobj", "getbias", "getflat","getar"],
@@ -127,7 +127,7 @@ class KSPECRunner:
         """
         handler_map = {
             "adc": handle_adc, "gfa": handle_gfa, "fbp": handle_fbp,
-            "endo": handle_endo, "mtl": handle_mtl, "lamp": handle_lamp,
+            "mtl": handle_mtl, "lamp": handle_lamp,
             "spec": handle_spec, "script": handle_script
         }
         if category in handler_map:
@@ -153,7 +153,7 @@ class KSPECRunner:
                 cmd = message.split(" ")[0]
                 category = self.find_category(cmd)
                 print(f'Command Category is {category}', flush=True)
-g
+
                 if category:
                     if category.lower() == 'tcs':
                         messagetcs = 'KSPEC>TC ' + message

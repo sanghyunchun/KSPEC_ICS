@@ -26,7 +26,7 @@ from Lib.AMQ import AMQclass, UDPClientProtocol, TCPClient
 from ADC.adccli import handle_adc
 from GFA.gfacli import handle_gfa
 from FBP.fbpcli import handle_fbp
-from ENDO.ENDOcli import handle_endo
+#from ENDO.ENDOcli import handle_endo
 from MTL.mtlcli import handle_mtl
 from LAMP.lampcli import handle_lamp
 from SPECTRO.speccli import handle_spec
@@ -377,7 +377,7 @@ class MainWindow(QMainWindow):
             'GFA': self.ui.ok_status_gfa,
             'ADC': self.ui.ok_status_adc,
             'FBP': self.ui.ok_status_fiber,
-            'ENDO': self.ui.ok_status_endo,
+            'FINDER': self.ui.ok_status_finder,
             'MTL' : self.ui.ok_status_metrology,
             'SPEC' : self.ui.ok_status_spectrograph
         }   
@@ -386,7 +386,7 @@ class MainWindow(QMainWindow):
             'GFA': self.ui.ok_status_gfa_2,
             'ADC': self.ui.ok_status_adc_2,
             'FBP': self.ui.ok_status_fiber_2,
-            'ENDO': self.ui.ok_status_endo_2,
+            'FINDER': self.ui.ok_status_finder_2,
             'MTL' : self.ui.ok_status_metrology_2,
             'SPEC' : self.ui.ok_status_spectrograph_2
         }   
@@ -395,7 +395,7 @@ class MainWindow(QMainWindow):
             'GFA': self.ui.label_status_gfa,
             'ADC': self.ui.label_status_adc,
             'FBP': self.ui.label_status_fiber,
-            'ENDO': self.ui.label_status_endo,
+            'FINDER': self.ui.label_status_finder,
             'MTL' : self.ui.label_status_metrology,
             'SPEC' : self.ui.label_status_spectrograph
         }
@@ -404,7 +404,7 @@ class MainWindow(QMainWindow):
             'GFA': self.ui.label_status_gfa_2,
             'ADC': self.ui.label_status_adc_2,
             'FBP': self.ui.label_status_fiber_2,
-            'ENDO': self.ui.label_status_endo_2,
+            'FINDER': self.ui.label_status_finder_2,
             'MTL' : self.ui.label_status_metrology_2,
             'SPEC' : self.ui.label_status_spectrograph_2
         }
@@ -419,9 +419,10 @@ class MainWindow(QMainWindow):
 ##### Main Functions corresponding to the GUI action #####
     async def _onoff_button_clicked(self, state_attr, btn1, btn2, command_on, command_off, label):
         if not self.check_connection():
-            self.logging("ICS_client is not connected to RabbitMQ server. Please click 'connect' button.", level='error')
             return
 
+        if not self.check_syscheck():
+            return
         # call state and convert
         state = not getattr(self, state_attr, False)
         setattr(self, state_attr, state)
@@ -447,9 +448,10 @@ class MainWindow(QMainWindow):
     @asyncSlot()
     async def GFArun_button_clicked(self):
         if not self.check_connection():
-            self.logging("ICS_client is not connected to RabbitMQ server. Please click 'connect' button.", level='error')
             return
 
+        if not self.check_syscheck():
+            return
         if not self.ui.lineEdit_GFA_exptime.text():
             self.ui.lineEdit_GFA_exptime.setText('1')
         if not self.ui.lineEdit_GFA_cam.text():
@@ -467,9 +469,10 @@ class MainWindow(QMainWindow):
     @asyncSlot()
     async def Guiding_button_clicked(self):
         if not self.check_connection():
-            self.logging("ICS_client is not connected to RabbitMQ server. Please click 'connect' button.", level='error')
             return
 
+        if not self.check_syscheck():
+            return
         if not self.ui.lineEdit_GFA_exptime.text():
             self.ui.lineEdit_GFA_exptime.setText('5')
 
@@ -519,6 +522,11 @@ class MainWindow(QMainWindow):
     ### ADC ###
     @asyncSlot()
     async def ADCadjust_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
         if self.ui.pushbtn_ADCadjust.isChecked():
             self.ui.pushbtn_ADCadjust.setStyleSheet("color: green; font-weight:900;")
             ra='12:34:43.2'
@@ -532,6 +540,11 @@ class MainWindow(QMainWindow):
 
     @asyncSlot()
     async def adcrotate_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
         if not self.ui.lineEdit_adc_counts.text():
             self.ui.lineEdit_adc_counts.setText('0')
 
@@ -548,16 +561,31 @@ class MainWindow(QMainWindow):
 
     @asyncSlot()
     async def adcpark_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
         self.logging(f'Sent ADC adcpark', level='send')
         await handle_adc('adcpark', self.ICS_client)
 
     @asyncSlot()
     async def adchome_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
         self.logging(f'Sent ADC adchome', level='send')
         await handle_adc('adchome', self.ICS_client)
 
     @asyncSlot()
     async def adczero_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
         self.logging(f'Sent ADC adczero', level='send')
         await handle_adc('adczero', self.ICS_client)
 
@@ -584,12 +612,15 @@ class MainWindow(QMainWindow):
     ### Flat Button ###
     @asyncSlot()
     async def flat_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
         await self._onoff_button_clicked(state_attr="flat_state", btn1=self.ui.pushbtn_Flat, btn2=self.ui.pushbtn_Flat_2,
         command_on="flaton",command_off="flatoff",label="Flat")
 
-#        if not self.check_connection():
-#            self.logging('ICS_client is not initialized.', level='error')
-#            return
 
 #        self.flat_state = not getattr(self, "flat_state", False)
 
@@ -617,12 +648,15 @@ class MainWindow(QMainWindow):
     ### Arc Button ###
     @asyncSlot()
     async def arc_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
         await self._onoff_button_clicked(state_attr="arc_state", btn1=self.ui.pushbtn_Arc, btn2=self.ui.pushbtn_Arc_2,
         command_on="arcon",command_off="arcoff",label="Arc")
 
-#        if not self.check_connection():
-#            self.logging('ICS_client is not initialized.', level='error')
-#            return
 
 #        self.arc_state = not getattr(self, "arc_state", False)
 
@@ -689,15 +723,15 @@ class MainWindow(QMainWindow):
     @asyncSlot()
     async def run_obs_clicked(self):
         if not self.check_connection():
-            self.logging("ICS_client is not connected to RabbitMQ server. Please click 'connect' button.", level='error')
             return
 
+        if not self.check_syscheck():
+            return
 #        await self.scriptrun.run_obs(self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue,
 #                self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue, logging=self.logging)
 
         await handle_script(f'runobs',scriptrun=self.scriptrun,logging=self.logging)
         
-        print('KKKKKKKKKKKKKKKKKKKKKKK')
         self.show_status('ADC','normal')
         self.show_status('GFA','normal')
         self.show_status('MTL','normal')
@@ -709,9 +743,10 @@ class MainWindow(QMainWindow):
     @asyncSlot()
     async def take_image(self):
         if not self.check_connection():
-            self.logging("ICS_client is not connected to RabbitMQ server. Please click 'connect' button.", level='error')
             return
 
+        if not self.check_syscheck():
+            return
 #        self.obstype1=self.ui.obstype_1
         self.ui.obstype_1.setCurrentText('Bias')
 #        await handle_spec('getobj 3 1', self.ICS_client)
@@ -732,9 +767,10 @@ class MainWindow(QMainWindow):
     @asyncSlot()
     async def take_calib(self):
         if not self.check_connection():
-            self.logging("ICS_client is not connected to RabbitMQ server. Please click 'connect' button.", level='error')
             return
 
+        if not self.check_syscheck():
+            return
 #        await self.scriptrun.run_calib(self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue,
 #                self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue, logging=self.logging)
 
@@ -835,14 +871,15 @@ class MainWindow(QMainWindow):
     @asyncSlot()
     async def syscheck(self):
         if not self.check_connection():
-            self.logging("ICS_client is not connected to RabbitMQ server. Please click 'connect' button.", level='error')
             return
 
+        if not self.check_syscheck():
+            return
         self.logging('System check start. Initialize dependencies',level='normal')
         self.scriptrun.initialize_dependencies(self.ICS_client, self.send_udp_message, self.send_telcom_command,
             self.response_queue, self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue, self.show_status)
         self.logging('System check finished. All systems are OK.',level='normal')
-
+        self.dependencies = True
 
 
 ### Functions related with RabbitMQ ###
@@ -880,10 +917,19 @@ class MainWindow(QMainWindow):
             await self.ICS_client.disconnect()
 
 
-
-    ### check connection to RabbitMQ Server ###
+    ### check connection to RabbitMQ Server and system  ###
     def check_connection(self):
-        return hasattr(self, "ICS_client") and self.ICS_client is not None
+        if not getattr(self,'ICS_client',False):
+            self.logging("ICS_client is not connected to RabbitMQ server. Please click 'connect' button.", level='error')
+            return False
+        return True
+
+    def check_syscheck(self):
+        if not getattr(self,'dependencies', False):
+            self.logging("Systems are not checked. Please click 'Sys check' button.", level='error')
+            return False
+        return True
+
 
     ### Waiting for response through RabbitMQ ###
     async def on_ics_message(self, message: IncomingMessage):
@@ -1003,9 +1049,9 @@ class MainWindow(QMainWindow):
         return {
             "adc": ["adcstatus", "adcactivate", "adcadjust", "adcinit", "adcconnect", "adcdisconnect", "adchome", "adczero",
             "adcpoweroff", "adcrotate1", "adcrotate2", "adcstop", "adcpark", "adcrotateop", "adcrotatesame"],
-            "gfa": ["gfastatus", "gfagrab", "gfaguidestop", "gfaguide"],
+            "gfa": ["gfastatus", "gfagrab", "gfaguidestop", "gfaguide", "fdgrab"],
             "fbp": ["fbpstatus", "fbpzero", "fbpmove", "fbpoffset"],
-            "endo": ["endoguide", "endotest", "endofocus", "endostop","endoexpset","endoclear","endostatus"],
+#            "endo": ["endoguide", "endotest", "endofocus", "endostop","endoexpset","endoclear","endostatus"],
             "mtl": ["mtlstatus", "mtlexp", "mtlcal"],
             "lamp": ["lampstatus", "arcon", "arcoff", "flaton", "flatoff","fiducialon","fiducialoff"],
             "spec": ["specstatus", "illuon", "illuoff", "getobj", "getbias", "getflat","getar"],

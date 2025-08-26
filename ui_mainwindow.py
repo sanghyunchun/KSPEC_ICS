@@ -537,16 +537,16 @@ class Ui_MainWindow(object):
         self.label_status_fiber.setGeometry(QRect(200, 50, 61, 29))
         self.label_status_fiber.setFont(font2)
         self.label_status_fiber.setAlignment(Qt.AlignCenter)
-        self.ok_status_endo = QLabel(self.group_status)
-        self.ok_status_endo.setObjectName(u"ok_status_endo")
-        self.ok_status_endo.setGeometry(QRect(264, 50, 32, 29))
-        sizePolicy2.setHeightForWidth(self.ok_status_endo.sizePolicy().hasHeightForWidth())
-        self.ok_status_endo.setSizePolicy(sizePolicy2)
-        self.ok_status_endo.setFont(font2)
-        self.ok_status_endo.setAlignment(Qt.AlignCenter)
+        self.ok_status_finder = QLabel(self.group_status)
+        self.ok_status_finder.setObjectName(u"ok_status_finder")
+        self.ok_status_finder.setGeometry(QRect(264, 50, 32, 29))
+        sizePolicy2.setHeightForWidth(self.ok_status_finder.sizePolicy().hasHeightForWidth())
+        self.ok_status_finder.setSizePolicy(sizePolicy2)
+        self.ok_status_finder.setFont(font2)
+        self.ok_status_finder.setAlignment(Qt.AlignCenter)
         self.label_status_finder = QLabel(self.group_status)
         self.label_status_finder.setObjectName(u"label_status_finder")
-        self.label_status_finder.setGeometry(QRect(291, 50, 71, 29))
+        self.label_status_finder.setGeometry(QRect(290, 50, 71, 29))
         self.label_status_finder.setFont(font2)
         self.label_status_finder.setAlignment(Qt.AlignCenter)
         self.ok_status_metrology = QLabel(self.group_status)
@@ -804,12 +804,8 @@ class Ui_MainWindow(object):
         self.tab_single.setObjectName(u"tab_single")
         self.label = QLabel(self.tab_single)
         self.label.setObjectName(u"label")
-        self.label.setGeometry(QRect(10, 20, 201, 16))
-        font7 = QFont()
-        font7.setPointSize(11)
-        font7.setBold(True)
-        font7.setStrikeOut(False)
-        self.label.setFont(font7)
+        self.label.setGeometry(QRect(10, 20, 221, 16))
+        self.label.setFont(font3)
         self.formLayoutWidget = QWidget(self.tab_single)
         self.formLayoutWidget.setObjectName(u"formLayoutWidget")
         self.formLayoutWidget.setGeometry(QRect(10, 50, 331, 271))
@@ -967,12 +963,12 @@ class Ui_MainWindow(object):
         self.group_D.setContentsMargins(0, 0, 0, 0)
         self.circle_D = QLabel(self.layoutWidget_81)
         self.circle_D.setObjectName(u"circle_D")
-        font8 = QFont()
-        font8.setFamilies([u"Arial"])
-        font8.setPointSize(28)
-        font8.setBold(False)
-        font8.setStrikeOut(False)
-        self.circle_D.setFont(font8)
+        font7 = QFont()
+        font7.setFamilies([u"Arial"])
+        font7.setPointSize(28)
+        font7.setBold(False)
+        font7.setStrikeOut(False)
+        self.circle_D.setFont(font7)
         self.circle_D.setAlignment(Qt.AlignCenter)
         self.circle_D.setWordWrap(False)
 
@@ -993,13 +989,13 @@ class Ui_MainWindow(object):
         self.group_D0.setContentsMargins(0, 0, 0, 0)
         self.circle_D0 = QLabel(self.layoutWidget_190)
         self.circle_D0.setObjectName(u"circle_D0")
-        font9 = QFont()
-        font9.setFamilies([u"Arial"])
-        font9.setPointSize(28)
-        font9.setBold(False)
-        font9.setUnderline(False)
-        font9.setStrikeOut(False)
-        self.circle_D0.setFont(font9)
+        font8 = QFont()
+        font8.setFamilies([u"Arial"])
+        font8.setPointSize(28)
+        font8.setBold(False)
+        font8.setUnderline(False)
+        font8.setStrikeOut(False)
+        self.circle_D0.setFont(font8)
         self.circle_D0.setAlignment(Qt.AlignCenter)
         self.circle_D0.setWordWrap(False)
 
@@ -1020,7 +1016,7 @@ class Ui_MainWindow(object):
         self.group_D1.setContentsMargins(0, 0, 0, 0)
         self.circle_D1 = QLabel(self.layoutWidget_191)
         self.circle_D1.setObjectName(u"circle_D1")
-        self.circle_D1.setFont(font8)
+        self.circle_D1.setFont(font7)
         self.circle_D1.setAlignment(Qt.AlignCenter)
         self.circle_D1.setWordWrap(False)
 
@@ -1041,7 +1037,7 @@ class Ui_MainWindow(object):
         self.group_D2.setContentsMargins(0, 0, 0, 0)
         self.circle_D2 = QLabel(self.layoutWidget_192)
         self.circle_D2.setObjectName(u"circle_D2")
-        self.circle_D2.setFont(font8)
+        self.circle_D2.setFont(font7)
         self.circle_D2.setAlignment(Qt.AlignCenter)
         self.circle_D2.setWordWrap(False)
 
@@ -1062,7 +1058,7 @@ class Ui_MainWindow(object):
         self.group_D3.setContentsMargins(0, 0, 0, 0)
         self.circle_D3 = QLabel(self.layoutWidget_193)
         self.circle_D3.setObjectName(u"circle_D3")
-        self.circle_D3.setFont(font8)
+        self.circle_D3.setFont(font7)
         self.circle_D3.setAlignment(Qt.AlignCenter)
         self.circle_D3.setWordWrap(False)
 
@@ -1083,7 +1079,7 @@ class Ui_MainWindow(object):
         self.group_D4.setContentsMargins(0, 0, 0, 0)
         self.circle_D4 = QLabel(self.layoutWidget_86)
         self.circle_D4.setObjectName(u"circle_D4")
-        self.circle_D4.setFont(font8)
+        self.circle_D4.setFont(font7)
         self.circle_D4.setAlignment(Qt.AlignCenter)
         self.circle_D4.setWordWrap(False)
 
@@ -1104,7 +1100,7 @@ class Ui_MainWindow(object):
         self.group_D5.setContentsMargins(0, 0, 0, 0)
         self.circle_D5 = QLabel(self.layoutWidget_87)
         self.circle_D5.setObjectName(u"circle_D5")
-        self.circle_D5.setFont(font8)
+        self.circle_D5.setFont(font7)
         self.circle_D5.setAlignment(Qt.AlignCenter)
         self.circle_D5.setWordWrap(False)
 
@@ -1125,12 +1121,12 @@ class Ui_MainWindow(object):
         self.group_D6.setContentsMargins(0, 0, 0, 0)
         self.circle_D6 = QLabel(self.layoutWidget_88)
         self.circle_D6.setObjectName(u"circle_D6")
-        font10 = QFont()
-        font10.setFamilies([u"Arial"])
-        font10.setPointSize(27)
-        font10.setBold(False)
-        font10.setStrikeOut(False)
-        self.circle_D6.setFont(font10)
+        font9 = QFont()
+        font9.setFamilies([u"Arial"])
+        font9.setPointSize(27)
+        font9.setBold(False)
+        font9.setStrikeOut(False)
+        self.circle_D6.setFont(font9)
         self.circle_D6.setAlignment(Qt.AlignCenter)
         self.circle_D6.setWordWrap(False)
 
@@ -1151,7 +1147,7 @@ class Ui_MainWindow(object):
         self.group_D7.setContentsMargins(0, 0, 0, 0)
         self.circle_D7 = QLabel(self.layoutWidget_194)
         self.circle_D7.setObjectName(u"circle_D7")
-        self.circle_D7.setFont(font8)
+        self.circle_D7.setFont(font7)
         self.circle_D7.setAlignment(Qt.AlignCenter)
         self.circle_D7.setWordWrap(False)
 
@@ -1172,7 +1168,7 @@ class Ui_MainWindow(object):
         self.group_D8.setContentsMargins(0, 0, 0, 0)
         self.circle_D8 = QLabel(self.layoutWidget_195)
         self.circle_D8.setObjectName(u"circle_D8")
-        self.circle_D8.setFont(font8)
+        self.circle_D8.setFont(font7)
         self.circle_D8.setAlignment(Qt.AlignCenter)
         self.circle_D8.setWordWrap(False)
 
@@ -1193,7 +1189,7 @@ class Ui_MainWindow(object):
         self.group_D9.setContentsMargins(0, 0, 0, 0)
         self.circle_D9 = QLabel(self.layoutWidget_196)
         self.circle_D9.setObjectName(u"circle_D9")
-        self.circle_D9.setFont(font10)
+        self.circle_D9.setFont(font9)
         self.circle_D9.setAlignment(Qt.AlignCenter)
         self.circle_D9.setWordWrap(False)
 
@@ -1214,7 +1210,7 @@ class Ui_MainWindow(object):
         self.group_D10.setContentsMargins(0, 0, 0, 0)
         self.circle_D10 = QLabel(self.layoutWidget_197)
         self.circle_D10.setObjectName(u"circle_D10")
-        self.circle_D10.setFont(font8)
+        self.circle_D10.setFont(font7)
         self.circle_D10.setAlignment(Qt.AlignCenter)
         self.circle_D10.setWordWrap(False)
 
@@ -1235,7 +1231,7 @@ class Ui_MainWindow(object):
         self.group_blank4.setContentsMargins(0, 0, 0, 0)
         self.circle_blank4 = QLabel(self.layoutWidget_37)
         self.circle_blank4.setObjectName(u"circle_blank4")
-        self.circle_blank4.setFont(font8)
+        self.circle_blank4.setFont(font7)
         self.circle_blank4.setAlignment(Qt.AlignCenter)
         self.circle_blank4.setWordWrap(False)
 
@@ -1256,7 +1252,7 @@ class Ui_MainWindow(object):
         self.group_L.setContentsMargins(0, 0, 0, 0)
         self.circle_L = QLabel(self.layoutWidget_38)
         self.circle_L.setObjectName(u"circle_L")
-        self.circle_L.setFont(font8)
+        self.circle_L.setFont(font7)
         self.circle_L.setAlignment(Qt.AlignCenter)
         self.circle_L.setWordWrap(False)
 
@@ -1277,7 +1273,7 @@ class Ui_MainWindow(object):
         self.group_L0.setContentsMargins(0, 0, 0, 0)
         self.circle_L0 = QLabel(self.layoutWidget_134)
         self.circle_L0.setObjectName(u"circle_L0")
-        self.circle_L0.setFont(font8)
+        self.circle_L0.setFont(font7)
         self.circle_L0.setAlignment(Qt.AlignCenter)
         self.circle_L0.setWordWrap(False)
 
@@ -1298,13 +1294,13 @@ class Ui_MainWindow(object):
         self.group_L1.setContentsMargins(0, 0, 0, 0)
         self.circle_L1 = QLabel(self.layoutWidget_268)
         self.circle_L1.setObjectName(u"circle_L1")
-        font11 = QFont()
-        font11.setFamilies([u"Arial"])
-        font11.setPointSize(27)
-        font11.setBold(False)
-        font11.setUnderline(False)
-        font11.setStrikeOut(False)
-        self.circle_L1.setFont(font11)
+        font10 = QFont()
+        font10.setFamilies([u"Arial"])
+        font10.setPointSize(27)
+        font10.setBold(False)
+        font10.setUnderline(False)
+        font10.setStrikeOut(False)
+        self.circle_L1.setFont(font10)
         self.circle_L1.setAlignment(Qt.AlignCenter)
         self.circle_L1.setWordWrap(False)
 
@@ -1325,7 +1321,7 @@ class Ui_MainWindow(object):
         self.group_L2.setContentsMargins(0, 0, 0, 0)
         self.circle_L2 = QLabel(self.layoutWidget_269)
         self.circle_L2.setObjectName(u"circle_L2")
-        self.circle_L2.setFont(font8)
+        self.circle_L2.setFont(font7)
         self.circle_L2.setAlignment(Qt.AlignCenter)
         self.circle_L2.setWordWrap(False)
 
@@ -1346,7 +1342,7 @@ class Ui_MainWindow(object):
         self.group_L3.setContentsMargins(0, 0, 0, 0)
         self.circle_L3 = QLabel(self.layoutWidget_270)
         self.circle_L3.setObjectName(u"circle_L3")
-        self.circle_L3.setFont(font8)
+        self.circle_L3.setFont(font7)
         self.circle_L3.setAlignment(Qt.AlignCenter)
         self.circle_L3.setWordWrap(False)
 
@@ -1367,7 +1363,7 @@ class Ui_MainWindow(object):
         self.group_L4.setContentsMargins(0, 0, 0, 0)
         self.circle_L4 = QLabel(self.layoutWidget_271)
         self.circle_L4.setObjectName(u"circle_L4")
-        self.circle_L4.setFont(font10)
+        self.circle_L4.setFont(font9)
         self.circle_L4.setAlignment(Qt.AlignCenter)
         self.circle_L4.setWordWrap(False)
 
@@ -1388,7 +1384,7 @@ class Ui_MainWindow(object):
         self.group_L5.setContentsMargins(0, 0, 0, 0)
         self.circle_L5 = QLabel(self.layoutWidget_135)
         self.circle_L5.setObjectName(u"circle_L5")
-        self.circle_L5.setFont(font8)
+        self.circle_L5.setFont(font7)
         self.circle_L5.setAlignment(Qt.AlignCenter)
         self.circle_L5.setWordWrap(False)
 
@@ -1409,7 +1405,7 @@ class Ui_MainWindow(object):
         self.group_L6.setContentsMargins(0, 0, 0, 0)
         self.circle_L6 = QLabel(self.layoutWidget_136)
         self.circle_L6.setObjectName(u"circle_L6")
-        self.circle_L6.setFont(font8)
+        self.circle_L6.setFont(font7)
         self.circle_L6.setAlignment(Qt.AlignCenter)
         self.circle_L6.setWordWrap(False)
 
@@ -1430,7 +1426,7 @@ class Ui_MainWindow(object):
         self.group_L7.setContentsMargins(0, 0, 0, 0)
         self.circle_L7 = QLabel(self.layoutWidget_137)
         self.circle_L7.setObjectName(u"circle_L7")
-        self.circle_L7.setFont(font8)
+        self.circle_L7.setFont(font7)
         self.circle_L7.setAlignment(Qt.AlignCenter)
         self.circle_L7.setWordWrap(False)
 
@@ -1451,7 +1447,7 @@ class Ui_MainWindow(object):
         self.group_L8.setContentsMargins(0, 0, 0, 0)
         self.circle_L8 = QLabel(self.layoutWidget_272)
         self.circle_L8.setObjectName(u"circle_L8")
-        self.circle_L8.setFont(font8)
+        self.circle_L8.setFont(font7)
         self.circle_L8.setAlignment(Qt.AlignCenter)
         self.circle_L8.setWordWrap(False)
 
@@ -1472,7 +1468,7 @@ class Ui_MainWindow(object):
         self.group_L9.setContentsMargins(0, 0, 0, 0)
         self.circle_L9 = QLabel(self.layoutWidget_273)
         self.circle_L9.setObjectName(u"circle_L9")
-        self.circle_L9.setFont(font8)
+        self.circle_L9.setFont(font7)
         self.circle_L9.setAlignment(Qt.AlignCenter)
         self.circle_L9.setWordWrap(False)
 
@@ -1493,7 +1489,7 @@ class Ui_MainWindow(object):
         self.group_L10.setContentsMargins(0, 0, 0, 0)
         self.circle_L10 = QLabel(self.layoutWidget_138)
         self.circle_L10.setObjectName(u"circle_L10")
-        self.circle_L10.setFont(font8)
+        self.circle_L10.setFont(font7)
         self.circle_L10.setAlignment(Qt.AlignCenter)
         self.circle_L10.setWordWrap(False)
 
@@ -1521,7 +1517,7 @@ class Ui_MainWindow(object):
         self.group_E.setContentsMargins(0, 0, 0, 0)
         self.circle_E = QLabel(self.layoutWidget_100)
         self.circle_E.setObjectName(u"circle_E")
-        self.circle_E.setFont(font8)
+        self.circle_E.setFont(font7)
         self.circle_E.setAlignment(Qt.AlignCenter)
         self.circle_E.setWordWrap(False)
 
@@ -1542,7 +1538,7 @@ class Ui_MainWindow(object):
         self.group_E0.setContentsMargins(0, 0, 0, 0)
         self.circle_E0 = QLabel(self.layoutWidget_225)
         self.circle_E0.setObjectName(u"circle_E0")
-        self.circle_E0.setFont(font9)
+        self.circle_E0.setFont(font8)
         self.circle_E0.setAlignment(Qt.AlignCenter)
         self.circle_E0.setWordWrap(False)
 
@@ -1563,7 +1559,7 @@ class Ui_MainWindow(object):
         self.group_E1.setContentsMargins(0, 0, 0, 0)
         self.circle_E1 = QLabel(self.layoutWidget_226)
         self.circle_E1.setObjectName(u"circle_E1")
-        self.circle_E1.setFont(font8)
+        self.circle_E1.setFont(font7)
         self.circle_E1.setAlignment(Qt.AlignCenter)
         self.circle_E1.setWordWrap(False)
 
@@ -1584,7 +1580,7 @@ class Ui_MainWindow(object):
         self.group_E2.setContentsMargins(0, 0, 0, 0)
         self.circle_E2 = QLabel(self.layoutWidget_227)
         self.circle_E2.setObjectName(u"circle_E2")
-        self.circle_E2.setFont(font8)
+        self.circle_E2.setFont(font7)
         self.circle_E2.setAlignment(Qt.AlignCenter)
         self.circle_E2.setWordWrap(False)
 
@@ -1605,7 +1601,7 @@ class Ui_MainWindow(object):
         self.group_E3.setContentsMargins(0, 0, 0, 0)
         self.circle_E3 = QLabel(self.layoutWidget_228)
         self.circle_E3.setObjectName(u"circle_E3")
-        self.circle_E3.setFont(font10)
+        self.circle_E3.setFont(font9)
         self.circle_E3.setAlignment(Qt.AlignCenter)
         self.circle_E3.setWordWrap(False)
 
@@ -1626,7 +1622,7 @@ class Ui_MainWindow(object):
         self.group_E4.setContentsMargins(0, 0, 0, 0)
         self.circle_E4 = QLabel(self.layoutWidget_104)
         self.circle_E4.setObjectName(u"circle_E4")
-        self.circle_E4.setFont(font8)
+        self.circle_E4.setFont(font7)
         self.circle_E4.setAlignment(Qt.AlignCenter)
         self.circle_E4.setWordWrap(False)
 
@@ -1647,7 +1643,7 @@ class Ui_MainWindow(object):
         self.group_E5.setContentsMargins(0, 0, 0, 0)
         self.circle_E5 = QLabel(self.layoutWidget_105)
         self.circle_E5.setObjectName(u"circle_E5")
-        self.circle_E5.setFont(font8)
+        self.circle_E5.setFont(font7)
         self.circle_E5.setAlignment(Qt.AlignCenter)
         self.circle_E5.setWordWrap(False)
 
@@ -1668,7 +1664,7 @@ class Ui_MainWindow(object):
         self.group_E6.setContentsMargins(0, 0, 0, 0)
         self.circle_E6 = QLabel(self.layoutWidget_106)
         self.circle_E6.setObjectName(u"circle_E6")
-        self.circle_E6.setFont(font8)
+        self.circle_E6.setFont(font7)
         self.circle_E6.setAlignment(Qt.AlignCenter)
         self.circle_E6.setWordWrap(False)
 
@@ -1689,7 +1685,7 @@ class Ui_MainWindow(object):
         self.group_E7.setContentsMargins(0, 0, 0, 0)
         self.circle_E7 = QLabel(self.layoutWidget_229)
         self.circle_E7.setObjectName(u"circle_E7")
-        self.circle_E7.setFont(font8)
+        self.circle_E7.setFont(font7)
         self.circle_E7.setAlignment(Qt.AlignCenter)
         self.circle_E7.setWordWrap(False)
 
@@ -1710,7 +1706,7 @@ class Ui_MainWindow(object):
         self.group_E8.setContentsMargins(0, 0, 0, 0)
         self.circle_E8 = QLabel(self.layoutWidget_230)
         self.circle_E8.setObjectName(u"circle_E8")
-        self.circle_E8.setFont(font8)
+        self.circle_E8.setFont(font7)
         self.circle_E8.setAlignment(Qt.AlignCenter)
         self.circle_E8.setWordWrap(False)
 
@@ -1731,7 +1727,7 @@ class Ui_MainWindow(object):
         self.group_E9.setContentsMargins(0, 0, 0, 0)
         self.circle_E9 = QLabel(self.layoutWidget_231)
         self.circle_E9.setObjectName(u"circle_E9")
-        self.circle_E9.setFont(font8)
+        self.circle_E9.setFont(font7)
         self.circle_E9.setAlignment(Qt.AlignCenter)
         self.circle_E9.setWordWrap(False)
 
@@ -1752,7 +1748,7 @@ class Ui_MainWindow(object):
         self.group_E10.setContentsMargins(0, 0, 0, 0)
         self.circle_E10 = QLabel(self.layoutWidget_232)
         self.circle_E10.setObjectName(u"circle_E10")
-        self.circle_E10.setFont(font8)
+        self.circle_E10.setFont(font7)
         self.circle_E10.setAlignment(Qt.AlignCenter)
         self.circle_E10.setWordWrap(False)
 
@@ -1773,7 +1769,7 @@ class Ui_MainWindow(object):
         self.group_E11.setContentsMargins(0, 0, 0, 0)
         self.circle_E11 = QLabel(self.layoutWidget_41)
         self.circle_E11.setObjectName(u"circle_E11")
-        self.circle_E11.setFont(font8)
+        self.circle_E11.setFont(font7)
         self.circle_E11.setAlignment(Qt.AlignCenter)
         self.circle_E11.setWordWrap(False)
 
@@ -1794,7 +1790,7 @@ class Ui_MainWindow(object):
         self.group_blank5.setContentsMargins(0, 0, 0, 0)
         self.circle_blank5 = QLabel(self.layoutWidget_42)
         self.circle_blank5.setObjectName(u"circle_blank5")
-        self.circle_blank5.setFont(font8)
+        self.circle_blank5.setFont(font7)
         self.circle_blank5.setAlignment(Qt.AlignCenter)
         self.circle_blank5.setWordWrap(False)
 
@@ -1815,7 +1811,7 @@ class Ui_MainWindow(object):
         self.group_M.setContentsMargins(0, 0, 0, 0)
         self.circle_M = QLabel(self.layoutWidget_144)
         self.circle_M.setObjectName(u"circle_M")
-        self.circle_M.setFont(font8)
+        self.circle_M.setFont(font7)
         self.circle_M.setAlignment(Qt.AlignCenter)
         self.circle_M.setWordWrap(False)
 
@@ -1836,7 +1832,7 @@ class Ui_MainWindow(object):
         self.group_M0.setContentsMargins(0, 0, 0, 0)
         self.circle_M0 = QLabel(self.layoutWidget_280)
         self.circle_M0.setObjectName(u"circle_M0")
-        self.circle_M0.setFont(font9)
+        self.circle_M0.setFont(font8)
         self.circle_M0.setAlignment(Qt.AlignCenter)
         self.circle_M0.setWordWrap(False)
 
@@ -1857,7 +1853,7 @@ class Ui_MainWindow(object):
         self.group_M1.setContentsMargins(0, 0, 0, 0)
         self.circle_M1 = QLabel(self.layoutWidget_281)
         self.circle_M1.setObjectName(u"circle_M1")
-        self.circle_M1.setFont(font8)
+        self.circle_M1.setFont(font7)
         self.circle_M1.setAlignment(Qt.AlignCenter)
         self.circle_M1.setWordWrap(False)
 
@@ -1878,7 +1874,7 @@ class Ui_MainWindow(object):
         self.group_M2.setContentsMargins(0, 0, 0, 0)
         self.circle_M2 = QLabel(self.layoutWidget_282)
         self.circle_M2.setObjectName(u"circle_M2")
-        self.circle_M2.setFont(font8)
+        self.circle_M2.setFont(font7)
         self.circle_M2.setAlignment(Qt.AlignCenter)
         self.circle_M2.setWordWrap(False)
 
@@ -1899,7 +1895,7 @@ class Ui_MainWindow(object):
         self.group_M3.setContentsMargins(0, 0, 0, 0)
         self.circle_M3 = QLabel(self.layoutWidget_283)
         self.circle_M3.setObjectName(u"circle_M3")
-        self.circle_M3.setFont(font8)
+        self.circle_M3.setFont(font7)
         self.circle_M3.setAlignment(Qt.AlignCenter)
         self.circle_M3.setWordWrap(False)
 
@@ -1920,7 +1916,7 @@ class Ui_MainWindow(object):
         self.group_M4.setContentsMargins(0, 0, 0, 0)
         self.circle_M4 = QLabel(self.layoutWidget_145)
         self.circle_M4.setObjectName(u"circle_M4")
-        self.circle_M4.setFont(font8)
+        self.circle_M4.setFont(font7)
         self.circle_M4.setAlignment(Qt.AlignCenter)
         self.circle_M4.setWordWrap(False)
 
@@ -1941,7 +1937,7 @@ class Ui_MainWindow(object):
         self.group_M5.setContentsMargins(0, 0, 0, 0)
         self.circle_M5 = QLabel(self.layoutWidget_146)
         self.circle_M5.setObjectName(u"circle_M5")
-        self.circle_M5.setFont(font8)
+        self.circle_M5.setFont(font7)
         self.circle_M5.setAlignment(Qt.AlignCenter)
         self.circle_M5.setWordWrap(False)
 
@@ -1962,7 +1958,7 @@ class Ui_MainWindow(object):
         self.group_M6.setContentsMargins(0, 0, 0, 0)
         self.circle_M6 = QLabel(self.layoutWidget_147)
         self.circle_M6.setObjectName(u"circle_M6")
-        self.circle_M6.setFont(font8)
+        self.circle_M6.setFont(font7)
         self.circle_M6.setAlignment(Qt.AlignCenter)
         self.circle_M6.setWordWrap(False)
 
@@ -1983,7 +1979,7 @@ class Ui_MainWindow(object):
         self.group_M7.setContentsMargins(0, 0, 0, 0)
         self.circle_M7 = QLabel(self.layoutWidget_284)
         self.circle_M7.setObjectName(u"circle_M7")
-        self.circle_M7.setFont(font8)
+        self.circle_M7.setFont(font7)
         self.circle_M7.setAlignment(Qt.AlignCenter)
         self.circle_M7.setWordWrap(False)
 
@@ -2004,7 +2000,7 @@ class Ui_MainWindow(object):
         self.group_M8.setContentsMargins(0, 0, 0, 0)
         self.circle_M8 = QLabel(self.layoutWidget_285)
         self.circle_M8.setObjectName(u"circle_M8")
-        self.circle_M8.setFont(font8)
+        self.circle_M8.setFont(font7)
         self.circle_M8.setAlignment(Qt.AlignCenter)
         self.circle_M8.setWordWrap(False)
 
@@ -2025,7 +2021,7 @@ class Ui_MainWindow(object):
         self.group_M9.setContentsMargins(0, 0, 0, 0)
         self.circle_M9 = QLabel(self.layoutWidget_148)
         self.circle_M9.setObjectName(u"circle_M9")
-        self.circle_M9.setFont(font8)
+        self.circle_M9.setFont(font7)
         self.circle_M9.setAlignment(Qt.AlignCenter)
         self.circle_M9.setWordWrap(False)
 
@@ -2053,7 +2049,7 @@ class Ui_MainWindow(object):
         self.group_F.setContentsMargins(0, 0, 0, 0)
         self.circle_F = QLabel(self.layoutWidget_107)
         self.circle_F.setObjectName(u"circle_F")
-        self.circle_F.setFont(font8)
+        self.circle_F.setFont(font7)
         self.circle_F.setAlignment(Qt.AlignCenter)
         self.circle_F.setWordWrap(False)
 
@@ -2074,7 +2070,7 @@ class Ui_MainWindow(object):
         self.group_F0.setContentsMargins(0, 0, 0, 0)
         self.circle_F0 = QLabel(self.layoutWidget_233)
         self.circle_F0.setObjectName(u"circle_F0")
-        self.circle_F0.setFont(font9)
+        self.circle_F0.setFont(font8)
         self.circle_F0.setAlignment(Qt.AlignCenter)
         self.circle_F0.setWordWrap(False)
 
@@ -2095,7 +2091,7 @@ class Ui_MainWindow(object):
         self.group_F1.setContentsMargins(0, 0, 0, 0)
         self.circle_F1 = QLabel(self.layoutWidget_234)
         self.circle_F1.setObjectName(u"circle_F1")
-        self.circle_F1.setFont(font10)
+        self.circle_F1.setFont(font9)
         self.circle_F1.setAlignment(Qt.AlignCenter)
         self.circle_F1.setWordWrap(False)
 
@@ -2116,7 +2112,7 @@ class Ui_MainWindow(object):
         self.group_F2.setContentsMargins(0, 0, 0, 0)
         self.circle_F2 = QLabel(self.layoutWidget_286)
         self.circle_F2.setObjectName(u"circle_F2")
-        self.circle_F2.setFont(font8)
+        self.circle_F2.setFont(font7)
         self.circle_F2.setAlignment(Qt.AlignCenter)
         self.circle_F2.setWordWrap(False)
 
@@ -2137,7 +2133,7 @@ class Ui_MainWindow(object):
         self.group_F3.setContentsMargins(0, 0, 0, 0)
         self.circle_F3 = QLabel(self.layoutWidget_287)
         self.circle_F3.setObjectName(u"circle_F3")
-        self.circle_F3.setFont(font8)
+        self.circle_F3.setFont(font7)
         self.circle_F3.setAlignment(Qt.AlignCenter)
         self.circle_F3.setWordWrap(False)
 
@@ -2158,7 +2154,7 @@ class Ui_MainWindow(object):
         self.group_F4.setContentsMargins(0, 0, 0, 0)
         self.circle_F4 = QLabel(self.layoutWidget_108)
         self.circle_F4.setObjectName(u"circle_F4")
-        self.circle_F4.setFont(font8)
+        self.circle_F4.setFont(font7)
         self.circle_F4.setAlignment(Qt.AlignCenter)
         self.circle_F4.setWordWrap(False)
 
@@ -2179,7 +2175,7 @@ class Ui_MainWindow(object):
         self.group_F5.setContentsMargins(0, 0, 0, 0)
         self.circle_F5 = QLabel(self.layoutWidget_109)
         self.circle_F5.setObjectName(u"circle_F5")
-        self.circle_F5.setFont(font8)
+        self.circle_F5.setFont(font7)
         self.circle_F5.setAlignment(Qt.AlignCenter)
         self.circle_F5.setWordWrap(False)
 
@@ -2200,7 +2196,7 @@ class Ui_MainWindow(object):
         self.group_F6.setContentsMargins(0, 0, 0, 0)
         self.circle_F6 = QLabel(self.layoutWidget_149)
         self.circle_F6.setObjectName(u"circle_F6")
-        self.circle_F6.setFont(font8)
+        self.circle_F6.setFont(font7)
         self.circle_F6.setAlignment(Qt.AlignCenter)
         self.circle_F6.setWordWrap(False)
 
@@ -2221,7 +2217,7 @@ class Ui_MainWindow(object):
         self.group_F7.setContentsMargins(0, 0, 0, 0)
         self.circle_F7 = QLabel(self.layoutWidget_288)
         self.circle_F7.setObjectName(u"circle_F7")
-        self.circle_F7.setFont(font8)
+        self.circle_F7.setFont(font7)
         self.circle_F7.setAlignment(Qt.AlignCenter)
         self.circle_F7.setWordWrap(False)
 
@@ -2242,7 +2238,7 @@ class Ui_MainWindow(object):
         self.group_F8.setContentsMargins(0, 0, 0, 0)
         self.circle_F8 = QLabel(self.layoutWidget_289)
         self.circle_F8.setObjectName(u"circle_F8")
-        self.circle_F8.setFont(font8)
+        self.circle_F8.setFont(font7)
         self.circle_F8.setAlignment(Qt.AlignCenter)
         self.circle_F8.setWordWrap(False)
 
@@ -2263,7 +2259,7 @@ class Ui_MainWindow(object):
         self.group_F9.setContentsMargins(0, 0, 0, 0)
         self.circle_F9 = QLabel(self.layoutWidget_290)
         self.circle_F9.setObjectName(u"circle_F9")
-        self.circle_F9.setFont(font8)
+        self.circle_F9.setFont(font7)
         self.circle_F9.setAlignment(Qt.AlignCenter)
         self.circle_F9.setWordWrap(False)
 
@@ -2284,7 +2280,7 @@ class Ui_MainWindow(object):
         self.group_F10.setContentsMargins(0, 0, 0, 0)
         self.circle_F10 = QLabel(self.layoutWidget_291)
         self.circle_F10.setObjectName(u"circle_F10")
-        self.circle_F10.setFont(font8)
+        self.circle_F10.setFont(font7)
         self.circle_F10.setAlignment(Qt.AlignCenter)
         self.circle_F10.setWordWrap(False)
 
@@ -2305,7 +2301,7 @@ class Ui_MainWindow(object):
         self.group_F11.setContentsMargins(0, 0, 0, 0)
         self.circle_F11 = QLabel(self.layoutWidget_43)
         self.circle_F11.setObjectName(u"circle_F11")
-        self.circle_F11.setFont(font8)
+        self.circle_F11.setFont(font7)
         self.circle_F11.setAlignment(Qt.AlignCenter)
         self.circle_F11.setWordWrap(False)
 
@@ -2326,7 +2322,7 @@ class Ui_MainWindow(object):
         self.group_F12.setContentsMargins(0, 0, 0, 0)
         self.circle_F12 = QLabel(self.layoutWidget_44)
         self.circle_F12.setObjectName(u"circle_F12")
-        self.circle_F12.setFont(font8)
+        self.circle_F12.setFont(font7)
         self.circle_F12.setAlignment(Qt.AlignCenter)
         self.circle_F12.setWordWrap(False)
 
@@ -2347,7 +2343,7 @@ class Ui_MainWindow(object):
         self.group_blank6.setContentsMargins(0, 0, 0, 0)
         self.circle_blank6 = QLabel(self.layoutWidget_150)
         self.circle_blank6.setObjectName(u"circle_blank6")
-        self.circle_blank6.setFont(font8)
+        self.circle_blank6.setFont(font7)
         self.circle_blank6.setAlignment(Qt.AlignCenter)
         self.circle_blank6.setWordWrap(False)
 
@@ -2368,7 +2364,7 @@ class Ui_MainWindow(object):
         self.group_N.setContentsMargins(0, 0, 0, 0)
         self.circle_N = QLabel(self.layoutWidget_292)
         self.circle_N.setObjectName(u"circle_N")
-        self.circle_N.setFont(font9)
+        self.circle_N.setFont(font8)
         self.circle_N.setAlignment(Qt.AlignCenter)
         self.circle_N.setWordWrap(False)
 
@@ -2389,7 +2385,7 @@ class Ui_MainWindow(object):
         self.group_N0.setContentsMargins(0, 0, 0, 0)
         self.circle_N0 = QLabel(self.layoutWidget_293)
         self.circle_N0.setObjectName(u"circle_N0")
-        self.circle_N0.setFont(font8)
+        self.circle_N0.setFont(font7)
         self.circle_N0.setAlignment(Qt.AlignCenter)
         self.circle_N0.setWordWrap(False)
 
@@ -2410,7 +2406,7 @@ class Ui_MainWindow(object):
         self.group_N1.setContentsMargins(0, 0, 0, 0)
         self.circle_N1 = QLabel(self.layoutWidget_294)
         self.circle_N1.setObjectName(u"circle_N1")
-        self.circle_N1.setFont(font8)
+        self.circle_N1.setFont(font7)
         self.circle_N1.setAlignment(Qt.AlignCenter)
         self.circle_N1.setWordWrap(False)
 
@@ -2431,7 +2427,7 @@ class Ui_MainWindow(object):
         self.group_N2.setContentsMargins(0, 0, 0, 0)
         self.circle_N2 = QLabel(self.layoutWidget_295)
         self.circle_N2.setObjectName(u"circle_N2")
-        self.circle_N2.setFont(font8)
+        self.circle_N2.setFont(font7)
         self.circle_N2.setAlignment(Qt.AlignCenter)
         self.circle_N2.setWordWrap(False)
 
@@ -2452,7 +2448,7 @@ class Ui_MainWindow(object):
         self.group_N3.setContentsMargins(0, 0, 0, 0)
         self.circle_N3 = QLabel(self.layoutWidget_174)
         self.circle_N3.setObjectName(u"circle_N3")
-        self.circle_N3.setFont(font8)
+        self.circle_N3.setFont(font7)
         self.circle_N3.setAlignment(Qt.AlignCenter)
         self.circle_N3.setWordWrap(False)
 
@@ -2473,7 +2469,7 @@ class Ui_MainWindow(object):
         self.group_N4.setContentsMargins(0, 0, 0, 0)
         self.circle_N4 = QLabel(self.layoutWidget_175)
         self.circle_N4.setObjectName(u"circle_N4")
-        self.circle_N4.setFont(font8)
+        self.circle_N4.setFont(font7)
         self.circle_N4.setAlignment(Qt.AlignCenter)
         self.circle_N4.setWordWrap(False)
 
@@ -2494,7 +2490,7 @@ class Ui_MainWindow(object):
         self.group_N5.setContentsMargins(0, 0, 0, 0)
         self.circle_N5 = QLabel(self.layoutWidget_176)
         self.circle_N5.setObjectName(u"circle_N5")
-        self.circle_N5.setFont(font10)
+        self.circle_N5.setFont(font9)
         self.circle_N5.setAlignment(Qt.AlignCenter)
         self.circle_N5.setWordWrap(False)
 
@@ -2515,7 +2511,7 @@ class Ui_MainWindow(object):
         self.group_N6.setContentsMargins(0, 0, 0, 0)
         self.circle_N6 = QLabel(self.layoutWidget_296)
         self.circle_N6.setObjectName(u"circle_N6")
-        self.circle_N6.setFont(font8)
+        self.circle_N6.setFont(font7)
         self.circle_N6.setAlignment(Qt.AlignCenter)
         self.circle_N6.setWordWrap(False)
 
@@ -2536,7 +2532,7 @@ class Ui_MainWindow(object):
         self.group_N7.setContentsMargins(0, 0, 0, 0)
         self.circle_N7 = QLabel(self.layoutWidget_297)
         self.circle_N7.setObjectName(u"circle_N7")
-        self.circle_N7.setFont(font8)
+        self.circle_N7.setFont(font7)
         self.circle_N7.setAlignment(Qt.AlignCenter)
         self.circle_N7.setWordWrap(False)
 
@@ -2557,7 +2553,7 @@ class Ui_MainWindow(object):
         self.group_N8.setContentsMargins(0, 0, 0, 0)
         self.circle_N8 = QLabel(self.layoutWidget_177)
         self.circle_N8.setObjectName(u"circle_N8")
-        self.circle_N8.setFont(font8)
+        self.circle_N8.setFont(font7)
         self.circle_N8.setAlignment(Qt.AlignCenter)
         self.circle_N8.setWordWrap(False)
 
@@ -2583,7 +2579,7 @@ class Ui_MainWindow(object):
         self.group_G.setContentsMargins(0, 0, 0, 0)
         self.circle_G = QLabel(self.layoutWidget_101)
         self.circle_G.setObjectName(u"circle_G")
-        self.circle_G.setFont(font8)
+        self.circle_G.setFont(font7)
         self.circle_G.setAlignment(Qt.AlignCenter)
         self.circle_G.setWordWrap(False)
 
@@ -2604,7 +2600,7 @@ class Ui_MainWindow(object):
         self.group_G0.setContentsMargins(0, 0, 0, 0)
         self.circle_G0 = QLabel(self.layoutWidget_220)
         self.circle_G0.setObjectName(u"circle_G0")
-        self.circle_G0.setFont(font9)
+        self.circle_G0.setFont(font8)
         self.circle_G0.setAlignment(Qt.AlignCenter)
         self.circle_G0.setWordWrap(False)
 
@@ -2625,7 +2621,7 @@ class Ui_MainWindow(object):
         self.group_G1.setContentsMargins(0, 0, 0, 0)
         self.circle_G1 = QLabel(self.layoutWidget_221)
         self.circle_G1.setObjectName(u"circle_G1")
-        self.circle_G1.setFont(font8)
+        self.circle_G1.setFont(font7)
         self.circle_G1.setAlignment(Qt.AlignCenter)
         self.circle_G1.setWordWrap(False)
 
@@ -2646,7 +2642,7 @@ class Ui_MainWindow(object):
         self.group_G2.setContentsMargins(0, 0, 0, 0)
         self.circle_G2 = QLabel(self.layoutWidget_222)
         self.circle_G2.setObjectName(u"circle_G2")
-        self.circle_G2.setFont(font8)
+        self.circle_G2.setFont(font7)
         self.circle_G2.setAlignment(Qt.AlignCenter)
         self.circle_G2.setWordWrap(False)
 
@@ -2667,7 +2663,7 @@ class Ui_MainWindow(object):
         self.group_G3.setContentsMargins(0, 0, 0, 0)
         self.circle_G3 = QLabel(self.layoutWidget_223)
         self.circle_G3.setObjectName(u"circle_G3")
-        self.circle_G3.setFont(font8)
+        self.circle_G3.setFont(font7)
         self.circle_G3.setAlignment(Qt.AlignCenter)
         self.circle_G3.setWordWrap(False)
 
@@ -2688,7 +2684,7 @@ class Ui_MainWindow(object):
         self.group_G4.setContentsMargins(0, 0, 0, 0)
         self.circle_G4 = QLabel(self.layoutWidget_102)
         self.circle_G4.setObjectName(u"circle_G4")
-        self.circle_G4.setFont(font8)
+        self.circle_G4.setFont(font7)
         self.circle_G4.setAlignment(Qt.AlignCenter)
         self.circle_G4.setWordWrap(False)
 
@@ -2709,7 +2705,7 @@ class Ui_MainWindow(object):
         self.group_G5.setContentsMargins(0, 0, 0, 0)
         self.circle_G5 = QLabel(self.layoutWidget_103)
         self.circle_G5.setObjectName(u"circle_G5")
-        self.circle_G5.setFont(font8)
+        self.circle_G5.setFont(font7)
         self.circle_G5.setAlignment(Qt.AlignCenter)
         self.circle_G5.setWordWrap(False)
 
@@ -2730,7 +2726,7 @@ class Ui_MainWindow(object):
         self.group_G6.setContentsMargins(0, 0, 0, 0)
         self.circle_G6 = QLabel(self.layoutWidget_166)
         self.circle_G6.setObjectName(u"circle_G6")
-        self.circle_G6.setFont(font8)
+        self.circle_G6.setFont(font7)
         self.circle_G6.setAlignment(Qt.AlignCenter)
         self.circle_G6.setWordWrap(False)
 
@@ -2751,7 +2747,7 @@ class Ui_MainWindow(object):
         self.group_G7.setContentsMargins(0, 0, 0, 0)
         self.circle_G7 = QLabel(self.layoutWidget_298)
         self.circle_G7.setObjectName(u"circle_G7")
-        self.circle_G7.setFont(font8)
+        self.circle_G7.setFont(font7)
         self.circle_G7.setAlignment(Qt.AlignCenter)
         self.circle_G7.setWordWrap(False)
 
@@ -2772,7 +2768,7 @@ class Ui_MainWindow(object):
         self.group_G8.setContentsMargins(0, 0, 0, 0)
         self.circle_G8 = QLabel(self.layoutWidget_299)
         self.circle_G8.setObjectName(u"circle_G8")
-        self.circle_G8.setFont(font8)
+        self.circle_G8.setFont(font7)
         self.circle_G8.setAlignment(Qt.AlignCenter)
         self.circle_G8.setWordWrap(False)
 
@@ -2793,7 +2789,7 @@ class Ui_MainWindow(object):
         self.group_G9.setContentsMargins(0, 0, 0, 0)
         self.circle_G9 = QLabel(self.layoutWidget_300)
         self.circle_G9.setObjectName(u"circle_G9")
-        self.circle_G9.setFont(font10)
+        self.circle_G9.setFont(font9)
         self.circle_G9.setAlignment(Qt.AlignCenter)
         self.circle_G9.setWordWrap(False)
 
@@ -2814,7 +2810,7 @@ class Ui_MainWindow(object):
         self.group_G10.setContentsMargins(0, 0, 0, 0)
         self.circle_G10 = QLabel(self.layoutWidget_301)
         self.circle_G10.setObjectName(u"circle_G10")
-        self.circle_G10.setFont(font8)
+        self.circle_G10.setFont(font7)
         self.circle_G10.setAlignment(Qt.AlignCenter)
         self.circle_G10.setWordWrap(False)
 
@@ -2835,7 +2831,7 @@ class Ui_MainWindow(object):
         self.group_G11.setContentsMargins(0, 0, 0, 0)
         self.circle_G11 = QLabel(self.layoutWidget_45)
         self.circle_G11.setObjectName(u"circle_G11")
-        self.circle_G11.setFont(font8)
+        self.circle_G11.setFont(font7)
         self.circle_G11.setAlignment(Qt.AlignCenter)
         self.circle_G11.setWordWrap(False)
 
@@ -2856,7 +2852,7 @@ class Ui_MainWindow(object):
         self.group_G12.setContentsMargins(0, 0, 0, 0)
         self.circle_G12 = QLabel(self.layoutWidget_46)
         self.circle_G12.setObjectName(u"circle_G12")
-        self.circle_G12.setFont(font8)
+        self.circle_G12.setFont(font7)
         self.circle_G12.setAlignment(Qt.AlignCenter)
         self.circle_G12.setWordWrap(False)
 
@@ -2877,7 +2873,7 @@ class Ui_MainWindow(object):
         self.group_G13.setContentsMargins(0, 0, 0, 0)
         self.circle_G13 = QLabel(self.layoutWidget_167)
         self.circle_G13.setObjectName(u"circle_G13")
-        self.circle_G13.setFont(font8)
+        self.circle_G13.setFont(font7)
         self.circle_G13.setAlignment(Qt.AlignCenter)
         self.circle_G13.setWordWrap(False)
 
@@ -2898,7 +2894,7 @@ class Ui_MainWindow(object):
         self.group_blank7.setContentsMargins(0, 0, 0, 0)
         self.circle_blank7 = QLabel(self.layoutWidget_302)
         self.circle_blank7.setObjectName(u"circle_blank7")
-        self.circle_blank7.setFont(font9)
+        self.circle_blank7.setFont(font8)
         self.circle_blank7.setAlignment(Qt.AlignCenter)
         self.circle_blank7.setWordWrap(False)
 
@@ -2919,7 +2915,7 @@ class Ui_MainWindow(object):
         self.group_O.setContentsMargins(0, 0, 0, 0)
         self.circle_O = QLabel(self.layoutWidget_303)
         self.circle_O.setObjectName(u"circle_O")
-        self.circle_O.setFont(font8)
+        self.circle_O.setFont(font7)
         self.circle_O.setAlignment(Qt.AlignCenter)
         self.circle_O.setWordWrap(False)
 
@@ -2940,7 +2936,7 @@ class Ui_MainWindow(object):
         self.group_O0.setContentsMargins(0, 0, 0, 0)
         self.circle_O0 = QLabel(self.layoutWidget_304)
         self.circle_O0.setObjectName(u"circle_O0")
-        self.circle_O0.setFont(font10)
+        self.circle_O0.setFont(font9)
         self.circle_O0.setAlignment(Qt.AlignCenter)
         self.circle_O0.setWordWrap(False)
 
@@ -2961,7 +2957,7 @@ class Ui_MainWindow(object):
         self.group_O1.setContentsMargins(0, 0, 0, 0)
         self.circle_O1 = QLabel(self.layoutWidget_305)
         self.circle_O1.setObjectName(u"circle_O1")
-        self.circle_O1.setFont(font8)
+        self.circle_O1.setFont(font7)
         self.circle_O1.setAlignment(Qt.AlignCenter)
         self.circle_O1.setWordWrap(False)
 
@@ -2982,7 +2978,7 @@ class Ui_MainWindow(object):
         self.group_O2.setContentsMargins(0, 0, 0, 0)
         self.circle_O2 = QLabel(self.layoutWidget_168)
         self.circle_O2.setObjectName(u"circle_O2")
-        self.circle_O2.setFont(font8)
+        self.circle_O2.setFont(font7)
         self.circle_O2.setAlignment(Qt.AlignCenter)
         self.circle_O2.setWordWrap(False)
 
@@ -3003,7 +2999,7 @@ class Ui_MainWindow(object):
         self.group_O3.setContentsMargins(0, 0, 0, 0)
         self.circle_O3 = QLabel(self.layoutWidget_169)
         self.circle_O3.setObjectName(u"circle_O3")
-        self.circle_O3.setFont(font8)
+        self.circle_O3.setFont(font7)
         self.circle_O3.setAlignment(Qt.AlignCenter)
         self.circle_O3.setWordWrap(False)
 
@@ -3024,7 +3020,7 @@ class Ui_MainWindow(object):
         self.group_O4.setContentsMargins(0, 0, 0, 0)
         self.circle_O4 = QLabel(self.layoutWidget_170)
         self.circle_O4.setObjectName(u"circle_O4")
-        self.circle_O4.setFont(font8)
+        self.circle_O4.setFont(font7)
         self.circle_O4.setAlignment(Qt.AlignCenter)
         self.circle_O4.setWordWrap(False)
 
@@ -3045,7 +3041,7 @@ class Ui_MainWindow(object):
         self.group_O5.setContentsMargins(0, 0, 0, 0)
         self.circle_O5 = QLabel(self.layoutWidget_306)
         self.circle_O5.setObjectName(u"circle_O5")
-        self.circle_O5.setFont(font8)
+        self.circle_O5.setFont(font7)
         self.circle_O5.setAlignment(Qt.AlignCenter)
         self.circle_O5.setWordWrap(False)
 
@@ -3066,7 +3062,7 @@ class Ui_MainWindow(object):
         self.group_O6.setContentsMargins(0, 0, 0, 0)
         self.circle_O6 = QLabel(self.layoutWidget_307)
         self.circle_O6.setObjectName(u"circle_O6")
-        self.circle_O6.setFont(font8)
+        self.circle_O6.setFont(font7)
         self.circle_O6.setAlignment(Qt.AlignCenter)
         self.circle_O6.setWordWrap(False)
 
@@ -3087,7 +3083,7 @@ class Ui_MainWindow(object):
         self.group_O7.setContentsMargins(0, 0, 0, 0)
         self.circle_O7 = QLabel(self.layoutWidget_171)
         self.circle_O7.setObjectName(u"circle_O7")
-        self.circle_O7.setFont(font10)
+        self.circle_O7.setFont(font9)
         self.circle_O7.setAlignment(Qt.AlignCenter)
         self.circle_O7.setWordWrap(False)
 
@@ -3115,7 +3111,7 @@ class Ui_MainWindow(object):
         self.group_H.setContentsMargins(0, 0, 0, 0)
         self.circle_H = QLabel(self.layoutWidget_158)
         self.circle_H.setObjectName(u"circle_H")
-        self.circle_H.setFont(font8)
+        self.circle_H.setFont(font7)
         self.circle_H.setAlignment(Qt.AlignCenter)
         self.circle_H.setWordWrap(False)
 
@@ -3136,7 +3132,7 @@ class Ui_MainWindow(object):
         self.group_H0.setContentsMargins(0, 0, 0, 0)
         self.circle_H0 = QLabel(self.layoutWidget_308)
         self.circle_H0.setObjectName(u"circle_H0")
-        self.circle_H0.setFont(font11)
+        self.circle_H0.setFont(font10)
         self.circle_H0.setAlignment(Qt.AlignCenter)
         self.circle_H0.setWordWrap(False)
 
@@ -3157,7 +3153,7 @@ class Ui_MainWindow(object):
         self.group_H1.setContentsMargins(0, 0, 0, 0)
         self.circle_H1 = QLabel(self.layoutWidget_309)
         self.circle_H1.setObjectName(u"circle_H1")
-        self.circle_H1.setFont(font8)
+        self.circle_H1.setFont(font7)
         self.circle_H1.setAlignment(Qt.AlignCenter)
         self.circle_H1.setWordWrap(False)
 
@@ -3178,7 +3174,7 @@ class Ui_MainWindow(object):
         self.group_H2.setContentsMargins(0, 0, 0, 0)
         self.circle_H2 = QLabel(self.layoutWidget_310)
         self.circle_H2.setObjectName(u"circle_H2")
-        self.circle_H2.setFont(font8)
+        self.circle_H2.setFont(font7)
         self.circle_H2.setAlignment(Qt.AlignCenter)
         self.circle_H2.setWordWrap(False)
 
@@ -3199,7 +3195,7 @@ class Ui_MainWindow(object):
         self.group_H3.setContentsMargins(0, 0, 0, 0)
         self.circle_H3 = QLabel(self.layoutWidget_311)
         self.circle_H3.setObjectName(u"circle_H3")
-        self.circle_H3.setFont(font8)
+        self.circle_H3.setFont(font7)
         self.circle_H3.setAlignment(Qt.AlignCenter)
         self.circle_H3.setWordWrap(False)
 
@@ -3220,7 +3216,7 @@ class Ui_MainWindow(object):
         self.group_H4.setContentsMargins(0, 0, 0, 0)
         self.circle_H4 = QLabel(self.layoutWidget_159)
         self.circle_H4.setObjectName(u"circle_H4")
-        self.circle_H4.setFont(font8)
+        self.circle_H4.setFont(font7)
         self.circle_H4.setAlignment(Qt.AlignCenter)
         self.circle_H4.setWordWrap(False)
 
@@ -3241,7 +3237,7 @@ class Ui_MainWindow(object):
         self.group_H5.setContentsMargins(0, 0, 0, 0)
         self.circle_H5 = QLabel(self.layoutWidget_160)
         self.circle_H5.setObjectName(u"circle_H5")
-        self.circle_H5.setFont(font8)
+        self.circle_H5.setFont(font7)
         self.circle_H5.setAlignment(Qt.AlignCenter)
         self.circle_H5.setWordWrap(False)
 
@@ -3262,7 +3258,7 @@ class Ui_MainWindow(object):
         self.group_H6.setContentsMargins(0, 0, 0, 0)
         self.circle_H6 = QLabel(self.layoutWidget_161)
         self.circle_H6.setObjectName(u"circle_H6")
-        self.circle_H6.setFont(font8)
+        self.circle_H6.setFont(font7)
         self.circle_H6.setAlignment(Qt.AlignCenter)
         self.circle_H6.setWordWrap(False)
 
@@ -3283,7 +3279,7 @@ class Ui_MainWindow(object):
         self.group_H7.setContentsMargins(0, 0, 0, 0)
         self.circle_H7 = QLabel(self.layoutWidget_312)
         self.circle_H7.setObjectName(u"circle_H7")
-        self.circle_H7.setFont(font8)
+        self.circle_H7.setFont(font7)
         self.circle_H7.setAlignment(Qt.AlignCenter)
         self.circle_H7.setWordWrap(False)
 
@@ -3304,7 +3300,7 @@ class Ui_MainWindow(object):
         self.group_H8.setContentsMargins(0, 0, 0, 0)
         self.circle_H8 = QLabel(self.layoutWidget_313)
         self.circle_H8.setObjectName(u"circle_H8")
-        self.circle_H8.setFont(font8)
+        self.circle_H8.setFont(font7)
         self.circle_H8.setAlignment(Qt.AlignCenter)
         self.circle_H8.setWordWrap(False)
 
@@ -3325,7 +3321,7 @@ class Ui_MainWindow(object):
         self.group_H9.setContentsMargins(0, 0, 0, 0)
         self.circle_H9 = QLabel(self.layoutWidget_314)
         self.circle_H9.setObjectName(u"circle_H9")
-        self.circle_H9.setFont(font8)
+        self.circle_H9.setFont(font7)
         self.circle_H9.setAlignment(Qt.AlignCenter)
         self.circle_H9.setWordWrap(False)
 
@@ -3346,7 +3342,7 @@ class Ui_MainWindow(object):
         self.group_H10.setContentsMargins(0, 0, 0, 0)
         self.circle_H10 = QLabel(self.layoutWidget_315)
         self.circle_H10.setObjectName(u"circle_H10")
-        self.circle_H10.setFont(font8)
+        self.circle_H10.setFont(font7)
         self.circle_H10.setAlignment(Qt.AlignCenter)
         self.circle_H10.setWordWrap(False)
 
@@ -3367,7 +3363,7 @@ class Ui_MainWindow(object):
         self.group_H11.setContentsMargins(0, 0, 0, 0)
         self.circle_H11 = QLabel(self.layoutWidget_47)
         self.circle_H11.setObjectName(u"circle_H11")
-        self.circle_H11.setFont(font8)
+        self.circle_H11.setFont(font7)
         self.circle_H11.setAlignment(Qt.AlignCenter)
         self.circle_H11.setWordWrap(False)
 
@@ -3388,7 +3384,7 @@ class Ui_MainWindow(object):
         self.group_H12.setContentsMargins(0, 0, 0, 0)
         self.circle_H12 = QLabel(self.layoutWidget_48)
         self.circle_H12.setObjectName(u"circle_H12")
-        self.circle_H12.setFont(font8)
+        self.circle_H12.setFont(font7)
         self.circle_H12.setAlignment(Qt.AlignCenter)
         self.circle_H12.setWordWrap(False)
 
@@ -3409,7 +3405,7 @@ class Ui_MainWindow(object):
         self.group_H13.setContentsMargins(0, 0, 0, 0)
         self.circle_H13 = QLabel(self.layoutWidget_162)
         self.circle_H13.setObjectName(u"circle_H13")
-        self.circle_H13.setFont(font8)
+        self.circle_H13.setFont(font7)
         self.circle_H13.setAlignment(Qt.AlignCenter)
         self.circle_H13.setWordWrap(False)
 
@@ -3430,7 +3426,7 @@ class Ui_MainWindow(object):
         self.group_H14.setContentsMargins(0, 0, 0, 0)
         self.circle_H14 = QLabel(self.layoutWidget_316)
         self.circle_H14.setObjectName(u"circle_H14")
-        self.circle_H14.setFont(font11)
+        self.circle_H14.setFont(font10)
         self.circle_H14.setAlignment(Qt.AlignCenter)
         self.circle_H14.setWordWrap(False)
 
@@ -3451,7 +3447,7 @@ class Ui_MainWindow(object):
         self.group_blank8.setContentsMargins(0, 0, 0, 0)
         self.circle_blank8 = QLabel(self.layoutWidget_317)
         self.circle_blank8.setObjectName(u"circle_blank8")
-        self.circle_blank8.setFont(font8)
+        self.circle_blank8.setFont(font7)
         self.circle_blank8.setAlignment(Qt.AlignCenter)
         self.circle_blank8.setWordWrap(False)
 
@@ -3472,7 +3468,7 @@ class Ui_MainWindow(object):
         self.group_blank9.setContentsMargins(0, 0, 0, 0)
         self.circle_blank9 = QLabel(self.layoutWidget_318)
         self.circle_blank9.setObjectName(u"circle_blank9")
-        self.circle_blank9.setFont(font8)
+        self.circle_blank9.setFont(font7)
         self.circle_blank9.setAlignment(Qt.AlignCenter)
         self.circle_blank9.setWordWrap(False)
 
@@ -3493,7 +3489,7 @@ class Ui_MainWindow(object):
         self.group_blank10.setContentsMargins(0, 0, 0, 0)
         self.circle_blank10 = QLabel(self.layoutWidget_319)
         self.circle_blank10.setObjectName(u"circle_blank10")
-        self.circle_blank10.setFont(font8)
+        self.circle_blank10.setFont(font7)
         self.circle_blank10.setAlignment(Qt.AlignCenter)
         self.circle_blank10.setWordWrap(False)
 
@@ -3514,7 +3510,7 @@ class Ui_MainWindow(object):
         self.group_blank11.setContentsMargins(0, 0, 0, 0)
         self.circle_blank11 = QLabel(self.layoutWidget_163)
         self.circle_blank11.setObjectName(u"circle_blank11")
-        self.circle_blank11.setFont(font8)
+        self.circle_blank11.setFont(font7)
         self.circle_blank11.setAlignment(Qt.AlignCenter)
         self.circle_blank11.setWordWrap(False)
 
@@ -3535,7 +3531,7 @@ class Ui_MainWindow(object):
         self.group_blank12.setContentsMargins(0, 0, 0, 0)
         self.circle_blank12 = QLabel(self.layoutWidget_164)
         self.circle_blank12.setObjectName(u"circle_blank12")
-        self.circle_blank12.setFont(font8)
+        self.circle_blank12.setFont(font7)
         self.circle_blank12.setAlignment(Qt.AlignCenter)
         self.circle_blank12.setWordWrap(False)
 
@@ -3556,7 +3552,7 @@ class Ui_MainWindow(object):
         self.group_blank13.setContentsMargins(0, 0, 0, 0)
         self.circle_blank13 = QLabel(self.layoutWidget_165)
         self.circle_blank13.setObjectName(u"circle_blank13")
-        self.circle_blank13.setFont(font8)
+        self.circle_blank13.setFont(font7)
         self.circle_blank13.setAlignment(Qt.AlignCenter)
         self.circle_blank13.setWordWrap(False)
 
@@ -3577,7 +3573,7 @@ class Ui_MainWindow(object):
         self.group_blank14.setContentsMargins(0, 0, 0, 0)
         self.circle_blank14 = QLabel(self.layoutWidget_320)
         self.circle_blank14.setObjectName(u"circle_blank14")
-        self.circle_blank14.setFont(font8)
+        self.circle_blank14.setFont(font7)
         self.circle_blank14.setAlignment(Qt.AlignCenter)
         self.circle_blank14.setWordWrap(False)
 
@@ -3598,7 +3594,7 @@ class Ui_MainWindow(object):
         self.group_blank15.setContentsMargins(0, 0, 0, 0)
         self.circle_blank15 = QLabel(self.layoutWidget_321)
         self.circle_blank15.setObjectName(u"circle_blank15")
-        self.circle_blank15.setFont(font8)
+        self.circle_blank15.setFont(font7)
         self.circle_blank15.setAlignment(Qt.AlignCenter)
         self.circle_blank15.setWordWrap(False)
 
@@ -3619,7 +3615,7 @@ class Ui_MainWindow(object):
         self.group_blank16.setContentsMargins(0, 0, 0, 0)
         self.circle_blank16 = QLabel(self.layoutWidget_172)
         self.circle_blank16.setObjectName(u"circle_blank16")
-        self.circle_blank16.setFont(font8)
+        self.circle_blank16.setFont(font7)
         self.circle_blank16.setAlignment(Qt.AlignCenter)
         self.circle_blank16.setWordWrap(False)
 
@@ -3656,7 +3652,7 @@ class Ui_MainWindow(object):
         self.group_Z.setContentsMargins(0, 0, 0, 0)
         self.circle_Z = QLabel(self.layoutWidget_80)
         self.circle_Z.setObjectName(u"circle_Z")
-        self.circle_Z.setFont(font8)
+        self.circle_Z.setFont(font7)
         self.circle_Z.setAlignment(Qt.AlignCenter)
         self.circle_Z.setWordWrap(False)
 
@@ -3677,7 +3673,7 @@ class Ui_MainWindow(object):
         self.group_Z0.setContentsMargins(0, 0, 0, 0)
         self.circle_Z0 = QLabel(self.layoutWidget_182)
         self.circle_Z0.setObjectName(u"circle_Z0")
-        self.circle_Z0.setFont(font11)
+        self.circle_Z0.setFont(font10)
         self.circle_Z0.setAlignment(Qt.AlignCenter)
         self.circle_Z0.setWordWrap(False)
 
@@ -3698,7 +3694,7 @@ class Ui_MainWindow(object):
         self.group_Z1.setContentsMargins(0, 0, 0, 0)
         self.circle_Z1 = QLabel(self.layoutWidget_183)
         self.circle_Z1.setObjectName(u"circle_Z1")
-        self.circle_Z1.setFont(font10)
+        self.circle_Z1.setFont(font9)
         self.circle_Z1.setAlignment(Qt.AlignCenter)
         self.circle_Z1.setWordWrap(False)
 
@@ -3719,7 +3715,7 @@ class Ui_MainWindow(object):
         self.group_Z2.setContentsMargins(0, 0, 0, 0)
         self.circle_Z2 = QLabel(self.layoutWidget_184)
         self.circle_Z2.setObjectName(u"circle_Z2")
-        self.circle_Z2.setFont(font10)
+        self.circle_Z2.setFont(font9)
         self.circle_Z2.setAlignment(Qt.AlignCenter)
         self.circle_Z2.setWordWrap(False)
 
@@ -3740,7 +3736,7 @@ class Ui_MainWindow(object):
         self.group_Z3.setContentsMargins(0, 0, 0, 0)
         self.circle_Z3 = QLabel(self.layoutWidget_185)
         self.circle_Z3.setObjectName(u"circle_Z3")
-        self.circle_Z3.setFont(font10)
+        self.circle_Z3.setFont(font9)
         self.circle_Z3.setAlignment(Qt.AlignCenter)
         self.circle_Z3.setWordWrap(False)
 
@@ -3761,7 +3757,7 @@ class Ui_MainWindow(object):
         self.group_Z4.setContentsMargins(0, 0, 0, 0)
         self.circle_Z4 = QLabel(self.layoutWidget_83)
         self.circle_Z4.setObjectName(u"circle_Z4")
-        self.circle_Z4.setFont(font10)
+        self.circle_Z4.setFont(font9)
         self.circle_Z4.setAlignment(Qt.AlignCenter)
         self.circle_Z4.setWordWrap(False)
 
@@ -3782,7 +3778,7 @@ class Ui_MainWindow(object):
         self.group_Z5.setContentsMargins(0, 0, 0, 0)
         self.circle_Z5 = QLabel(self.layoutWidget_84)
         self.circle_Z5.setObjectName(u"circle_Z5")
-        self.circle_Z5.setFont(font10)
+        self.circle_Z5.setFont(font9)
         self.circle_Z5.setAlignment(Qt.AlignCenter)
         self.circle_Z5.setWordWrap(False)
 
@@ -3803,7 +3799,7 @@ class Ui_MainWindow(object):
         self.group_Z6.setContentsMargins(0, 0, 0, 0)
         self.circle_Z6 = QLabel(self.layoutWidget_85)
         self.circle_Z6.setObjectName(u"circle_Z6")
-        self.circle_Z6.setFont(font10)
+        self.circle_Z6.setFont(font9)
         self.circle_Z6.setAlignment(Qt.AlignCenter)
         self.circle_Z6.setWordWrap(False)
 
@@ -3824,7 +3820,7 @@ class Ui_MainWindow(object):
         self.group_Z7.setContentsMargins(0, 0, 0, 0)
         self.circle_Z7 = QLabel(self.layoutWidget_186)
         self.circle_Z7.setObjectName(u"circle_Z7")
-        self.circle_Z7.setFont(font10)
+        self.circle_Z7.setFont(font9)
         self.circle_Z7.setAlignment(Qt.AlignCenter)
         self.circle_Z7.setWordWrap(False)
 
@@ -3884,7 +3880,7 @@ class Ui_MainWindow(object):
         self.group_A_2.setContentsMargins(0, 0, 0, 0)
         self.circle_A_2 = QLabel(self.layoutWidget_139)
         self.circle_A_2.setObjectName(u"circle_A_2")
-        self.circle_A_2.setFont(font8)
+        self.circle_A_2.setFont(font7)
         self.circle_A_2.setAlignment(Qt.AlignCenter)
         self.circle_A_2.setWordWrap(False)
 
@@ -3905,7 +3901,7 @@ class Ui_MainWindow(object):
         self.group_A0_2.setContentsMargins(0, 0, 0, 0)
         self.circle_A0_2 = QLabel(self.layoutWidget_274)
         self.circle_A0_2.setObjectName(u"circle_A0_2")
-        self.circle_A0_2.setFont(font11)
+        self.circle_A0_2.setFont(font10)
         self.circle_A0_2.setAlignment(Qt.AlignCenter)
         self.circle_A0_2.setWordWrap(False)
 
@@ -3926,7 +3922,7 @@ class Ui_MainWindow(object):
         self.group_A1_2.setContentsMargins(0, 0, 0, 0)
         self.circle_A1_2 = QLabel(self.layoutWidget_275)
         self.circle_A1_2.setObjectName(u"circle_A1_2")
-        self.circle_A1_2.setFont(font8)
+        self.circle_A1_2.setFont(font7)
         self.circle_A1_2.setAlignment(Qt.AlignCenter)
         self.circle_A1_2.setWordWrap(False)
 
@@ -3947,7 +3943,7 @@ class Ui_MainWindow(object):
         self.group_A2_2.setContentsMargins(0, 0, 0, 0)
         self.circle_A2_2 = QLabel(self.layoutWidget_276)
         self.circle_A2_2.setObjectName(u"circle_A2_2")
-        self.circle_A2_2.setFont(font8)
+        self.circle_A2_2.setFont(font7)
         self.circle_A2_2.setAlignment(Qt.AlignCenter)
         self.circle_A2_2.setWordWrap(False)
 
@@ -3968,7 +3964,7 @@ class Ui_MainWindow(object):
         self.group_A3_2.setContentsMargins(0, 0, 0, 0)
         self.circle_A3_2 = QLabel(self.layoutWidget_277)
         self.circle_A3_2.setObjectName(u"circle_A3_2")
-        self.circle_A3_2.setFont(font8)
+        self.circle_A3_2.setFont(font7)
         self.circle_A3_2.setAlignment(Qt.AlignCenter)
         self.circle_A3_2.setWordWrap(False)
 
@@ -3989,7 +3985,7 @@ class Ui_MainWindow(object):
         self.group_A4_2.setContentsMargins(0, 0, 0, 0)
         self.circle_A4_2 = QLabel(self.layoutWidget_140)
         self.circle_A4_2.setObjectName(u"circle_A4_2")
-        self.circle_A4_2.setFont(font8)
+        self.circle_A4_2.setFont(font7)
         self.circle_A4_2.setAlignment(Qt.AlignCenter)
         self.circle_A4_2.setWordWrap(False)
 
@@ -4010,7 +4006,7 @@ class Ui_MainWindow(object):
         self.group_A5_2.setContentsMargins(0, 0, 0, 0)
         self.circle_A5_2 = QLabel(self.layoutWidget_141)
         self.circle_A5_2.setObjectName(u"circle_A5_2")
-        self.circle_A5_2.setFont(font8)
+        self.circle_A5_2.setFont(font7)
         self.circle_A5_2.setAlignment(Qt.AlignCenter)
         self.circle_A5_2.setWordWrap(False)
 
@@ -4031,7 +4027,7 @@ class Ui_MainWindow(object):
         self.group_A6_2.setContentsMargins(0, 0, 0, 0)
         self.circle_A6_2 = QLabel(self.layoutWidget_142)
         self.circle_A6_2.setObjectName(u"circle_A6_2")
-        self.circle_A6_2.setFont(font10)
+        self.circle_A6_2.setFont(font9)
         self.circle_A6_2.setAlignment(Qt.AlignCenter)
         self.circle_A6_2.setWordWrap(False)
 
@@ -4052,7 +4048,7 @@ class Ui_MainWindow(object):
         self.group_A7_2.setContentsMargins(0, 0, 0, 0)
         self.circle_A7_2 = QLabel(self.layoutWidget_278)
         self.circle_A7_2.setObjectName(u"circle_A7_2")
-        self.circle_A7_2.setFont(font8)
+        self.circle_A7_2.setFont(font7)
         self.circle_A7_2.setAlignment(Qt.AlignCenter)
         self.circle_A7_2.setWordWrap(False)
 
@@ -4073,7 +4069,7 @@ class Ui_MainWindow(object):
         self.group_blank1_2.setContentsMargins(0, 0, 0, 0)
         self.circle_blank1_2 = QLabel(self.layoutWidget_279)
         self.circle_blank1_2.setObjectName(u"circle_blank1_2")
-        self.circle_blank1_2.setFont(font8)
+        self.circle_blank1_2.setFont(font7)
         self.circle_blank1_2.setAlignment(Qt.AlignCenter)
         self.circle_blank1_2.setWordWrap(False)
 
@@ -4094,7 +4090,7 @@ class Ui_MainWindow(object):
         self.group_I_2.setContentsMargins(0, 0, 0, 0)
         self.circle_I_2 = QLabel(self.layoutWidget_322)
         self.circle_I_2.setObjectName(u"circle_I_2")
-        self.circle_I_2.setFont(font8)
+        self.circle_I_2.setFont(font7)
         self.circle_I_2.setAlignment(Qt.AlignCenter)
         self.circle_I_2.setWordWrap(False)
 
@@ -4115,7 +4111,7 @@ class Ui_MainWindow(object):
         self.group_I0_2.setContentsMargins(0, 0, 0, 0)
         self.circle_I0_2 = QLabel(self.layoutWidget_323)
         self.circle_I0_2.setObjectName(u"circle_I0_2")
-        self.circle_I0_2.setFont(font8)
+        self.circle_I0_2.setFont(font7)
         self.circle_I0_2.setAlignment(Qt.AlignCenter)
         self.circle_I0_2.setWordWrap(False)
 
@@ -4136,7 +4132,7 @@ class Ui_MainWindow(object):
         self.group_I1_2.setContentsMargins(0, 0, 0, 0)
         self.circle_I1_2 = QLabel(self.layoutWidget_39)
         self.circle_I1_2.setObjectName(u"circle_I1_2")
-        self.circle_I1_2.setFont(font8)
+        self.circle_I1_2.setFont(font7)
         self.circle_I1_2.setAlignment(Qt.AlignCenter)
         self.circle_I1_2.setWordWrap(False)
 
@@ -4157,7 +4153,7 @@ class Ui_MainWindow(object):
         self.group_I2_2.setContentsMargins(0, 0, 0, 0)
         self.circle_I2_2 = QLabel(self.layoutWidget_40)
         self.circle_I2_2.setObjectName(u"circle_I2_2")
-        self.circle_I2_2.setFont(font8)
+        self.circle_I2_2.setFont(font7)
         self.circle_I2_2.setAlignment(Qt.AlignCenter)
         self.circle_I2_2.setWordWrap(False)
 
@@ -4178,7 +4174,7 @@ class Ui_MainWindow(object):
         self.group_I3_2.setContentsMargins(0, 0, 0, 0)
         self.circle_I3_2 = QLabel(self.layoutWidget_143)
         self.circle_I3_2.setObjectName(u"circle_I3_2")
-        self.circle_I3_2.setFont(font8)
+        self.circle_I3_2.setFont(font7)
         self.circle_I3_2.setAlignment(Qt.AlignCenter)
         self.circle_I3_2.setWordWrap(False)
 
@@ -4199,7 +4195,7 @@ class Ui_MainWindow(object):
         self.group_I4_2.setContentsMargins(0, 0, 0, 0)
         self.circle_I4_2 = QLabel(self.layoutWidget_324)
         self.circle_I4_2.setObjectName(u"circle_I4_2")
-        self.circle_I4_2.setFont(font11)
+        self.circle_I4_2.setFont(font10)
         self.circle_I4_2.setAlignment(Qt.AlignCenter)
         self.circle_I4_2.setWordWrap(False)
 
@@ -4220,7 +4216,7 @@ class Ui_MainWindow(object):
         self.group_I5_2.setContentsMargins(0, 0, 0, 0)
         self.circle_I5_2 = QLabel(self.layoutWidget_325)
         self.circle_I5_2.setObjectName(u"circle_I5_2")
-        self.circle_I5_2.setFont(font8)
+        self.circle_I5_2.setFont(font7)
         self.circle_I5_2.setAlignment(Qt.AlignCenter)
         self.circle_I5_2.setWordWrap(False)
 
@@ -4241,7 +4237,7 @@ class Ui_MainWindow(object):
         self.group_I6_2.setContentsMargins(0, 0, 0, 0)
         self.circle_I6_2 = QLabel(self.layoutWidget_326)
         self.circle_I6_2.setObjectName(u"circle_I6_2")
-        self.circle_I6_2.setFont(font8)
+        self.circle_I6_2.setFont(font7)
         self.circle_I6_2.setAlignment(Qt.AlignCenter)
         self.circle_I6_2.setWordWrap(False)
 
@@ -4262,7 +4258,7 @@ class Ui_MainWindow(object):
         self.group_I7_2.setContentsMargins(0, 0, 0, 0)
         self.circle_I7_2 = QLabel(self.layoutWidget_327)
         self.circle_I7_2.setObjectName(u"circle_I7_2")
-        self.circle_I7_2.setFont(font8)
+        self.circle_I7_2.setFont(font7)
         self.circle_I7_2.setAlignment(Qt.AlignCenter)
         self.circle_I7_2.setWordWrap(False)
 
@@ -4283,7 +4279,7 @@ class Ui_MainWindow(object):
         self.group_I8_2.setContentsMargins(0, 0, 0, 0)
         self.circle_I8_2 = QLabel(self.layoutWidget_155)
         self.circle_I8_2.setObjectName(u"circle_I8_2")
-        self.circle_I8_2.setFont(font8)
+        self.circle_I8_2.setFont(font7)
         self.circle_I8_2.setAlignment(Qt.AlignCenter)
         self.circle_I8_2.setWordWrap(False)
 
@@ -4304,7 +4300,7 @@ class Ui_MainWindow(object):
         self.group_I9_2.setContentsMargins(0, 0, 0, 0)
         self.circle_I9_2 = QLabel(self.layoutWidget_156)
         self.circle_I9_2.setObjectName(u"circle_I9_2")
-        self.circle_I9_2.setFont(font8)
+        self.circle_I9_2.setFont(font7)
         self.circle_I9_2.setAlignment(Qt.AlignCenter)
         self.circle_I9_2.setWordWrap(False)
 
@@ -4325,7 +4321,7 @@ class Ui_MainWindow(object):
         self.group_I10_2.setContentsMargins(0, 0, 0, 0)
         self.circle_I10_2 = QLabel(self.layoutWidget_157)
         self.circle_I10_2.setObjectName(u"circle_I10_2")
-        self.circle_I10_2.setFont(font8)
+        self.circle_I10_2.setFont(font7)
         self.circle_I10_2.setAlignment(Qt.AlignCenter)
         self.circle_I10_2.setWordWrap(False)
 
@@ -4346,7 +4342,7 @@ class Ui_MainWindow(object):
         self.group_I11_2.setContentsMargins(0, 0, 0, 0)
         self.circle_I11_2 = QLabel(self.layoutWidget_328)
         self.circle_I11_2.setObjectName(u"circle_I11_2")
-        self.circle_I11_2.setFont(font8)
+        self.circle_I11_2.setFont(font7)
         self.circle_I11_2.setAlignment(Qt.AlignCenter)
         self.circle_I11_2.setWordWrap(False)
 
@@ -4367,7 +4363,7 @@ class Ui_MainWindow(object):
         self.group_I12_2.setContentsMargins(0, 0, 0, 0)
         self.circle_I12_2 = QLabel(self.layoutWidget_329)
         self.circle_I12_2.setObjectName(u"circle_I12_2")
-        self.circle_I12_2.setFont(font8)
+        self.circle_I12_2.setFont(font7)
         self.circle_I12_2.setAlignment(Qt.AlignCenter)
         self.circle_I12_2.setWordWrap(False)
 
@@ -4388,7 +4384,7 @@ class Ui_MainWindow(object):
         self.group_I13_2.setContentsMargins(0, 0, 0, 0)
         self.circle_I13_2 = QLabel(self.layoutWidget_173)
         self.circle_I13_2.setObjectName(u"circle_I13_2")
-        self.circle_I13_2.setFont(font8)
+        self.circle_I13_2.setFont(font7)
         self.circle_I13_2.setAlignment(Qt.AlignCenter)
         self.circle_I13_2.setWordWrap(False)
 
@@ -4416,7 +4412,7 @@ class Ui_MainWindow(object):
         self.group_B_2.setContentsMargins(0, 0, 0, 0)
         self.circle_B_2 = QLabel(self.layoutWidget_110)
         self.circle_B_2.setObjectName(u"circle_B_2")
-        self.circle_B_2.setFont(font8)
+        self.circle_B_2.setFont(font7)
         self.circle_B_2.setAlignment(Qt.AlignCenter)
         self.circle_B_2.setWordWrap(False)
 
@@ -4437,7 +4433,7 @@ class Ui_MainWindow(object):
         self.group_B0_2.setContentsMargins(0, 0, 0, 0)
         self.circle_B0_2 = QLabel(self.layoutWidget_224)
         self.circle_B0_2.setObjectName(u"circle_B0_2")
-        self.circle_B0_2.setFont(font9)
+        self.circle_B0_2.setFont(font8)
         self.circle_B0_2.setAlignment(Qt.AlignCenter)
         self.circle_B0_2.setWordWrap(False)
 
@@ -4458,7 +4454,7 @@ class Ui_MainWindow(object):
         self.group_B1_2.setContentsMargins(0, 0, 0, 0)
         self.circle_B1_2 = QLabel(self.layoutWidget_235)
         self.circle_B1_2.setObjectName(u"circle_B1_2")
-        self.circle_B1_2.setFont(font8)
+        self.circle_B1_2.setFont(font7)
         self.circle_B1_2.setAlignment(Qt.AlignCenter)
         self.circle_B1_2.setWordWrap(False)
 
@@ -4479,7 +4475,7 @@ class Ui_MainWindow(object):
         self.group_B2_2.setContentsMargins(0, 0, 0, 0)
         self.circle_B2_2 = QLabel(self.layoutWidget_236)
         self.circle_B2_2.setObjectName(u"circle_B2_2")
-        self.circle_B2_2.setFont(font8)
+        self.circle_B2_2.setFont(font7)
         self.circle_B2_2.setAlignment(Qt.AlignCenter)
         self.circle_B2_2.setWordWrap(False)
 
@@ -4500,7 +4496,7 @@ class Ui_MainWindow(object):
         self.group_B3_2.setContentsMargins(0, 0, 0, 0)
         self.circle_B3_2 = QLabel(self.layoutWidget_237)
         self.circle_B3_2.setObjectName(u"circle_B3_2")
-        self.circle_B3_2.setFont(font10)
+        self.circle_B3_2.setFont(font9)
         self.circle_B3_2.setAlignment(Qt.AlignCenter)
         self.circle_B3_2.setWordWrap(False)
 
@@ -4521,7 +4517,7 @@ class Ui_MainWindow(object):
         self.group_B4_2.setContentsMargins(0, 0, 0, 0)
         self.circle_B4_2 = QLabel(self.layoutWidget_111)
         self.circle_B4_2.setObjectName(u"circle_B4_2")
-        self.circle_B4_2.setFont(font8)
+        self.circle_B4_2.setFont(font7)
         self.circle_B4_2.setAlignment(Qt.AlignCenter)
         self.circle_B4_2.setWordWrap(False)
 
@@ -4542,7 +4538,7 @@ class Ui_MainWindow(object):
         self.group_B5_2.setContentsMargins(0, 0, 0, 0)
         self.circle_B5_2 = QLabel(self.layoutWidget_112)
         self.circle_B5_2.setObjectName(u"circle_B5_2")
-        self.circle_B5_2.setFont(font8)
+        self.circle_B5_2.setFont(font7)
         self.circle_B5_2.setAlignment(Qt.AlignCenter)
         self.circle_B5_2.setWordWrap(False)
 
@@ -4563,7 +4559,7 @@ class Ui_MainWindow(object):
         self.group_B6_2.setContentsMargins(0, 0, 0, 0)
         self.circle_B6_2 = QLabel(self.layoutWidget_113)
         self.circle_B6_2.setObjectName(u"circle_B6_2")
-        self.circle_B6_2.setFont(font8)
+        self.circle_B6_2.setFont(font7)
         self.circle_B6_2.setAlignment(Qt.AlignCenter)
         self.circle_B6_2.setWordWrap(False)
 
@@ -4584,7 +4580,7 @@ class Ui_MainWindow(object):
         self.group_B7_2.setContentsMargins(0, 0, 0, 0)
         self.circle_B7_2 = QLabel(self.layoutWidget_238)
         self.circle_B7_2.setObjectName(u"circle_B7_2")
-        self.circle_B7_2.setFont(font8)
+        self.circle_B7_2.setFont(font7)
         self.circle_B7_2.setAlignment(Qt.AlignCenter)
         self.circle_B7_2.setWordWrap(False)
 
@@ -4605,7 +4601,7 @@ class Ui_MainWindow(object):
         self.group_B8_2.setContentsMargins(0, 0, 0, 0)
         self.circle_B8_2 = QLabel(self.layoutWidget_239)
         self.circle_B8_2.setObjectName(u"circle_B8_2")
-        self.circle_B8_2.setFont(font8)
+        self.circle_B8_2.setFont(font7)
         self.circle_B8_2.setAlignment(Qt.AlignCenter)
         self.circle_B8_2.setWordWrap(False)
 
@@ -4626,7 +4622,7 @@ class Ui_MainWindow(object):
         self.group_blank2_2.setContentsMargins(0, 0, 0, 0)
         self.circle_blank2_2 = QLabel(self.layoutWidget_240)
         self.circle_blank2_2.setObjectName(u"circle_blank2_2")
-        self.circle_blank2_2.setFont(font8)
+        self.circle_blank2_2.setFont(font7)
         self.circle_blank2_2.setAlignment(Qt.AlignCenter)
         self.circle_blank2_2.setWordWrap(False)
 
@@ -4647,7 +4643,7 @@ class Ui_MainWindow(object):
         self.group_J_2.setContentsMargins(0, 0, 0, 0)
         self.circle_J_2 = QLabel(self.layoutWidget_241)
         self.circle_J_2.setObjectName(u"circle_J_2")
-        self.circle_J_2.setFont(font8)
+        self.circle_J_2.setFont(font7)
         self.circle_J_2.setAlignment(Qt.AlignCenter)
         self.circle_J_2.setWordWrap(False)
 
@@ -4668,7 +4664,7 @@ class Ui_MainWindow(object):
         self.group_J0_2.setContentsMargins(0, 0, 0, 0)
         self.circle_J0_2 = QLabel(self.layoutWidget_49)
         self.circle_J0_2.setObjectName(u"circle_J0_2")
-        self.circle_J0_2.setFont(font8)
+        self.circle_J0_2.setFont(font7)
         self.circle_J0_2.setAlignment(Qt.AlignCenter)
         self.circle_J0_2.setWordWrap(False)
 
@@ -4689,7 +4685,7 @@ class Ui_MainWindow(object):
         self.group_J1_2.setContentsMargins(0, 0, 0, 0)
         self.circle_J1_2 = QLabel(self.layoutWidget_50)
         self.circle_J1_2.setObjectName(u"circle_J1_2")
-        self.circle_J1_2.setFont(font8)
+        self.circle_J1_2.setFont(font7)
         self.circle_J1_2.setAlignment(Qt.AlignCenter)
         self.circle_J1_2.setWordWrap(False)
 
@@ -4710,7 +4706,7 @@ class Ui_MainWindow(object):
         self.group_J2_2.setContentsMargins(0, 0, 0, 0)
         self.circle_J2_2 = QLabel(self.layoutWidget_178)
         self.circle_J2_2.setObjectName(u"circle_J2_2")
-        self.circle_J2_2.setFont(font8)
+        self.circle_J2_2.setFont(font7)
         self.circle_J2_2.setAlignment(Qt.AlignCenter)
         self.circle_J2_2.setWordWrap(False)
 
@@ -4731,7 +4727,7 @@ class Ui_MainWindow(object):
         self.group_J3_2.setContentsMargins(0, 0, 0, 0)
         self.circle_J3_2 = QLabel(self.layoutWidget_330)
         self.circle_J3_2.setObjectName(u"circle_J3_2")
-        self.circle_J3_2.setFont(font9)
+        self.circle_J3_2.setFont(font8)
         self.circle_J3_2.setAlignment(Qt.AlignCenter)
         self.circle_J3_2.setWordWrap(False)
 
@@ -4752,7 +4748,7 @@ class Ui_MainWindow(object):
         self.group_J4_2.setContentsMargins(0, 0, 0, 0)
         self.circle_J4_2 = QLabel(self.layoutWidget_331)
         self.circle_J4_2.setObjectName(u"circle_J4_2")
-        self.circle_J4_2.setFont(font8)
+        self.circle_J4_2.setFont(font7)
         self.circle_J4_2.setAlignment(Qt.AlignCenter)
         self.circle_J4_2.setWordWrap(False)
 
@@ -4773,7 +4769,7 @@ class Ui_MainWindow(object):
         self.group_J5_2.setContentsMargins(0, 0, 0, 0)
         self.circle_J5_2 = QLabel(self.layoutWidget_332)
         self.circle_J5_2.setObjectName(u"circle_J5_2")
-        self.circle_J5_2.setFont(font8)
+        self.circle_J5_2.setFont(font7)
         self.circle_J5_2.setAlignment(Qt.AlignCenter)
         self.circle_J5_2.setWordWrap(False)
 
@@ -4794,7 +4790,7 @@ class Ui_MainWindow(object):
         self.group_J6_2.setContentsMargins(0, 0, 0, 0)
         self.circle_J6_2 = QLabel(self.layoutWidget_333)
         self.circle_J6_2.setObjectName(u"circle_J6_2")
-        self.circle_J6_2.setFont(font8)
+        self.circle_J6_2.setFont(font7)
         self.circle_J6_2.setAlignment(Qt.AlignCenter)
         self.circle_J6_2.setWordWrap(False)
 
@@ -4815,7 +4811,7 @@ class Ui_MainWindow(object):
         self.group_J7_2.setContentsMargins(0, 0, 0, 0)
         self.circle_J7_2 = QLabel(self.layoutWidget_179)
         self.circle_J7_2.setObjectName(u"circle_J7_2")
-        self.circle_J7_2.setFont(font8)
+        self.circle_J7_2.setFont(font7)
         self.circle_J7_2.setAlignment(Qt.AlignCenter)
         self.circle_J7_2.setWordWrap(False)
 
@@ -4836,7 +4832,7 @@ class Ui_MainWindow(object):
         self.group_J8_2.setContentsMargins(0, 0, 0, 0)
         self.circle_J8_2 = QLabel(self.layoutWidget_180)
         self.circle_J8_2.setObjectName(u"circle_J8_2")
-        self.circle_J8_2.setFont(font8)
+        self.circle_J8_2.setFont(font7)
         self.circle_J8_2.setAlignment(Qt.AlignCenter)
         self.circle_J8_2.setWordWrap(False)
 
@@ -4857,7 +4853,7 @@ class Ui_MainWindow(object):
         self.group_J9_2.setContentsMargins(0, 0, 0, 0)
         self.circle_J9_2 = QLabel(self.layoutWidget_181)
         self.circle_J9_2.setObjectName(u"circle_J9_2")
-        self.circle_J9_2.setFont(font8)
+        self.circle_J9_2.setFont(font7)
         self.circle_J9_2.setAlignment(Qt.AlignCenter)
         self.circle_J9_2.setWordWrap(False)
 
@@ -4878,7 +4874,7 @@ class Ui_MainWindow(object):
         self.group_J10_2.setContentsMargins(0, 0, 0, 0)
         self.circle_J10_2 = QLabel(self.layoutWidget_334)
         self.circle_J10_2.setObjectName(u"circle_J10_2")
-        self.circle_J10_2.setFont(font8)
+        self.circle_J10_2.setFont(font7)
         self.circle_J10_2.setAlignment(Qt.AlignCenter)
         self.circle_J10_2.setWordWrap(False)
 
@@ -4899,7 +4895,7 @@ class Ui_MainWindow(object):
         self.group_J11_2.setContentsMargins(0, 0, 0, 0)
         self.circle_J11_2 = QLabel(self.layoutWidget_335)
         self.circle_J11_2.setObjectName(u"circle_J11_2")
-        self.circle_J11_2.setFont(font10)
+        self.circle_J11_2.setFont(font9)
         self.circle_J11_2.setAlignment(Qt.AlignCenter)
         self.circle_J11_2.setWordWrap(False)
 
@@ -4920,7 +4916,7 @@ class Ui_MainWindow(object):
         self.group_J12_2.setContentsMargins(0, 0, 0, 0)
         self.circle_J12_2 = QLabel(self.layoutWidget_187)
         self.circle_J12_2.setObjectName(u"circle_J12_2")
-        self.circle_J12_2.setFont(font8)
+        self.circle_J12_2.setFont(font7)
         self.circle_J12_2.setAlignment(Qt.AlignCenter)
         self.circle_J12_2.setWordWrap(False)
 
@@ -4948,7 +4944,7 @@ class Ui_MainWindow(object):
         self.group_C.setContentsMargins(0, 0, 0, 0)
         self.circle_C = QLabel(self.layoutWidget_96)
         self.circle_C.setObjectName(u"circle_C")
-        self.circle_C.setFont(font8)
+        self.circle_C.setFont(font7)
         self.circle_C.setAlignment(Qt.AlignCenter)
         self.circle_C.setWordWrap(False)
 
@@ -4969,7 +4965,7 @@ class Ui_MainWindow(object):
         self.group_C0.setContentsMargins(0, 0, 0, 0)
         self.circle_C0 = QLabel(self.layoutWidget_213)
         self.circle_C0.setObjectName(u"circle_C0")
-        self.circle_C0.setFont(font9)
+        self.circle_C0.setFont(font8)
         self.circle_C0.setAlignment(Qt.AlignCenter)
         self.circle_C0.setWordWrap(False)
 
@@ -4990,7 +4986,7 @@ class Ui_MainWindow(object):
         self.group_C1.setContentsMargins(0, 0, 0, 0)
         self.circle_C1 = QLabel(self.layoutWidget_214)
         self.circle_C1.setObjectName(u"circle_C1")
-        self.circle_C1.setFont(font8)
+        self.circle_C1.setFont(font7)
         self.circle_C1.setAlignment(Qt.AlignCenter)
         self.circle_C1.setWordWrap(False)
 
@@ -5011,7 +5007,7 @@ class Ui_MainWindow(object):
         self.group_C2.setContentsMargins(0, 0, 0, 0)
         self.circle_C2 = QLabel(self.layoutWidget_215)
         self.circle_C2.setObjectName(u"circle_C2")
-        self.circle_C2.setFont(font8)
+        self.circle_C2.setFont(font7)
         self.circle_C2.setAlignment(Qt.AlignCenter)
         self.circle_C2.setWordWrap(False)
 
@@ -5032,7 +5028,7 @@ class Ui_MainWindow(object):
         self.group_C3.setContentsMargins(0, 0, 0, 0)
         self.circle_C3 = QLabel(self.layoutWidget_216)
         self.circle_C3.setObjectName(u"circle_C3")
-        self.circle_C3.setFont(font8)
+        self.circle_C3.setFont(font7)
         self.circle_C3.setAlignment(Qt.AlignCenter)
         self.circle_C3.setWordWrap(False)
 
@@ -5053,7 +5049,7 @@ class Ui_MainWindow(object):
         self.group_C4.setContentsMargins(0, 0, 0, 0)
         self.circle_C4 = QLabel(self.layoutWidget_97)
         self.circle_C4.setObjectName(u"circle_C4")
-        self.circle_C4.setFont(font8)
+        self.circle_C4.setFont(font7)
         self.circle_C4.setAlignment(Qt.AlignCenter)
         self.circle_C4.setWordWrap(False)
 
@@ -5074,7 +5070,7 @@ class Ui_MainWindow(object):
         self.group_C5.setContentsMargins(0, 0, 0, 0)
         self.circle_C5 = QLabel(self.layoutWidget_98)
         self.circle_C5.setObjectName(u"circle_C5")
-        self.circle_C5.setFont(font8)
+        self.circle_C5.setFont(font7)
         self.circle_C5.setAlignment(Qt.AlignCenter)
         self.circle_C5.setWordWrap(False)
 
@@ -5095,7 +5091,7 @@ class Ui_MainWindow(object):
         self.group_C6.setContentsMargins(0, 0, 0, 0)
         self.circle_C6 = QLabel(self.layoutWidget_99)
         self.circle_C6.setObjectName(u"circle_C6")
-        self.circle_C6.setFont(font8)
+        self.circle_C6.setFont(font7)
         self.circle_C6.setAlignment(Qt.AlignCenter)
         self.circle_C6.setWordWrap(False)
 
@@ -5116,7 +5112,7 @@ class Ui_MainWindow(object):
         self.group_C7.setContentsMargins(0, 0, 0, 0)
         self.circle_C7 = QLabel(self.layoutWidget_217)
         self.circle_C7.setObjectName(u"circle_C7")
-        self.circle_C7.setFont(font8)
+        self.circle_C7.setFont(font7)
         self.circle_C7.setAlignment(Qt.AlignCenter)
         self.circle_C7.setWordWrap(False)
 
@@ -5137,7 +5133,7 @@ class Ui_MainWindow(object):
         self.group_C8.setContentsMargins(0, 0, 0, 0)
         self.circle_C8 = QLabel(self.layoutWidget_218)
         self.circle_C8.setObjectName(u"circle_C8")
-        self.circle_C8.setFont(font8)
+        self.circle_C8.setFont(font7)
         self.circle_C8.setAlignment(Qt.AlignCenter)
         self.circle_C8.setWordWrap(False)
 
@@ -5158,7 +5154,7 @@ class Ui_MainWindow(object):
         self.group_C9.setContentsMargins(0, 0, 0, 0)
         self.circle_C9 = QLabel(self.layoutWidget_219)
         self.circle_C9.setObjectName(u"circle_C9")
-        self.circle_C9.setFont(font8)
+        self.circle_C9.setFont(font7)
         self.circle_C9.setAlignment(Qt.AlignCenter)
         self.circle_C9.setWordWrap(False)
 
@@ -5179,7 +5175,7 @@ class Ui_MainWindow(object):
         self.group_blank3.setContentsMargins(0, 0, 0, 0)
         self.circle_blank3 = QLabel(self.layoutWidget_261)
         self.circle_blank3.setObjectName(u"circle_blank3")
-        self.circle_blank3.setFont(font8)
+        self.circle_blank3.setFont(font7)
         self.circle_blank3.setAlignment(Qt.AlignCenter)
         self.circle_blank3.setWordWrap(False)
 
@@ -5200,7 +5196,7 @@ class Ui_MainWindow(object):
         self.group_K.setContentsMargins(0, 0, 0, 0)
         self.circle_K = QLabel(self.layoutWidget_35)
         self.circle_K.setObjectName(u"circle_K")
-        self.circle_K.setFont(font8)
+        self.circle_K.setFont(font7)
         self.circle_K.setAlignment(Qt.AlignCenter)
         self.circle_K.setWordWrap(False)
 
@@ -5221,7 +5217,7 @@ class Ui_MainWindow(object):
         self.group_K0.setContentsMargins(0, 0, 0, 0)
         self.circle_K0 = QLabel(self.layoutWidget_36)
         self.circle_K0.setObjectName(u"circle_K0")
-        self.circle_K0.setFont(font8)
+        self.circle_K0.setFont(font7)
         self.circle_K0.setAlignment(Qt.AlignCenter)
         self.circle_K0.setWordWrap(False)
 
@@ -5242,7 +5238,7 @@ class Ui_MainWindow(object):
         self.group_K1.setContentsMargins(0, 0, 0, 0)
         self.circle_K1 = QLabel(self.layoutWidget_129)
         self.circle_K1.setObjectName(u"circle_K1")
-        self.circle_K1.setFont(font8)
+        self.circle_K1.setFont(font7)
         self.circle_K1.setAlignment(Qt.AlignCenter)
         self.circle_K1.setWordWrap(False)
 
@@ -5263,7 +5259,7 @@ class Ui_MainWindow(object):
         self.group_K2.setContentsMargins(0, 0, 0, 0)
         self.circle_K2 = QLabel(self.layoutWidget_262)
         self.circle_K2.setObjectName(u"circle_K2")
-        self.circle_K2.setFont(font9)
+        self.circle_K2.setFont(font8)
         self.circle_K2.setAlignment(Qt.AlignCenter)
         self.circle_K2.setWordWrap(False)
 
@@ -5284,7 +5280,7 @@ class Ui_MainWindow(object):
         self.group_K3.setContentsMargins(0, 0, 0, 0)
         self.circle_K3 = QLabel(self.layoutWidget_263)
         self.circle_K3.setObjectName(u"circle_K3")
-        self.circle_K3.setFont(font8)
+        self.circle_K3.setFont(font7)
         self.circle_K3.setAlignment(Qt.AlignCenter)
         self.circle_K3.setWordWrap(False)
 
@@ -5305,7 +5301,7 @@ class Ui_MainWindow(object):
         self.group_K4.setContentsMargins(0, 0, 0, 0)
         self.circle_K4 = QLabel(self.layoutWidget_264)
         self.circle_K4.setObjectName(u"circle_K4")
-        self.circle_K4.setFont(font8)
+        self.circle_K4.setFont(font7)
         self.circle_K4.setAlignment(Qt.AlignCenter)
         self.circle_K4.setWordWrap(False)
 
@@ -5326,7 +5322,7 @@ class Ui_MainWindow(object):
         self.group_K5.setContentsMargins(0, 0, 0, 0)
         self.circle_K5 = QLabel(self.layoutWidget_265)
         self.circle_K5.setObjectName(u"circle_K5")
-        self.circle_K5.setFont(font8)
+        self.circle_K5.setFont(font7)
         self.circle_K5.setAlignment(Qt.AlignCenter)
         self.circle_K5.setWordWrap(False)
 
@@ -5347,7 +5343,7 @@ class Ui_MainWindow(object):
         self.group_K6.setContentsMargins(0, 0, 0, 0)
         self.circle_K6 = QLabel(self.layoutWidget_130)
         self.circle_K6.setObjectName(u"circle_K6")
-        self.circle_K6.setFont(font8)
+        self.circle_K6.setFont(font7)
         self.circle_K6.setAlignment(Qt.AlignCenter)
         self.circle_K6.setWordWrap(False)
 
@@ -5368,7 +5364,7 @@ class Ui_MainWindow(object):
         self.group_K7.setContentsMargins(0, 0, 0, 0)
         self.circle_K7 = QLabel(self.layoutWidget_131)
         self.circle_K7.setObjectName(u"circle_K7")
-        self.circle_K7.setFont(font8)
+        self.circle_K7.setFont(font7)
         self.circle_K7.setAlignment(Qt.AlignCenter)
         self.circle_K7.setWordWrap(False)
 
@@ -5389,7 +5385,7 @@ class Ui_MainWindow(object):
         self.group_K8.setContentsMargins(0, 0, 0, 0)
         self.circle_K8 = QLabel(self.layoutWidget_132)
         self.circle_K8.setObjectName(u"circle_K8")
-        self.circle_K8.setFont(font10)
+        self.circle_K8.setFont(font9)
         self.circle_K8.setAlignment(Qt.AlignCenter)
         self.circle_K8.setWordWrap(False)
 
@@ -5410,7 +5406,7 @@ class Ui_MainWindow(object):
         self.group_K9.setContentsMargins(0, 0, 0, 0)
         self.circle_K9 = QLabel(self.layoutWidget_266)
         self.circle_K9.setObjectName(u"circle_K9")
-        self.circle_K9.setFont(font8)
+        self.circle_K9.setFont(font7)
         self.circle_K9.setAlignment(Qt.AlignCenter)
         self.circle_K9.setWordWrap(False)
 
@@ -5431,7 +5427,7 @@ class Ui_MainWindow(object):
         self.group_K10.setContentsMargins(0, 0, 0, 0)
         self.circle_K10 = QLabel(self.layoutWidget_267)
         self.circle_K10.setObjectName(u"circle_K10")
-        self.circle_K10.setFont(font8)
+        self.circle_K10.setFont(font7)
         self.circle_K10.setAlignment(Qt.AlignCenter)
         self.circle_K10.setWordWrap(False)
 
@@ -5452,7 +5448,7 @@ class Ui_MainWindow(object):
         self.group_K11.setContentsMargins(0, 0, 0, 0)
         self.circle_K11 = QLabel(self.layoutWidget_133)
         self.circle_K11.setObjectName(u"circle_K11")
-        self.circle_K11.setFont(font8)
+        self.circle_K11.setFont(font7)
         self.circle_K11.setAlignment(Qt.AlignCenter)
         self.circle_K11.setWordWrap(False)
 
@@ -5553,7 +5549,7 @@ class Ui_MainWindow(object):
         self.pushbtn_GFArun.setFont(font1)
         self.gfa_checkBox = QCheckBox(self.group_gfa)
         self.gfa_checkBox.setObjectName(u"gfa_checkBox")
-        self.gfa_checkBox.setGeometry(QRect(220, 40, 71, 21))
+        self.gfa_checkBox.setGeometry(QRect(220, 43, 71, 21))
         self.gfa_checkBox.setFont(font2)
         self.lineEdit_terminal_2 = QLineEdit(self.tab_status)
         self.lineEdit_terminal_2.setObjectName(u"lineEdit_terminal_2")
@@ -5623,16 +5619,16 @@ class Ui_MainWindow(object):
         self.label_status_fiber_2.setGeometry(QRect(195, 50, 71, 29))
         self.label_status_fiber_2.setFont(font2)
         self.label_status_fiber_2.setAlignment(Qt.AlignCenter)
-        self.ok_status_endo_2 = QLabel(self.group_status_2)
-        self.ok_status_endo_2.setObjectName(u"ok_status_endo_2")
-        self.ok_status_endo_2.setGeometry(QRect(264, 50, 32, 29))
-        sizePolicy2.setHeightForWidth(self.ok_status_endo_2.sizePolicy().hasHeightForWidth())
-        self.ok_status_endo_2.setSizePolicy(sizePolicy2)
-        self.ok_status_endo_2.setFont(font2)
-        self.ok_status_endo_2.setAlignment(Qt.AlignCenter)
+        self.ok_status_finder_2 = QLabel(self.group_status_2)
+        self.ok_status_finder_2.setObjectName(u"ok_status_finder_2")
+        self.ok_status_finder_2.setGeometry(QRect(264, 50, 32, 29))
+        sizePolicy2.setHeightForWidth(self.ok_status_finder_2.sizePolicy().hasHeightForWidth())
+        self.ok_status_finder_2.setSizePolicy(sizePolicy2)
+        self.ok_status_finder_2.setFont(font2)
+        self.ok_status_finder_2.setAlignment(Qt.AlignCenter)
         self.label_status_finder_2 = QLabel(self.group_status_2)
         self.label_status_finder_2.setObjectName(u"label_status_finder_2")
-        self.label_status_finder_2.setGeometry(QRect(282, 50, 89, 29))
+        self.label_status_finder_2.setGeometry(QRect(290, 50, 71, 29))
         self.label_status_finder_2.setFont(font2)
         self.label_status_finder_2.setAlignment(Qt.AlignCenter)
         self.ok_status_metrology_2 = QLabel(self.group_status_2)
@@ -5734,9 +5730,9 @@ class Ui_MainWindow(object):
         self.group_metrology_2.setObjectName(u"group_metrology_2")
         self.group_metrology_2.setGeometry(QRect(10, 268, 311, 121))
         self.group_metrology_2.setFont(font1)
-        self.pushbtn_MTL_cal_3 = QPushButton(self.group_metrology_2)
-        self.pushbtn_MTL_cal_3.setObjectName(u"pushbtn_MTL_cal_3")
-        self.pushbtn_MTL_cal_3.setGeometry(QRect(200, 80, 101, 31))
+        self.pushbtn_Finder_exp_3 = QPushButton(self.group_metrology_2)
+        self.pushbtn_Finder_exp_3.setObjectName(u"pushbtn_Finder_exp_3")
+        self.pushbtn_Finder_exp_3.setGeometry(QRect(200, 80, 101, 31))
         self.lineEdit_MTL_exptime_3 = QLineEdit(self.group_metrology_2)
         self.lineEdit_MTL_exptime_3.setObjectName(u"lineEdit_MTL_exptime_3")
         self.lineEdit_MTL_exptime_3.setGeometry(QRect(110, 40, 81, 25))
@@ -5755,7 +5751,7 @@ class Ui_MainWindow(object):
 
         self.tabWidget.setCurrentIndex(1)
         self.tabWidget_2.setCurrentIndex(2)
-        self.group_obs.setCurrentIndex(0)
+        self.group_obs.setCurrentIndex(1)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -5833,7 +5829,7 @@ class Ui_MainWindow(object):
         self.label_status_adc.setText(QCoreApplication.translate("MainWindow", u"ADC", None))
         self.ok_status_fiber.setText(QCoreApplication.translate("MainWindow", u"\u26ab", None))
         self.label_status_fiber.setText(QCoreApplication.translate("MainWindow", u"Fiber", None))
-        self.ok_status_endo.setText(QCoreApplication.translate("MainWindow", u"\u26ab", None))
+        self.ok_status_finder.setText(QCoreApplication.translate("MainWindow", u"\u26ab", None))
         self.label_status_finder.setText(QCoreApplication.translate("MainWindow", u"Finder", None))
         self.ok_status_metrology.setText(QCoreApplication.translate("MainWindow", u"\u26ab", None))
         self.label_status_metrology.setText(QCoreApplication.translate("MainWindow", u"Metrology", None))
@@ -7055,7 +7051,7 @@ class Ui_MainWindow(object):
         self.label_status_adc_2.setText(QCoreApplication.translate("MainWindow", u"ADC", None))
         self.ok_status_fiber_2.setText(QCoreApplication.translate("MainWindow", u"\u26ab", None))
         self.label_status_fiber_2.setText(QCoreApplication.translate("MainWindow", u"Fiber", None))
-        self.ok_status_endo_2.setText(QCoreApplication.translate("MainWindow", u"\u26ab", None))
+        self.ok_status_finder_2.setText(QCoreApplication.translate("MainWindow", u"\u26ab", None))
         self.label_status_finder_2.setText(QCoreApplication.translate("MainWindow", u"Finder", None))
         self.ok_status_metrology_2.setText(QCoreApplication.translate("MainWindow", u"\u26ab", None))
         self.label_status_metrology_2.setText(QCoreApplication.translate("MainWindow", u"Metrology", None))
@@ -7108,7 +7104,7 @@ class Ui_MainWindow(object):
         self.pushbtn_FBP_offset_2.setText(QCoreApplication.translate("MainWindow", u"Park", None))
         self.group_spectrograph.setTitle(QCoreApplication.translate("MainWindow", u"Spectrograph", None))
         self.group_metrology_2.setTitle(QCoreApplication.translate("MainWindow", u"Finder", None))
-        self.pushbtn_MTL_cal_3.setText(QCoreApplication.translate("MainWindow", u"Exp. Start", None))
+        self.pushbtn_Finder_exp_3.setText(QCoreApplication.translate("MainWindow", u"Exp. Start", None))
         self.label_MTL_exptime_3.setText(QCoreApplication.translate("MainWindow", u"Exp. Time", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_status), QCoreApplication.translate("MainWindow", u"Setting/Status", None))
     # retranslateUi

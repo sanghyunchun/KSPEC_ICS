@@ -104,8 +104,8 @@ class script():
     async def obs_initial(self,scriptrun,logging):
         """Initialize all instruments."""
         print('Start instruments intialization')
-        await handle_endo('endostatus',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
+#        await handle_endo('endostatus',scriptrun.ICSclient)
+#        await scriptrun.response_queue.get()
         await handle_gfa('gfastatus',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
         await handle_fbp('fbpstatus',scriptrun.ICSclient)
@@ -201,6 +201,7 @@ class script():
         )
 
     async def handle_autoguide(self,exptime, scriptrun):
+        print(scriptrun)
         try:
             await handle_gfa(f'gfaguide {exptime}',scriptrun.ICSclient)
             while True:

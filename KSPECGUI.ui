@@ -2002,7 +2002,7 @@
         <set>Qt::AlignCenter</set>
        </property>
       </widget>
-      <widget class="QLabel" name="ok_status_endo">
+      <widget class="QLabel" name="ok_status_finder">
        <property name="geometry">
         <rect>
          <x>264</x>
@@ -2036,7 +2036,7 @@
       <widget class="QLabel" name="label_status_finder">
        <property name="geometry">
         <rect>
-         <x>291</x>
+         <x>290</x>
          <y>50</y>
          <width>71</width>
          <height>29</height>
@@ -2440,7 +2440,7 @@
        </sizepolicy>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab_queue">
        <attribute name="title">
@@ -2917,13 +2917,13 @@
          <rect>
           <x>10</x>
           <y>20</y>
-          <width>201</width>
+          <width>221</width>
           <height>16</height>
          </rect>
         </property>
         <property name="font">
          <font>
-          <pointsize>11</pointsize>
+          <pointsize>14</pointsize>
           <weight>75</weight>
           <bold>true</bold>
           <strikeout>false</strikeout>
@@ -14175,7 +14175,7 @@
        <property name="geometry">
         <rect>
          <x>220</x>
-         <y>40</y>
+         <y>43</y>
          <width>71</width>
          <height>21</height>
         </rect>
@@ -14516,7 +14516,7 @@
         <set>Qt::AlignCenter</set>
        </property>
       </widget>
-      <widget class="QLabel" name="ok_status_endo_2">
+      <widget class="QLabel" name="ok_status_finder_2">
        <property name="geometry">
         <rect>
          <x>264</x>
@@ -14550,9 +14550,9 @@
       <widget class="QLabel" name="label_status_finder_2">
        <property name="geometry">
         <rect>
-         <x>282</x>
+         <x>290</x>
          <y>50</y>
-         <width>89</width>
+         <width>71</width>
          <height>29</height>
         </rect>
        </property>
@@ -15110,7 +15110,7 @@
       <property name="title">
        <string>Finder</string>
       </property>
-      <widget class="QPushButton" name="pushbtn_MTL_cal_3">
+      <widget class="QPushButton" name="pushbtn_Finder_exp_3">
        <property name="geometry">
         <rect>
          <x>200</x>
