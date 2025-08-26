@@ -128,7 +128,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
         reply_data = mkmsg.adcmsg()
         result = await adc_action.stop(0)
         reply_data.update(result)
-        reply_data.update(process='Done',status='success')
+        reply_data.update(process='Done',status='normal')
         rsp = json.dumps(reply_data)
         printing(reply_data['message'])
         await ADC_server.send_message('ICS', rsp)
