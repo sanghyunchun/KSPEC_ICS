@@ -958,7 +958,7 @@ class MainWindow(QMainWindow):
         """
         handler_map = {
             "adc": handle_adc, "gfa": handle_gfa, "fbp": handle_fbp,
-            "endo": handle_endo, "mtl": handle_mtl, "lamp": handle_lamp,
+            "mtl": handle_mtl, "lamp": handle_lamp,
             "spec": handle_spec, "script": handle_script
         }
         if category in handler_map:

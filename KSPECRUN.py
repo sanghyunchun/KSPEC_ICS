@@ -240,9 +240,9 @@ if __name__ == "__main__":
         from LAMP import LAMP_server
         asyncio.run(LAMP_server.main())
 
-    if sys.argv[1] == 'ENDO':
-        from ENDO import ENDO_server
-        asyncio.run(ENDO_server.main())
+#    if sys.argv[1] == 'ENDO':
+#        from ENDO import ENDO_server
+#        asyncio.run(ENDO_server.main())
 
     if sys.argv[1] == 'ADCsimul':
         from ADC.Simul import ADC_server
