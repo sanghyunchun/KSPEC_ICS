@@ -59,6 +59,10 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
 
         # Start a new adcadjust task
         printing("New guiding task started.")
+        reply_data=mkmsg.gfamsg()
+        reply_data.update(process='ING',message='Autoguide starts.',status='success')
+        rsp=json.dumps(reply_data)
+        await GFA_server.send_message('ICS',rsp)
         guiding_task = asyncio.create_task(handle_guiding(GFA_server, gfa_actions, dict_data['ExpTime']))
 
     elif func == 'gfaguidestop':
@@ -66,7 +70,7 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
             printing("Stopping guiding task...")
             guiding_task.cancel()
             reply_data=mkmsg.gfamsg()
-            reply_data.update(process='Done',message='Autoguide Stop',status='normal')
+            reply_data.update(process='Done',message='Autoguide Stop',status='success')
             rsp=json.dumps(reply_data)
             await GFA_server.send_message('ICS',rsp)
             path_astroimg=kspecinfo['GFA']['Simul_astrometry_images']

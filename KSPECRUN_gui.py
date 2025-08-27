@@ -36,7 +36,6 @@ from script.scriptcli import script
 from SCIOBS.sciobscli import sciobscli
 
 
-
 class MplCanvas(FigureCanvas):
     def __init__(self, parent=None,dpi=100,left=0.00,right=1.,bottom=0.0,top=1.):
         self.fig = Figure(dpi=dpi)
@@ -359,17 +358,26 @@ class MainWindow(QMainWindow):
         widget.setStyleSheet(style)
 
 
-    def show_status(self,inst,stat):
-        color_map = {
-        'success': 'green',
-        'normal': 'black',
-        'fail': 'red'
-        }
-
-        font_map = {
-            'success' : 'True',
-            'noraml': 'False',
-            'fail': 'True'
+    def show_status(self,inst,stat,process):
+        print(f'tttt {inst}')
+        print(f'ttt {stat}')
+#        color_map = {
+#            'success': 'green',
+#            'normal': 'black',
+#            'fail': 'red'
+#            }
+#        print(f'ttttt {process}')
+        if process == 'Done':
+            color_map = {
+            'success': 'black',
+#            'normal': 'black',
+            'error': 'red'
+            }
+        elif process == 'ING':
+            color_map = {
+            'success': 'green',
+#            'normal': 'black',
+            'error': 'red'
             }
 
         label_map = {
@@ -622,29 +630,6 @@ class MainWindow(QMainWindow):
         command_on="flaton",command_off="flatoff",label="Flat")
 
 
-#        self.flat_state = not getattr(self, "flat_state", False)
-
-        # sync two button
-#        self.ui.pushbtn_Flat.setChecked(self.flat_state)
-#        self.ui.pushbtn_Flat_2.setChecked(self.flat_state)
-
-        # Set colors
-#        style_on = "color: green; font-weight:900;"
-#        style_off = "color: black;"
-#        style = style_on if self.flat_state else style_off
-
-#        self.ui.pushbtn_Flat.setStyleSheet(style)
-#        self.ui.pushbtn_Flat_2.setStyleSheet(style)
-
-        # command and log
-#        if self.flat_state:
-#            await handle_lamp('flaton', self.ICS_client)
-#            self.logging('Sent Flat ON', level='send')
-#        else:
-#            await handle_lamp('flatoff', self.ICS_client)
-#            self.logging('Sent Flat OFF', level='send')
-
-
     ### Arc Button ###
     @asyncSlot()
     async def arc_button_clicked(self):
@@ -656,30 +641,6 @@ class MainWindow(QMainWindow):
 
         await self._onoff_button_clicked(state_attr="arc_state", btn1=self.ui.pushbtn_Arc, btn2=self.ui.pushbtn_Arc_2,
         command_on="arcon",command_off="arcoff",label="Arc")
-
-
-#        self.arc_state = not getattr(self, "arc_state", False)
-
-        # sync two button
-#        self.ui.pushbtn_Arc.setChecked(self.arc_state)
-#        self.ui.pushbtn_Arc_2.setChecked(self.arc_state)
-
-        # Set colors
-#        style_on = "color: green; font-weight:900;"
-#        style_off = "color: black;"
-#        style = style_on if self.arc_state else style_off
-
-#        self.ui.pushbtn_Arc.setStyleSheet(style)
-#        self.ui.pushbtn_Arc_2.setStyleSheet(style)
-
-        # command and log
-#        if self.arc_state:
-#            await handle_lamp('arcon', self.ICS_client)
-#            self.logging('Sent Arc ON', level='send')
-#        else:
-#            await handle_lamp('arcoff', self.ICS_client)
-#            self.logging('Sent Arc OFF', level='send')
-
 
 
     @asyncSlot()
@@ -873,8 +834,6 @@ class MainWindow(QMainWindow):
         if not self.check_connection():
             return
 
-        if not self.check_syscheck():
-            return
         self.logging('System check start. Initialize dependencies',level='normal')
         self.scriptrun.initialize_dependencies(self.ICS_client, self.send_udp_message, self.send_telcom_command,
             self.response_queue, self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue, self.show_status)
@@ -942,7 +901,7 @@ class MainWindow(QMainWindow):
                 message =response_data.get('message','None')
                 status = response_data.get('status', 'fail')
 
-                self.show_status(inst,status)
+                self.show_status(inst,status, process)
 
                 if isinstance(message,dict):
                     message = json.dumps(message, indent=2)
@@ -958,8 +917,8 @@ class MainWindow(QMainWindow):
                 if inst in queue_map and process == 'ING':
                     await queue_map[inst].put(response_data)
                     if inst == 'GFA':
-                        fwhm=response_data['fwhm']
-                        self.ui.lineEdit_seeing.setText(f'{fwhm}')
+                        self.fwhm=response_data['fwhm']
+                        self.ui.lineEdit_seeing.setText(f'{self.fwhm}')
                 else:
                     print('put response_data to response_queue')
                     await self.response_queue.put(response_data)
