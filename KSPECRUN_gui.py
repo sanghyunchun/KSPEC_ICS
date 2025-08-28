@@ -200,11 +200,10 @@ class MainWindow(QMainWindow):
         self.timer.setInterval(1000)
         self.timer.timeout.connect(self.timeout)
         self.setWindowTitle('QTimer')
-
         self.timer.start()
 
 
-        ##### Button setting #####
+    ######### Button setting #####
         # Setting Initial observation
         self.ui.pushbtn_connect.clicked.connect(self.rabbitmq_connect)
         self.ui.pushbtn_connect.setCheckable(True)
@@ -219,17 +218,22 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_Guiding_2.setCheckable(True)
         self.ui.pushbtn_Guiding_2.clicked.connect(self.Guiding_button_clicked)
 
-
         self.ui.pushbtn_GFArun.clicked.connect(self.GFArun_button_clicked)
 
 
         # ADC adjust
         self.ui.pushbtn_ADCadjust.setCheckable(True)
         self.ui.pushbtn_ADCadjust.clicked.connect(self.ADCadjust_button_clicked)
+        self.ui.pushbtn_ADCadjust_2.setCheckable(True)
+        self.ui.pushbtn_ADCadjust_2.clicked.connect(self.ADCadjust_button_clicked)
+
         self.ui.pushbtn_adc_rotate.clicked.connect(self.adcrotate_button_clicked)
         self.ui.pushbtn_adc_park.clicked.connect(self.adcpark_button_clicked)
         self.ui.pushbtn_adc_home.clicked.connect(self.adchome_button_clicked)
         self.ui.pushbtn_adc_zero.clicked.connect(self.adczero_button_clicked)
+
+        # Fiber assign
+
 
         # Load Sequence
         self.ui.pushbtn_load_sequence.clicked.connect(self.load_file)
@@ -242,7 +246,7 @@ class MainWindow(QMainWindow):
 
 #        self.ui.pushbtn_exp_start.clicked.connect(self.take_calib)
 
-        # Subsystem function
+        # LAMP
         self.ui.pushbtn_Flat.setCheckable(True)
         self.ui.pushbtn_Flat_2.setCheckable(True)
         self.ui.pushbtn_Flat.clicked.connect(self.flat_button_clicked)
@@ -258,7 +262,7 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_send_cmd.clicked.connect(self.user_input)
 
 
-        ##### Canvas setting #####
+    ######### Canvas setting #####
         self.canvas_B=MplCanvas(self,dpi=100,left=0.00,right=1.,bottom=0.0,top=1.)
         self.B_layout=QVBoxLayout(self.ui.frame_B)
         self.B_layout.addWidget(self.canvas_B)
@@ -302,7 +306,7 @@ class MainWindow(QMainWindow):
                 "receive": "blue",
                 "error" : "red"
                 }
-        if status == 'fail':
+        if status == 'error':
             level = 'error'
 
         color = color_map.get(level,"black")
@@ -501,16 +505,9 @@ class MainWindow(QMainWindow):
 
         # Command and log
         if self.guiding_state:
-#            await self.scriptrun.run_autoguide(self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue,
-#                    self.GFA_response_queue,self.gfaexpt)
-#            await handle_script(f'autoguide {self.gfaexpt}', self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue,
-#                    self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue,self.scriptrun)
             await handle_script(f'autoguide {self.gfaexpt}', scriptrun=self.scriptrun)
             self.logging('Sent Autoguiding Start', level='send')
         else:
-#            await self.scriptrun.autoguidestop(self.ICS_client)
-#            await handle_script('autoguidestop', self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue,
-#                    self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue,self.scriptrun)
             await handle_script('autoguidestop', scriptrun=self.scriptrun)
             self.logging('Sent Autoguiding Stop', level='send')
 
@@ -535,9 +532,22 @@ class MainWindow(QMainWindow):
 
         if not self.check_syscheck():
             return
-        if self.ui.pushbtn_ADCadjust.isChecked():
-            self.ui.pushbtn_ADCadjust.setStyleSheet("color: green; font-weight:900;")
-            ra='12:34:43.2'
+
+        self.adcadjusting_state = not getattr(self,"adcadjusting_state",False)
+
+        # sync two button
+        self.ui.pushbtn_ADCadjust.setChecked(self.adcadjusting_state)
+        self.ui.pushbtn_ADCadjust_2.setChecked(self.adcadjusting_state)
+
+        style_on = "color: green; font-weight:900;"
+        style_off = "color: black;"
+        style = style_on if self.adcadjusting_state else style_off
+        self.ui.pushbtn_ADCadjust.setStyleSheet(style)
+        self.ui.pushbtn_ADCadjust_2.setStyleSheet(style)
+
+        if self.adcadjusting_state:
+#            self.ui.pushbtn_ADCadjust.setStyleSheet("color: green; font-weight:900;")
+            ra='02:34:43.2'
             dec='-31:34:56.4'
             await handle_adc(f'adcadjust {ra} {dec}',self.ICS_client)
             self.logging('Sent ADC adjusting Start', level='send')
