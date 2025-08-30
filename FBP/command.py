@@ -49,23 +49,29 @@ async def identify_execute(FBP_server,cmd):
         await FBP_server.send_message('ICS',rsp)
 
     if func == 'fbpmove':
-#        reply_data=mkmsg.fbpmsg()
-#        comment = 'Fiber positioners start to move'
-#        reply_data.update(message=comment,process='Done')
-#        rsp=json.dumps(reply_data)
-#        await FBP_server.send_message('ICS',rsp)
+        reply_data=mkmsg.fbpmsg()
+        comment = 'Fiber positioners start to targets.'
+        reply_data.update(message=comment,process='ING',status='success')
+        rsp=json.dumps(reply_data)
+        await FBP_server.send_message('ICS',rsp)
 
         status, comment=fbp_move()     ### Position of fiber postioner movement function
         reply_data=mkmsg.fbpmsg()
-        reply_data.update(message=comment,process='Done',status=status)
+        reply_data.update(message=comment,process='Done',status=status, pos_state='assign')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[FBP]', comment+'\033[0m')
         await FBP_server.send_message('ICS',rsp)
 
     if func == 'fbpoffset':
+        reply_data=mkmsg.fbpmsg()
+        comment = 'Fiber positioners start to offset.'
+        reply_data.update(message=comment,process='ING',status='success',pos_state='assign')
+        rsp=json.dumps(reply_data)
+        await FBP_server.send_message('ICS',rsp)
+
         status, comment = fbp_offset()   ### Position of fiber offset movement function
         reply_data=mkmsg.fbpmsg()
-        reply_data.update(message=comment,process='Done', status=status)
+        reply_data.update(message=comment,process='Done', status=status, pos_state='assign')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[FBP]', comment+'\033[0m')
         await FBP_server.send_message('ICS',rsp)
@@ -81,14 +87,14 @@ async def identify_execute(FBP_server,cmd):
     if func == 'fbpzero':
         reply_data=mkmsg.fbpmsg()
         comment = 'Fiber positioners start to move to zero positions'
-        reply_data.update(message=comment,process='Done',status='success')
+        reply_data.update(message=comment,process='ING',status='success')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[FBP]', comment+'\033[0m')
         await FBP_server.send_message('ICS',rsp)
 
         status, comment=fbp_zero()     ### Position of fiber postioner movement function
         reply_data=mkmsg.fbpmsg()
-        reply_data.update(message=comment,process='Done',status=status)
+        reply_data.update(message=comment,process='Done',status=status,pos_state='zero')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[FBP]', comment+'\033[0m')
         await FBP_server.send_message('ICS',rsp)
@@ -101,9 +107,9 @@ def fbp_zero():
     except Exception as e:
         return 'fail', str(e)
 
-    ra,dec,xp,yp=np.loadtxt(fbpfilepath+'object.radec',dtype=float,unpack=True,usecols=(0,1,2,3))
+#    ra,dec,xp,yp=np.loadtxt(fbpfilepath+'object.radec',dtype=float,unpack=True,usecols=(0,1,2,3))
     time.sleep(5)
-    rspmsg=f'Fiber positioners moved to initial position.'
+    rspmsg=f'Fiber positioners successfully moved to zero position.'
     return 'success', rspmsg
 
 def fbp_move():

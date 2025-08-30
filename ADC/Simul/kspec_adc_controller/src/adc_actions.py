@@ -284,7 +284,7 @@ class AdcActions:
             return self._generate_response(
                 "success",
                 f"Motors activated to position {pos} with velocity {vel}. "
-                f"Results: Motor1: {results[0]}, Motor2: {results[1]}"
+                f"Results: Motor1: $$$$$, Motor2: $$$$$"
             )
         except Exception as e:
             self.logger.error(f"Failed to activate motors with zenith angle {za}: {e}")

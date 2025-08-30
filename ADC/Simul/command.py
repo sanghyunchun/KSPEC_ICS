@@ -270,7 +270,7 @@ async def handle_adcadjust(ADC_server, adc_action, ra, dec):
         comment=f"Error in handle_adcadjust: {e}"
         printing(comment)
         reply_data=mkmsg.adcmsg()
-        reply_data.update(message=comment,process='Done',status='fail')
+        reply_data.update(message=comment,process='Done',status='error')
         rsp=json.dumps(reply_data)
         await ADC_server.send_message('ICS',rsp)
     else:

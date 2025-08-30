@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1612</width>
-    <height>1061</height>
+    <width>1616</width>
+    <height>1082</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -56,7 +56,7 @@
      <enum>QTabWidget::Triangular</enum>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <property name="elideMode">
      <enum>Qt::ElideLeft</enum>
@@ -212,7 +212,7 @@
         </sizepolicy>
        </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="finder">
         <attribute name="title">
@@ -2440,7 +2440,7 @@
        </sizepolicy>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab_queue">
        <attribute name="title">
@@ -2474,7 +2474,7 @@
        <widget class="QPushButton" name="pushbtn_stop_sequence">
         <property name="geometry">
          <rect>
-          <x>490</x>
+          <x>360</x>
           <y>280</y>
           <width>121</width>
           <height>41</height>
@@ -2907,6 +2907,31 @@
          <string>Run Calib</string>
         </property>
        </widget>
+       <widget class="QPushButton" name="pushbtn_stop_sequence_3">
+        <property name="geometry">
+         <rect>
+          <x>490</x>
+          <y>280</y>
+          <width>121</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>Arial</family>
+          <pointsize>14</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+          <strikeout>false</strikeout>
+         </font>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="text">
+         <string>END</string>
+        </property>
+       </widget>
       </widget>
       <widget class="QWidget" name="tab_single">
        <attribute name="title">
@@ -3240,7 +3265,7 @@
          <string>Exp. Start</string>
         </property>
        </widget>
-       <widget class="QPushButton" name="pushbtn_stop_sequence_2">
+       <widget class="QPushButton" name="pushbtn_exp_stop">
         <property name="geometry">
          <rect>
           <x>490</x>
@@ -14938,13 +14963,13 @@
        </property>
       </widget>
      </widget>
-     <widget class="QGroupBox" name="group_gfa_2">
+     <widget class="QGroupBox" name="group_fiberpositioner">
       <property name="geometry">
        <rect>
         <x>330</x>
         <y>144</y>
         <width>301</width>
-        <height>246</height>
+        <height>241</height>
        </rect>
       </property>
       <property name="font">
@@ -14963,7 +14988,7 @@
        <property name="geometry">
         <rect>
          <x>120</x>
-         <y>80</y>
+         <y>60</y>
          <width>71</width>
          <height>31</height>
         </rect>
@@ -14984,43 +15009,11 @@
         <string>Offset</string>
        </property>
       </widget>
-      <widget class="QLineEdit" name="lineEdit">
+      <widget class="QPushButton" name="pushbtn_FBP_zero">
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>40</y>
-         <width>151</width>
-         <height>25</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <family>Arial</family>
-         <pointsize>14</pointsize>
-         <weight>50</weight>
-         <bold>false</bold>
-         <strikeout>false</strikeout>
-        </font>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushbtn_FBP_mp_load">
-       <property name="geometry">
-        <rect>
-         <x>170</x>
-         <y>36</y>
-         <width>121</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Load Motion</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushbtn_adc_initialize_3">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>80</y>
+         <y>60</y>
          <width>101</width>
          <height>31</height>
         </rect>
@@ -15038,14 +15031,14 @@
         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
-        <string>Initialize</string>
+        <string>Zero</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushbtn_FBP_offset_2">
+      <widget class="QPushButton" name="pushbtn_FBP_park">
        <property name="geometry">
         <rect>
-         <x>210</x>
-         <y>80</y>
+         <x>200</x>
+         <y>60</y>
          <width>71</width>
          <height>31</height>
         </rect>
@@ -15093,7 +15086,7 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>268</y>
+        <y>263</y>
         <width>311</width>
         <height>121</height>
        </rect>
@@ -15114,7 +15107,7 @@
        <property name="geometry">
         <rect>
          <x>200</x>
-         <y>80</y>
+         <y>40</y>
          <width>101</width>
          <height>31</height>
         </rect>

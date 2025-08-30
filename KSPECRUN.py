@@ -72,6 +72,12 @@ class KSPECRunner:
         """Finds the category of a given command."""
         return next((cat for cat, cmds in self.command_list.items() if cmd in cmds), None)
 
+    def set_inst_pos_state(self,dict_data):
+        if dict_data['inst'] == 'ADC':
+            self.adc_pos = dict_data['pos_state']
+        if dict_data['inst'] == 'FBP':
+            self.fbp_pos = dict_data['pos_state']
+
     async def on_ics_message(self, message: IncomingMessage):
         async with message.process():
             try:
@@ -81,6 +87,7 @@ class KSPECRunner:
                 process = response_data.get('process', 'None')
                 message =response_data.get('message','None')
                 status = response_data.get('status', 'fail')
+                self.set_inst_pos_state(response_data) 
 
                 if isinstance(message,dict):
                     message = json.dumps(message, indent=2)

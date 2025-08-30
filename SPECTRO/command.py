@@ -22,6 +22,11 @@ async def identify_execute(SPEC_server,cmd):
         await SPEC_server.send_message('ICS',rsp)
 
     if func == 'getflat':
+        reply_data=mkmsg.specmsg()
+        comment = 'Flat exposure starts.'
+        reply_data.update(message=comment,process='ING',status='success')
+        rsp=json.dumps(reply_data)
+        await SPEC_server.send_message('ICS',rsp)
         exptime=dict_data['time']
         numframe=dict_data['numframe']
         comment=get_flat(exptime,numframe) ### Position of back illumination light on function
@@ -32,6 +37,11 @@ async def identify_execute(SPEC_server,cmd):
         await SPEC_server.send_message('ICS',rsp)
 
     if func == 'getarc':
+        reply_data=mkmsg.specmsg()
+        comment = 'Arc exposure starts.'
+        reply_data.update(message = comment, process='ING',status='success')
+        rsp=json.dumps(reply_data)
+        await SPEC_server.send_message('ICS',rsp)
         exptime=dict_data['time']
         numframe=dict_data['numframe']
         comment=get_arc(exptime,numframe) ### Position of back illumination light on function

@@ -1,0 +1,8 @@
+2025-08-29 10:38:51,831 [DEBUG] Initializing AdcActions class. (at adc_actions.py)
+2025-08-29 10:38:51,831 [INFO] Lookup table found: /media/shyunc/DATA/KSpec/KSPEC_ICS/ADC/Simul/kspec_adc_controller/src/etc/ADC_lookup.csv (at adc_actions.py)
+2025-08-29 10:38:51,832 [INFO] Interpolation function using pchip method created. (at adc_actions.py)
+2025-08-29 10:39:12,459 [INFO] Calculating from ZA. (at adc_actions.py)
+2025-08-29 10:39:12,459 [ERROR] Input zenith angle 90.49428636697905 is out of bounds (0.0, 60.0) (at adc_actions.py)
+2025-08-29 10:39:12,459 [ERROR] Error calculating from ZA: Input zenith angle 90.49428636697905 is out of bounds. (at adc_actions.py)
+2025-08-29 10:39:17,269 [DEBUG] Stopping both motors simultaneously. (at adc_actions.py)
+2025-08-29 10:39:17,269 [INFO] Both motors stopped successfully. (at adc_actions.py)

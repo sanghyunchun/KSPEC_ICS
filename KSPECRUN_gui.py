@@ -191,6 +191,9 @@ class MainWindow(QMainWindow):
 
         self.obstype = None
 
+        ### Moving Instrument position state ###
+        self.adc_pos = None
+        self.fbp_pos = None
 
 
 #Make timer (LT & UTC) 
@@ -233,6 +236,13 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_adc_zero.clicked.connect(self.adczero_button_clicked)
 
         # Fiber assign
+    #    self.ui.pushbtn_Fiber_assign.setCheckable(True)
+        self.ui.pushbtn_Fiber_assign.clicked.connect(self.Fiber_assign_button_clicked)
+    #    self.ui.pushbtn_Fiber_assign_2.setCheckable(True)
+        self.ui.pushbtn_Fiber_assign_2.clicked.connect(self.Fiber_assign_button_clicked)
+
+        self.ui.pushbtn_FBP_zero.clicked.connect(self.FBP_zero_button_clicked)
+        self.ui.pushbtn_FBP_offset.clicked.connect(self.FBP_offset_button_clicked)
 
 
         # Load Sequence
@@ -297,6 +307,7 @@ class MainWindow(QMainWindow):
         self.G6_layout.addWidget(self.canvas_G6)
 
 
+    ### Message log 
     def logging(self, message, status: str='success', level: str="send"):
         if isinstance(message, dict):
             message = json.dumps(message)
@@ -310,8 +321,10 @@ class MainWindow(QMainWindow):
             level = 'error'
 
         color = color_map.get(level,"black")
-        self.ui.log1.append(f'<span style="color:{color};">[ICS] {message}</span>')
-        self.ui.log2.append(f'<span style="color:{color};">[ICS] {message}</span>')
+        self.uttime=QDateTime.currentDateTimeUtc().toString('hh:mm:ss')
+        print(self.currentutc)
+        self.ui.log1.append(f'<span style="color:{color};">[{self.uttime}][ICS] {message}</span>')
+        self.ui.log2.append(f'<span style="color:{color};">[{self.uttime}][ICS] {message}</span>')
 
 ### Observation Set function ###
     def save_observer(self):
@@ -361,10 +374,13 @@ class MainWindow(QMainWindow):
 
         widget.setStyleSheet(style)
 
-
-    def show_status(self,inst,stat,process):
+    def show_status(self,dict_data):
+        inst = dict_data.get('inst', 'None')
+        process = dict_data.get('process', 'None')
+        message =dict_data.get('message','None')
+        status = dict_data.get('status', 'fail')
         print(f'tttt {inst}')
-        print(f'ttt {stat}')
+        print(f'ttt {status}')
 #        color_map = {
 #            'success': 'green',
 #            'normal': 'black',
@@ -374,7 +390,7 @@ class MainWindow(QMainWindow):
         if process == 'Done':
             color_map = {
             'success': 'black',
-#            'normal': 'black',
+#            'normal': 'black',self.logging('Sent Autoguiding Start', level='send')
             'error': 'red'
             }
         elif process == 'ING':
@@ -421,11 +437,31 @@ class MainWindow(QMainWindow):
             'SPEC' : self.ui.label_status_spectrograph_2
         }
         
-        if inst in label_map and stat in color_map:
-            self.QWidgetLabelStyle(label_map[inst], color_map[stat])
-            self.QWidgetLabelStyle(label_map2[inst], color_map[stat])
-            self.QWidgetLabelStyle(inst_map1[inst], color_map[stat])
-            self.QWidgetLabelStyle(inst_map2[inst], color_map[stat])
+        if inst in label_map and status in color_map:
+            self.QWidgetLabelStyle(label_map[inst], color_map[status])
+            self.QWidgetLabelStyle(label_map2[inst], color_map[status])
+            self.QWidgetLabelStyle(inst_map1[inst], color_map[status])
+            self.QWidgetLabelStyle(inst_map2[inst], color_map[status])
+        
+        if inst == 'FBP':
+            if (process in ("ING", "Done")) and self.fbp_pos == 'assign':
+                self.ui.pushbtn_Fiber_assign.setStyleSheet(f"color: green")
+                self.ui.pushbtn_Fiber_assign_2.setStyleSheet(f"color: green")
+                self.ui.pushbtn_Fiber_assign.setText("FBP Assigned")
+                self.ui.pushbtn_Fiber_assign_2.setText("FBP Assigned")
+            if (process == "Done") and (self.fbp_pos == 'zero'):
+                self.ui.pushbtn_Fiber_assign.setStyleSheet(f"color: black")
+                self.ui.pushbtn_Fiber_assign_2.setStyleSheet(f"color: black")
+                self.ui.pushbtn_Fiber_assign.setText("FBP Assign")
+                self.ui.pushbtn_Fiber_assign_2.setText("FBP Assign")
+            
+
+#### Calling Instrument position state #####
+    def set_inst_pos_state(self,dict_data):
+        if dict_data['inst'] == 'ADC':
+            self.adc_pos = dict_data['pos_state']
+        if dict_data['inst'] == 'FBP':
+            self.fbp_pos = dict_data['pos_state']
 
 
 ##### Main Functions corresponding to the GUI action #####
@@ -455,6 +491,67 @@ class MainWindow(QMainWindow):
         await handle_lamp(command, self.ICS_client)
         self.logging(f"Sent {label} {'ON' if state else 'OFF'}", level='send')
 
+
+    ## Fiber positionser ##
+    @asyncSlot()
+    async def Fiber_assign_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+        
+        if self.fbp_pos not in (None,"zero"):
+            self.logging('Fiber positioners are not in zero position. Click Fiber Zero button.', level='error')
+            return
+
+        self.assign_state = True 
+        #not getattr(self,"assign_state",False)
+
+        # sync two button
+        self.ui.pushbtn_Fiber_assign.setChecked(self.assign_state)
+        self.ui.pushbtn_Fiber_assign_2.setChecked(self.assign_state)
+
+        # Set colors
+        style_on = "color: green; font-weight:900;"
+        style_off = "color: black;"
+        style = style_on if self.assign_state else style_off
+        self.ui.pushbtn_Fiber_assign.setStyleSheet(style)
+        self.ui.pushbtn_Fiber_assign_2.setStyleSheet(style)
+
+        if self.assign_state:
+            await handle_fbp('fbpmove',self.ICS_client)
+            self.logging('Sent Fiber assignment Starts.', level='send')
+
+    @asyncSlot()
+    async def FBP_zero_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        if self.fbp_pos not in (None,"assign"):
+            self.logging('Fiber positioners are already in zero position', level='error')
+            return
+
+        await handle_fbp('fbpzero',self.ICS_client)
+        self.logging('Sent Fiber moves to zero position.', level='send')
+
+    @asyncSlot()
+    async def FBP_offset_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        if self.fbp_pos not in (None,"assign"):
+            self.logging('Fiber positioners are not assigned to targets. Click first assign button', level='error')
+            return
+
+        await handle_fbp('fbpoffset',self.ICS_client)
+        self.logging('Sent Fiber offset starts.', level='send')
 
     ## GFA ##
     @asyncSlot()
@@ -908,10 +1005,11 @@ class MainWindow(QMainWindow):
                 print(response_data)
                 inst = response_data.get('inst', 'None')
                 process = response_data.get('process', 'None')
-                message =response_data.get('message','None')
+                message = response_data.get('message','None')
                 status = response_data.get('status', 'fail')
-
-                self.show_status(inst,status, process)
+                self.set_inst_pos_state(response_data)
+                self.show_status(response_data)
+                
 
                 if isinstance(message,dict):
                     message = json.dumps(message, indent=2)
@@ -1068,12 +1166,12 @@ class MainWindow(QMainWindow):
 
     def timeout(self):
         sender = self.sender()
-        currentTime = QDateTime.currentDateTime().toString('yyyy.MM.dd, hh:mm:ss')
-        currentutc = QDateTime.currentDateTimeUtc().toString('yyyy.MM.dd, hh:mm:ss')
+        self.currentTime = QDateTime.currentDateTime().toString('yyyy.MM.dd, hh:mm:ss')
+        self.currentutc = QDateTime.currentDateTimeUtc().toString('yyyy.MM.dd, hh:mm:ss')
         #print(currentTime)
         if id(sender) == id(self.timer):
-            self.ui.lcd_lt.display(currentTime)
-            self.ui.lcd_utc.display(currentutc)
+            self.ui.lcd_lt.display(self.currentTime)
+            self.ui.lcd_utc.display(self.currentutc)
 
 #    def load_data(self, 
 

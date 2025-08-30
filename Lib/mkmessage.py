@@ -2,7 +2,7 @@ import json
 
 def common():
     dict_data={'inst': 'None', 'func' : 'None', 'savedata': 'False', 'filename': 'None', 'process': 'ING', 'message': 'None',
-            'script': 'False','status': 'fail'}
+            'script': 'False','status': 'error'}
     return dict_data
 
 def gfamsg():
@@ -17,15 +17,15 @@ def endomsg():
 
 def adcmsg():
     dict_data=common()
-    update_data={'zdist': 'None','RA': 'None', 'DEC': 'None'}
+    update_data={'zdist': 'None','RA': 'None', 'DEC': 'None', 'pos_state': 'None'}
     dict_data.update(update_data)
     dict_data.update(inst='ADC')
     return dict_data
 
 def fbpmsg():
     dict_data=common()
-#    update_data={'zdist': 'None'}
-#    dict_data.update(update_data)
+    update_data={'pos_state': 'None'}
+    dict_data.update(update_data)
     dict_data.update(inst='FBP')
     return dict_data
 
