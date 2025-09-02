@@ -177,7 +177,6 @@ class MainWindow(QMainWindow):
         self.ADC_response_queue = asyncio.Queue()
         self.SPEC_response_queue = asyncio.Queue()
 
-
         ### Observation Setting ###
         self.observer = None
         self.obsdir = None
@@ -190,6 +189,8 @@ class MainWindow(QMainWindow):
         self.adc = 0
 
         self.obstype = None
+
+        self.msglog_path = None
 
         ### Moving Instrument position state ###
         self.adc_pos = None
@@ -208,8 +209,8 @@ class MainWindow(QMainWindow):
 
     ######### Button setting #####
         # Setting Initial observation
-        self.ui.pushbtn_connect.clicked.connect(self.rabbitmq_connect)
         self.ui.pushbtn_connect.setCheckable(True)
+        self.ui.pushbtn_connect.clicked.connect(self.rabbitmq_connect)
         self.ui.pushbtn_observer.clicked.connect(self.save_observer)
         self.ui.pushbtn_directory.clicked.connect(self.set_directory)
         self.ui.pushbtn_syscheck.clicked.connect(self.syscheck)
@@ -236,14 +237,19 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_adc_zero.clicked.connect(self.adczero_button_clicked)
 
         # Fiber assign
-    #    self.ui.pushbtn_Fiber_assign.setCheckable(True)
         self.ui.pushbtn_Fiber_assign.clicked.connect(self.Fiber_assign_button_clicked)
-    #    self.ui.pushbtn_Fiber_assign_2.setCheckable(True)
         self.ui.pushbtn_Fiber_assign_2.clicked.connect(self.Fiber_assign_button_clicked)
 
         self.ui.pushbtn_FBP_zero.clicked.connect(self.FBP_zero_button_clicked)
         self.ui.pushbtn_FBP_offset.clicked.connect(self.FBP_offset_button_clicked)
 
+
+        # MTL 
+        self.ui.pushbtn_MTL_exp.clicked.connect(self.MTL_exp_button_clicked)
+        self.ui.pushbtn_MTL_exp_2.clicked.connect(self.MTL_exp_button_clicked)
+        self.ui.pushbtn_MTL_exp_3.clicked.connect(self.MTL_exp_button_clicked)
+
+        self.ui.pushbtn_MTL_cal.clicked.connect(self.MTL_cal_button_clicked)
 
         # Load Sequence
         self.ui.pushbtn_load_sequence.clicked.connect(self.load_file)
@@ -270,6 +276,10 @@ class MainWindow(QMainWindow):
 
         # Individual command 
         self.ui.pushbtn_send_cmd.clicked.connect(self.user_input)
+
+        # Observer Comment
+        self.ui.pushbtn_send_comment_1.clicked.connect(self.comment1_clicked)
+        self.ui.pushbtn_send_comment_2.clicked.connect(self.comment2_clicked)
 
 
     ######### Canvas setting #####
@@ -308,23 +318,27 @@ class MainWindow(QMainWindow):
 
 
     ### Message log 
-    def logging(self, message, status: str='success', level: str="send"):
+    def logging(self, message, status: str='success', level: str="send",save=True):
         if isinstance(message, dict):
             message = json.dumps(message)
 
         color_map = {
                 "send": "green",
                 "receive": "blue",
-                "error" : "red"
+                "error" : "red",
+                "comment" : "black"
                 }
         if status == 'error':
             level = 'error'
 
         color = color_map.get(level,"black")
         self.uttime=QDateTime.currentDateTimeUtc().toString('hh:mm:ss')
-        print(self.currentutc)
         self.ui.log1.append(f'<span style="color:{color};">[{self.uttime}][ICS] {message}</span>')
         self.ui.log2.append(f'<span style="color:{color};">[{self.uttime}][ICS] {message}</span>')
+
+        if save :
+            with open(self.msglog_path,'a') as f:
+                f.write(f'[{self.uttime}][ICS] {message}\n')
 
 ### Observation Set function ###
     def save_observer(self):
@@ -332,19 +346,28 @@ class MainWindow(QMainWindow):
         self.logging(f"Observer '{self.observer}' Saved",level='normal')
 
 ### Set Save directory ###
-    def set_directory(self):
+    def set_directory(self): 
         current_dir=os.getcwd()
         parent_dir = os.path.dirname(current_dir)
         dir_name=self.ui.lineEdit_directory.text()
-        self.dir_path=os.path.join(parent_dir,"RAWDATA",dir_name)
 
+        msglogfile = 'MSGLOG_'+dir_name+'.txt'
+        self.msglog_path=os.path.join(parent_dir,"DATA/MSGLOG",msglogfile)
+        if os.path.exists(self.msglog_path):
+            self.logging(f"Message Log file'{msglogfile}' already exists.", level='normal')
+            pass
+        else:
+            with open(self.msglog_path,'w') as f:
+                pass
+                self.logging(f"Message Log file '{msglogfile}' was created.", level='normal')
+
+        self.dir_path=os.path.join(parent_dir,"DATA/RAWDATA",dir_name)
         if os.path.exists(self.dir_path):
             self.logging(f"Directory '{self.dir_path}' already exists.", level='normal')
-            return
+            pass
         else:
             os.makedirs(self.dir_path, exist_ok=True)
             self.logging(f"Create directory '{self.dir_path}'.",level='normal')
-
 
 
 #### Calling Status #####
@@ -462,6 +485,17 @@ class MainWindow(QMainWindow):
             self.adc_pos = dict_data['pos_state']
         if dict_data['inst'] == 'FBP':
             self.fbp_pos = dict_data['pos_state']
+
+### Observer's comment to message log ###
+    def comment1_clicked(self):
+        comment=self.ui.lineEdit_comment_1.text()
+        self.logging(f"Observer comment '{comment}'.",level='comment')
+        self.ui.lineEdit_comment_1.clear()
+
+    def comment2_clicked(self):
+        comment=self.ui.lineEdit_comment_2.text()
+        self.logging(f"Observer comment '{comment}'.",level='comment')
+        self.ui.lineEdit_comment_2.clear()
 
 
 ##### Main Functions corresponding to the GUI action #####
@@ -724,6 +758,35 @@ class MainWindow(QMainWindow):
 
         return cmd
 
+
+    ### MTL Button ###
+    @asyncSlot()
+    async def MTL_exp_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        if not self.ui.lineEdit_MTL_exptime.text():
+            self.ui.lineEdit_MTL_exptime.setText('5')
+
+        self.mtlexp = self.ui.lineEdit_MTL_exptime.text()
+        self.logging(f'Sent MTL exposure', level='send')
+        await handle_mtl(f'mtlexp {self.mtlexp}', self.ICS_client)
+
+    @asyncSlot()
+    async def MTL_cal_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        self.logging(f'Sent MTL calculation', level='send')
+        await handle_mtl(f'mtlcal', self.ICS_client)
+        
+
     ### Flat Button ###
     @asyncSlot()
     async def flat_button_clicked(self):
@@ -952,35 +1015,40 @@ class MainWindow(QMainWindow):
     ### Connect RabbitMQ Server ###
     @asyncSlot()
     async def rabbitmq_connect(self):
-        if self.ui.pushbtn_connect.isChecked():
-            self.ui.pushbtn_connect.setText('connected')
-            self.ui.pushbtn_connect.setStyleSheet('color: green;')
-
-            print(f'Observer Name: {self.observer}')
-            # Connect RabbitMQ
-            with open('./Lib/KSPEC.ini', 'r') as f:
-                kspecinfo = json.load(f)
-
-            self.ICS_client = AMQclass(
-                kspecinfo['RabbitMQ']['ip_addr'],
-                kspecinfo['RabbitMQ']['idname'],
-                kspecinfo['RabbitMQ']['pwd'],
-                'ICS', 'ics.ex'
-            )
-
-            react = await self.ICS_client.connect()
-            self.logging(react,level='AMQ')
-            react = await self.ICS_client.define_producer()
-            self.logging(react,level='AMQ')
-
-
-            await self.ICS_client.define_consumer('ICS',self.on_ics_message)
-#            asyncio.create_task(self.wait_for_response())
-
+        if self.msglog_path == None:
+            self.logging("Obseveing directory was not set. Please insert directory.",level='error',save=False)
+            self.ui.pushbtn_connect.setChecked(False)
+            return
         else:
-            self.ui.pushbtn_connect.setText('connect')
-            self.ui.pushbtn_connect.setStyleSheet('color: black;')
-            await self.ICS_client.disconnect()
+            if self.ui.pushbtn_connect.isChecked():
+                self.ui.pushbtn_connect.setText('Connected')
+                self.ui.pushbtn_connect.setStyleSheet('color: green;')
+
+                print(f'Observer Name: {self.observer}')
+            # Connect RabbitMQ
+                with open('./Lib/KSPEC.ini', 'r') as f:
+                    kspecinfo = json.load(f)
+
+                self.ICS_client = AMQclass(
+                    kspecinfo['RabbitMQ']['ip_addr'],
+                    kspecinfo['RabbitMQ']['idname'],
+                    kspecinfo['RabbitMQ']['pwd'],
+                    'ICS', 'ics.ex'
+                )
+
+                react = await self.ICS_client.connect()
+                self.logging(react,level='AMQ')
+                react = await self.ICS_client.define_producer()
+                self.logging(react,level='AMQ')
+
+
+                await self.ICS_client.define_consumer('ICS',self.on_ics_message)
+#               asyncio.create_task(self.wait_for_response())
+
+            else:
+                self.ui.pushbtn_connect.setText('Connect')
+                self.ui.pushbtn_connect.setStyleSheet('color: black;')
+                await self.ICS_client.disconnect()
 
 
     ### check connection to RabbitMQ Server and system  ###
@@ -1010,7 +1078,6 @@ class MainWindow(QMainWindow):
                 self.set_inst_pos_state(response_data)
                 self.show_status(response_data)
                 
-
                 if isinstance(message,dict):
                     message = json.dumps(message, indent=2)
                     print(f'\033[94m[ICS] received from {inst}: {message}\033[0m\n', flush=True)

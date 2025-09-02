@@ -20,7 +20,7 @@
       <x>0</x>
       <y>0</y>
       <width>1611</width>
-      <height>971</height>
+      <height>1061</height>
      </rect>
     </property>
     <property name="sizePolicy">
@@ -56,7 +56,7 @@
      <enum>QTabWidget::Triangular</enum>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <property name="elideMode">
      <enum>Qt::ElideLeft</enum>
@@ -114,7 +114,7 @@
         <string>Observer's comment</string>
        </property>
       </widget>
-      <widget class="QLineEdit" name="lineEdit_comment_1">
+      <widget class="QLineEdit" name="lineEdit_comment">
        <property name="geometry">
         <rect>
          <x>10</x>
@@ -128,15 +128,6 @@
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
-       </property>
-       <property name="font">
-        <font>
-         <family>Arial</family>
-         <pointsize>14</pointsize>
-         <weight>50</weight>
-         <bold>false</bold>
-         <strikeout>false</strikeout>
-        </font>
        </property>
       </widget>
       <widget class="QPushButton" name="pushbtn_send_comment_1">
@@ -14289,15 +14280,6 @@
          <width>521</width>
          <height>71</height>
         </rect>
-       </property>
-       <property name="font">
-        <font>
-         <family>Arial</family>
-         <pointsize>14</pointsize>
-         <weight>50</weight>
-         <bold>false</bold>
-         <strikeout>false</strikeout>
-        </font>
        </property>
       </widget>
       <widget class="QPushButton" name="pushbtn_send_comment_2">

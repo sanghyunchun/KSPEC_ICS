@@ -35,6 +35,11 @@ async def identify_execute(MTL_server,cmd):
         await MTL_server.send_message('ICS',rsp)
 
     if func == 'mtlexp':
+        reply_data=mkmsg.mtlmsg()
+        reply_data.update(message='MTL exposure starts.',process='Done',status='success')
+        rsp=json.dumps(reply_data)
+        await MTL_server.send_message('ICS',rsp)
+
         exptime=float(receive_msg['time'])
         status, comment=mtlexp.mtlexp(exptime)
         reply_data=mkmsg.mtlmsg()
@@ -45,12 +50,26 @@ async def identify_execute(MTL_server,cmd):
 
 
     if func == 'mtlcal':
+        reply_data=mkmsg.mtlmsg()
+        reply_data.update(message='MTL calculation starts.',process='Done',status='success')
+        rsp=json.dumps(reply_data)
+        await MTL_server.send_message('ICS',rsp)
+
         status, offx,offy = mtlcal.mtlcal()
         comment='Metrology analysis finished successfully. Offsets were calculated.'
         reply_data=mkmsg.mtlmsg()
         reply_data.update(savedata='True',filename='MTLresult.json',offsetx=offx.tolist(),offsety=offy.tolist(),message=comment,status=status)
         reply_data.update(process='Done')
         rsp=json.dumps(reply_data)
+
+        with open('./Lib/KSPEC.ini','r') as fs:
+            kspecinfo=json.load(fs)
+
+        mtlfilepath=kspecinfo['MTL']['mtlfilepath']
+
+        with open(mtlfilepath+'MTLresult.json',"w") as f:
+            json.dump(reply_data, f)
+
         print('\033[32m'+'[MTL]', comment+'\033[0m')
         await MTL_server.send_message('ICS',rsp)
 
