@@ -116,7 +116,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
         ra = dict_data['RA']
         dec = dict_data['DEC']
         reply_data = mkmsg.adcmsg()
-        reply_data.update(message = 'ADC adjusting starts.', process='ING',status='success')
+        reply_data.update(message = 'ADC adjusting starts.', process='START',status='success')
         rsp = json.dumps(reply_data)
         await ADC_server.send_message('ICS', rsp)
 
@@ -155,7 +155,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
 
     elif func in {'adcrotate1', 'adcrotate2', 'adcctrotate','adccorotate'}:
         reply_data = mkmsg.adcmsg()
-        reply_data.update(process='ING',message='ADC rotation starts.', status='success')
+        reply_data.update(process='START',message='ADC rotation starts.', status='success')
         rsp = json.dumps(reply_data)
         printing(reply_data['message'])
         await ADC_server.send_message('ICS', rsp)
@@ -172,7 +172,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
 
     elif func == 'adchome':
         reply_data = mkmsg.adcmsg()
-        reply_data.update(process='ING',message='ADC Homing starts.', status='success')
+        reply_data.update(process='START',message='ADC Homing starts.', status='success')
         rsp = json.dumps(reply_data)
         await ADC_server.send_message('ICS', rsp)
 
@@ -186,7 +186,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
 
     elif func == 'adczero':
         reply_data = mkmsg.adcmsg()
-        reply_data.update(process='ING',message='ADC Zeroing starts.', status='success')
+        reply_data.update(process='START',message='ADC Zeroing starts.', status='success')
         rsp = json.dumps(reply_data)
         await ADC_server.send_message('ICS', rsp)
 

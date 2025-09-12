@@ -104,8 +104,6 @@ class script():
     async def obs_initial(self,scriptrun,logging):
         """Initialize all instruments."""
         print('Start instruments intialization')
-#        await handle_endo('endostatus',scriptrun.ICSclient)
-#        await scriptrun.response_queue.get()
         await handle_gfa('gfastatus',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
         await handle_fbp('fbpstatus',scriptrun.ICSclient)
@@ -200,18 +198,20 @@ class script():
                 self.handle_autoguide(exptime, scriptrun)
         )
 
-    async def handle_autoguide(self,exptime, scriptrun):
-        print(scriptrun)
+    async def handle_autoguide(self, exptime, scriptrun):
         try:
             await handle_gfa(f'gfaguide {exptime}',scriptrun.ICSclient)
             while True:
                 try:
                     response_data = await asyncio.wait_for(scriptrun.GFA_response_queue.get(),timeout=70)
+                    print('fff {response_data}')
+                    print(f'tttt {response_data}')
                 except asyncio.TimeoutError:
                     print("No GFA response")
                     continue
 
                 fdx=response_data['fdx']
+                print(f'ttttt {fdx}')
                 fdy=response_data['fdy']
                 self.fwhm=response_data['fwhm']
                 ra= await scriptrun.send_telcom_command('getra')
@@ -259,6 +259,8 @@ class script():
         await clear_queue(scriptrun.GFA_response_queue)
         await clear_queue(scriptrun.ADC_response_queue)
         await clear_queue(scriptrun.SPEC_response_queue)
+
+        logging(f'Observation Strats',level='comment')
         
         if logging == None:
             printing('###### Observation Script Start!!! ######')
@@ -344,7 +346,7 @@ class script():
         printing(f'ADC Adjust Start')
         message=f'adcadjust {self.ra} {self.dec}'
 #        print(message)
-        message=f'adcadjust 13:34:56.44 -31:34:55.67'
+        message=f'adcadjust 09:34:56.44 -31:34:55.67'
         await handle_adc(message,scriptrun.ICSclient)
         await asyncio.sleep(2)
 

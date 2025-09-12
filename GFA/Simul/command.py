@@ -60,7 +60,7 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
         # Start a new adcadjust task
         printing("New guiding task started.")
         reply_data=mkmsg.gfamsg()
-        reply_data.update(process='ING',message='Autoguide starts.',status='success')
+        reply_data.update(process='START',message='Autoguide starts.',status='success')
         rsp=json.dumps(reply_data)
         await GFA_server.send_message('ICS',rsp)
         guiding_task = asyncio.create_task(handle_guiding(GFA_server, gfa_actions, dict_data['ExpTime']))

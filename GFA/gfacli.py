@@ -58,7 +58,7 @@ async def handle_gfa(arg, ICS_client):
 
     if cmd in command_map:
         gfamsg = command_map[cmd]()
-        print(gfamsg)
+#        print(gfamsg)
         await ICS_client.send_message("GFA", gfamsg)
     else:
         print(f"Error: '{cmd}' is not right command for GFA.")

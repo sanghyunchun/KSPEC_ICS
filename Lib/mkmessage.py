@@ -7,7 +7,7 @@ def common():
 
 def gfamsg():
     dict_data=common()
-    dict_data.update(inst='GFA')
+    dict_data.update(inst='GFA',fwhm='0')
     return dict_data
 
 def endomsg():

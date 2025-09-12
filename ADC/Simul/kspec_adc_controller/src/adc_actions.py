@@ -43,7 +43,7 @@ class AdcActions:
         try:
 #            self.controller.connect()
             self.logger.info("Connection successful.")
-            return self._generate_response("success", "Connected to devices.")
+            return self._generate_response("success", "Connected to ADC devices.")
         except Exception as e:
             self.logger.error(f"Error in connect: {e}")
             return self._generate_response("error", f"Failed to connect: {str(e)}")

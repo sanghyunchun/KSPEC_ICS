@@ -8,6 +8,7 @@
 import os
 import asyncio
 import shutil
+import time
 from datetime import datetime
 from typing import Union, List, Dict, Any, Optional
 
@@ -278,7 +279,8 @@ class GFAActions:
         try:
             self.env.logger.info("Querying camera statuses...")
 #            status_info = self.env.controller.status()
-#            return self._generate_response("success", status_info)
+            time.sleep(5)
+            return self._generate_response("success", 'GFA cameras are ready')
         except Exception as e:
             self.env.logger.error(f"Status query failed: {e}")
             return self._generate_response("error", f"Status query failed: {e}")

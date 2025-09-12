@@ -192,9 +192,16 @@ class MainWindow(QMainWindow):
 
         self.msglog_path = None
 
-        ### Moving Instrument position state ###
-        self.adc_pos = None
-        self.fbp_pos = None
+        ### Instrument position state & state ###
+        self.adcadjusting_state = False
+        self.fbp_state = False
+        self.find_state = False
+        self.mtl_state = False
+        self.guiding_state = False
+        self.arc_state = False
+        self.flat_state = False
+        self.fiducial_state = False
+    
 
 
 #Make timer (LT & UTC) 
@@ -273,13 +280,29 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_Arc.clicked.connect(self.arc_button_clicked)
         self.ui.pushbtn_Arc_2.clicked.connect(self.arc_button_clicked)
 
+        self.ui.pushbtn_Fiducial.setCheckable(True)
+        self.ui.pushbtn_Fiducial_2.setCheckable(True)
+        self.ui.pushbtn_Fiducial.clicked.connect(self.fiducial_button_clicked)
+        self.ui.pushbtn_Fiducial_2.clicked.connect(self.fiducial_button_clicked)
 
-        # Individual command 
+
+        # Telescope slew
+        self.ui.pushbtn_slew.clicked.connect(self.slew_button_clicked)
+
+
+
+
+        # CLI command 
         self.ui.pushbtn_send_cmd.clicked.connect(self.user_input)
 
         # Observer Comment
         self.ui.pushbtn_send_comment_1.clicked.connect(self.comment1_clicked)
         self.ui.pushbtn_send_comment_2.clicked.connect(self.comment2_clicked)
+
+
+        # System status button
+        self.ui.pushbtn_reset1.clicked.connect(self.reset_status)
+        self.ui.pushbtn_reset2.clicked.connect(self.reset_status)
 
 
     ######### Canvas setting #####
@@ -315,25 +338,7 @@ class MainWindow(QMainWindow):
         self.canvas_G6=MplCanvas(self,dpi=100,left=0.0,right=1.,bottom=0.,top=1.)
         self.G6_layout=QVBoxLayout(self.ui.Guide6)
         self.G6_layout.addWidget(self.canvas_G6)
-
-
-    ### Message log 
-    def logging(self, message, status: str='success', level: str="send",save=True):
-        if isinstance(message, dict):
-            message = json.dumps(message)
-
-        color_map = {
-                "send": "green",
-                "receive": "blue",
-                "error" : "red",
-                "comment" : "black"
-                }
-        if status == 'error':
-            level = 'error'
-
-        color = color_map.get(level,"black")
-        self.uttime=QDateTime.currentDateTimeUtc().toString('hh:mm:ss')
-        self.ui.log1.append(f'<span style="color:{color};">[{self.uttime}][ICS] {message}</span>')
+Guiding_button_clicked
         self.ui.log2.append(f'<span style="color:{color};">[{self.uttime}][ICS] {message}</span>')
 
         if save :
@@ -402,26 +407,14 @@ class MainWindow(QMainWindow):
         process = dict_data.get('process', 'None')
         message =dict_data.get('message','None')
         status = dict_data.get('status', 'fail')
-        print(f'tttt {inst}')
-        print(f'ttt {status}')
-#        color_map = {
-#            'success': 'green',
-#            'normal': 'black',
-#            'fail': 'red'
-#            }
-#        print(f'ttttt {process}')
+        subinst = dict_data.get('subinst', 'None')
+
         if process == 'Done':
-            color_map = {
-            'success': 'black',
-#            'normal': 'black',self.logging('Sent Autoguiding Start', level='send')
-            'error': 'red'
-            }
-        elif process == 'ING':
-            color_map = {
-            'success': 'green',
-#            'normal': 'black',
-            'error': 'red'
-            }
+            color_map = {'success': 'black','error': 'red'}
+        elif process in  ('ING', 'START'):
+            color_map = {'success': 'green','error': 'red'}
+        else:
+            color_map = {}
 
         label_map = {
             'LAMP': self.ui.ok_status_lamp,
@@ -465,26 +458,191 @@ class MainWindow(QMainWindow):
             self.QWidgetLabelStyle(label_map2[inst], color_map[status])
             self.QWidgetLabelStyle(inst_map1[inst], color_map[status])
             self.QWidgetLabelStyle(inst_map2[inst], color_map[status])
+
+        self._handle_fbp_state(inst, process)
+        self._handle_gfa_state(inst, process)
+        self._handle_adc_state(inst, process)
+        self._handle_lamp_state(inst, subinst, process)
+
+    def _handle_fbp_state(self,inst,process):
+        if inst != 'FBP':
+            return
+
+        if process in ('ING', 'Done') and self.fbp_state == 'assign':
+            self._set_button_state(self.ui.pushbtn_Fiber_assign, 'FBP Assigned', 'green', True)
+            self._set_button_state(self.ui.pushbtn_Fiber_assign_2, 'FBP Assigned', 'green', True)
+        elif process == 'Done' and self.fbp_state == 'zero':
+            self._set_button_state(self.ui.pushbtn_Fiber_assign, 'FBP Assign', 'black', False)
+            self._set_button_state(self.ui.pushbtn_Fiber_assign_2, 'FBP Assign', 'black', False)
+
+    def _handle_gfa_state(self, inst, process):
+        if inst != 'GFA':
+            return
+
+        state = (process == 'ING')
+        self.guiding_state = state
+        self._set_toggle_button(self.ui.pushbtn_Guiding, state)
+        self._set_toggle_button(self.ui.pushbtn_Guiding_2, state)
+
+    def _handle_adc_state(self, inst, process):
+        if inst != 'ADC':
+            return
+
+        state = (process == 'ING')
+        self.adcadjusting_state = state
+        self._set_toggle_button(self.ui.pushbtn_ADCadjust, state)
+        self._set_toggle_button(self.ui.pushbtn_ADCadjust_2, state)
+
+    def _handle_lamp_state(self, inst, subinst, process):
+        if inst != 'LAMP':
+            return
+
+    # 서브 상태에 따라 제어
+        def apply(sub, state_var, button, button2):
+            state = (process == 'ING')
+            setattr(self, state_var, state)
+            self._set_toggle_button(button, state)
+            self._set_toggle_button(button2, state)
+
+        if subinst == 'FIDUCIAL':
+            apply('FIDUCIAL', 'fiducial_state', self.ui.pushbtn_Fiducial, self.ui.pushbtn_Fiducial_2)
+        elif subinst == 'ARC':
+            apply('ARC', 'arc_state', self.ui.pushbtn_Arc, self.ui.pushbtn_Arc_2)
+        elif subinst == 'FLAT':
+            apply('FLAT', 'flat_state', self.ui.pushbtn_Flat, self.ui.pushbtn_Flat_2)
+
         
+    def _set_toggle_button(self, button, active):
+        color = 'green' if active else 'black'
+        button.setStyleSheet(f"color: {color}")
+        button.setChecked(active)
+
+    def _set_button_state(self, button, text, color, checked):
+        button.setText(text)
+        button.setStyleSheet(f"color: {color}")
+        button.setChecked(checked)
+    
+
+        """
         if inst == 'FBP':
-            if (process in ("ING", "Done")) and self.fbp_pos == 'assign':
+            if (process in ("ING", "Done")) and self.fbp_state == 'assign':
                 self.ui.pushbtn_Fiber_assign.setStyleSheet(f"color: green")
                 self.ui.pushbtn_Fiber_assign_2.setStyleSheet(f"color: green")
                 self.ui.pushbtn_Fiber_assign.setText("FBP Assigned")
                 self.ui.pushbtn_Fiber_assign_2.setText("FBP Assigned")
-            if (process == "Done") and (self.fbp_pos == 'zero'):
+            if (process == "Done") and (self.fbp_state == 'zero'):
                 self.ui.pushbtn_Fiber_assign.setStyleSheet(f"color: black")
                 self.ui.pushbtn_Fiber_assign_2.setStyleSheet(f"color: black")
                 self.ui.pushbtn_Fiber_assign.setText("FBP Assign")
                 self.ui.pushbtn_Fiber_assign_2.setText("FBP Assign")
+
+        if inst == 'GFA':
+            if process == 'ING':
+                self.guiding_state = True
+                self.ui.pushbtn_Guiding.setStyleSheet(f"color: green")
+                self.ui.pushbtn_Guiding.setChecked(True)
+                self.ui.pushbtn_Guiding_2.setStyleSheet(f"color: green")
+                self.ui.pushbtn_Guiding_2.setChecked(True)
+
+            elif process == 'Done':
+                self.guiding_state = False
+                self.ui.pushbtn_Guiding.setStyleSheet(f"color: black")
+                self.ui.pushbtn_Guiding.setChecked(False)
+                self.ui.pushbtn_Guiding_2.setStyleSheet(f"color: black")
+                self.ui.pushbtn_Guiding_2.setChecked(False)
+
+        if inst == 'ADC':
+            if process == 'ING':
+                self.adcadjusting_state = True
+                self.ui.pushbtn_ADCadjust.setStyleSheet(f"color: green")
+                self.ui.pushbtn_ADCadjust.setChecked(True)
+                self.ui.pushbtn_ADCadjust_2.setStyleSheet(f"color: green")
+                self.ui.pushbtn_ADCadjust_2.setChecked(True)
+
+            elif process == 'Done':
+                self.adcadjusting_state = False
+                self.ui.pushbtn_ADCadjust.setStyleSheet(f"color: black")
+                self.ui.pushbtn_ADCadjust.setChecked(False)
+                self.ui.pushbtn_ADCadjust_2.setStyleSheet(f"color: black")
+                self.ui.pushbtn_ADCadjust_2.setChecked(False)
+
+        if inst == 'LAMP':
+            subinst = dict_data.get('subinst', 'None')
+            if subinst == 'FIDUCIAL' and process == 'ING':
+                self.fiducial_state = True
+                self.ui.pushbtn_Fiducial.setStyleSheet(f"color: green")
+                self.ui.pushbtn_Fiducial.setChecked(True)
+                self.ui.pushbtn_Fiducial_2.setStyleSheet(f"color: green")
+                self.ui.pushbtn_Fiducial_2.setChecked(True)
+
+            elif subinst == 'FIDUCIAL' and process == 'Done':
+                self.Fiducial_state = False
+                self.ui.pushbtn_Fiducial.setStyleSheet(f"color: black")
+                self.ui.pushbtn_Fiducial.setChecked(False)
+                self.ui.pushbtn_Fiducial_2.setStyleSheet(f"color: black")
+                self.ui.pushbtn_Fiducial_2.setChecked(False)
+
+            if subinst == 'ARC' and process == 'ING':
+                self.arc_state = True
+                self.ui.pushbtn_Arc.setStyleSheet(f"color: green")
+                self.ui.pushbtn_Arc.setChecked(True)
+                self.ui.pushbtn_Arc_2.setStyleSheet(f"color: green")
+                self.ui.pushbtn_Arc_2.setChecked(True)
+
+            elif subinst == 'ARC' and process == 'Done':
+                self.arc_state = False
+                self.ui.pushbtn_Arc.setStyleSheet(f"color: black")
+                self.ui.pushbtn_Arc.setChecked(False)
+                self.ui.pushbtn_Arc_2.setStyleSheet(f"color: black")
+                self.ui.pushbtn_Arc_2.setChecked(False)
+
+            if subinst == 'FLAT' and process == 'ING':
+                self.flat_state = True
+                self.ui.pushbtn_Flat.setStyleSheet(f"color: green")
+                self.ui.pushbtn_Flat.setChecked(True)
+                self.ui.pushbtn_Flat_2.setStyleSheet(f"color: green")
+                self.ui.pushbtn_Flat_2.setChecked(True)
+
+            elif subinst == 'FLAT' and process == 'Done':
+                self.flat_state = False
+                self.ui.pushbtn_Flat.setStyleSheet(f"color: black")
+                self.ui.pushbtn_Flat.setChecked(False)
+                self.ui.pushbtn_Flat_2.setStyleSheet(f"color: black")
+                self.ui.pushbtn_Flat_2.setChecked(False)
+            """
             
+    def reset_status(self):
+        labels =[
+            self.ui.ok_status_lamp,self.ui.ok_status_lamp_2,self.ui.label_status_lamp,self.ui.label_status_lamp_2,
+            self.ui.ok_status_gfa,self.ui.ok_status_gfa_2,self.ui.label_status_gfa,self.ui.label_status_gfa_2,
+            self.ui.ok_status_adc,self.ui.ok_status_adc_2,self.ui.label_status_adc,self.ui.label_status_adc_2,
+            self.ui.ok_status_fiber,self.ui.ok_status_fiber_2,self.ui.label_status_fiber,self.ui.label_status_fiber_2,
+            self.ui.ok_status_finder,self.ui.ok_status_finder_2,self.ui.label_status_finder,self.ui.label_status_finder_2,
+            self.ui.ok_status_metrology,self.ui.ok_status_metrology_2,self.ui.label_status_metrology,self.ui.label_status_metrology_2,
+            self.ui.ok_status_spectrograph,self.ui.ok_status_spectrograph_2,self.ui.label_status_spectrograph,self.ui.label_status_spectrograph_2,
+            ]
+        for label in labels:
+            label.setStyleSheet(f"color: black")
+
 
 #### Calling Instrument position state #####
     def set_inst_pos_state(self,dict_data):
-        if dict_data['inst'] == 'ADC':
-            self.adc_pos = dict_data['pos_state']
-        if dict_data['inst'] == 'FBP':
-            self.fbp_pos = dict_data['pos_state']
+        inst = dict_data.get('inst')
+        if not inst:
+            return
+
+        state_map = {
+            'ADC': ('adc_state', 'pos_state'),
+            'FBP': ('fbp_state', 'pos_state'),
+            'MTL': ('mtl_state', 'process'),
+            'FIND': ('FIND_state', 'process'),
+            'GFA': ('GFA_state', 'process'),
+        }
+
+        attr, key = state_map.get(inst, (None, None))
+        if attr and key in dict_data:
+            setattr(self, attr, dict_data[key])
+        
 
 ### Observer's comment to message log ###
     def comment1_clicked(self):
@@ -499,6 +657,25 @@ class MainWindow(QMainWindow):
 
 
 ##### Main Functions corresponding to the GUI action #####
+
+    # Telescope slew by single button
+    @asyncSlot()
+    async def slew_button_clicked(self):
+
+        if not self.ui.lineEdit_ra_2.text() or not self.ui.lineEdit_dec_2.text():
+            self.logging('Please insert RA and DEC coordinates in Single Mode tap.', level='error')
+            return
+        else:
+            self.ra = self.ui.lineEdit_ra_2.text()
+            self.dec = self.ui.lineEdit_dec_2.text()
+
+            messagetcs = 'KSPEC>TC ' + 'tmradec ' + self.ra +' '+ self.dec
+            self.logging(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.', level='send')
+            print(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.')
+            await self.send_udp_message(messagetcs)
+
+
+
     async def _onoff_button_clicked(self, state_attr, btn1, btn2, command_on, command_off, label):
         if not self.check_connection():
             return
@@ -535,7 +712,7 @@ class MainWindow(QMainWindow):
         if not self.check_syscheck():
             return
         
-        if self.fbp_pos not in (None,"zero"):
+        if self.fbp_state not in (None,"zero"):
             self.logging('Fiber positioners are not in zero position. Click Fiber Zero button.', level='error')
             return
 
@@ -565,7 +742,7 @@ class MainWindow(QMainWindow):
         if not self.check_syscheck():
             return
 
-        if self.fbp_pos not in (None,"assign"):
+        if self.fbp_state not in (None,"assign"):
             self.logging('Fiber positioners are already in zero position', level='error')
             return
 
@@ -580,7 +757,7 @@ class MainWindow(QMainWindow):
         if not self.check_syscheck():
             return
 
-        if self.fbp_pos not in (None,"assign"):
+        if self.fbp_state not in (None,"assign"):
             self.logging('Fiber positioners are not assigned to targets. Click first assign button', level='error')
             return
 
@@ -678,9 +855,9 @@ class MainWindow(QMainWindow):
 
         if self.adcadjusting_state:
 #            self.ui.pushbtn_ADCadjust.setStyleSheet("color: green; font-weight:900;")
-            ra='02:34:43.2'
-            dec='-31:34:56.4'
-            await handle_adc(f'adcadjust {ra} {dec}',self.ICS_client)
+            self.ra='09:34:43.2'
+            self.dec='-31:34:56.4'
+            await handle_adc(f'adcadjust {self.ra} {self.dec}', self.ICS_client)
             self.logging('Sent ADC adjusting Start', level='send')
         else:
             self.ui.pushbtn_ADCadjust.setStyleSheet("color: black;")
@@ -812,6 +989,18 @@ class MainWindow(QMainWindow):
         await self._onoff_button_clicked(state_attr="arc_state", btn1=self.ui.pushbtn_Arc, btn2=self.ui.pushbtn_Arc_2,
         command_on="arcon",command_off="arcoff",label="Arc")
 
+    ### Fiducial Button ###
+    @asyncSlot()
+    async def fiducial_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        await self._onoff_button_clicked(state_attr="fiducial_state", btn1=self.ui.pushbtn_Fiducial, btn2=self.ui.pushbtn_Fiducial_2,
+        command_on="fiducialon",command_off="fiducialoff",label="Fiducial")
+
 
     @asyncSlot()
     async def load_tile(self):
@@ -844,9 +1033,9 @@ class MainWindow(QMainWindow):
 
         self.logging(f'All accessary files for observation of Tile ID {self.select_tile} are successfully loaded', level='receive')
         await asyncio.sleep(2)
-        self.show_status('GFA','normal')
-        self.show_status('MTL','normal')
-        self.show_status('FBP','normal')
+#        self.show_status('GFA','success')
+#        self.show_status('MTL','success')
+#        self.show_status('FBP','success')
 
 
 
@@ -858,17 +1047,16 @@ class MainWindow(QMainWindow):
 
         if not self.check_syscheck():
             return
-#        await self.scriptrun.run_obs(self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue,
-#                self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue, logging=self.logging)
+
 
         await handle_script(f'runobs',scriptrun=self.scriptrun,logging=self.logging)
         
-        self.show_status('ADC','normal')
-        self.show_status('GFA','normal')
-        self.show_status('MTL','normal')
-        self.show_status('FBP','normal')
-        self.show_status('LAMP','normal')
-        self.show_status('SPEC','normal')
+#        self.show_status('ADC','normal')
+#        self.show_status('GFA','normal')
+#        self.show_status('MTL','normal')
+#        self.show_status('FBP','normal')
+#        self.show_status('LAMP','normal')
+#        self.show_status('SPEC','normal')
 
 
     @asyncSlot()
@@ -1007,8 +1195,21 @@ class MainWindow(QMainWindow):
         self.logging('System check start. Initialize dependencies',level='normal')
         self.scriptrun.initialize_dependencies(self.ICS_client, self.send_udp_message, self.send_telcom_command,
             self.response_queue, self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue, self.show_status)
+
+        await handle_script('obsinitial',scriptrun=self.scriptrun)
+
+        labels = [self.ui.label_status_gfa,self.ui.label_status_adc,self.ui.label_status_finder,self.ui.label_status_fiber,self.ui.label_status_metrology,
+            self.ui.label_status_spectrograph,self.ui.label_status_lamp]
+
+        for label in labels:
+            style = label.styleSheet().lower()
+            if "color: red" in style:
+                self.logging('While system checking, unexpected Errors have occurred in some instruments.',level='error')
+                return True
+
         self.logging('System check finished. All systems are OK.',level='normal')
         self.dependencies = True
+#        self.logging('System check finished. All systems are OK.',level='normal')
 
 
 ### Functions related with RabbitMQ ###
@@ -1089,10 +1290,11 @@ class MainWindow(QMainWindow):
                     self.logging(message, status, level='receive')
 
                 queue_map = {"GFA": self.GFA_response_queue, "ADC": self.ADC_response_queue, "SPEC": self.SPEC_response_queue}
-                if inst in queue_map and process == 'ING':
+                if inst in queue_map and process in ('ING', 'START'):
                     await queue_map[inst].put(response_data)
                     if inst == 'GFA':
                         self.fwhm=response_data['fwhm']
+                        print(f'ttttt {self.fwhm}')
                         self.ui.lineEdit_seeing.setText(f'{self.fwhm}')
                 else:
                     print('put response_data to response_queue')
@@ -1140,6 +1342,9 @@ class MainWindow(QMainWindow):
             await handler_map[category](message, self.ICS_client)
         else:
             print(f"Unknown command category: {category}",flush=True)
+
+        self.ui.lineEdit_cmd.clear()
+        self.ui.lineEdit_cmd_2.clear()
 
 
     ### User input command like CLI ###
