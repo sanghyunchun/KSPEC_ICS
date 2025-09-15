@@ -3193,7 +3193,7 @@
             <bool>false</bool>
            </property>
            <property name="placeholderText">
-            <string>12:34:.34.6</string>
+            <string>ex) 12:34:.34.6</string>
            </property>
           </widget>
          </item>
@@ -3231,7 +3231,7 @@
             <bool>false</bool>
            </property>
            <property name="placeholderText">
-            <string>-31:23:24.5</string>
+            <string>ex) -31:23:24.5</string>
            </property>
           </widget>
          </item>

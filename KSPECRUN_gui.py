@@ -338,7 +338,23 @@ class MainWindow(QMainWindow):
         self.canvas_G6=MplCanvas(self,dpi=100,left=0.0,right=1.,bottom=0.,top=1.)
         self.G6_layout=QVBoxLayout(self.ui.Guide6)
         self.G6_layout.addWidget(self.canvas_G6)
-Guiding_button_clicked
+
+
+    def logging(self,message,status: str='success', level: str='send', save: str=True):
+        if isinstance(message,dict):
+            message=json.dumps(message)
+
+        color_map={
+            "send": "green", "receive": "blue", "error": "red"
+        }
+
+        if status == "error":
+            level = 'error'
+
+        color = color_map.get(level,"black")
+
+        self.uttime = QDateTime.currentDateTimeUtc().toString('hh:mm:ss')
+        self.ui.log1.append(f'<span style="color:{color};">[{self.uttime}][ICS] {message}</span>')
         self.ui.log2.append(f'<span style="color:{color};">[{self.uttime}][ICS] {message}</span>')
 
         if save :
@@ -479,7 +495,7 @@ Guiding_button_clicked
         if inst != 'GFA':
             return
 
-        state = (process == 'ING')
+        state = (process in ('ING','START'))
         self.guiding_state = state
         self._set_toggle_button(self.ui.pushbtn_Guiding, state)
         self._set_toggle_button(self.ui.pushbtn_Guiding_2, state)
