@@ -56,7 +56,7 @@
      <enum>QTabWidget::Triangular</enum>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <property name="elideMode">
      <enum>Qt::ElideLeft</enum>
@@ -595,7 +595,7 @@
         </item>
        </layout>
       </widget>
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="pushbtn_dfp5">
        <property name="geometry">
         <rect>
          <x>698</x>
@@ -621,7 +621,7 @@
         <string>Focus</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushButton_2">
+      <widget class="QPushButton" name="pushbtn_dfp005">
        <property name="geometry">
         <rect>
          <x>750</x>
@@ -634,7 +634,7 @@
         <string>+0.005</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushButton_3">
+      <widget class="QPushButton" name="pushbtn_dfm5">
        <property name="geometry">
         <rect>
          <x>698</x>
@@ -647,7 +647,7 @@
         <string>-.5</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushButton_4">
+      <widget class="QPushButton" name="pushbtn_dfm005">
        <property name="geometry">
         <rect>
          <x>750</x>
@@ -660,7 +660,7 @@
         <string>-0.005</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushButton_5">
+      <widget class="QPushButton" name="pushbtn_fttgoto">
        <property name="geometry">
         <rect>
          <x>840</x>
@@ -673,7 +673,7 @@
         <string>fttgoto</string>
        </property>
       </widget>
-      <widget class="QLineEdit" name="lineEdit">
+      <widget class="QLineEdit" name="lineEdit_fttvalue">
        <property name="geometry">
         <rect>
          <x>840</x>
@@ -2448,35 +2448,10 @@
         <string>Fiber Assign</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushbtn_MTL_exp">
-       <property name="geometry">
-        <rect>
-         <x>475</x>
-         <y>37</y>
-         <width>91</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <family>Arial</family>
-         <pointsize>14</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-         <strikeout>false</strikeout>
-        </font>
-       </property>
-       <property name="toolTip">
-        <string/>
-       </property>
-       <property name="text">
-        <string>MTL Exp.</string>
-       </property>
-      </widget>
       <widget class="QPushButton" name="pushbtn_Finder_exp">
        <property name="geometry">
         <rect>
-         <x>580</x>
+         <x>475</x>
          <y>37</y>
          <width>111</width>
          <height>31</height>
@@ -2573,6 +2548,31 @@
         <string>Fiducial</string>
        </property>
       </widget>
+      <widget class="QPushButton" name="pushbtn_illumi">
+       <property name="geometry">
+        <rect>
+         <x>600</x>
+         <y>37</y>
+         <width>91</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="text">
+        <string>Illumi</string>
+       </property>
+      </widget>
      </widget>
      <widget class="QTabWidget" name="group_obs">
       <property name="geometry">
@@ -2590,7 +2590,7 @@
        </sizepolicy>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab_queue">
        <attribute name="title">
@@ -3080,6 +3080,31 @@
         </property>
         <property name="text">
          <string>END</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pushbtn_Test_sequence">
+        <property name="geometry">
+         <rect>
+          <x>490</x>
+          <y>90</y>
+          <width>121</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>Arial</family>
+          <pointsize>14</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+          <strikeout>false</strikeout>
+         </font>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="text">
+         <string>Test</string>
         </property>
        </widget>
       </widget>
@@ -14198,7 +14223,7 @@
         <string>MTL Cal</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushbtn_MTL_exp_3">
+      <widget class="QPushButton" name="pushbtn_MTL_exp">
        <property name="geometry">
         <rect>
          <x>10</x>
@@ -14387,7 +14412,7 @@
        </property>
       </widget>
      </widget>
-     <widget class="QLineEdit" name="lineEdit_terminal_2">
+     <widget class="QLineEdit" name="lineEdit_cmd_2">
       <property name="geometry">
        <rect>
         <x>10</x>
@@ -15043,35 +15068,10 @@
         <string>Fiber Assign</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushbtn_MTL_exp_2">
-       <property name="geometry">
-        <rect>
-         <x>475</x>
-         <y>37</y>
-         <width>91</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <family>Arial</family>
-         <pointsize>14</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-         <strikeout>false</strikeout>
-        </font>
-       </property>
-       <property name="toolTip">
-        <string/>
-       </property>
-       <property name="text">
-        <string>MTL Exp.</string>
-       </property>
-      </widget>
       <widget class="QPushButton" name="pushbtn_Finder_exp_2">
        <property name="geometry">
         <rect>
-         <x>580</x>
+         <x>475</x>
          <y>37</y>
          <width>111</width>
          <height>31</height>
@@ -15168,6 +15168,31 @@
         <string>Fiducial</string>
        </property>
       </widget>
+      <widget class="QPushButton" name="pushbtn_illumi_2">
+       <property name="geometry">
+        <rect>
+         <x>600</x>
+         <y>37</y>
+         <width>91</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="text">
+        <string>Illumi</string>
+       </property>
+      </widget>
      </widget>
      <widget class="QGroupBox" name="group_fiberpositioner">
       <property name="geometry">
@@ -15194,7 +15219,7 @@
        <property name="geometry">
         <rect>
          <x>120</x>
-         <y>60</y>
+         <y>120</y>
          <width>71</width>
          <height>31</height>
         </rect>
@@ -15219,7 +15244,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>60</y>
+         <y>120</y>
          <width>101</width>
          <height>31</height>
         </rect>
@@ -15244,7 +15269,7 @@
        <property name="geometry">
         <rect>
          <x>200</x>
-         <y>60</y>
+         <y>120</y>
          <width>71</width>
          <height>31</height>
         </rect>
@@ -15263,6 +15288,44 @@
        </property>
        <property name="text">
         <string>Park</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_4">
+       <property name="geometry">
+        <rect>
+         <x>13</x>
+         <y>40</y>
+         <width>101</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="text">
+        <string>Loaded Tile</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEdit">
+       <property name="geometry">
+        <rect>
+         <x>120</x>
+         <y>36</y>
+         <width>113</width>
+         <height>25</height>
+        </rect>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
        </property>
       </widget>
      </widget>

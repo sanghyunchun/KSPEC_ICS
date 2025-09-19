@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
         QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QMessageBox, QSizePolicy, QFileDialog, QListWidget,QListWidgetItem,
         QDialog
         )
-from PySide6.QtGui import QMouseEvent, QGuiApplication
+from PySide6.QtGui import QMouseEvent, QGuiApplication, QTextCursor
 from ui_mainwindow import Ui_MainWindow
 from qasync import QEventLoop, asyncSlot
 from astropy.io import fits
@@ -253,8 +253,8 @@ class MainWindow(QMainWindow):
 
         # MTL 
         self.ui.pushbtn_MTL_exp.clicked.connect(self.MTL_exp_button_clicked)
-        self.ui.pushbtn_MTL_exp_2.clicked.connect(self.MTL_exp_button_clicked)
-        self.ui.pushbtn_MTL_exp_3.clicked.connect(self.MTL_exp_button_clicked)
+    #    self.ui.pushbtn_MTL_exp_2.clicked.connect(self.MTL_exp_button_clicked)
+    #    self.ui.pushbtn_MTL_exp_3.clicked.connect(self.MTL_exp_button_clicked)
 
         self.ui.pushbtn_MTL_cal.clicked.connect(self.MTL_cal_button_clicked)
 
@@ -267,7 +267,7 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_run_obs.clicked.connect(self.run_obs_clicked)
         self.ui.pushbtn_run_calib.clicked.connect(self.take_calib)
 
-#        self.ui.pushbtn_exp_start.clicked.connect(self.take_calib)
+        self.ui.pushbtn_exp_start.clicked.connect(self.exp_start_clicked)
 
         # LAMP
         self.ui.pushbtn_Flat.setCheckable(True)
@@ -290,7 +290,12 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_slew.clicked.connect(self.slew_button_clicked)
 
 
-
+        # Focusing
+        self.ui.pushbtn_dfp5.clicked.connect(self.dfp5_buttuon_clicked)
+        self.ui.pushbtn_dfm5.clicked.connect(self.dfm5_buttuon_clicked)
+        self.ui.pushbtn_dfp005.clicked.connect(self.dfp005_buttuon_clicked)
+        self.ui.pushbtn_dfm005.clicked.connect(self.dfm005_buttuon_clicked)
+        self.ui.pushbtn_fttgoto.clicked.connect(self.fttgoto_buttuon_clicked)
 
         # CLI command 
         self.ui.pushbtn_send_cmd.clicked.connect(self.user_input)
@@ -356,6 +361,8 @@ class MainWindow(QMainWindow):
         self.uttime = QDateTime.currentDateTimeUtc().toString('hh:mm:ss')
         self.ui.log1.append(f'<span style="color:{color};">[{self.uttime}][ICS] {message}</span>')
         self.ui.log2.append(f'<span style="color:{color};">[{self.uttime}][ICS] {message}</span>')
+        self.ui.log1.moveCursor(QTextCursor.End)
+        self.ui.log2.moveCursor(QTextCursor.End)
 
         if save :
             with open(self.msglog_path,'a') as f:
@@ -370,9 +377,9 @@ class MainWindow(QMainWindow):
     def set_directory(self): 
         current_dir=os.getcwd()
         parent_dir = os.path.dirname(current_dir)
-        dir_name=self.ui.lineEdit_directory.text()
+        self.dir_name=self.ui.lineEdit_directory.text()
 
-        msglogfile = 'MSGLOG_'+dir_name+'.txt'
+        msglogfile = 'MSGLOG_'+self.dir_name+'.txt'
         self.msglog_path=os.path.join(parent_dir,"DATA/MSGLOG",msglogfile)
         if os.path.exists(self.msglog_path):
             self.logging(f"Message Log file'{msglogfile}' already exists.", level='normal')
@@ -382,7 +389,7 @@ class MainWindow(QMainWindow):
                 pass
                 self.logging(f"Message Log file '{msglogfile}' was created.", level='normal')
 
-        self.dir_path=os.path.join(parent_dir,"DATA/RAWDATA",dir_name)
+        self.dir_path=os.path.join(parent_dir,"DATA/RAWDATA",self.dir_name)
         if os.path.exists(self.dir_path):
             self.logging(f"Directory '{self.dir_path}' already exists.", level='normal')
             pass
@@ -674,6 +681,38 @@ class MainWindow(QMainWindow):
 
 ##### Main Functions corresponding to the GUI action #####
 
+    # Focusing button
+    @asyncSlot()
+    async def dfp5_buttuon_clicked(self):
+        foffset = 0.5
+        messagetcs = f'KSPEC>TC dfocus {foffset}'
+        await self.send_udp_message(messagetcs)
+
+    @asyncSlot()
+    async def dfm5_buttuon_clicked(self):
+        foffset = -0.5
+        messagetcs = f'KSPEC>TC dfocus {foffset}'
+        await self.send_udp_message(messagetcs)
+
+    @asyncSlot()
+    async def dfp005_buttuon_clicked(self):
+        foffset = 0.005
+        messagetcs = f'KSPEC>TC dfocus {foffset}'
+        await self.send_udp_message(messagetcs)
+
+    @asyncSlot()
+    async def dfm005_buttuon_clicked(self):
+        foffset = -0.005
+        messagetcs = f'KSPEC>TC dfocus {foffset}'
+        await self.send_udp_message(messagetcs)
+
+    @asyncSlot()
+    async def fttgoto_buttuon_clicked(self):
+        ftt_value = self.ui.lineEdit_fttvalue.text()
+        messagetcs = f'KSPEC>TC fttgoto {ftt_value}'
+        await self.send_udp_message(messagetcs)
+
+
     # Telescope slew by single button
     @asyncSlot()
     async def slew_button_clicked(self):
@@ -690,8 +729,19 @@ class MainWindow(QMainWindow):
             print(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.')
             await self.send_udp_message(messagetcs)
 
+    # Exposure spectrograph from single mode
+    @asyncSlot()
+    async def exp_start_clicked(self):
+        exp_time = self.ui.lineEdit_exp_time_2.text()
+        exp_num = self.ui.lineEdit_n_exp_2.text()
+        if exp_time.strip() or exp_num.strip():
+            await handle_spec(f'getobj {exp_time} {exp_num}',self.ICS_client)
+        else:
+            self.logging(f"Please insert exposure time and number of exposure", level='error')
+    #    
 
 
+    @asyncSlot()
     async def _onoff_button_clicked(self, state_attr, btn1, btn2, command_on, command_off, label):
         if not self.check_connection():
             return
@@ -1210,7 +1260,7 @@ class MainWindow(QMainWindow):
 
         self.logging('System check start. Initialize dependencies',level='normal')
         self.scriptrun.initialize_dependencies(self.ICS_client, self.send_udp_message, self.send_telcom_command,
-            self.response_queue, self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue, self.show_status)
+            self.response_queue, self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue, self.show_status, self.dir_name)
 
         await handle_script('obsinitial',scriptrun=self.scriptrun)
 
@@ -1307,6 +1357,7 @@ class MainWindow(QMainWindow):
 
                 queue_map = {"GFA": self.GFA_response_queue, "ADC": self.ADC_response_queue, "SPEC": self.SPEC_response_queue}
                 if inst in queue_map and process in ('ING', 'START'):
+            #    if inst in queue_map and process in ('ING'):
                     await queue_map[inst].put(response_data)
                     if inst == 'GFA':
                         self.fwhm=response_data['fwhm']
@@ -1409,7 +1460,7 @@ class MainWindow(QMainWindow):
 #            "endo": ["endoguide", "endotest", "endofocus", "endostop","endoexpset","endoclear","endostatus"],
             "mtl": ["mtlstatus", "mtlexp", "mtlcal"],
             "lamp": ["lampstatus", "arcon", "arcoff", "flaton", "flatoff","fiducialon","fiducialoff"],
-            "spec": ["specstatus", "illuon", "illuoff", "getobj", "getbias", "getflat","getar"],
+            "spec": ["specstatus", "specinitial","illuon", "illuoff", "getobj", "getbias", "getflat","getar"],
             "tcs": ["tmradec", "start", "stop", "tcsint", "tcsreset", "tcsclose",
             "tcsarc", "tcsstatus", "tstat", "traw", "tsync", "tcmd",
             "treg", "tmradec", "tmr", "tmobject", "tmo", "tmelaz",
@@ -1420,7 +1471,7 @@ class MainWindow(QMainWindow):
             "ft", "dfocus", "dtilt", "fttgoto"],
 
             "telcom": ["getall", "getra", "getdec", "getha", "getel", "getaz", "getsecz", "mvstow", "mvelaz", "mvstop", "mvra", "mvdec", "track"],
-            "utils": ["obsstatus","loadtile"],
+            "utils": ["?","obsstatus","loadtile","setdir"],
             "script": ["runcalib", "obsinitial", "autoguide", "autoguidestop", "runobs"]
             }
 

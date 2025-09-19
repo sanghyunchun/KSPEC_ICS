@@ -51,7 +51,7 @@ async def identify_execute(FBP_server,cmd):
     if func == 'fbpmove':
         reply_data=mkmsg.fbpmsg()
         comment = 'Fiber positioners start to targets.'
-        reply_data.update(message=comment,process='ING',status='success')
+        reply_data.update(message=comment,process='START',status='success')
         rsp=json.dumps(reply_data)
         await FBP_server.send_message('ICS',rsp)
 
@@ -65,7 +65,7 @@ async def identify_execute(FBP_server,cmd):
     if func == 'fbpoffset':
         reply_data=mkmsg.fbpmsg()
         comment = 'Fiber positioners start to offset.'
-        reply_data.update(message=comment,process='ING',status='success',pos_state='assign')
+        reply_data.update(message=comment,process='START',status='success',pos_state='assign')
         rsp=json.dumps(reply_data)
         await FBP_server.send_message('ICS',rsp)
 
@@ -87,7 +87,7 @@ async def identify_execute(FBP_server,cmd):
     if func == 'fbpzero':
         reply_data=mkmsg.fbpmsg()
         comment = 'Fiber positioners start to move to zero positions'
-        reply_data.update(message=comment,process='ING',status='success')
+        reply_data.update(message=comment,process='START',status='success')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[FBP]', comment+'\033[0m')
         await FBP_server.send_message('ICS',rsp)

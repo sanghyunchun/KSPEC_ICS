@@ -1,4 +1,5 @@
 import sys
+import os
 import asyncio
 import json
 from aio_pika import IncomingMessage
@@ -52,7 +53,7 @@ class KSPECRunner:
             "ft", "dfocus", "dtilt", "fttgoto"],
 
             "telcom": ["getall", "getra", "getdec", "getha", "getel", "getaz", "getsecz", "mvstow", "mvelaz", "mvstop", "mvra", "mvdec", "track"],
-            "utils": ["obsstatus","loadtile"],
+            "utils": ["obsstatus","loadtile","setdir"],
             "script": ["runcalib", "obsinitial", "autoguide", "autoguidestop", "runobs"]
             }
     
@@ -77,6 +78,34 @@ class KSPECRunner:
             self.adc_pos = dict_data['pos_state']
         if dict_data['inst'] == 'FBP':
             self.fbp_pos = dict_data['pos_state']
+
+    def set_directory(self,dir_name):
+        current_dir=os.getcwd()
+        parent_dir = os.path.dirname(current_dir)
+
+        msglogfile = 'MSGLOG_'+dir_name+'.txt'
+        self.msglog_path=os.path.join(parent_dir,"DATA/MSGLOG",msglogfile)
+        if os.path.exists(self.msglog_path):
+            print(f"Message Log file'{msglogfile}' already exists.")
+            pass
+        else:
+            with open(self.msglog_path,'w') as f:
+                pass
+                print(f"Message Log file '{msglogfile}' was created.")
+
+        self.dir_path=os.path.join(parent_dir,"DATA/RAWDATA",dir_name)
+        if os.path.exists(self.dir_path):
+            print(f"Directory '{self.dir_path}' already exists.")
+            pass
+        else:
+            os.makedirs(self.dir_path, exist_ok=True)
+            print(f"Create directory '{self.dir_path}'.")
+
+    async def handle_utils(self,arg, ICS_client):
+        cmd, *params = arg.split()
+
+        if cmd == 'setdir':
+            self.set_directory(params[0])
 
     async def on_ics_message(self, message: IncomingMessage):
         async with message.process():
@@ -135,7 +164,8 @@ class KSPECRunner:
         handler_map = {
             "adc": handle_adc, "gfa": handle_gfa, "fbp": handle_fbp,
             "mtl": handle_mtl, "lamp": handle_lamp,
-            "spec": handle_spec, "script": handle_script
+            "spec": handle_spec, "script": handle_script,
+            "utils": self.handle_utils
         }
         if category in handler_map:
             await handler_map[category](message, self.ICS_client)
@@ -170,8 +200,6 @@ class KSPECRunner:
                         print('\033[94m' + '[ICS] received: ', telcom_result.decode() + '\033[0m', flush=True)
                     elif category.lower() == "script":
                         await handle_script(message, scriptrun=self.scriptrun)
-                    #    await handle_script(message, self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue, self.GFA_response_queue, self.ADC_response_queue, 
-                    #    self.SPEC_response_queue, self.scriptrun)
                     else:
                         await self.send_command(category, message)
                 else:

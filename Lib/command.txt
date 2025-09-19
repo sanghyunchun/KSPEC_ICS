@@ -1,0 +1,28 @@
+"adcstatus", "adcactivate", "adcadjust", "adcinit", "adcconnect", "adcdisconnect", "adchome", "adczero",
+            "adcpoweroff", "adcrotate1", "adcrotate2", "adcstop", "adcpark", "adcrotateop", "adcrotatesame"],
+            
+"gfa": ["gfastatus", "gfagrab", "gfaguidestop", "gfaguide", "fdgrab"],
+            
+"fbp": ["fbpstatus", "fbpzero", "fbpmove", "fbpoffset"],
+            
+"mtl": ["mtlstatus", "mtlexp", "mtlcal"],
+            
+"lamp": ["lampstatus", "arcon", "arcoff", "flaton", "flatoff","fiducialon","fiducialoff"],
+            
+"spec": ["specstatus", "specinitial","illuon", "illuoff", "getobj", "getbias", "getflat","getar"],
+            
+"tcs": ["tmradec", "start", "stop", "tcsint", "tcsreset", "tcsclose",
+            "tcsarc", "tcsstatus", "tstat", "traw", "tsync", "tcmd",
+            "treg", "tmradec", "tmr", "tmobject", "tmo", "tmelaz",
+            "tme", "tmoffset", "toff", "tstop", "tstow", "tdi",
+            "cc", "oo", "nstset", "nston", "nstoff", "auxinit",
+            "auxreset", "auxclose", "auxarc", "auxstatus",
+            "astat", "acmd", "fsastat", "fs", "fttstat",
+            "ft", "dfocus", "dtilt", "fttgoto"],
+
+            
+"telcom": ["getall", "getra", "getdec", "getha", "getel", "getaz", "getsecz", "mvstow", "mvelaz", "mvstop", "mvra", "mvdec", "track"],
+            
+"utils": ["obsstatus","loadtile","setdir"],
+            
+"script": ["runcalib", "obsinitial", "autoguide", "autoguidestop", "runobs"]

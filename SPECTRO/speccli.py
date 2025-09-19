@@ -20,6 +20,8 @@ def illu_on(): return create_spec_command('illuon', message ='Turn on back-illum
 
 def illu_off(): return create_spec_command('illuoff', message ='Turn off back-illumination light.')
 
+def spec_initial(dir_name): return create_spec_command('specinitial', dirname=dir_name, message = f'Initialize Spectrograph')
+
 def get_obj(exptime,nframe):
     return create_spec_command('getobj', time=exptime, numframe=nframe, message =f'Exposure {exptime} seconds for objects.')
 
@@ -40,6 +42,12 @@ async def handle_spec(arg, ICS_client):
         'illuon' : illu_on,
         'illuoff' : illu_off
     }
+
+    if cmd == 'specinitial':
+        if len(params) != 1:
+            print("Error: 'specinitial' needs one paramerter, i.e. directory name. ex) 20250918")
+            return
+        command_map[cmd] = lambda: spec_initial(str(params[0]))
 
     if cmd == 'getobj':
         if len(params) != 2:

@@ -47,7 +47,6 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
         await GFA_server.send_message('ICS',rsp)
 
     elif func == 'gfaguide':
-
         # Cancel any running task before starting a new one
         if guiding_task and not guiding_task.done():
             printing("Cancelling the running autoguiding task...")

@@ -80,6 +80,7 @@ class script():
         self.select_tile = None
         self.project = None
         self.obsdate = None
+        self.dir_name = None
 
     def configure_cordinate(self, project, obsdate, tileid, value1, value2):
         self.project = project
@@ -90,7 +91,7 @@ class script():
         print(f'ppp {self.select_tile}, {self.ra}, {self.dec}')
 
     def initialize_dependencies(self, ICSclient, send_udp_message, send_telcom_command,
-            response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue, show_status):
+            response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue, show_status, dir_name):
         self.ICSclient = ICSclient
         self.send_udp_message = send_udp_message 
         self.send_telcom_command = send_telcom_command
@@ -98,12 +99,17 @@ class script():
         self.GFA_response_queue = GFA_response_queue 
         self.ADC_response_queue = ADC_response_queue 
         self.SPEC_response_queue = SPEC_response_queue 
-#        self.logging = logging 
         self.show_status = show_status
+        self.dir_name = dir_name
+
 
     async def obs_initial(self,scriptrun,logging):
         """Initialize all instruments."""
         print('Start instruments intialization')
+        await clear_queue(scriptrun.response_queue)
+        await clear_queue(scriptrun.GFA_response_queue)
+        await clear_queue(scriptrun.ADC_response_queue)
+        await clear_queue(scriptrun.SPEC_response_queue)
         await handle_gfa('gfastatus',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
         await handle_fbp('fbpstatus',scriptrun.ICSclient)
@@ -118,15 +124,11 @@ class script():
         await scriptrun.response_queue.get()
         await handle_adc('adcstatus',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
+        await handle_spec(f'specinitial {self.dir_name}',scriptrun.ICSclient)
+        await scriptrun.response_queue.get()
         await handle_spec('specstatus',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
 
-#    async def run_calib(self,ICSclient,send_udp_message, send_telcom_command, 
-#            response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue, logging):
-#        """Starts the calibration process asynchronously."""
-#        self.script_task = asyncio.create_task(
-#                self.handle_calib(ICSclient,send_udp_message, send_telcom_command, response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue, logging)
-#        )
     async def run_calib(self,scriptrun,logging):
         """Starts the calibration process asynchronously."""
         self.script_task = asyncio.create_task(
@@ -204,24 +206,23 @@ class script():
             while True:
                 try:
                     response_data = await asyncio.wait_for(scriptrun.GFA_response_queue.get(),timeout=70)
-                    print('fff {response_data}')
-                    print(f'tttt {response_data}')
                 except asyncio.TimeoutError:
                     print("No GFA response")
                     continue
-
-                fdx=response_data['fdx']
-                print(f'ttttt {fdx}')
-                fdy=response_data['fdy']
-                self.fwhm=response_data['fwhm']
-                ra= await scriptrun.send_telcom_command('getra')
-                dec= await scriptrun.send_telcom_command('getdec')
-                ra=ra.decode()
-                dec=dec.decode()
-                rahms,decdms=convert_to_sexagesimal(ra,dec)
-                new_coord=apply_offset(rahms,decdms,fdx,fdy)
-                messagetcs = 'KSPEC>TC ' + 'tmradec ' + new_coord
-                await scriptrun.send_udp_message(messagetcs)
+                
+                if "fdx" in response_data:
+                    fdx=response_data['fdx']
+                    print(f'ttttt {fdx}')
+                    fdy=response_data['fdy']
+                    self.fwhm=response_data['fwhm']
+                    ra= await scriptrun.send_telcom_command('getra')
+                    dec= await scriptrun.send_telcom_command('getdec')
+                    ra=ra.decode()
+                    dec=dec.decode()
+                    rahms,decdms=convert_to_sexagesimal(ra,dec)
+                    new_coord=apply_offset(rahms,decdms,fdx,fdy)
+                    messagetcs = 'KSPEC>TC ' + 'tmradec ' + new_coord
+                    await scriptrun.send_udp_message(messagetcs)
 
         except asyncio.CancelledError:
             print("Autoguide task was cancelled.")
@@ -260,7 +261,8 @@ class script():
         await clear_queue(scriptrun.ADC_response_queue)
         await clear_queue(scriptrun.SPEC_response_queue)
 
-        logging(f'Observation Strats',level='comment')
+        logging(f'###### Observation for Tile ID {self.select_tile} strats ######',level='comment')
+        printing(f'###### Observation for Tile ID {self.select_tile} strats ######')
         
         if logging == None:
             printing('###### Observation Script Start!!! ######')
@@ -342,19 +344,18 @@ class script():
             printing(f'All accessary files for observation of Tile ID {self.select_tile} are successfully loaded')
         
         await asyncio.sleep(2)
-
+    
         printing(f'ADC Adjust Start')
         message=f'adcadjust {self.ra} {self.dec}'
-#        print(message)
-        message=f'adcadjust 09:34:56.44 -31:34:55.67'
+        print(message)
+        message=f'adcadjust 13:34:56.44 -31:34:55.67'
         await handle_adc(message,scriptrun.ICSclient)
         await asyncio.sleep(2)
-
+        
         printing(f'Fiber positioner Moving Start')
         await handle_fbp('fbpmove',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
         sys.stdout.flush()
-        await asyncio.sleep(0)
 
         messagetcs = 'KSPEC>TC ' + 'tmradec ' + self.ra +' '+ self.dec
         printing(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.')
@@ -369,15 +370,21 @@ class script():
 
             if value == '1':
                 print('Telescope slew finished')
+                logging('Telescope slew finished.', level='receive')
                 break
             print('.',end=' ', flush=True)
             await asyncio.sleep(5)
+
+        await scriptrun.response_queue.get()
 
 
         await asyncio.sleep(5)
         printing(f'Autoguiding Start')
         await self.run_autoguide(scriptrun)
         await asyncio.sleep(2)
+
+
+        
         await handle_spec('illuon',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
         await asyncio.sleep(2)
@@ -388,13 +395,16 @@ class script():
 
         await handle_mtl('mtlexp 10',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
+        await scriptrun.response_queue.get()
         await asyncio.sleep(2)
 
         await handle_mtl('mtlcal',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
+        await scriptrun.response_queue.get()
         await asyncio.sleep(2)
 
         await handle_fbp('fbpoffset',scriptrun.ICSclient)
+        await scriptrun.response_queue.get()
         await scriptrun.response_queue.get()
         await asyncio.sleep(2)
 
@@ -403,43 +413,45 @@ class script():
         await asyncio.sleep(2)
 
         await handle_lamp('fiducialoff',scriptrun.ICSclient)
+        print('decfewdg')
+        print(f'FHWM is {self.fwhm:.5f}.')
         await scriptrun.response_queue.get()
         await asyncio.sleep(2)
 
-        
-        print(f'FHWM is {self.fwhm:.5f}.')
+
 
         obs_num=3
         printing(f'KSPEC starts {obs_num} exposures with 300 seconds.')
         for i in range(int(obs_num)):
             await clear_queue(scriptrun.SPEC_response_queue)
             await handle_spec(f'getobj 30 1', scriptrun.ICSclient)
-            printing(f'{i+1}/{obs_num}: 30 seconds exposure start.')
+            printing(f'**** {i+1}/{obs_num}: 30 seconds exposure start. ****')
+            logging(f'**** {i+1}/{obs_num}: 30 seconds exposure start. ****', level='receive')
             spec_rsp=await scriptrun.response_queue.get()
-            print('Hellow response queue')
+#            print(f'jhkjkjk {spec_rsp}')
             fram=f'{i+1}/{obs_num}'
             header_data = {"PROJECT": self.project, "EXPTIME": 20, "FRAME": fram, "Tile": self.select_tile, "PRORA": self.ra, "PRODEC": self.dec}
             update_fits(spec_rsp["file"],header_data)
+            logging('Fits header updated', level='receive')
             printing("Fits header updated")
 
 
         printing('All exposures are completed.')
+        logging('All exposures are completed.',level='receive')
+
         await handle_adc('adcstop',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
         await self.autoguidestop(scriptrun)
         await scriptrun.response_queue.get()
         await handle_adc('adczero',scriptrun.ICSclient)
+        await handle_fbp('fbpzero',scriptrun.ICSclient)
+        await scriptrun.response_queue.get()
+        await scriptrun.response_queue.get()
         await scriptrun.response_queue.get()
 
-        await asyncio.sleep(3)
         printing(f'###### Observation Script for Tile ID {self.select_tile} END!!! ######')
-        scriptrun.show_status('LAMP','normal')
-        scriptrun.show_status('ADC','normal')
-        scriptrun.show_status('FBP','normal')
-        scriptrun.show_status('MTL','normal')
-        scriptrun.show_status('SPEC','normal')
+        logging(f'###### Observation Script for Tile ID {self.select_tile} END!!! ######',level='comment')
 
-        
 
 
 #async def handle_script(arg, ICSclient, send_udp_message, send_telcom_command, 
