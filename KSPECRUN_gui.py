@@ -192,6 +192,9 @@ class MainWindow(QMainWindow):
 
         self.msglog_path = None
 
+        self.ra = None
+        self.dec = None
+
         ### Instrument position state & state ###
         self.adcadjusting_state = False
         self.fbp_state = False
@@ -210,7 +213,7 @@ class MainWindow(QMainWindow):
         self.timer = QTimer(self)
         self.timer.setInterval(1000)
         self.timer.timeout.connect(self.timeout)
-        self.setWindowTitle('QTimer')
+        self.setWindowTitle('KSPEC ICS')
         self.timer.start()
 
 
@@ -907,6 +910,11 @@ class MainWindow(QMainWindow):
         if not self.check_syscheck():
             return
 
+        if self.ra is None or self.dec is None:
+            self.logging('Please slew telescope to specific sky position or load sequence file',level='error')
+            return
+
+
         self.adcadjusting_state = not getattr(self,"adcadjusting_state",False)
 
         # sync two button
@@ -921,8 +929,8 @@ class MainWindow(QMainWindow):
 
         if self.adcadjusting_state:
 #            self.ui.pushbtn_ADCadjust.setStyleSheet("color: green; font-weight:900;")
-            self.ra='09:34:43.2'
-            self.dec='-31:34:56.4'
+#            self.ra='09:34:43.2'
+#            self.dec='-31:34:56.4'
             await handle_adc(f'adcadjust {self.ra} {self.dec}', self.ICS_client)
             self.logging('Sent ADC adjusting Start', level='send')
         else:
