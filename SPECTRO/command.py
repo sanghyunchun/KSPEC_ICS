@@ -117,7 +117,7 @@ async def get_obj(SPEC_server, exptime, nframe):
     await SPEC_server.send_message('ICS', rsp)
 
     result= await asyncio.gather(create_fits_image(exptime),remaining(SPEC_server,exptime))
-    msg=f'Exposure finished'
+    msg=f'Exposure finished. Creating the image now.'
     reply_data=mkmsg.specmsg()
     reply_data.update(message=msg,process='ING',status='success')
     rsp=json.dumps(reply_data)
@@ -160,7 +160,7 @@ async def create_fits_image(exptime, shape: tuple = (100, 100), data_type=np.flo
     hdul.writeto(filepath+filename, overwrite=True)
     await asyncio.sleep(exptime)
     msg=f'FITS file {filename} is created.'
-    response = {"status": "success", "message": msg, "file": filepath+filename, "process": 'Done'}
+    response = {"status": "success", "message": msg, "filename": filepath+filename, "process": 'Done'}
     return response
 
 async def remaining(SPEC_server, exptime):

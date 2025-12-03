@@ -70,6 +70,7 @@ async def clear_queue(queue):
         queue.task_done()
 
 
+
 class script():
     def __init__(self):
         self.autoguide_task = None
@@ -81,14 +82,20 @@ class script():
         self.project = None
         self.obsdate = None
         self.dir_name = None
+        self.obsnum = None
+        self.expT = None
+        self.MTLexpT = 5.    # default MTL exposure time
+        self.GFAexpT = 5.    # default GFA exposure time
 
-    def configure_cordinate(self, project, obsdate, tileid, value1, value2):
+    def configure_cordinate(self, project, obsdate, tileid, value1, value2, obsnum, expT):
         self.project = project
         self.obsdate = obsdate
         self.select_tile = tileid
         self.ra = value1
         self.dec = value2
-        print(f'ppp {self.select_tile}, {self.ra}, {self.dec}')
+        self.obsnum = obsnum
+        self.expT = expT
+        print(f'{self.select_tile}, {self.ra}, {self.dec}')
 
     def initialize_dependencies(self, ICSclient, send_udp_message, send_telcom_command,
             response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue, show_status, dir_name):
@@ -102,6 +109,13 @@ class script():
         self.show_status = show_status
         self.dir_name = dir_name
 
+    def MTL_set(self,exptime):
+        self.MTLexpT = exptime
+    #    print(f'MTL exposure time is {self.MTLexpT}')
+
+
+    def GFA_set(self,exptime):
+        self.GFAexpT = exptime
 
     async def obs_initial(self,scriptrun,logging):
         """Initialize all instruments."""
@@ -190,19 +204,18 @@ class script():
             logging('Run Calibration Task finished', level='normal')
 
 
-
-    async def run_autoguide(self,scriptrun, exptime: float = 1.0):
+    async def run_autoguide(self,scriptrun, exptime: float = 5.0, save: str = False):
         """Starts the autoguiding process asynchronously."""
         if self.autoguide_task and not self.autoguide_task.done():
             print("Autoguide task is already running. Ignoring duplicate start.")
             return
         self.autoguide_task = asyncio.create_task(
-                self.handle_autoguide(exptime, scriptrun)
+                self.handle_autoguide(exptime, save, scriptrun)
         )
 
-    async def handle_autoguide(self, exptime, scriptrun):
+    async def handle_autoguide(self, exptime, save, scriptrun):
         try:
-            await handle_gfa(f'gfaguide {exptime}',scriptrun.ICSclient)
+            await handle_gfa(f'gfaguide {exptime} {save}',scriptrun.ICSclient)
             while True:
                 try:
                     response_data = await asyncio.wait_for(scriptrun.GFA_response_queue.get(),timeout=70)
@@ -212,7 +225,7 @@ class script():
                 
                 if "fdx" in response_data:
                     fdx=response_data['fdx']
-                    print(f'ttttt {fdx}')
+                #    print(f'ttttt {fdx}')
                     fdy=response_data['fdy']
                     self.fwhm=response_data['fwhm']
                     ra= await scriptrun.send_telcom_command('getra')
@@ -271,6 +284,7 @@ class script():
             fs.close()
             obsplanpath=kspecinfo['SCIOBS']['obsplanpath']
 
+            ### Start CLI version ###
             while True:
                 filename=input('\nPlease insert Observation sequence file (ex. ASPECS_obs_250217.txt): ')
                 filepath=os.path.join(obsplanpath,filename)
@@ -342,20 +356,21 @@ class script():
             await asyncio.sleep(2)
 
             printing(f'All accessary files for observation of Tile ID {self.select_tile} are successfully loaded')
+            ### End of CLI version ###
         
         await asyncio.sleep(2)
     
         printing(f'ADC Adjust Start')
         message=f'adcadjust {self.ra} {self.dec}'
         print(message)
-        message=f'adcadjust 13:34:56.44 -31:34:55.67'
+        message=f'adcadjust 19:34:56.44 -31:34:55.67'                           # Just for simulation. Remove or comment when real observation
         await handle_adc(message,scriptrun.ICSclient)
         await asyncio.sleep(2)
         
         printing(f'Fiber positioner Moving Start')
         await handle_fbp('fbpmove',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
-        sys.stdout.flush()
+     #   sys.stdout.flush()
 
         messagetcs = 'KSPEC>TC ' + 'tmradec ' + self.ra +' '+ self.dec
         printing(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.')
@@ -363,28 +378,26 @@ class script():
         print('Telescope is slewing now.', end=' ',flush=True)
 
         while True:
-            r=redis.Redis(host='localhost',port=6379,decode_responses=True)
+            r=redis.Redis(host='localhost',port=6379,decode_responses=True)     # Set IP address of KMTNet redis server
 
             value=r.get('dome_error')
-            print(value)
+            print(value)                                                        # Remove or comment in real observation
 
-            if value == '1':
+            if value != '2':
                 print('Telescope slew finished')
                 logging('Telescope slew finished.', level='receive')
                 break
             print('.',end=' ', flush=True)
             await asyncio.sleep(5)
 
-        await scriptrun.response_queue.get()
-
+        await scriptrun.response_queue.get()                                    # ??? Remove in real observation ???
 
         await asyncio.sleep(5)
         printing(f'Autoguiding Start')
-        await self.run_autoguide(scriptrun)
+        logging(f'GFA guiding. Expoture time is {self.GFAexpT}', level='receive')
+        await self.run_autoguide(scriptrun,self.GFAexpT)
         await asyncio.sleep(2)
 
-
-        
         await handle_spec('illuon',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
         await asyncio.sleep(2)
@@ -393,7 +406,7 @@ class script():
         await scriptrun.response_queue.get()
         await asyncio.sleep(2)
 
-        await handle_mtl('mtlexp 10',scriptrun.ICSclient)
+        await handle_mtl(f'mtlexp {self.MTLexpT}',scriptrun.ICSclient)                       # Change exposure time in real observation
         await scriptrun.response_queue.get()
         await scriptrun.response_queue.get()
         await asyncio.sleep(2)
@@ -413,25 +426,24 @@ class script():
         await asyncio.sleep(2)
 
         await handle_lamp('fiducialoff',scriptrun.ICSclient)
-        print('decfewdg')
-        print(f'FHWM is {self.fwhm:.5f}.')
+    
+    #    print(f'FHWM is {self.fwhm:.5f}.')                                     # Remove in real observation
         await scriptrun.response_queue.get()
         await asyncio.sleep(2)
 
 
-
-        obs_num=3
-        printing(f'KSPEC starts {obs_num} exposures with 300 seconds.')
+        obs_num=self.obsnum
+        printing(f'KSPEC starts {obs_num} exposures with {self.expT} seconds.')
         for i in range(int(obs_num)):
             await clear_queue(scriptrun.SPEC_response_queue)
-            await handle_spec(f'getobj 30 1', scriptrun.ICSclient)
+            await handle_spec(f'getobj {self.expT} 1', scriptrun.ICSclient)
             printing(f'**** {i+1}/{obs_num}: 30 seconds exposure start. ****')
             logging(f'**** {i+1}/{obs_num}: 30 seconds exposure start. ****', level='receive')
             spec_rsp=await scriptrun.response_queue.get()
 #            print(f'jhkjkjk {spec_rsp}')
             fram=f'{i+1}/{obs_num}'
-            header_data = {"PROJECT": self.project, "EXPTIME": 20, "FRAME": fram, "Tile": self.select_tile, "PRORA": self.ra, "PRODEC": self.dec}
-            update_fits(spec_rsp["file"],header_data)
+            header_data = {"PROJECT": self.project, "EXPTIME": self.expT, "FRAME": fram, "Tile": self.select_tile, "PRORA": self.ra, "PRODEC": self.dec}
+            update_fits(spec_rsp["filename"],header_data)
             logging('Fits header updated', level='receive')
             printing("Fits header updated")
 
@@ -459,6 +471,7 @@ class script():
 async def handle_script(arg, scriptrun=None, logging=None):
     """ Handle script with error checking. """
     cmd, *params = arg.split()
+    print(params)
     command_map = {
             'obsinitial': scriptrun.obs_initial, 'runcalib': scriptrun.run_calib, 'runobs': scriptrun.run_obs
     }
@@ -468,10 +481,10 @@ async def handle_script(arg, scriptrun=None, logging=None):
 #                scriptrun.response_queue, scriptrun.GFA_response_queue, scriptrun.ADC_response_queue, scriptrun.SPEC_response_queue, scriptrun.logging)
         await command_map[cmd](scriptrun,logging)
     elif cmd == 'autoguide':
-        if not params:
-            await scriptrun.run_autoguide(scriptrun)
-        else:
-            await scriptrun.run_autoguide(scriptrun,params[0])
+    #    if not params:
+    #        await scriptrun.run_autoguide(scriptrun)
+    #    else:
+        await scriptrun.run_autoguide(scriptrun,params[0],params[1])
 
     elif cmd == 'autoguidestop':
         await scriptrun.autoguidestop(scriptrun)

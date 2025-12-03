@@ -183,7 +183,7 @@ class MainWindow(QMainWindow):
         self.command_list = self.load_command_list()
         self.tcsagentIP, self.tcsagentPort, self.telcomIP, self.telcomPort = self.load_config()
 
-        self.gfaexpt = 3
+        self.gfaexpt = None
         self.gfacam = 0
 
         self.adc = 0
@@ -194,6 +194,8 @@ class MainWindow(QMainWindow):
 
         self.ra = None
         self.dec = None
+
+        self.mtlexp = None
 
         ### Instrument position state & state ###
         self.adcadjusting_state = False
@@ -233,6 +235,7 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_Guiding_2.clicked.connect(self.Guiding_button_clicked)
 
         self.ui.pushbtn_GFArun.clicked.connect(self.GFArun_button_clicked)
+        self.ui.pushbtn_GFA_set.clicked.connect(self.GFA_set_button_clicked)
 
 
         # ADC adjust
@@ -260,6 +263,8 @@ class MainWindow(QMainWindow):
     #    self.ui.pushbtn_MTL_exp_3.clicked.connect(self.MTL_exp_button_clicked)
 
         self.ui.pushbtn_MTL_cal.clicked.connect(self.MTL_cal_button_clicked)
+        self.ui.pushbtn_MTL_set.clicked.connect(self.MTL_set_button_clicked)
+
 
         # Load Sequence
         self.ui.pushbtn_load_sequence.clicked.connect(self.load_file)
@@ -321,6 +326,10 @@ class MainWindow(QMainWindow):
         self.canvas_R=MplCanvas(self,dpi=100,left=0.00,right=1.,bottom=0.0,top=1.)
         self.R_layout=QVBoxLayout(self.ui.frame_R)
         self.R_layout.addWidget(self.canvas_R)
+
+        self.canvas_F=MplCanvas(self,dpi=100,left=0.00,right=1.,bottom=0.0,top=1.)
+        self.F_layout=QVBoxLayout(self.ui.frame_finder)
+        self.F_layout.addWidget(self.canvas_F)
 
 
         self.canvas_G1=MplCanvas(self,dpi=100,left=0.0,right=1.,bottom=0.,top=1.)
@@ -842,13 +851,16 @@ class MainWindow(QMainWindow):
         if not self.check_syscheck():
             return
         if not self.ui.lineEdit_GFA_exptime.text():
-            self.ui.lineEdit_GFA_exptime.setText('1')
+            self.ui.lineEdit_GFA_exptime.setText('5')      # Default guiding exposure time : 5 sec
+
         if not self.ui.lineEdit_GFA_cam.text():
             self.ui.lineEdit_GFA_cam.setText('0')
 
         self.gfaexpt = float(self.ui.lineEdit_GFA_exptime.text())
         self.gfacam = int(self.ui.lineEdit_GFA_cam.text())
 
+
+        gfasave=self.ui.gfa_checkBox.isChecked()
         await handle_gfa(f'gfagrab {self.gfacam} {self.gfaexpt}',self.ICS_client)
         if self.gfacam == 0:
             self.logging(f'Sent Expose all GFA cameras for {self.gfaexpt} seconds.', level='send')
@@ -862,8 +874,9 @@ class MainWindow(QMainWindow):
 
         if not self.check_syscheck():
             return
+
         if not self.ui.lineEdit_GFA_exptime.text():
-            self.ui.lineEdit_GFA_exptime.setText('5')
+            self.ui.lineEdit_GFA_exptime.setText('5')      # Default guiding exposure time : 5 sec
 
         self.gfaexpt = float(self.ui.lineEdit_GFA_exptime.text())
 
@@ -881,14 +894,36 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_Guiding_2.setStyleSheet(style)
 
         # Command and log
+        gfasave=self.ui.gfa_checkBox.isChecked()
         if self.guiding_state:
-            await handle_script(f'autoguide {self.gfaexpt}', scriptrun=self.scriptrun)
-            self.logging('Sent Autoguiding Start', level='send')
+            if not gfasave:
+                await handle_script(f'autoguide {self.gfaexpt} False', scriptrun=self.scriptrun)
+                self.logging(f'Sent Autoguiding Start. Exposure time is {self.gfaexpt}.', level='send')
+            else:
+                print(f'tekjkerjek {gfasave}')
+                await handle_script(f'autoguide {self.gfaexpt} True', scriptrun=self.scriptrun)
         else:
             await handle_script('autoguidestop', scriptrun=self.scriptrun)
             self.logging('Sent Autoguiding Stop', level='send')
 
-        await asyncio.sleep(5)
+
+    @asyncSlot()
+    async def GFA_set_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        if not self.ui.lineEdit_GFA_exptime.text():
+            self.ui.lineEdit_GFA_exptime.setText('5')
+
+        self.gfaexpt = float(self.ui.lineEdit_GFA_exptime.text())
+        self.logging(f'Set GFA exposure time to {self.gfaexpt}', level='send')
+        self.scriptrun.GFA_set(self.gfaexpt)
+
+
+    def show_guiding(self):
         cutimgpath='/media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/kspec_gfa_controller/src/img/cutout/'
         guidenum=['1','2','3','4']
         G_canvas=[self.canvas_G1,self.canvas_G2,self.canvas_G3,self.canvas_G4]
@@ -899,6 +934,18 @@ class MainWindow(QMainWindow):
 
             self.G_zmin, self.G_zmax = zs.zscale(data)
             can.imshows(data,vmin=self.G_zmin,vmax=self.G_zmax,cmap='gray',origin='lower')
+
+    def show_spec(self, spec_response):
+    #    self.fwhm=response_data['fwhm']
+        spec_canvas = [self.canvas_B, self.canvas_R, self.canvas_F]
+
+        for i,can in enumerate(spec_canvas):
+            with fits.open(spec_response['filename']) as hdul:
+                data=hdul[0].data
+
+            self.S_zmin, self.S_zmax = zs.zscale(data)
+            can.imshows(data,vmin=self.S_zmin,vmax=self.S_zmax,cmap='gray',origin='lower')
+
 
 
     ### ADC ###
@@ -932,7 +979,7 @@ class MainWindow(QMainWindow):
 #            self.ra='09:34:43.2'
 #            self.dec='-31:34:56.4'
             await handle_adc(f'adcadjust {self.ra} {self.dec}', self.ICS_client)
-            self.logging('Sent ADC adjusting Start', level='send')
+            self.logging(f'Sent ADC adjusting for ({self.ra}, {self.dec}) Start.', level='send')
         else:
             self.ui.pushbtn_ADCadjust.setStyleSheet("color: black;")
             await handle_adc('adcstop',self.ICS_client)
@@ -1022,7 +1069,7 @@ class MainWindow(QMainWindow):
         if not self.ui.lineEdit_MTL_exptime.text():
             self.ui.lineEdit_MTL_exptime.setText('5')
 
-        self.mtlexp = self.ui.lineEdit_MTL_exptime.text()
+        self.mtlexp = float(self.ui.lineEdit_MTL_exptime.text())
         self.logging(f'Sent MTL exposure', level='send')
         await handle_mtl(f'mtlexp {self.mtlexp}', self.ICS_client)
 
@@ -1036,6 +1083,21 @@ class MainWindow(QMainWindow):
 
         self.logging(f'Sent MTL calculation', level='send')
         await handle_mtl(f'mtlcal', self.ICS_client)
+
+    @asyncSlot()
+    async def MTL_set_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        if not self.ui.lineEdit_MTL_exptime.text():
+            self.ui.lineEdit_MTL_exptime.setText('5')
+
+        self.mtlexp = float(self.ui.lineEdit_MTL_exptime.text())
+        self.logging(f'Set MTL exposure time to {self.mtlexp}', level='send')
+        self.scriptrun.MTL_set(self.mtlexp)
         
 
     ### Flat Button ###
@@ -1200,7 +1262,7 @@ class MainWindow(QMainWindow):
         self.tilemsg,self.guidemsg,self.objmsg,self.motionmsg1,self.motionmsg2=sciobs.loadtile(self.select_tile)
         self.ra, self.dec=self.convert_to_sexagesimal(sciobs.ra,sciobs.dec)
 
-        self.scriptrun.configure_cordinate(self.project, self.obsdate, self.select_tile, self.ra, self.dec)
+        self.scriptrun.configure_cordinate(self.project, self.obsdate, self.select_tile, self.ra, self.dec, self.obsnum, self.expT)
 
         self.ui.lineEdit_TileID.setText(f'{self.select_tile}')
         self.ui.lineEdit_ra_1.setText(f'{self.ra}')
@@ -1367,12 +1429,16 @@ class MainWindow(QMainWindow):
                 if inst in queue_map and process in ('ING', 'START'):
             #    if inst in queue_map and process in ('ING'):
                     await queue_map[inst].put(response_data)
-                    if inst == 'GFA':
+                    if inst == 'GFA' and process == 'ING':
                         self.fwhm=response_data['fwhm']
                         print(f'ttttt {self.fwhm}')
                         self.ui.lineEdit_seeing.setText(f'{self.fwhm}')
+                        self.show_guiding()
+                elif inst == 'SPEC' and response_data['filename'] != 'None':
+                    self.show_spec(response_data)
+                    await self.response_queue.put(response_data)
                 else:
-                    print('put response_data to response_queue')
+                    print('put response_data to response_queue')      # To comment this out in real observation
                     await self.response_queue.put(response_data)
             except Exception as e:
                 print(f"Error in wait_for_response: {e}", flush=True)

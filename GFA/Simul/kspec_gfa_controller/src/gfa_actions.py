@@ -208,7 +208,10 @@ class GFAActions:
 #            self.copy_files(src_dir,raw_save_path)
             await asyncio.sleep(5)
 
+            print(f'Save index is {save}')
+
             if save:
+                print("Fits files saved")
                 os.makedirs(grab_save_path, exist_ok=True)
                 for fname in os.listdir(raw_save_path):
                     src = os.path.join(raw_save_path, fname)
@@ -230,7 +233,7 @@ class GFAActions:
             fdy=-0.045
             fwhm=1.21
 
-            msg = f"Offsets: fdx={fdx}, fdy={fdy}, FWHM={fwhm:.5f} arcsec"
+            msg = f"Offsets: fdx={fdx}, fdy={fdy}, FWHM={fwhm:.5f} arcsec."
             return self._generate_response("success", msg, fdx=fdx, fdy=fdy, fwhm=fwhm)
 
         except Exception as e:

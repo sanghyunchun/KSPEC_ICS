@@ -20,7 +20,7 @@ def printing(message):
     """
     print(f"\033[32m[GFA] {message}\033[0m")
 
-async def identify_execute(GFA_server,gfa_actions,cmd):
+async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
     global guiding_task 
     dict_data=json.loads(cmd)
     func=dict_data['func']
@@ -60,7 +60,7 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
 
         # Start a new adcadjust task
         printing("New guiding task started.")
-        guiding_task = asyncio.create_task(handle_guiding(GFA_server, gfa_actions,dict_data['ExpTime']))
+        guiding_task = asyncio.create_task(handle_guiding(GFA_server, gfa_actions, dict_data['ExpTime']))
 
     elif func == 'gfaguidestop':
         if guiding_task and not guiding_task.done():
