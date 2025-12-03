@@ -1937,7 +1937,7 @@
        <property name="geometry">
         <rect>
          <x>6</x>
-         <y>41</y>
+         <y>39</y>
          <width>29</width>
          <height>29</height>
         </rect>
@@ -1950,15 +1950,16 @@
        </property>
        <property name="font">
         <font>
-         <family>Arial</family>
+         <family>DejaVu Sans</family>
          <pointsize>14</pointsize>
          <weight>50</weight>
+         <italic>false</italic>
          <bold>false</bold>
          <strikeout>false</strikeout>
         </font>
        </property>
        <property name="text">
-        <string>⚫</string>
+        <string>●</string>
        </property>
        <property name="textFormat">
         <enum>Qt::PlainText</enum>
@@ -1992,37 +1993,6 @@
         <set>Qt::AlignCenter</set>
        </property>
       </widget>
-      <widget class="QLabel" name="ok_status_adc">
-       <property name="geometry">
-        <rect>
-         <x>88</x>
-         <y>41</y>
-         <width>26</width>
-         <height>29</height>
-        </rect>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="font">
-        <font>
-         <family>Arial</family>
-         <pointsize>14</pointsize>
-         <weight>50</weight>
-         <bold>false</bold>
-         <strikeout>false</strikeout>
-        </font>
-       </property>
-       <property name="text">
-        <string>⚫</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
       <widget class="QLabel" name="label_status_adc">
        <property name="geometry">
         <rect>
@@ -2043,37 +2013,6 @@
        </property>
        <property name="text">
         <string>ADC</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-      <widget class="QLabel" name="ok_status_fiber">
-       <property name="geometry">
-        <rect>
-         <x>174</x>
-         <y>41</y>
-         <width>32</width>
-         <height>29</height>
-        </rect>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="font">
-        <font>
-         <family>Arial</family>
-         <pointsize>14</pointsize>
-         <weight>50</weight>
-         <bold>false</bold>
-         <strikeout>false</strikeout>
-        </font>
-       </property>
-       <property name="text">
-        <string>⚫</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -2352,6 +2291,76 @@
        </property>
        <property name="flat">
         <bool>false</bool>
+       </property>
+      </widget>
+      <widget class="QLabel" name="ok_status_adc">
+       <property name="geometry">
+        <rect>
+         <x>90</x>
+         <y>39</y>
+         <width>29</width>
+         <height>29</height>
+        </rect>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <family>DejaVu Sans</family>
+         <pointsize>14</pointsize>
+         <weight>50</weight>
+         <italic>false</italic>
+         <bold>false</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="text">
+        <string>●</string>
+       </property>
+       <property name="textFormat">
+        <enum>Qt::PlainText</enum>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+      <widget class="QLabel" name="ok_status_fiber">
+       <property name="geometry">
+        <rect>
+         <x>180</x>
+         <y>40</y>
+         <width>29</width>
+         <height>29</height>
+        </rect>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <family>DejaVu Sans</family>
+         <pointsize>14</pointsize>
+         <weight>50</weight>
+         <italic>false</italic>
+         <bold>false</bold>
+         <strikeout>false</strikeout>
+        </font>
+       </property>
+       <property name="text">
+        <string>●</string>
+       </property>
+       <property name="textFormat">
+        <enum>Qt::PlainText</enum>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </widget>
@@ -17071,15 +17080,19 @@
        </property>
        <property name="font">
         <font>
-         <family>Arial</family>
+         <family>DejaVu Sans</family>
          <pointsize>14</pointsize>
          <weight>50</weight>
+         <italic>true</italic>
          <bold>false</bold>
          <strikeout>false</strikeout>
         </font>
        </property>
        <property name="text">
-        <string>⚫</string>
+        <string>●</string>
+       </property>
+       <property name="textFormat">
+        <enum>Qt::PlainText</enum>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>

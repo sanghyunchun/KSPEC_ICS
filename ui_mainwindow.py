@@ -519,13 +519,19 @@ class Ui_MainWindow(object):
         self.group_status.setFont(font1)
         self.ok_status_gfa = QLabel(self.group_status)
         self.ok_status_gfa.setObjectName(u"ok_status_gfa")
-        self.ok_status_gfa.setGeometry(QRect(6, 41, 29, 29))
+        self.ok_status_gfa.setGeometry(QRect(6, 39, 29, 29))
         sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         sizePolicy2.setHorizontalStretch(0)
         sizePolicy2.setVerticalStretch(0)
         sizePolicy2.setHeightForWidth(self.ok_status_gfa.sizePolicy().hasHeightForWidth())
         self.ok_status_gfa.setSizePolicy(sizePolicy2)
-        self.ok_status_gfa.setFont(font2)
+        font6 = QFont()
+        font6.setFamilies([u"DejaVu Sans"])
+        font6.setPointSize(14)
+        font6.setBold(False)
+        font6.setItalic(False)
+        font6.setStrikeOut(False)
+        self.ok_status_gfa.setFont(font6)
         self.ok_status_gfa.setTextFormat(Qt.PlainText)
         self.ok_status_gfa.setAlignment(Qt.AlignCenter)
         self.label_status_gfa = QLabel(self.group_status)
@@ -533,25 +539,11 @@ class Ui_MainWindow(object):
         self.label_status_gfa.setGeometry(QRect(28, 41, 61, 29))
         self.label_status_gfa.setFont(font2)
         self.label_status_gfa.setAlignment(Qt.AlignCenter)
-        self.ok_status_adc = QLabel(self.group_status)
-        self.ok_status_adc.setObjectName(u"ok_status_adc")
-        self.ok_status_adc.setGeometry(QRect(88, 41, 26, 29))
-        sizePolicy2.setHeightForWidth(self.ok_status_adc.sizePolicy().hasHeightForWidth())
-        self.ok_status_adc.setSizePolicy(sizePolicy2)
-        self.ok_status_adc.setFont(font2)
-        self.ok_status_adc.setAlignment(Qt.AlignCenter)
         self.label_status_adc = QLabel(self.group_status)
         self.label_status_adc.setObjectName(u"label_status_adc")
         self.label_status_adc.setGeometry(QRect(110, 41, 61, 29))
         self.label_status_adc.setFont(font2)
         self.label_status_adc.setAlignment(Qt.AlignCenter)
-        self.ok_status_fiber = QLabel(self.group_status)
-        self.ok_status_fiber.setObjectName(u"ok_status_fiber")
-        self.ok_status_fiber.setGeometry(QRect(174, 41, 32, 29))
-        sizePolicy2.setHeightForWidth(self.ok_status_fiber.sizePolicy().hasHeightForWidth())
-        self.ok_status_fiber.setSizePolicy(sizePolicy2)
-        self.ok_status_fiber.setFont(font2)
-        self.ok_status_fiber.setAlignment(Qt.AlignCenter)
         self.label_status_fiber = QLabel(self.group_status)
         self.label_status_fiber.setObjectName(u"label_status_fiber")
         self.label_status_fiber.setGeometry(QRect(200, 41, 61, 29))
@@ -613,6 +605,22 @@ class Ui_MainWindow(object):
         self.pushbtn_reset1.setIcon(icon)
         self.pushbtn_reset1.setIconSize(QSize(181, 61))
         self.pushbtn_reset1.setFlat(False)
+        self.ok_status_adc = QLabel(self.group_status)
+        self.ok_status_adc.setObjectName(u"ok_status_adc")
+        self.ok_status_adc.setGeometry(QRect(90, 39, 29, 29))
+        sizePolicy2.setHeightForWidth(self.ok_status_adc.sizePolicy().hasHeightForWidth())
+        self.ok_status_adc.setSizePolicy(sizePolicy2)
+        self.ok_status_adc.setFont(font6)
+        self.ok_status_adc.setTextFormat(Qt.PlainText)
+        self.ok_status_adc.setAlignment(Qt.AlignCenter)
+        self.ok_status_fiber = QLabel(self.group_status)
+        self.ok_status_fiber.setObjectName(u"ok_status_fiber")
+        self.ok_status_fiber.setGeometry(QRect(180, 40, 29, 29))
+        sizePolicy2.setHeightForWidth(self.ok_status_fiber.sizePolicy().hasHeightForWidth())
+        self.ok_status_fiber.setSizePolicy(sizePolicy2)
+        self.ok_status_fiber.setFont(font6)
+        self.ok_status_fiber.setTextFormat(Qt.PlainText)
+        self.ok_status_fiber.setAlignment(Qt.AlignCenter)
         self.group_subsytem = QGroupBox(self.tab_home)
         self.group_subsytem.setObjectName(u"group_subsytem")
         self.group_subsytem.setGeometry(QRect(580, 90, 951, 81))
@@ -782,11 +790,11 @@ class Ui_MainWindow(object):
 
         self.progressBar_svc = QProgressBar(self.formLayoutWidget_3)
         self.progressBar_svc.setObjectName(u"progressBar_svc")
-        font6 = QFont()
-        font6.setPointSize(9)
-        font6.setBold(True)
-        font6.setStrikeOut(False)
-        self.progressBar_svc.setFont(font6)
+        font7 = QFont()
+        font7.setPointSize(9)
+        font7.setBold(True)
+        font7.setStrikeOut(False)
+        self.progressBar_svc.setFont(font7)
         self.progressBar_svc.setValue(24)
 
         self.formLayout_3.setWidget(6, QFormLayout.FieldRole, self.progressBar_svc)
@@ -953,7 +961,7 @@ class Ui_MainWindow(object):
 
         self.progressBar_svc_2 = QProgressBar(self.formLayoutWidget)
         self.progressBar_svc_2.setObjectName(u"progressBar_svc_2")
-        self.progressBar_svc_2.setFont(font6)
+        self.progressBar_svc_2.setFont(font7)
         self.progressBar_svc_2.setValue(24)
 
         self.formLayout.setWidget(6, QFormLayout.FieldRole, self.progressBar_svc_2)
@@ -1103,12 +1111,12 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_179.sizePolicy().hasHeightForWidth())
         self.circle_A1_179.setSizePolicy(sizePolicy4)
         self.circle_A1_179.setMaximumSize(QSize(1500000, 1500000))
-        font7 = QFont()
-        font7.setFamilies([u"Arial"])
-        font7.setPointSize(25)
-        font7.setBold(False)
-        font7.setStrikeOut(False)
-        self.circle_A1_179.setFont(font7)
+        font8 = QFont()
+        font8.setFamilies([u"Arial"])
+        font8.setPointSize(25)
+        font8.setBold(False)
+        font8.setStrikeOut(False)
+        self.circle_A1_179.setFont(font8)
         self.circle_A1_179.setAlignment(Qt.AlignCenter)
         self.circle_A1_179.setWordWrap(False)
 
@@ -1139,13 +1147,13 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_M0_27.sizePolicy().hasHeightForWidth())
         self.circle_M0_27.setSizePolicy(sizePolicy4)
         self.circle_M0_27.setMaximumSize(QSize(1500000, 1500000))
-        font8 = QFont()
-        font8.setFamilies([u"Arial"])
-        font8.setPointSize(25)
-        font8.setBold(False)
-        font8.setUnderline(False)
-        font8.setStrikeOut(False)
-        self.circle_M0_27.setFont(font8)
+        font9 = QFont()
+        font9.setFamilies([u"Arial"])
+        font9.setPointSize(25)
+        font9.setBold(False)
+        font9.setUnderline(False)
+        font9.setStrikeOut(False)
+        self.circle_M0_27.setFont(font9)
         self.circle_M0_27.setAlignment(Qt.AlignCenter)
         self.circle_M0_27.setWordWrap(False)
 
@@ -1166,7 +1174,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_162.sizePolicy().hasHeightForWidth())
         self.circle_A1_162.setSizePolicy(sizePolicy4)
         self.circle_A1_162.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_162.setFont(font7)
+        self.circle_A1_162.setFont(font8)
         self.circle_A1_162.setAlignment(Qt.AlignCenter)
         self.circle_A1_162.setWordWrap(False)
 
@@ -1187,7 +1195,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_160.sizePolicy().hasHeightForWidth())
         self.circle_A1_160.setSizePolicy(sizePolicy4)
         self.circle_A1_160.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_160.setFont(font7)
+        self.circle_A1_160.setFont(font8)
         self.circle_A1_160.setAlignment(Qt.AlignCenter)
         self.circle_A1_160.setWordWrap(False)
 
@@ -1198,13 +1206,13 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A_7.sizePolicy().hasHeightForWidth())
         self.circle_A_7.setSizePolicy(sizePolicy4)
         self.circle_A_7.setMaximumSize(QSize(1500000, 1500000))
-        font9 = QFont()
-        font9.setFamilies([u"Arial"])
-        font9.setPointSize(27)
-        font9.setBold(False)
-        font9.setUnderline(False)
-        font9.setStrikeOut(False)
-        self.circle_A_7.setFont(font9)
+        font10 = QFont()
+        font10.setFamilies([u"Arial"])
+        font10.setPointSize(27)
+        font10.setBold(False)
+        font10.setUnderline(False)
+        font10.setStrikeOut(False)
+        self.circle_A_7.setFont(font10)
         self.circle_A_7.setAlignment(Qt.AlignCenter)
         self.circle_A_7.setWordWrap(False)
 
@@ -1215,12 +1223,12 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_L_3.sizePolicy().hasHeightForWidth())
         self.circle_L_3.setSizePolicy(sizePolicy4)
         self.circle_L_3.setMaximumSize(QSize(1500000, 1500000))
-        font10 = QFont()
-        font10.setFamilies([u"Arial"])
-        font10.setPointSize(28)
-        font10.setBold(False)
-        font10.setStrikeOut(False)
-        self.circle_L_3.setFont(font10)
+        font11 = QFont()
+        font11.setFamilies([u"Arial"])
+        font11.setPointSize(28)
+        font11.setBold(False)
+        font11.setStrikeOut(False)
+        self.circle_L_3.setFont(font11)
         self.circle_L_3.setAlignment(Qt.AlignCenter)
         self.circle_L_3.setWordWrap(False)
 
@@ -1231,7 +1239,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_201.sizePolicy().hasHeightForWidth())
         self.circle_A1_201.setSizePolicy(sizePolicy4)
         self.circle_A1_201.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_201.setFont(font7)
+        self.circle_A1_201.setFont(font8)
         self.circle_A1_201.setAlignment(Qt.AlignCenter)
         self.circle_A1_201.setWordWrap(False)
 
@@ -1252,7 +1260,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_151.sizePolicy().hasHeightForWidth())
         self.circle_A1_151.setSizePolicy(sizePolicy4)
         self.circle_A1_151.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_151.setFont(font7)
+        self.circle_A1_151.setFont(font8)
         self.circle_A1_151.setAlignment(Qt.AlignCenter)
         self.circle_A1_151.setWordWrap(False)
 
@@ -1273,7 +1281,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_L0_21.sizePolicy().hasHeightForWidth())
         self.circle_L0_21.setSizePolicy(sizePolicy4)
         self.circle_L0_21.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_L0_21.setFont(font7)
+        self.circle_L0_21.setFont(font8)
         self.circle_L0_21.setAlignment(Qt.AlignCenter)
         self.circle_L0_21.setWordWrap(False)
 
@@ -1284,7 +1292,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_192.sizePolicy().hasHeightForWidth())
         self.circle_A1_192.setSizePolicy(sizePolicy4)
         self.circle_A1_192.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_192.setFont(font7)
+        self.circle_A1_192.setFont(font8)
         self.circle_A1_192.setAlignment(Qt.AlignCenter)
         self.circle_A1_192.setWordWrap(False)
 
@@ -1305,7 +1313,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_E0_23.sizePolicy().hasHeightForWidth())
         self.circle_E0_23.setSizePolicy(sizePolicy4)
         self.circle_E0_23.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_E0_23.setFont(font8)
+        self.circle_E0_23.setFont(font9)
         self.circle_E0_23.setAlignment(Qt.AlignCenter)
         self.circle_E0_23.setWordWrap(False)
 
@@ -1316,7 +1324,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_N0_12.sizePolicy().hasHeightForWidth())
         self.circle_N0_12.setSizePolicy(sizePolicy4)
         self.circle_N0_12.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_N0_12.setFont(font7)
+        self.circle_N0_12.setFont(font8)
         self.circle_N0_12.setAlignment(Qt.AlignCenter)
         self.circle_N0_12.setWordWrap(False)
 
@@ -1337,7 +1345,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_54.sizePolicy().hasHeightForWidth())
         self.circle_A0_54.setSizePolicy(sizePolicy4)
         self.circle_A0_54.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_54.setFont(font9)
+        self.circle_A0_54.setFont(font10)
         self.circle_A0_54.setAlignment(Qt.AlignCenter)
         self.circle_A0_54.setWordWrap(False)
 
@@ -1348,7 +1356,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_F0_23.sizePolicy().hasHeightForWidth())
         self.circle_F0_23.setSizePolicy(sizePolicy4)
         self.circle_F0_23.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_F0_23.setFont(font8)
+        self.circle_F0_23.setFont(font9)
         self.circle_F0_23.setAlignment(Qt.AlignCenter)
         self.circle_F0_23.setWordWrap(False)
 
@@ -1359,13 +1367,13 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_N_3.sizePolicy().hasHeightForWidth())
         self.circle_N_3.setSizePolicy(sizePolicy4)
         self.circle_N_3.setMaximumSize(QSize(1500000, 1500000))
-        font11 = QFont()
-        font11.setFamilies([u"Arial"])
-        font11.setPointSize(28)
-        font11.setBold(False)
-        font11.setUnderline(False)
-        font11.setStrikeOut(False)
-        self.circle_N_3.setFont(font11)
+        font12 = QFont()
+        font12.setFamilies([u"Arial"])
+        font12.setPointSize(28)
+        font12.setBold(False)
+        font12.setUnderline(False)
+        font12.setStrikeOut(False)
+        self.circle_N_3.setFont(font12)
         self.circle_N_3.setAlignment(Qt.AlignCenter)
         self.circle_N_3.setWordWrap(False)
 
@@ -1396,7 +1404,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_58.sizePolicy().hasHeightForWidth())
         self.circle_A0_58.setSizePolicy(sizePolicy4)
         self.circle_A0_58.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_58.setFont(font9)
+        self.circle_A0_58.setFont(font10)
         self.circle_A0_58.setAlignment(Qt.AlignCenter)
         self.circle_A0_58.setWordWrap(False)
 
@@ -1407,7 +1415,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_53.sizePolicy().hasHeightForWidth())
         self.circle_A0_53.setSizePolicy(sizePolicy4)
         self.circle_A0_53.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_53.setFont(font9)
+        self.circle_A0_53.setFont(font10)
         self.circle_A0_53.setAlignment(Qt.AlignCenter)
         self.circle_A0_53.setWordWrap(False)
 
@@ -1418,7 +1426,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_M0_28.sizePolicy().hasHeightForWidth())
         self.circle_M0_28.setSizePolicy(sizePolicy4)
         self.circle_M0_28.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_M0_28.setFont(font8)
+        self.circle_M0_28.setFont(font9)
         self.circle_M0_28.setAlignment(Qt.AlignCenter)
         self.circle_M0_28.setWordWrap(False)
 
@@ -1429,13 +1437,13 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.label_A0_22.sizePolicy().hasHeightForWidth())
         self.label_A0_22.setSizePolicy(sizePolicy4)
         self.label_A0_22.setMaximumSize(QSize(1500000, 1500000))
-        font12 = QFont()
-        font12.setFamilies([u"Arial"])
-        font12.setPointSize(13)
-        font12.setBold(False)
-        font12.setUnderline(False)
-        font12.setStrikeOut(False)
-        self.label_A0_22.setFont(font12)
+        font13 = QFont()
+        font13.setFamilies([u"Arial"])
+        font13.setPointSize(13)
+        font13.setBold(False)
+        font13.setUnderline(False)
+        font13.setStrikeOut(False)
+        self.label_A0_22.setFont(font13)
         self.label_A0_22.setLayoutDirection(Qt.LeftToRight)
         self.label_A0_22.setAlignment(Qt.AlignCenter)
 
@@ -1446,7 +1454,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A_32.sizePolicy().hasHeightForWidth())
         self.circle_A_32.setSizePolicy(sizePolicy4)
         self.circle_A_32.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A_32.setFont(font9)
+        self.circle_A_32.setFont(font10)
         self.circle_A_32.setAlignment(Qt.AlignCenter)
         self.circle_A_32.setWordWrap(False)
 
@@ -1457,7 +1465,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_M0_22.sizePolicy().hasHeightForWidth())
         self.circle_M0_22.setSizePolicy(sizePolicy4)
         self.circle_M0_22.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_M0_22.setFont(font8)
+        self.circle_M0_22.setFont(font9)
         self.circle_M0_22.setAlignment(Qt.AlignCenter)
         self.circle_M0_22.setWordWrap(False)
 
@@ -1468,7 +1476,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.label_A0_21.sizePolicy().hasHeightForWidth())
         self.label_A0_21.setSizePolicy(sizePolicy4)
         self.label_A0_21.setMaximumSize(QSize(1500000, 1500000))
-        self.label_A0_21.setFont(font12)
+        self.label_A0_21.setFont(font13)
         self.label_A0_21.setLayoutDirection(Qt.LeftToRight)
         self.label_A0_21.setAlignment(Qt.AlignCenter)
 
@@ -1479,7 +1487,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_188.sizePolicy().hasHeightForWidth())
         self.circle_A1_188.setSizePolicy(sizePolicy4)
         self.circle_A1_188.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_188.setFont(font7)
+        self.circle_A1_188.setFont(font8)
         self.circle_A1_188.setAlignment(Qt.AlignCenter)
         self.circle_A1_188.setWordWrap(False)
 
@@ -1490,7 +1498,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_222.sizePolicy().hasHeightForWidth())
         self.circle_A1_222.setSizePolicy(sizePolicy4)
         self.circle_A1_222.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_222.setFont(font7)
+        self.circle_A1_222.setFont(font8)
         self.circle_A1_222.setAlignment(Qt.AlignCenter)
         self.circle_A1_222.setWordWrap(False)
 
@@ -1521,7 +1529,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_E0_29.sizePolicy().hasHeightForWidth())
         self.circle_E0_29.setSizePolicy(sizePolicy4)
         self.circle_E0_29.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_E0_29.setFont(font8)
+        self.circle_E0_29.setFont(font9)
         self.circle_E0_29.setAlignment(Qt.AlignCenter)
         self.circle_E0_29.setWordWrap(False)
 
@@ -1532,7 +1540,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_74.sizePolicy().hasHeightForWidth())
         self.circle_A0_74.setSizePolicy(sizePolicy4)
         self.circle_A0_74.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_74.setFont(font9)
+        self.circle_A0_74.setFont(font10)
         self.circle_A0_74.setAlignment(Qt.AlignCenter)
         self.circle_A0_74.setWordWrap(False)
 
@@ -1543,7 +1551,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_F0_24.sizePolicy().hasHeightForWidth())
         self.circle_F0_24.setSizePolicy(sizePolicy4)
         self.circle_F0_24.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_F0_24.setFont(font8)
+        self.circle_F0_24.setFont(font9)
         self.circle_F0_24.setAlignment(Qt.AlignCenter)
         self.circle_F0_24.setWordWrap(False)
 
@@ -1554,7 +1562,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.label_A0_23.sizePolicy().hasHeightForWidth())
         self.label_A0_23.setSizePolicy(sizePolicy4)
         self.label_A0_23.setMaximumSize(QSize(1500000, 1500000))
-        self.label_A0_23.setFont(font12)
+        self.label_A0_23.setFont(font13)
         self.label_A0_23.setLayoutDirection(Qt.LeftToRight)
         self.label_A0_23.setAlignment(Qt.AlignCenter)
 
@@ -1565,7 +1573,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_66.sizePolicy().hasHeightForWidth())
         self.circle_A0_66.setSizePolicy(sizePolicy4)
         self.circle_A0_66.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_66.setFont(font9)
+        self.circle_A0_66.setFont(font10)
         self.circle_A0_66.setAlignment(Qt.AlignCenter)
         self.circle_A0_66.setWordWrap(False)
 
@@ -1576,7 +1584,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_H1_36.sizePolicy().hasHeightForWidth())
         self.circle_H1_36.setSizePolicy(sizePolicy4)
         self.circle_H1_36.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_H1_36.setFont(font7)
+        self.circle_H1_36.setFont(font8)
         self.circle_H1_36.setAlignment(Qt.AlignCenter)
         self.circle_H1_36.setWordWrap(False)
 
@@ -1587,7 +1595,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_H1_35.sizePolicy().hasHeightForWidth())
         self.circle_H1_35.setSizePolicy(sizePolicy4)
         self.circle_H1_35.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_H1_35.setFont(font7)
+        self.circle_H1_35.setFont(font8)
         self.circle_H1_35.setAlignment(Qt.AlignCenter)
         self.circle_H1_35.setWordWrap(False)
 
@@ -1618,7 +1626,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_L0_27.sizePolicy().hasHeightForWidth())
         self.circle_L0_27.setSizePolicy(sizePolicy4)
         self.circle_L0_27.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_L0_27.setFont(font7)
+        self.circle_L0_27.setFont(font8)
         self.circle_L0_27.setAlignment(Qt.AlignCenter)
         self.circle_L0_27.setWordWrap(False)
 
@@ -1669,7 +1677,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_63.sizePolicy().hasHeightForWidth())
         self.circle_A0_63.setSizePolicy(sizePolicy4)
         self.circle_A0_63.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_63.setFont(font9)
+        self.circle_A0_63.setFont(font10)
         self.circle_A0_63.setAlignment(Qt.AlignCenter)
         self.circle_A0_63.setWordWrap(False)
 
@@ -1680,7 +1688,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_174.sizePolicy().hasHeightForWidth())
         self.circle_A1_174.setSizePolicy(sizePolicy4)
         self.circle_A1_174.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_174.setFont(font7)
+        self.circle_A1_174.setFont(font8)
         self.circle_A1_174.setAlignment(Qt.AlignCenter)
         self.circle_A1_174.setWordWrap(False)
 
@@ -1691,7 +1699,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_F0_33.sizePolicy().hasHeightForWidth())
         self.circle_F0_33.setSizePolicy(sizePolicy4)
         self.circle_F0_33.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_F0_33.setFont(font8)
+        self.circle_F0_33.setFont(font9)
         self.circle_F0_33.setAlignment(Qt.AlignCenter)
         self.circle_F0_33.setWordWrap(False)
 
@@ -1752,7 +1760,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_75.sizePolicy().hasHeightForWidth())
         self.circle_A0_75.setSizePolicy(sizePolicy4)
         self.circle_A0_75.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_75.setFont(font9)
+        self.circle_A0_75.setFont(font10)
         self.circle_A0_75.setAlignment(Qt.AlignCenter)
         self.circle_A0_75.setWordWrap(False)
 
@@ -1763,7 +1771,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_M0_21.sizePolicy().hasHeightForWidth())
         self.circle_M0_21.setSizePolicy(sizePolicy4)
         self.circle_M0_21.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_M0_21.setFont(font8)
+        self.circle_M0_21.setFont(font9)
         self.circle_M0_21.setAlignment(Qt.AlignCenter)
         self.circle_M0_21.setWordWrap(False)
 
@@ -1774,7 +1782,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_182.sizePolicy().hasHeightForWidth())
         self.circle_A1_182.setSizePolicy(sizePolicy4)
         self.circle_A1_182.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_182.setFont(font7)
+        self.circle_A1_182.setFont(font8)
         self.circle_A1_182.setAlignment(Qt.AlignCenter)
         self.circle_A1_182.setWordWrap(False)
 
@@ -1785,7 +1793,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_E0_28.sizePolicy().hasHeightForWidth())
         self.circle_E0_28.setSizePolicy(sizePolicy4)
         self.circle_E0_28.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_E0_28.setFont(font8)
+        self.circle_E0_28.setFont(font9)
         self.circle_E0_28.setAlignment(Qt.AlignCenter)
         self.circle_E0_28.setWordWrap(False)
 
@@ -1796,7 +1804,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.label_A0_24.sizePolicy().hasHeightForWidth())
         self.label_A0_24.setSizePolicy(sizePolicy4)
         self.label_A0_24.setMaximumSize(QSize(1500000, 1500000))
-        self.label_A0_24.setFont(font12)
+        self.label_A0_24.setFont(font13)
         self.label_A0_24.setLayoutDirection(Qt.LeftToRight)
         self.label_A0_24.setAlignment(Qt.AlignCenter)
 
@@ -1817,7 +1825,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_210.sizePolicy().hasHeightForWidth())
         self.circle_A1_210.setSizePolicy(sizePolicy4)
         self.circle_A1_210.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_210.setFont(font7)
+        self.circle_A1_210.setFont(font8)
         self.circle_A1_210.setAlignment(Qt.AlignCenter)
         self.circle_A1_210.setWordWrap(False)
 
@@ -1828,7 +1836,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_N0_11.sizePolicy().hasHeightForWidth())
         self.circle_N0_11.setSizePolicy(sizePolicy4)
         self.circle_N0_11.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_N0_11.setFont(font7)
+        self.circle_N0_11.setFont(font8)
         self.circle_N0_11.setAlignment(Qt.AlignCenter)
         self.circle_N0_11.setWordWrap(False)
 
@@ -1859,7 +1867,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_N0_13.sizePolicy().hasHeightForWidth())
         self.circle_N0_13.setSizePolicy(sizePolicy4)
         self.circle_N0_13.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_N0_13.setFont(font7)
+        self.circle_N0_13.setFont(font8)
         self.circle_N0_13.setAlignment(Qt.AlignCenter)
         self.circle_N0_13.setWordWrap(False)
 
@@ -1870,7 +1878,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_H1_37.sizePolicy().hasHeightForWidth())
         self.circle_H1_37.setSizePolicy(sizePolicy4)
         self.circle_H1_37.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_H1_37.setFont(font7)
+        self.circle_H1_37.setFont(font8)
         self.circle_H1_37.setAlignment(Qt.AlignCenter)
         self.circle_H1_37.setWordWrap(False)
 
@@ -1891,7 +1899,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_F0_28.sizePolicy().hasHeightForWidth())
         self.circle_F0_28.setSizePolicy(sizePolicy4)
         self.circle_F0_28.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_F0_28.setFont(font8)
+        self.circle_F0_28.setFont(font9)
         self.circle_F0_28.setAlignment(Qt.AlignCenter)
         self.circle_F0_28.setWordWrap(False)
 
@@ -1922,7 +1930,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_199.sizePolicy().hasHeightForWidth())
         self.circle_A1_199.setSizePolicy(sizePolicy4)
         self.circle_A1_199.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_199.setFont(font7)
+        self.circle_A1_199.setFont(font8)
         self.circle_A1_199.setAlignment(Qt.AlignCenter)
         self.circle_A1_199.setWordWrap(False)
 
@@ -1933,7 +1941,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_152.sizePolicy().hasHeightForWidth())
         self.circle_A1_152.setSizePolicy(sizePolicy4)
         self.circle_A1_152.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_152.setFont(font7)
+        self.circle_A1_152.setFont(font8)
         self.circle_A1_152.setAlignment(Qt.AlignCenter)
         self.circle_A1_152.setWordWrap(False)
 
@@ -1944,7 +1952,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_189.sizePolicy().hasHeightForWidth())
         self.circle_A1_189.setSizePolicy(sizePolicy4)
         self.circle_A1_189.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_189.setFont(font7)
+        self.circle_A1_189.setFont(font8)
         self.circle_A1_189.setAlignment(Qt.AlignCenter)
         self.circle_A1_189.setWordWrap(False)
 
@@ -1995,7 +2003,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_K_3.sizePolicy().hasHeightForWidth())
         self.circle_K_3.setSizePolicy(sizePolicy4)
         self.circle_K_3.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_K_3.setFont(font10)
+        self.circle_K_3.setFont(font11)
         self.circle_K_3.setAlignment(Qt.AlignCenter)
         self.circle_K_3.setWordWrap(False)
 
@@ -2026,7 +2034,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_196.sizePolicy().hasHeightForWidth())
         self.circle_A1_196.setSizePolicy(sizePolicy4)
         self.circle_A1_196.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_196.setFont(font7)
+        self.circle_A1_196.setFont(font8)
         self.circle_A1_196.setAlignment(Qt.AlignCenter)
         self.circle_A1_196.setWordWrap(False)
 
@@ -2057,7 +2065,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_173.sizePolicy().hasHeightForWidth())
         self.circle_A1_173.setSizePolicy(sizePolicy4)
         self.circle_A1_173.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_173.setFont(font7)
+        self.circle_A1_173.setFont(font8)
         self.circle_A1_173.setAlignment(Qt.AlignCenter)
         self.circle_A1_173.setWordWrap(False)
 
@@ -2068,7 +2076,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_207.sizePolicy().hasHeightForWidth())
         self.circle_A1_207.setSizePolicy(sizePolicy4)
         self.circle_A1_207.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_207.setFont(font7)
+        self.circle_A1_207.setFont(font8)
         self.circle_A1_207.setAlignment(Qt.AlignCenter)
         self.circle_A1_207.setWordWrap(False)
 
@@ -2099,7 +2107,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_70.sizePolicy().hasHeightForWidth())
         self.circle_A0_70.setSizePolicy(sizePolicy4)
         self.circle_A0_70.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_70.setFont(font9)
+        self.circle_A0_70.setFont(font10)
         self.circle_A0_70.setAlignment(Qt.AlignCenter)
         self.circle_A0_70.setWordWrap(False)
 
@@ -2110,7 +2118,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_N6_7.sizePolicy().hasHeightForWidth())
         self.circle_N6_7.setSizePolicy(sizePolicy4)
         self.circle_N6_7.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_N6_7.setFont(font7)
+        self.circle_N6_7.setFont(font8)
         self.circle_N6_7.setAlignment(Qt.AlignCenter)
         self.circle_N6_7.setWordWrap(False)
 
@@ -2121,7 +2129,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_L0_23.sizePolicy().hasHeightForWidth())
         self.circle_L0_23.setSizePolicy(sizePolicy4)
         self.circle_L0_23.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_L0_23.setFont(font7)
+        self.circle_L0_23.setFont(font8)
         self.circle_L0_23.setAlignment(Qt.AlignCenter)
         self.circle_L0_23.setWordWrap(False)
 
@@ -2142,7 +2150,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_164.sizePolicy().hasHeightForWidth())
         self.circle_A1_164.setSizePolicy(sizePolicy4)
         self.circle_A1_164.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_164.setFont(font7)
+        self.circle_A1_164.setFont(font8)
         self.circle_A1_164.setAlignment(Qt.AlignCenter)
         self.circle_A1_164.setWordWrap(False)
 
@@ -2163,7 +2171,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_M0_26.sizePolicy().hasHeightForWidth())
         self.circle_M0_26.setSizePolicy(sizePolicy4)
         self.circle_M0_26.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_M0_26.setFont(font8)
+        self.circle_M0_26.setFont(font9)
         self.circle_M0_26.setAlignment(Qt.AlignCenter)
         self.circle_M0_26.setWordWrap(False)
 
@@ -2174,7 +2182,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A_31.sizePolicy().hasHeightForWidth())
         self.circle_A_31.setSizePolicy(sizePolicy4)
         self.circle_A_31.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A_31.setFont(font9)
+        self.circle_A_31.setFont(font10)
         self.circle_A_31.setAlignment(Qt.AlignCenter)
         self.circle_A_31.setWordWrap(False)
 
@@ -2185,7 +2193,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_D0_19.sizePolicy().hasHeightForWidth())
         self.circle_D0_19.setSizePolicy(sizePolicy4)
         self.circle_D0_19.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_D0_19.setFont(font8)
+        self.circle_D0_19.setFont(font9)
         self.circle_D0_19.setAlignment(Qt.AlignCenter)
         self.circle_D0_19.setWordWrap(False)
 
@@ -2196,7 +2204,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_O_3.sizePolicy().hasHeightForWidth())
         self.circle_O_3.setSizePolicy(sizePolicy4)
         self.circle_O_3.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_O_3.setFont(font10)
+        self.circle_O_3.setFont(font11)
         self.circle_O_3.setAlignment(Qt.AlignCenter)
         self.circle_O_3.setWordWrap(False)
 
@@ -2217,7 +2225,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_D0_20.sizePolicy().hasHeightForWidth())
         self.circle_D0_20.setSizePolicy(sizePolicy4)
         self.circle_D0_20.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_D0_20.setFont(font8)
+        self.circle_D0_20.setFont(font9)
         self.circle_D0_20.setAlignment(Qt.AlignCenter)
         self.circle_D0_20.setWordWrap(False)
 
@@ -2228,7 +2236,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.label_A0_17.sizePolicy().hasHeightForWidth())
         self.label_A0_17.setSizePolicy(sizePolicy4)
         self.label_A0_17.setMaximumSize(QSize(1500000, 1500000))
-        self.label_A0_17.setFont(font12)
+        self.label_A0_17.setFont(font13)
         self.label_A0_17.setLayoutDirection(Qt.LeftToRight)
         self.label_A0_17.setAlignment(Qt.AlignCenter)
 
@@ -2249,7 +2257,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_D0_27.sizePolicy().hasHeightForWidth())
         self.circle_D0_27.setSizePolicy(sizePolicy4)
         self.circle_D0_27.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_D0_27.setFont(font8)
+        self.circle_D0_27.setFont(font9)
         self.circle_D0_27.setAlignment(Qt.AlignCenter)
         self.circle_D0_27.setWordWrap(False)
 
@@ -2320,7 +2328,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_198.sizePolicy().hasHeightForWidth())
         self.circle_A1_198.setSizePolicy(sizePolicy4)
         self.circle_A1_198.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_198.setFont(font7)
+        self.circle_A1_198.setFont(font8)
         self.circle_A1_198.setAlignment(Qt.AlignCenter)
         self.circle_A1_198.setWordWrap(False)
 
@@ -2351,7 +2359,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_155.sizePolicy().hasHeightForWidth())
         self.circle_A1_155.setSizePolicy(sizePolicy4)
         self.circle_A1_155.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_155.setFont(font7)
+        self.circle_A1_155.setFont(font8)
         self.circle_A1_155.setAlignment(Qt.AlignCenter)
         self.circle_A1_155.setWordWrap(False)
 
@@ -2362,7 +2370,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_F0_30.sizePolicy().hasHeightForWidth())
         self.circle_F0_30.setSizePolicy(sizePolicy4)
         self.circle_F0_30.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_F0_30.setFont(font8)
+        self.circle_F0_30.setFont(font9)
         self.circle_F0_30.setAlignment(Qt.AlignCenter)
         self.circle_F0_30.setWordWrap(False)
 
@@ -2373,7 +2381,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_F0_31.sizePolicy().hasHeightForWidth())
         self.circle_F0_31.setSizePolicy(sizePolicy4)
         self.circle_F0_31.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_F0_31.setFont(font8)
+        self.circle_F0_31.setFont(font9)
         self.circle_F0_31.setAlignment(Qt.AlignCenter)
         self.circle_F0_31.setWordWrap(False)
 
@@ -2384,7 +2392,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_184.sizePolicy().hasHeightForWidth())
         self.circle_A1_184.setSizePolicy(sizePolicy4)
         self.circle_A1_184.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_184.setFont(font7)
+        self.circle_A1_184.setFont(font8)
         self.circle_A1_184.setAlignment(Qt.AlignCenter)
         self.circle_A1_184.setWordWrap(False)
 
@@ -2405,7 +2413,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_193.sizePolicy().hasHeightForWidth())
         self.circle_A1_193.setSizePolicy(sizePolicy4)
         self.circle_A1_193.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_193.setFont(font7)
+        self.circle_A1_193.setFont(font8)
         self.circle_A1_193.setAlignment(Qt.AlignCenter)
         self.circle_A1_193.setWordWrap(False)
 
@@ -2416,7 +2424,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_H1_39.sizePolicy().hasHeightForWidth())
         self.circle_H1_39.setSizePolicy(sizePolicy4)
         self.circle_H1_39.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_H1_39.setFont(font7)
+        self.circle_H1_39.setFont(font8)
         self.circle_H1_39.setAlignment(Qt.AlignCenter)
         self.circle_H1_39.setWordWrap(False)
 
@@ -2427,7 +2435,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_H1_33.sizePolicy().hasHeightForWidth())
         self.circle_H1_33.setSizePolicy(sizePolicy4)
         self.circle_H1_33.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_H1_33.setFont(font7)
+        self.circle_H1_33.setFont(font8)
         self.circle_H1_33.setAlignment(Qt.AlignCenter)
         self.circle_H1_33.setWordWrap(False)
 
@@ -2468,7 +2476,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_O1_17.sizePolicy().hasHeightForWidth())
         self.circle_O1_17.setSizePolicy(sizePolicy4)
         self.circle_O1_17.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_O1_17.setFont(font7)
+        self.circle_O1_17.setFont(font8)
         self.circle_O1_17.setAlignment(Qt.AlignCenter)
         self.circle_O1_17.setWordWrap(False)
 
@@ -2479,7 +2487,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.label_A0_20.sizePolicy().hasHeightForWidth())
         self.label_A0_20.setSizePolicy(sizePolicy4)
         self.label_A0_20.setMaximumSize(QSize(1500000, 1500000))
-        self.label_A0_20.setFont(font12)
+        self.label_A0_20.setFont(font13)
         self.label_A0_20.setLayoutDirection(Qt.LeftToRight)
         self.label_A0_20.setAlignment(Qt.AlignCenter)
 
@@ -2510,7 +2518,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_180.sizePolicy().hasHeightForWidth())
         self.circle_A1_180.setSizePolicy(sizePolicy4)
         self.circle_A1_180.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_180.setFont(font7)
+        self.circle_A1_180.setFont(font8)
         self.circle_A1_180.setAlignment(Qt.AlignCenter)
         self.circle_A1_180.setWordWrap(False)
 
@@ -2531,7 +2539,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_E0_24.sizePolicy().hasHeightForWidth())
         self.circle_E0_24.setSizePolicy(sizePolicy4)
         self.circle_E0_24.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_E0_24.setFont(font8)
+        self.circle_E0_24.setFont(font9)
         self.circle_E0_24.setAlignment(Qt.AlignCenter)
         self.circle_E0_24.setWordWrap(False)
 
@@ -2562,7 +2570,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_H1_30.sizePolicy().hasHeightForWidth())
         self.circle_H1_30.setSizePolicy(sizePolicy4)
         self.circle_H1_30.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_H1_30.setFont(font7)
+        self.circle_H1_30.setFont(font8)
         self.circle_H1_30.setAlignment(Qt.AlignCenter)
         self.circle_H1_30.setWordWrap(False)
 
@@ -2573,7 +2581,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_217.sizePolicy().hasHeightForWidth())
         self.circle_A1_217.setSizePolicy(sizePolicy4)
         self.circle_A1_217.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_217.setFont(font7)
+        self.circle_A1_217.setFont(font8)
         self.circle_A1_217.setAlignment(Qt.AlignCenter)
         self.circle_A1_217.setWordWrap(False)
 
@@ -2584,7 +2592,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_M_3.sizePolicy().hasHeightForWidth())
         self.circle_M_3.setSizePolicy(sizePolicy4)
         self.circle_M_3.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_M_3.setFont(font10)
+        self.circle_M_3.setFont(font11)
         self.circle_M_3.setAlignment(Qt.AlignCenter)
         self.circle_M_3.setWordWrap(False)
 
@@ -2615,7 +2623,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_L0_20.sizePolicy().hasHeightForWidth())
         self.circle_L0_20.setSizePolicy(sizePolicy4)
         self.circle_L0_20.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_L0_20.setFont(font7)
+        self.circle_L0_20.setFont(font8)
         self.circle_L0_20.setAlignment(Qt.AlignCenter)
         self.circle_L0_20.setWordWrap(False)
 
@@ -2626,7 +2634,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_165.sizePolicy().hasHeightForWidth())
         self.circle_A1_165.setSizePolicy(sizePolicy4)
         self.circle_A1_165.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_165.setFont(font7)
+        self.circle_A1_165.setFont(font8)
         self.circle_A1_165.setAlignment(Qt.AlignCenter)
         self.circle_A1_165.setWordWrap(False)
 
@@ -2647,7 +2655,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_205.sizePolicy().hasHeightForWidth())
         self.circle_A1_205.setSizePolicy(sizePolicy4)
         self.circle_A1_205.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_205.setFont(font7)
+        self.circle_A1_205.setFont(font8)
         self.circle_A1_205.setAlignment(Qt.AlignCenter)
         self.circle_A1_205.setWordWrap(False)
 
@@ -2678,7 +2686,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_169.sizePolicy().hasHeightForWidth())
         self.circle_A1_169.setSizePolicy(sizePolicy4)
         self.circle_A1_169.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_169.setFont(font7)
+        self.circle_A1_169.setFont(font8)
         self.circle_A1_169.setAlignment(Qt.AlignCenter)
         self.circle_A1_169.setWordWrap(False)
 
@@ -2699,7 +2707,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_176.sizePolicy().hasHeightForWidth())
         self.circle_A1_176.setSizePolicy(sizePolicy4)
         self.circle_A1_176.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_176.setFont(font7)
+        self.circle_A1_176.setFont(font8)
         self.circle_A1_176.setAlignment(Qt.AlignCenter)
         self.circle_A1_176.setWordWrap(False)
 
@@ -2730,7 +2738,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_218.sizePolicy().hasHeightForWidth())
         self.circle_A1_218.setSizePolicy(sizePolicy4)
         self.circle_A1_218.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_218.setFont(font7)
+        self.circle_A1_218.setFont(font8)
         self.circle_A1_218.setAlignment(Qt.AlignCenter)
         self.circle_A1_218.setWordWrap(False)
 
@@ -2741,7 +2749,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_157.sizePolicy().hasHeightForWidth())
         self.circle_A1_157.setSizePolicy(sizePolicy4)
         self.circle_A1_157.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_157.setFont(font7)
+        self.circle_A1_157.setFont(font8)
         self.circle_A1_157.setAlignment(Qt.AlignCenter)
         self.circle_A1_157.setWordWrap(False)
 
@@ -2752,7 +2760,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_185.sizePolicy().hasHeightForWidth())
         self.circle_A1_185.setSizePolicy(sizePolicy4)
         self.circle_A1_185.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_185.setFont(font7)
+        self.circle_A1_185.setFont(font8)
         self.circle_A1_185.setAlignment(Qt.AlignCenter)
         self.circle_A1_185.setWordWrap(False)
 
@@ -2773,7 +2781,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_55.sizePolicy().hasHeightForWidth())
         self.circle_A0_55.setSizePolicy(sizePolicy4)
         self.circle_A0_55.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_55.setFont(font9)
+        self.circle_A0_55.setFont(font10)
         self.circle_A0_55.setAlignment(Qt.AlignCenter)
         self.circle_A0_55.setWordWrap(False)
 
@@ -2794,7 +2802,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_E0_31.sizePolicy().hasHeightForWidth())
         self.circle_E0_31.setSizePolicy(sizePolicy4)
         self.circle_E0_31.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_E0_31.setFont(font8)
+        self.circle_E0_31.setFont(font9)
         self.circle_E0_31.setAlignment(Qt.AlignCenter)
         self.circle_E0_31.setWordWrap(False)
 
@@ -2805,7 +2813,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_62.sizePolicy().hasHeightForWidth())
         self.circle_A0_62.setSizePolicy(sizePolicy4)
         self.circle_A0_62.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_62.setFont(font9)
+        self.circle_A0_62.setFont(font10)
         self.circle_A0_62.setAlignment(Qt.AlignCenter)
         self.circle_A0_62.setWordWrap(False)
 
@@ -2846,7 +2854,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_158.sizePolicy().hasHeightForWidth())
         self.circle_A1_158.setSizePolicy(sizePolicy4)
         self.circle_A1_158.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_158.setFont(font7)
+        self.circle_A1_158.setFont(font8)
         self.circle_A1_158.setAlignment(Qt.AlignCenter)
         self.circle_A1_158.setWordWrap(False)
 
@@ -2857,7 +2865,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_H1_38.sizePolicy().hasHeightForWidth())
         self.circle_H1_38.setSizePolicy(sizePolicy4)
         self.circle_H1_38.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_H1_38.setFont(font7)
+        self.circle_H1_38.setFont(font8)
         self.circle_H1_38.setAlignment(Qt.AlignCenter)
         self.circle_H1_38.setWordWrap(False)
 
@@ -2868,7 +2876,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_187.sizePolicy().hasHeightForWidth())
         self.circle_A1_187.setSizePolicy(sizePolicy4)
         self.circle_A1_187.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_187.setFont(font7)
+        self.circle_A1_187.setFont(font8)
         self.circle_A1_187.setAlignment(Qt.AlignCenter)
         self.circle_A1_187.setWordWrap(False)
 
@@ -2889,7 +2897,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_181.sizePolicy().hasHeightForWidth())
         self.circle_A1_181.setSizePolicy(sizePolicy4)
         self.circle_A1_181.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_181.setFont(font7)
+        self.circle_A1_181.setFont(font8)
         self.circle_A1_181.setAlignment(Qt.AlignCenter)
         self.circle_A1_181.setWordWrap(False)
 
@@ -2900,7 +2908,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_219.sizePolicy().hasHeightForWidth())
         self.circle_A1_219.setSizePolicy(sizePolicy4)
         self.circle_A1_219.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_219.setFont(font7)
+        self.circle_A1_219.setFont(font8)
         self.circle_A1_219.setAlignment(Qt.AlignCenter)
         self.circle_A1_219.setWordWrap(False)
 
@@ -2921,7 +2929,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_59.sizePolicy().hasHeightForWidth())
         self.circle_A0_59.setSizePolicy(sizePolicy4)
         self.circle_A0_59.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_59.setFont(font9)
+        self.circle_A0_59.setFont(font10)
         self.circle_A0_59.setAlignment(Qt.AlignCenter)
         self.circle_A0_59.setWordWrap(False)
 
@@ -2932,7 +2940,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_67.sizePolicy().hasHeightForWidth())
         self.circle_A0_67.setSizePolicy(sizePolicy4)
         self.circle_A0_67.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_67.setFont(font9)
+        self.circle_A0_67.setFont(font10)
         self.circle_A0_67.setAlignment(Qt.AlignCenter)
         self.circle_A0_67.setWordWrap(False)
 
@@ -2953,7 +2961,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_D0_25.sizePolicy().hasHeightForWidth())
         self.circle_D0_25.setSizePolicy(sizePolicy4)
         self.circle_D0_25.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_D0_25.setFont(font8)
+        self.circle_D0_25.setFont(font9)
         self.circle_D0_25.setAlignment(Qt.AlignCenter)
         self.circle_D0_25.setWordWrap(False)
 
@@ -2964,7 +2972,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_202.sizePolicy().hasHeightForWidth())
         self.circle_A1_202.setSizePolicy(sizePolicy4)
         self.circle_A1_202.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_202.setFont(font7)
+        self.circle_A1_202.setFont(font8)
         self.circle_A1_202.setAlignment(Qt.AlignCenter)
         self.circle_A1_202.setWordWrap(False)
 
@@ -2985,7 +2993,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_212.sizePolicy().hasHeightForWidth())
         self.circle_A1_212.setSizePolicy(sizePolicy4)
         self.circle_A1_212.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_212.setFont(font7)
+        self.circle_A1_212.setFont(font8)
         self.circle_A1_212.setAlignment(Qt.AlignCenter)
         self.circle_A1_212.setWordWrap(False)
 
@@ -3016,7 +3024,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_E0_26.sizePolicy().hasHeightForWidth())
         self.circle_E0_26.setSizePolicy(sizePolicy4)
         self.circle_E0_26.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_E0_26.setFont(font8)
+        self.circle_E0_26.setFont(font9)
         self.circle_E0_26.setAlignment(Qt.AlignCenter)
         self.circle_E0_26.setWordWrap(False)
 
@@ -3047,7 +3055,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_E0_33.sizePolicy().hasHeightForWidth())
         self.circle_E0_33.setSizePolicy(sizePolicy4)
         self.circle_E0_33.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_E0_33.setFont(font8)
+        self.circle_E0_33.setFont(font9)
         self.circle_E0_33.setAlignment(Qt.AlignCenter)
         self.circle_E0_33.setWordWrap(False)
 
@@ -3058,7 +3066,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_213.sizePolicy().hasHeightForWidth())
         self.circle_A1_213.setSizePolicy(sizePolicy4)
         self.circle_A1_213.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_213.setFont(font7)
+        self.circle_A1_213.setFont(font8)
         self.circle_A1_213.setAlignment(Qt.AlignCenter)
         self.circle_A1_213.setWordWrap(False)
 
@@ -3069,7 +3077,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_195.sizePolicy().hasHeightForWidth())
         self.circle_A1_195.setSizePolicy(sizePolicy4)
         self.circle_A1_195.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_195.setFont(font7)
+        self.circle_A1_195.setFont(font8)
         self.circle_A1_195.setAlignment(Qt.AlignCenter)
         self.circle_A1_195.setWordWrap(False)
 
@@ -3090,7 +3098,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_D0_21.sizePolicy().hasHeightForWidth())
         self.circle_D0_21.setSizePolicy(sizePolicy4)
         self.circle_D0_21.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_D0_21.setFont(font8)
+        self.circle_D0_21.setFont(font9)
         self.circle_D0_21.setAlignment(Qt.AlignCenter)
         self.circle_D0_21.setWordWrap(False)
 
@@ -3141,7 +3149,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_F0_26.sizePolicy().hasHeightForWidth())
         self.circle_F0_26.setSizePolicy(sizePolicy4)
         self.circle_F0_26.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_F0_26.setFont(font8)
+        self.circle_F0_26.setFont(font9)
         self.circle_F0_26.setAlignment(Qt.AlignCenter)
         self.circle_F0_26.setWordWrap(False)
 
@@ -3152,7 +3160,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_161.sizePolicy().hasHeightForWidth())
         self.circle_A1_161.setSizePolicy(sizePolicy4)
         self.circle_A1_161.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_161.setFont(font7)
+        self.circle_A1_161.setFont(font8)
         self.circle_A1_161.setAlignment(Qt.AlignCenter)
         self.circle_A1_161.setWordWrap(False)
 
@@ -3163,7 +3171,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_H1_28.sizePolicy().hasHeightForWidth())
         self.circle_H1_28.setSizePolicy(sizePolicy4)
         self.circle_H1_28.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_H1_28.setFont(font7)
+        self.circle_H1_28.setFont(font8)
         self.circle_H1_28.setAlignment(Qt.AlignCenter)
         self.circle_H1_28.setWordWrap(False)
 
@@ -3184,7 +3192,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_177.sizePolicy().hasHeightForWidth())
         self.circle_A1_177.setSizePolicy(sizePolicy4)
         self.circle_A1_177.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_177.setFont(font7)
+        self.circle_A1_177.setFont(font8)
         self.circle_A1_177.setAlignment(Qt.AlignCenter)
         self.circle_A1_177.setWordWrap(False)
 
@@ -3195,7 +3203,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_216.sizePolicy().hasHeightForWidth())
         self.circle_A1_216.setSizePolicy(sizePolicy4)
         self.circle_A1_216.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_216.setFont(font7)
+        self.circle_A1_216.setFont(font8)
         self.circle_A1_216.setAlignment(Qt.AlignCenter)
         self.circle_A1_216.setWordWrap(False)
 
@@ -3216,7 +3224,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_F0_32.sizePolicy().hasHeightForWidth())
         self.circle_F0_32.setSizePolicy(sizePolicy4)
         self.circle_F0_32.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_F0_32.setFont(font8)
+        self.circle_F0_32.setFont(font9)
         self.circle_F0_32.setAlignment(Qt.AlignCenter)
         self.circle_F0_32.setWordWrap(False)
 
@@ -3227,7 +3235,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_200.sizePolicy().hasHeightForWidth())
         self.circle_A1_200.setSizePolicy(sizePolicy4)
         self.circle_A1_200.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_200.setFont(font7)
+        self.circle_A1_200.setFont(font8)
         self.circle_A1_200.setAlignment(Qt.AlignCenter)
         self.circle_A1_200.setWordWrap(False)
 
@@ -3258,7 +3266,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_167.sizePolicy().hasHeightForWidth())
         self.circle_A1_167.setSizePolicy(sizePolicy4)
         self.circle_A1_167.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_167.setFont(font7)
+        self.circle_A1_167.setFont(font8)
         self.circle_A1_167.setAlignment(Qt.AlignCenter)
         self.circle_A1_167.setWordWrap(False)
 
@@ -3269,7 +3277,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_186.sizePolicy().hasHeightForWidth())
         self.circle_A1_186.setSizePolicy(sizePolicy4)
         self.circle_A1_186.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_186.setFont(font7)
+        self.circle_A1_186.setFont(font8)
         self.circle_A1_186.setAlignment(Qt.AlignCenter)
         self.circle_A1_186.setWordWrap(False)
 
@@ -3290,7 +3298,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_E0_25.sizePolicy().hasHeightForWidth())
         self.circle_E0_25.setSizePolicy(sizePolicy4)
         self.circle_E0_25.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_E0_25.setFont(font8)
+        self.circle_E0_25.setFont(font9)
         self.circle_E0_25.setAlignment(Qt.AlignCenter)
         self.circle_E0_25.setWordWrap(False)
 
@@ -3301,7 +3309,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_D0_26.sizePolicy().hasHeightForWidth())
         self.circle_D0_26.setSizePolicy(sizePolicy4)
         self.circle_D0_26.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_D0_26.setFont(font8)
+        self.circle_D0_26.setFont(font9)
         self.circle_D0_26.setAlignment(Qt.AlignCenter)
         self.circle_D0_26.setWordWrap(False)
 
@@ -3312,7 +3320,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_D0_22.sizePolicy().hasHeightForWidth())
         self.circle_D0_22.setSizePolicy(sizePolicy4)
         self.circle_D0_22.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_D0_22.setFont(font8)
+        self.circle_D0_22.setFont(font9)
         self.circle_D0_22.setAlignment(Qt.AlignCenter)
         self.circle_D0_22.setWordWrap(False)
 
@@ -3323,7 +3331,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_H1_29.sizePolicy().hasHeightForWidth())
         self.circle_H1_29.setSizePolicy(sizePolicy4)
         self.circle_H1_29.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_H1_29.setFont(font7)
+        self.circle_H1_29.setFont(font8)
         self.circle_H1_29.setAlignment(Qt.AlignCenter)
         self.circle_H1_29.setWordWrap(False)
 
@@ -3334,7 +3342,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_171.sizePolicy().hasHeightForWidth())
         self.circle_A1_171.setSizePolicy(sizePolicy4)
         self.circle_A1_171.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_171.setFont(font7)
+        self.circle_A1_171.setFont(font8)
         self.circle_A1_171.setAlignment(Qt.AlignCenter)
         self.circle_A1_171.setWordWrap(False)
 
@@ -3345,7 +3353,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A_25.sizePolicy().hasHeightForWidth())
         self.circle_A_25.setSizePolicy(sizePolicy4)
         self.circle_A_25.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A_25.setFont(font9)
+        self.circle_A_25.setFont(font10)
         self.circle_A_25.setAlignment(Qt.AlignCenter)
         self.circle_A_25.setWordWrap(False)
 
@@ -3376,7 +3384,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_H1_32.sizePolicy().hasHeightForWidth())
         self.circle_H1_32.setSizePolicy(sizePolicy4)
         self.circle_H1_32.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_H1_32.setFont(font7)
+        self.circle_H1_32.setFont(font8)
         self.circle_H1_32.setAlignment(Qt.AlignCenter)
         self.circle_H1_32.setWordWrap(False)
 
@@ -3387,7 +3395,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_57.sizePolicy().hasHeightForWidth())
         self.circle_A0_57.setSizePolicy(sizePolicy4)
         self.circle_A0_57.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_57.setFont(font9)
+        self.circle_A0_57.setFont(font10)
         self.circle_A0_57.setAlignment(Qt.AlignCenter)
         self.circle_A0_57.setWordWrap(False)
 
@@ -3398,7 +3406,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_194.sizePolicy().hasHeightForWidth())
         self.circle_A1_194.setSizePolicy(sizePolicy4)
         self.circle_A1_194.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_194.setFont(font7)
+        self.circle_A1_194.setFont(font8)
         self.circle_A1_194.setAlignment(Qt.AlignCenter)
         self.circle_A1_194.setWordWrap(False)
 
@@ -3429,7 +3437,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_209.sizePolicy().hasHeightForWidth())
         self.circle_A1_209.setSizePolicy(sizePolicy4)
         self.circle_A1_209.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_209.setFont(font7)
+        self.circle_A1_209.setFont(font8)
         self.circle_A1_209.setAlignment(Qt.AlignCenter)
         self.circle_A1_209.setWordWrap(False)
 
@@ -3450,7 +3458,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.label_A0_18.sizePolicy().hasHeightForWidth())
         self.label_A0_18.setSizePolicy(sizePolicy4)
         self.label_A0_18.setMaximumSize(QSize(1500000, 1500000))
-        self.label_A0_18.setFont(font12)
+        self.label_A0_18.setFont(font13)
         self.label_A0_18.setLayoutDirection(Qt.LeftToRight)
         self.label_A0_18.setAlignment(Qt.AlignCenter)
 
@@ -3481,7 +3489,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_N0_14.sizePolicy().hasHeightForWidth())
         self.circle_N0_14.setSizePolicy(sizePolicy4)
         self.circle_N0_14.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_N0_14.setFont(font7)
+        self.circle_N0_14.setFont(font8)
         self.circle_N0_14.setAlignment(Qt.AlignCenter)
         self.circle_N0_14.setWordWrap(False)
 
@@ -3492,7 +3500,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A_29.sizePolicy().hasHeightForWidth())
         self.circle_A_29.setSizePolicy(sizePolicy4)
         self.circle_A_29.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A_29.setFont(font9)
+        self.circle_A_29.setFont(font10)
         self.circle_A_29.setAlignment(Qt.AlignCenter)
         self.circle_A_29.setWordWrap(False)
 
@@ -3513,7 +3521,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_60.sizePolicy().hasHeightForWidth())
         self.circle_A0_60.setSizePolicy(sizePolicy4)
         self.circle_A0_60.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_60.setFont(font9)
+        self.circle_A0_60.setFont(font10)
         self.circle_A0_60.setAlignment(Qt.AlignCenter)
         self.circle_A0_60.setWordWrap(False)
 
@@ -3524,7 +3532,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_H1_31.sizePolicy().hasHeightForWidth())
         self.circle_H1_31.setSizePolicy(sizePolicy4)
         self.circle_H1_31.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_H1_31.setFont(font7)
+        self.circle_H1_31.setFont(font8)
         self.circle_H1_31.setAlignment(Qt.AlignCenter)
         self.circle_H1_31.setWordWrap(False)
 
@@ -3535,7 +3543,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_E0_30.sizePolicy().hasHeightForWidth())
         self.circle_E0_30.setSizePolicy(sizePolicy4)
         self.circle_E0_30.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_E0_30.setFont(font8)
+        self.circle_E0_30.setFont(font9)
         self.circle_E0_30.setAlignment(Qt.AlignCenter)
         self.circle_E0_30.setWordWrap(False)
 
@@ -3546,7 +3554,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A_30.sizePolicy().hasHeightForWidth())
         self.circle_A_30.setSizePolicy(sizePolicy4)
         self.circle_A_30.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A_30.setFont(font9)
+        self.circle_A_30.setFont(font10)
         self.circle_A_30.setAlignment(Qt.AlignCenter)
         self.circle_A_30.setWordWrap(False)
 
@@ -3557,7 +3565,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_211.sizePolicy().hasHeightForWidth())
         self.circle_A1_211.setSizePolicy(sizePolicy4)
         self.circle_A1_211.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_211.setFont(font7)
+        self.circle_A1_211.setFont(font8)
         self.circle_A1_211.setAlignment(Qt.AlignCenter)
         self.circle_A1_211.setWordWrap(False)
 
@@ -3568,7 +3576,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_J_4.sizePolicy().hasHeightForWidth())
         self.circle_J_4.setSizePolicy(sizePolicy4)
         self.circle_J_4.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_J_4.setFont(font10)
+        self.circle_J_4.setFont(font11)
         self.circle_J_4.setAlignment(Qt.AlignCenter)
         self.circle_J_4.setWordWrap(False)
 
@@ -3589,7 +3597,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_183.sizePolicy().hasHeightForWidth())
         self.circle_A1_183.setSizePolicy(sizePolicy4)
         self.circle_A1_183.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_183.setFont(font7)
+        self.circle_A1_183.setFont(font8)
         self.circle_A1_183.setAlignment(Qt.AlignCenter)
         self.circle_A1_183.setWordWrap(False)
 
@@ -3610,7 +3618,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_203.sizePolicy().hasHeightForWidth())
         self.circle_A1_203.setSizePolicy(sizePolicy4)
         self.circle_A1_203.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_203.setFont(font7)
+        self.circle_A1_203.setFont(font8)
         self.circle_A1_203.setAlignment(Qt.AlignCenter)
         self.circle_A1_203.setWordWrap(False)
 
@@ -3631,7 +3639,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_H1_27.sizePolicy().hasHeightForWidth())
         self.circle_H1_27.setSizePolicy(sizePolicy4)
         self.circle_H1_27.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_H1_27.setFont(font7)
+        self.circle_H1_27.setFont(font8)
         self.circle_H1_27.setAlignment(Qt.AlignCenter)
         self.circle_H1_27.setWordWrap(False)
 
@@ -3652,7 +3660,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_215.sizePolicy().hasHeightForWidth())
         self.circle_A1_215.setSizePolicy(sizePolicy4)
         self.circle_A1_215.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_215.setFont(font7)
+        self.circle_A1_215.setFont(font8)
         self.circle_A1_215.setAlignment(Qt.AlignCenter)
         self.circle_A1_215.setWordWrap(False)
 
@@ -3663,7 +3671,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_153.sizePolicy().hasHeightForWidth())
         self.circle_A1_153.setSizePolicy(sizePolicy4)
         self.circle_A1_153.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_153.setFont(font7)
+        self.circle_A1_153.setFont(font8)
         self.circle_A1_153.setAlignment(Qt.AlignCenter)
         self.circle_A1_153.setWordWrap(False)
 
@@ -3674,7 +3682,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_O1_16.sizePolicy().hasHeightForWidth())
         self.circle_O1_16.setSizePolicy(sizePolicy4)
         self.circle_O1_16.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_O1_16.setFont(font7)
+        self.circle_O1_16.setFont(font8)
         self.circle_O1_16.setAlignment(Qt.AlignCenter)
         self.circle_O1_16.setWordWrap(False)
 
@@ -3685,7 +3693,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_O1_13.sizePolicy().hasHeightForWidth())
         self.circle_O1_13.setSizePolicy(sizePolicy4)
         self.circle_O1_13.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_O1_13.setFont(font7)
+        self.circle_O1_13.setFont(font8)
         self.circle_O1_13.setAlignment(Qt.AlignCenter)
         self.circle_O1_13.setWordWrap(False)
 
@@ -3706,7 +3714,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_191.sizePolicy().hasHeightForWidth())
         self.circle_A1_191.setSizePolicy(sizePolicy4)
         self.circle_A1_191.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_191.setFont(font7)
+        self.circle_A1_191.setFont(font8)
         self.circle_A1_191.setAlignment(Qt.AlignCenter)
         self.circle_A1_191.setWordWrap(False)
 
@@ -3727,7 +3735,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_N6_9.sizePolicy().hasHeightForWidth())
         self.circle_N6_9.setSizePolicy(sizePolicy4)
         self.circle_N6_9.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_N6_9.setFont(font7)
+        self.circle_N6_9.setFont(font8)
         self.circle_N6_9.setAlignment(Qt.AlignCenter)
         self.circle_N6_9.setWordWrap(False)
 
@@ -3738,7 +3746,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_206.sizePolicy().hasHeightForWidth())
         self.circle_A1_206.setSizePolicy(sizePolicy4)
         self.circle_A1_206.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_206.setFont(font7)
+        self.circle_A1_206.setFont(font8)
         self.circle_A1_206.setAlignment(Qt.AlignCenter)
         self.circle_A1_206.setWordWrap(False)
 
@@ -3769,12 +3777,12 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_I_4.sizePolicy().hasHeightForWidth())
         self.circle_I_4.setSizePolicy(sizePolicy4)
         self.circle_I_4.setMaximumSize(QSize(1500000, 1500000))
-        font13 = QFont()
-        font13.setFamilies([u"Arial"])
-        font13.setPointSize(27)
-        font13.setBold(False)
-        font13.setStrikeOut(False)
-        self.circle_I_4.setFont(font13)
+        font14 = QFont()
+        font14.setFamilies([u"Arial"])
+        font14.setPointSize(27)
+        font14.setBold(False)
+        font14.setStrikeOut(False)
+        self.circle_I_4.setFont(font14)
         self.circle_I_4.setAlignment(Qt.AlignCenter)
         self.circle_I_4.setWordWrap(False)
 
@@ -3785,7 +3793,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_172.sizePolicy().hasHeightForWidth())
         self.circle_A1_172.setSizePolicy(sizePolicy4)
         self.circle_A1_172.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_172.setFont(font7)
+        self.circle_A1_172.setFont(font8)
         self.circle_A1_172.setAlignment(Qt.AlignCenter)
         self.circle_A1_172.setWordWrap(False)
 
@@ -3796,7 +3804,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_204.sizePolicy().hasHeightForWidth())
         self.circle_A1_204.setSizePolicy(sizePolicy4)
         self.circle_A1_204.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_204.setFont(font7)
+        self.circle_A1_204.setFont(font8)
         self.circle_A1_204.setAlignment(Qt.AlignCenter)
         self.circle_A1_204.setWordWrap(False)
 
@@ -3847,7 +3855,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_M0_30.sizePolicy().hasHeightForWidth())
         self.circle_M0_30.setSizePolicy(sizePolicy4)
         self.circle_M0_30.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_M0_30.setFont(font8)
+        self.circle_M0_30.setFont(font9)
         self.circle_M0_30.setAlignment(Qt.AlignCenter)
         self.circle_M0_30.setWordWrap(False)
 
@@ -3888,7 +3896,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_56.sizePolicy().hasHeightForWidth())
         self.circle_A0_56.setSizePolicy(sizePolicy4)
         self.circle_A0_56.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_56.setFont(font9)
+        self.circle_A0_56.setFont(font10)
         self.circle_A0_56.setAlignment(Qt.AlignCenter)
         self.circle_A0_56.setWordWrap(False)
 
@@ -3949,7 +3957,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_69.sizePolicy().hasHeightForWidth())
         self.circle_A0_69.setSizePolicy(sizePolicy4)
         self.circle_A0_69.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_69.setFont(font9)
+        self.circle_A0_69.setFont(font10)
         self.circle_A0_69.setAlignment(Qt.AlignCenter)
         self.circle_A0_69.setWordWrap(False)
 
@@ -3960,7 +3968,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_175.sizePolicy().hasHeightForWidth())
         self.circle_A1_175.setSizePolicy(sizePolicy4)
         self.circle_A1_175.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_175.setFont(font7)
+        self.circle_A1_175.setFont(font8)
         self.circle_A1_175.setAlignment(Qt.AlignCenter)
         self.circle_A1_175.setWordWrap(False)
 
@@ -3981,7 +3989,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_166.sizePolicy().hasHeightForWidth())
         self.circle_A1_166.setSizePolicy(sizePolicy4)
         self.circle_A1_166.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_166.setFont(font7)
+        self.circle_A1_166.setFont(font8)
         self.circle_A1_166.setAlignment(Qt.AlignCenter)
         self.circle_A1_166.setWordWrap(False)
 
@@ -3992,7 +4000,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_N6_8.sizePolicy().hasHeightForWidth())
         self.circle_N6_8.setSizePolicy(sizePolicy4)
         self.circle_N6_8.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_N6_8.setFont(font7)
+        self.circle_N6_8.setFont(font8)
         self.circle_N6_8.setAlignment(Qt.AlignCenter)
         self.circle_N6_8.setWordWrap(False)
 
@@ -4003,7 +4011,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_M0_29.sizePolicy().hasHeightForWidth())
         self.circle_M0_29.setSizePolicy(sizePolicy4)
         self.circle_M0_29.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_M0_29.setFont(font8)
+        self.circle_M0_29.setFont(font9)
         self.circle_M0_29.setAlignment(Qt.AlignCenter)
         self.circle_M0_29.setWordWrap(False)
 
@@ -4014,7 +4022,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_221.sizePolicy().hasHeightForWidth())
         self.circle_A1_221.setSizePolicy(sizePolicy4)
         self.circle_A1_221.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_221.setFont(font7)
+        self.circle_A1_221.setFont(font8)
         self.circle_A1_221.setAlignment(Qt.AlignCenter)
         self.circle_A1_221.setWordWrap(False)
 
@@ -4055,7 +4063,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_61.sizePolicy().hasHeightForWidth())
         self.circle_A0_61.setSizePolicy(sizePolicy4)
         self.circle_A0_61.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_61.setFont(font9)
+        self.circle_A0_61.setFont(font10)
         self.circle_A0_61.setAlignment(Qt.AlignCenter)
         self.circle_A0_61.setWordWrap(False)
 
@@ -4096,7 +4104,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_D0_23.sizePolicy().hasHeightForWidth())
         self.circle_D0_23.setSizePolicy(sizePolicy4)
         self.circle_D0_23.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_D0_23.setFont(font8)
+        self.circle_D0_23.setFont(font9)
         self.circle_D0_23.setAlignment(Qt.AlignCenter)
         self.circle_D0_23.setWordWrap(False)
 
@@ -4117,7 +4125,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_168.sizePolicy().hasHeightForWidth())
         self.circle_A1_168.setSizePolicy(sizePolicy4)
         self.circle_A1_168.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_168.setFont(font7)
+        self.circle_A1_168.setFont(font8)
         self.circle_A1_168.setAlignment(Qt.AlignCenter)
         self.circle_A1_168.setWordWrap(False)
 
@@ -4128,7 +4136,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_O1_18.sizePolicy().hasHeightForWidth())
         self.circle_O1_18.setSizePolicy(sizePolicy4)
         self.circle_O1_18.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_O1_18.setFont(font7)
+        self.circle_O1_18.setFont(font8)
         self.circle_O1_18.setAlignment(Qt.AlignCenter)
         self.circle_O1_18.setWordWrap(False)
 
@@ -4139,7 +4147,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_M0_25.sizePolicy().hasHeightForWidth())
         self.circle_M0_25.setSizePolicy(sizePolicy4)
         self.circle_M0_25.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_M0_25.setFont(font8)
+        self.circle_M0_25.setFont(font9)
         self.circle_M0_25.setAlignment(Qt.AlignCenter)
         self.circle_M0_25.setWordWrap(False)
 
@@ -4150,7 +4158,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_L0_24.sizePolicy().hasHeightForWidth())
         self.circle_L0_24.setSizePolicy(sizePolicy4)
         self.circle_L0_24.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_L0_24.setFont(font7)
+        self.circle_L0_24.setFont(font8)
         self.circle_L0_24.setAlignment(Qt.AlignCenter)
         self.circle_L0_24.setWordWrap(False)
 
@@ -4161,7 +4169,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_178.sizePolicy().hasHeightForWidth())
         self.circle_A1_178.setSizePolicy(sizePolicy4)
         self.circle_A1_178.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_178.setFont(font7)
+        self.circle_A1_178.setFont(font8)
         self.circle_A1_178.setAlignment(Qt.AlignCenter)
         self.circle_A1_178.setWordWrap(False)
 
@@ -4182,7 +4190,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_D0_24.sizePolicy().hasHeightForWidth())
         self.circle_D0_24.setSizePolicy(sizePolicy4)
         self.circle_D0_24.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_D0_24.setFont(font8)
+        self.circle_D0_24.setFont(font9)
         self.circle_D0_24.setAlignment(Qt.AlignCenter)
         self.circle_D0_24.setWordWrap(False)
 
@@ -4203,7 +4211,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_F0_27.sizePolicy().hasHeightForWidth())
         self.circle_F0_27.setSizePolicy(sizePolicy4)
         self.circle_F0_27.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_F0_27.setFont(font8)
+        self.circle_F0_27.setFont(font9)
         self.circle_F0_27.setAlignment(Qt.AlignCenter)
         self.circle_F0_27.setWordWrap(False)
 
@@ -4254,7 +4262,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_O1_14.sizePolicy().hasHeightForWidth())
         self.circle_O1_14.setSizePolicy(sizePolicy4)
         self.circle_O1_14.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_O1_14.setFont(font7)
+        self.circle_O1_14.setFont(font8)
         self.circle_O1_14.setAlignment(Qt.AlignCenter)
         self.circle_O1_14.setWordWrap(False)
 
@@ -4265,7 +4273,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A_28.sizePolicy().hasHeightForWidth())
         self.circle_A_28.setSizePolicy(sizePolicy4)
         self.circle_A_28.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A_28.setFont(font9)
+        self.circle_A_28.setFont(font10)
         self.circle_A_28.setAlignment(Qt.AlignCenter)
         self.circle_A_28.setWordWrap(False)
 
@@ -4276,7 +4284,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_150.sizePolicy().hasHeightForWidth())
         self.circle_A1_150.setSizePolicy(sizePolicy4)
         self.circle_A1_150.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_150.setFont(font7)
+        self.circle_A1_150.setFont(font8)
         self.circle_A1_150.setAlignment(Qt.AlignCenter)
         self.circle_A1_150.setWordWrap(False)
 
@@ -4287,7 +4295,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_H1_34.sizePolicy().hasHeightForWidth())
         self.circle_H1_34.setSizePolicy(sizePolicy4)
         self.circle_H1_34.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_H1_34.setFont(font7)
+        self.circle_H1_34.setFont(font8)
         self.circle_H1_34.setAlignment(Qt.AlignCenter)
         self.circle_H1_34.setWordWrap(False)
 
@@ -4298,7 +4306,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_E0_27.sizePolicy().hasHeightForWidth())
         self.circle_E0_27.setSizePolicy(sizePolicy4)
         self.circle_E0_27.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_E0_27.setFont(font8)
+        self.circle_E0_27.setFont(font9)
         self.circle_E0_27.setAlignment(Qt.AlignCenter)
         self.circle_E0_27.setWordWrap(False)
 
@@ -4309,7 +4317,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.label_A0_19.sizePolicy().hasHeightForWidth())
         self.label_A0_19.setSizePolicy(sizePolicy4)
         self.label_A0_19.setMaximumSize(QSize(1500000, 1500000))
-        self.label_A0_19.setFont(font12)
+        self.label_A0_19.setFont(font13)
         self.label_A0_19.setLayoutDirection(Qt.LeftToRight)
         self.label_A0_19.setAlignment(Qt.AlignCenter)
 
@@ -4340,7 +4348,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_156.sizePolicy().hasHeightForWidth())
         self.circle_A1_156.setSizePolicy(sizePolicy4)
         self.circle_A1_156.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_156.setFont(font7)
+        self.circle_A1_156.setFont(font8)
         self.circle_A1_156.setAlignment(Qt.AlignCenter)
         self.circle_A1_156.setWordWrap(False)
 
@@ -4351,7 +4359,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_O1_15.sizePolicy().hasHeightForWidth())
         self.circle_O1_15.setSizePolicy(sizePolicy4)
         self.circle_O1_15.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_O1_15.setFont(font7)
+        self.circle_O1_15.setFont(font8)
         self.circle_O1_15.setAlignment(Qt.AlignCenter)
         self.circle_O1_15.setWordWrap(False)
 
@@ -4372,7 +4380,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_L0_25.sizePolicy().hasHeightForWidth())
         self.circle_L0_25.setSizePolicy(sizePolicy4)
         self.circle_L0_25.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_L0_25.setFont(font7)
+        self.circle_L0_25.setFont(font8)
         self.circle_L0_25.setAlignment(Qt.AlignCenter)
         self.circle_L0_25.setWordWrap(False)
 
@@ -4383,7 +4391,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_M0_24.sizePolicy().hasHeightForWidth())
         self.circle_M0_24.setSizePolicy(sizePolicy4)
         self.circle_M0_24.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_M0_24.setFont(font8)
+        self.circle_M0_24.setFont(font9)
         self.circle_M0_24.setAlignment(Qt.AlignCenter)
         self.circle_M0_24.setWordWrap(False)
 
@@ -4394,7 +4402,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_154.sizePolicy().hasHeightForWidth())
         self.circle_A1_154.setSizePolicy(sizePolicy4)
         self.circle_A1_154.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_154.setFont(font7)
+        self.circle_A1_154.setFont(font8)
         self.circle_A1_154.setAlignment(Qt.AlignCenter)
         self.circle_A1_154.setWordWrap(False)
 
@@ -4415,7 +4423,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_M0_23.sizePolicy().hasHeightForWidth())
         self.circle_M0_23.setSizePolicy(sizePolicy4)
         self.circle_M0_23.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_M0_23.setFont(font8)
+        self.circle_M0_23.setFont(font9)
         self.circle_M0_23.setAlignment(Qt.AlignCenter)
         self.circle_M0_23.setWordWrap(False)
 
@@ -4446,7 +4454,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_163.sizePolicy().hasHeightForWidth())
         self.circle_A1_163.setSizePolicy(sizePolicy4)
         self.circle_A1_163.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_163.setFont(font7)
+        self.circle_A1_163.setFont(font8)
         self.circle_A1_163.setAlignment(Qt.AlignCenter)
         self.circle_A1_163.setWordWrap(False)
 
@@ -4457,7 +4465,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_197.sizePolicy().hasHeightForWidth())
         self.circle_A1_197.setSizePolicy(sizePolicy4)
         self.circle_A1_197.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_197.setFont(font7)
+        self.circle_A1_197.setFont(font8)
         self.circle_A1_197.setAlignment(Qt.AlignCenter)
         self.circle_A1_197.setWordWrap(False)
 
@@ -4518,7 +4526,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_159.sizePolicy().hasHeightForWidth())
         self.circle_A1_159.setSizePolicy(sizePolicy4)
         self.circle_A1_159.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_159.setFont(font7)
+        self.circle_A1_159.setFont(font8)
         self.circle_A1_159.setAlignment(Qt.AlignCenter)
         self.circle_A1_159.setWordWrap(False)
 
@@ -4529,7 +4537,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_L0_19.sizePolicy().hasHeightForWidth())
         self.circle_L0_19.setSizePolicy(sizePolicy4)
         self.circle_L0_19.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_L0_19.setFont(font7)
+        self.circle_L0_19.setFont(font8)
         self.circle_L0_19.setAlignment(Qt.AlignCenter)
         self.circle_L0_19.setWordWrap(False)
 
@@ -4540,7 +4548,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_208.sizePolicy().hasHeightForWidth())
         self.circle_A1_208.setSizePolicy(sizePolicy4)
         self.circle_A1_208.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_208.setFont(font7)
+        self.circle_A1_208.setFont(font8)
         self.circle_A1_208.setAlignment(Qt.AlignCenter)
         self.circle_A1_208.setWordWrap(False)
 
@@ -4561,7 +4569,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A_27.sizePolicy().hasHeightForWidth())
         self.circle_A_27.setSizePolicy(sizePolicy4)
         self.circle_A_27.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A_27.setFont(font9)
+        self.circle_A_27.setFont(font10)
         self.circle_A_27.setAlignment(Qt.AlignCenter)
         self.circle_A_27.setWordWrap(False)
 
@@ -4582,7 +4590,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_190.sizePolicy().hasHeightForWidth())
         self.circle_A1_190.setSizePolicy(sizePolicy4)
         self.circle_A1_190.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_190.setFont(font7)
+        self.circle_A1_190.setFont(font8)
         self.circle_A1_190.setAlignment(Qt.AlignCenter)
         self.circle_A1_190.setWordWrap(False)
 
@@ -4603,7 +4611,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_F0_25.sizePolicy().hasHeightForWidth())
         self.circle_F0_25.setSizePolicy(sizePolicy4)
         self.circle_F0_25.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_F0_25.setFont(font8)
+        self.circle_F0_25.setFont(font9)
         self.circle_F0_25.setAlignment(Qt.AlignCenter)
         self.circle_F0_25.setWordWrap(False)
 
@@ -4614,7 +4622,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_214.sizePolicy().hasHeightForWidth())
         self.circle_A1_214.setSizePolicy(sizePolicy4)
         self.circle_A1_214.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_214.setFont(font7)
+        self.circle_A1_214.setFont(font8)
         self.circle_A1_214.setAlignment(Qt.AlignCenter)
         self.circle_A1_214.setWordWrap(False)
 
@@ -4635,7 +4643,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_L0_22.sizePolicy().hasHeightForWidth())
         self.circle_L0_22.setSizePolicy(sizePolicy4)
         self.circle_L0_22.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_L0_22.setFont(font7)
+        self.circle_L0_22.setFont(font8)
         self.circle_L0_22.setAlignment(Qt.AlignCenter)
         self.circle_L0_22.setWordWrap(False)
 
@@ -4676,7 +4684,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_76.sizePolicy().hasHeightForWidth())
         self.circle_A0_76.setSizePolicy(sizePolicy4)
         self.circle_A0_76.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_76.setFont(font9)
+        self.circle_A0_76.setFont(font10)
         self.circle_A0_76.setAlignment(Qt.AlignCenter)
         self.circle_A0_76.setWordWrap(False)
 
@@ -4687,7 +4695,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_170.sizePolicy().hasHeightForWidth())
         self.circle_A1_170.setSizePolicy(sizePolicy4)
         self.circle_A1_170.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_170.setFont(font7)
+        self.circle_A1_170.setFont(font8)
         self.circle_A1_170.setAlignment(Qt.AlignCenter)
         self.circle_A1_170.setWordWrap(False)
 
@@ -4698,7 +4706,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_E0_32.sizePolicy().hasHeightForWidth())
         self.circle_E0_32.setSizePolicy(sizePolicy4)
         self.circle_E0_32.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_E0_32.setFont(font8)
+        self.circle_E0_32.setFont(font9)
         self.circle_E0_32.setAlignment(Qt.AlignCenter)
         self.circle_E0_32.setWordWrap(False)
 
@@ -4709,7 +4717,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_223.sizePolicy().hasHeightForWidth())
         self.circle_A1_223.setSizePolicy(sizePolicy4)
         self.circle_A1_223.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_223.setFont(font7)
+        self.circle_A1_223.setFont(font8)
         self.circle_A1_223.setAlignment(Qt.AlignCenter)
         self.circle_A1_223.setWordWrap(False)
 
@@ -4720,7 +4728,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_L0_26.sizePolicy().hasHeightForWidth())
         self.circle_L0_26.setSizePolicy(sizePolicy4)
         self.circle_L0_26.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_L0_26.setFont(font7)
+        self.circle_L0_26.setFont(font8)
         self.circle_L0_26.setAlignment(Qt.AlignCenter)
         self.circle_L0_26.setWordWrap(False)
 
@@ -4731,7 +4739,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A1_220.sizePolicy().hasHeightForWidth())
         self.circle_A1_220.setSizePolicy(sizePolicy4)
         self.circle_A1_220.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A1_220.setFont(font7)
+        self.circle_A1_220.setFont(font8)
         self.circle_A1_220.setAlignment(Qt.AlignCenter)
         self.circle_A1_220.setWordWrap(False)
 
@@ -4742,7 +4750,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_N0_15.sizePolicy().hasHeightForWidth())
         self.circle_N0_15.setSizePolicy(sizePolicy4)
         self.circle_N0_15.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_N0_15.setFont(font7)
+        self.circle_N0_15.setFont(font8)
         self.circle_N0_15.setAlignment(Qt.AlignCenter)
         self.circle_N0_15.setWordWrap(False)
 
@@ -4793,7 +4801,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_F0_29.sizePolicy().hasHeightForWidth())
         self.circle_F0_29.setSizePolicy(sizePolicy4)
         self.circle_F0_29.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_F0_29.setFont(font8)
+        self.circle_F0_29.setFont(font9)
         self.circle_F0_29.setAlignment(Qt.AlignCenter)
         self.circle_F0_29.setWordWrap(False)
 
@@ -4814,7 +4822,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A_26.sizePolicy().hasHeightForWidth())
         self.circle_A_26.setSizePolicy(sizePolicy4)
         self.circle_A_26.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A_26.setFont(font9)
+        self.circle_A_26.setFont(font10)
         self.circle_A_26.setAlignment(Qt.AlignCenter)
         self.circle_A_26.setWordWrap(False)
 
@@ -4825,7 +4833,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_73.sizePolicy().hasHeightForWidth())
         self.circle_A0_73.setSizePolicy(sizePolicy4)
         self.circle_A0_73.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_73.setFont(font9)
+        self.circle_A0_73.setFont(font10)
         self.circle_A0_73.setAlignment(Qt.AlignCenter)
         self.circle_A0_73.setWordWrap(False)
 
@@ -4836,7 +4844,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_68.sizePolicy().hasHeightForWidth())
         self.circle_A0_68.setSizePolicy(sizePolicy4)
         self.circle_A0_68.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_68.setFont(font9)
+        self.circle_A0_68.setFont(font10)
         self.circle_A0_68.setAlignment(Qt.AlignCenter)
         self.circle_A0_68.setWordWrap(False)
 
@@ -4847,7 +4855,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_65.sizePolicy().hasHeightForWidth())
         self.circle_A0_65.setSizePolicy(sizePolicy4)
         self.circle_A0_65.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_65.setFont(font9)
+        self.circle_A0_65.setFont(font10)
         self.circle_A0_65.setAlignment(Qt.AlignCenter)
         self.circle_A0_65.setWordWrap(False)
 
@@ -4858,7 +4866,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_64.sizePolicy().hasHeightForWidth())
         self.circle_A0_64.setSizePolicy(sizePolicy4)
         self.circle_A0_64.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_64.setFont(font9)
+        self.circle_A0_64.setFont(font10)
         self.circle_A0_64.setAlignment(Qt.AlignCenter)
         self.circle_A0_64.setWordWrap(False)
 
@@ -4869,7 +4877,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_52.sizePolicy().hasHeightForWidth())
         self.circle_A0_52.setSizePolicy(sizePolicy4)
         self.circle_A0_52.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_52.setFont(font9)
+        self.circle_A0_52.setFont(font10)
         self.circle_A0_52.setAlignment(Qt.AlignCenter)
         self.circle_A0_52.setWordWrap(False)
 
@@ -4880,7 +4888,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_72.sizePolicy().hasHeightForWidth())
         self.circle_A0_72.setSizePolicy(sizePolicy4)
         self.circle_A0_72.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_72.setFont(font9)
+        self.circle_A0_72.setFont(font10)
         self.circle_A0_72.setAlignment(Qt.AlignCenter)
         self.circle_A0_72.setWordWrap(False)
 
@@ -4891,7 +4899,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.circle_A0_71.sizePolicy().hasHeightForWidth())
         self.circle_A0_71.setSizePolicy(sizePolicy4)
         self.circle_A0_71.setMaximumSize(QSize(1500000, 1500000))
-        self.circle_A0_71.setFont(font9)
+        self.circle_A0_71.setFont(font10)
         self.circle_A0_71.setAlignment(Qt.AlignCenter)
         self.circle_A0_71.setWordWrap(False)
 
@@ -5036,12 +5044,12 @@ class Ui_MainWindow(object):
         self.lineEdit_GFA_exptime = QLineEdit(self.group_gfa)
         self.lineEdit_GFA_exptime.setObjectName(u"lineEdit_GFA_exptime")
         self.lineEdit_GFA_exptime.setGeometry(QRect(100, 30, 71, 25))
-        font14 = QFont()
-        font14.setFamilies([u"Arial"])
-        font14.setPointSize(9)
-        font14.setBold(False)
-        font14.setStrikeOut(False)
-        self.lineEdit_GFA_exptime.setFont(font14)
+        font15 = QFont()
+        font15.setFamilies([u"Arial"])
+        font15.setPointSize(9)
+        font15.setBold(False)
+        font15.setStrikeOut(False)
+        self.lineEdit_GFA_exptime.setFont(font15)
         self.lineEdit_GFA_exptime.setAlignment(Qt.AlignCenter)
         self.label_GFA_exptime = QLabel(self.group_gfa)
         self.label_GFA_exptime.setObjectName(u"label_GFA_exptime")
@@ -5054,7 +5062,7 @@ class Ui_MainWindow(object):
         self.lineEdit_GFA_cam = QLineEdit(self.group_gfa)
         self.lineEdit_GFA_cam.setObjectName(u"lineEdit_GFA_cam")
         self.lineEdit_GFA_cam.setGeometry(QRect(100, 60, 71, 25))
-        self.lineEdit_GFA_cam.setFont(font14)
+        self.lineEdit_GFA_cam.setFont(font15)
         self.lineEdit_GFA_cam.setAlignment(Qt.AlignCenter)
         self.pushbtn_GFArun = QPushButton(self.group_gfa)
         self.pushbtn_GFArun.setObjectName(u"pushbtn_GFArun")
@@ -5097,7 +5105,14 @@ class Ui_MainWindow(object):
         self.ok_status_gfa_2.setGeometry(QRect(6, 41, 29, 29))
         sizePolicy2.setHeightForWidth(self.ok_status_gfa_2.sizePolicy().hasHeightForWidth())
         self.ok_status_gfa_2.setSizePolicy(sizePolicy2)
-        self.ok_status_gfa_2.setFont(font2)
+        font16 = QFont()
+        font16.setFamilies([u"DejaVu Sans"])
+        font16.setPointSize(14)
+        font16.setBold(False)
+        font16.setItalic(True)
+        font16.setStrikeOut(False)
+        self.ok_status_gfa_2.setFont(font16)
+        self.ok_status_gfa_2.setTextFormat(Qt.PlainText)
         self.ok_status_gfa_2.setAlignment(Qt.AlignCenter)
         self.label_status_gfa_2 = QLabel(self.group_status_2)
         self.label_status_gfa_2.setObjectName(u"label_status_gfa_2")
@@ -5351,11 +5366,9 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.pushbtn_directory.setText(QCoreApplication.translate("MainWindow", u"Set", None))
         self.group_status.setTitle(QCoreApplication.translate("MainWindow", u" System Status", None))
-        self.ok_status_gfa.setText(QCoreApplication.translate("MainWindow", u"\u26ab", None))
+        self.ok_status_gfa.setText(QCoreApplication.translate("MainWindow", u"\u25cf", None))
         self.label_status_gfa.setText(QCoreApplication.translate("MainWindow", u"GFA", None))
-        self.ok_status_adc.setText(QCoreApplication.translate("MainWindow", u"\u26ab", None))
         self.label_status_adc.setText(QCoreApplication.translate("MainWindow", u"ADC", None))
-        self.ok_status_fiber.setText(QCoreApplication.translate("MainWindow", u"\u26ab", None))
         self.label_status_fiber.setText(QCoreApplication.translate("MainWindow", u"Fiber", None))
         self.ok_status_finder.setText(QCoreApplication.translate("MainWindow", u"\u26ab", None))
         self.label_status_finder.setText(QCoreApplication.translate("MainWindow", u"Finder", None))
@@ -5366,6 +5379,8 @@ class Ui_MainWindow(object):
         self.ok_status_lamp.setText(QCoreApplication.translate("MainWindow", u"\u26ab", None))
         self.label_status_lamp.setText(QCoreApplication.translate("MainWindow", u"Lamp", None))
         self.pushbtn_reset1.setText("")
+        self.ok_status_adc.setText(QCoreApplication.translate("MainWindow", u"\u25cf", None))
+        self.ok_status_fiber.setText(QCoreApplication.translate("MainWindow", u"\u25cf", None))
         self.group_subsytem.setTitle(QCoreApplication.translate("MainWindow", u" Subsystem Functions", None))
 #if QT_CONFIG(tooltip)
         self.pushbtn_Guiding.setToolTip("")
@@ -6488,7 +6503,7 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.pushbtn_send_comment_2.setText(QCoreApplication.translate("MainWindow", u"Send", None))
         self.group_status_2.setTitle(QCoreApplication.translate("MainWindow", u" System Status", None))
-        self.ok_status_gfa_2.setText(QCoreApplication.translate("MainWindow", u"\u26ab", None))
+        self.ok_status_gfa_2.setText(QCoreApplication.translate("MainWindow", u"\u25cf", None))
         self.label_status_gfa_2.setText(QCoreApplication.translate("MainWindow", u"GFA", None))
         self.ok_status_adc_2.setText(QCoreApplication.translate("MainWindow", u"\u26ab", None))
         self.label_status_adc_2.setText(QCoreApplication.translate("MainWindow", u"ADC", None))
