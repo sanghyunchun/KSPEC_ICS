@@ -1,10 +1,11 @@
 import os,sys
+import time
 from Lib.AMQ import *
 import Lib.mkmessage as mkmsg
 import json
 import asyncio
-from MTL.kspec_metrology.exposure import mtlexp
-from MTL.kspec_metrology.analysis import mtlcal
+from MTL.kspec_metrology.kspec_metrology.exposure import mtlexp
+from MTL.kspec_metrology.kspec_metrology.analysis import mtlcal
 
 
 async def identify_execute(MTL_server,cmd):
@@ -14,7 +15,7 @@ async def identify_execute(MTL_server,cmd):
     if func == 'mtlstatus':
         comment=mtl_status()
         reply_data=mkmsg.mtlmsg()
-        reply_data.update(message=comment,process='Done')
+        reply_data.update(message=comment,process='Done',status='success')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[MTL]', comment+'\033[0m')
         await MTL_server.send_message('ICS',rsp)
@@ -36,14 +37,14 @@ async def identify_execute(MTL_server,cmd):
 
     if func == 'mtlexp':
         reply_data=mkmsg.mtlmsg()
-        reply_data.update(message='MTL exposure starts.',process='Done',status='success')
+        reply_data.update(message='MTL exposure starts.',process='ING',status='success')
         rsp=json.dumps(reply_data)
         await MTL_server.send_message('ICS',rsp)
 
         exptime=float(receive_msg['time'])
-        comment=mtlexp.mtlexp(exptime)
+        status, comment=mtlexp.mtlexp(exptime)
         reply_data=mkmsg.mtlmsg()
-        reply_data.update(message=comment,process='Done')
+        reply_data.update(message=comment,process='Done',status=status)
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[MTL]', comment+'\033[0m')
         await MTL_server.send_message('ICS',rsp)
@@ -92,5 +93,6 @@ def savedata(data):
 
 # Below functions are for simulation. When connect the instruments, pleas annotate.
 def mtl_status():
+    time.sleep(3)
     mtl_rsp = 'Metrology Status is below. MTL is ready.'
     return mtl_rsp
