@@ -28,7 +28,7 @@ async def identify_execute(MTL_server,cmd):
         yp=receive_msg['yp']
         clss=receive_msg['class']
 
-        status, comment=savedata(receive_msg)
+        status, comment=savedata(receive_msg)     # save the loaded objects
         reply_data=mkmsg.mtlmsg()
         reply_data.update(message=comment,process='Done',status=status)
         rsp=json.dumps(reply_data)
@@ -51,12 +51,12 @@ async def identify_execute(MTL_server,cmd):
 
     if func == 'mtlcal':
         reply_data=mkmsg.mtlmsg()
-        reply_data.update(message='MTL calculation starts.',process='Done',status='success')
+        reply_data.update(message='MTL calculation starts.',process='ING',status='success')
         rsp=json.dumps(reply_data)
         await MTL_server.send_message('ICS',rsp)
 
-        offx,offy = mtlcal.mtlcal()
-        comment='Metrology analysis finished successfully. Offsets were calculated.'
+        status, comment, offx,offy = mtlcal.mtlcal()
+#        comment='Metrology analysis finished successfully. Offsets were calculated.'
         reply_data=mkmsg.mtlmsg()
         reply_data.update(savedata='True',filename='MTLresult.json',offsetx=offx.tolist(),offsety=offy.tolist(),message=comment)
         reply_data.update(process='Done')

@@ -6,8 +6,6 @@ import asyncio
 import time
 import random
 import shutil
-#from .kspec_gfa_controller.src.gfa_actions import GFAActions
-#from KSPEC_Server.GFA.kspec_gfa_controller.src.gfa_actions import gfa_actions
 
 
 guiding_task = None
@@ -24,8 +22,6 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
     global guiding_task 
     dict_data=json.loads(cmd)
     func=dict_data['func']
-#    endoaction=endo_actions()
-#    endoaction.endo_connect()
 
     with open('./Lib/KSPEC.ini','r') as f:
         kspecinfo=json.load(f)
@@ -60,20 +56,24 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
 
         # Start a new adcadjust task
         printing("New guiding task started.")
-        guiding_task = asyncio.create_task(handle_guiding(GFA_server, gfa_actions, dict_data['ExpTime']))
+        reply_data=mkmsg.gfamsg()
+        reply_data.update(process='START',message='Autoguide starts.',status='success')
+        rsp=json.dumps(reply_data)
+        await GFA_server.send_message('ICS',rsp)
+        save = dict_data['save'] == 'True'
+        guiding_task = asyncio.create_task(handle_guiding(GFA_server, gfa_actions, dict_data['ExpTime'],save))
 
     elif func == 'gfaguidestop':
         if guiding_task and not guiding_task.done():
             printing("Stopping guiding task...")
             guiding_task.cancel()
             reply_data=mkmsg.gfamsg()
-            reply_data.update(process='Done',message='Autoguide Stop')
+            reply_data.update(process='Done',message='Autoguide Stop',status='success')
             rsp=json.dumps(reply_data)
-            print(rsp)
             await GFA_server.send_message('ICS',rsp)
 
             path_astroimg=kspecinfo['GFA']['final_astrometry_images']
-            shutil.rmtree(path_astroimg)
+            shutil.rmtree(path_astroimg)                                        # Remove the guiding images after guiding stop.
             os.makedirs(path_astroimg, exist_ok=True)
 
             try:
@@ -83,7 +83,7 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
         else:
             printing("No Guiding task is currently running.")
             reply_data=mkmsg.gfamsg()
-            reply_data.update(process='Done',message='No Guiding task is currently running.')
+            reply_data.update(process='Done',message='No Guiding task is currently running.',status='normal')
             rsp=json.dumps(reply_data)
             await GFA_server.send_message('ICS',rsp)
 
@@ -94,19 +94,34 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
         mag=dict_data['mag']
         xp=dict_data['xp']
         yp=dict_data['yp']
-        status, comment=savedata(ra,dec,xp,yp,mag)
+        status, comment=savedata(ra,dec,xp,yp,mag)    # It would be removed, because guide stars are not necessary in current guiding system. 
         reply_data=mkmsg.gfamsg()
         reply_data.update(message=comment,process='Done',status=status)
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[GFA]', comment+'\033[0m')
         await GFA_server.send_message('ICS',rsp)
-        
 
+
+    if func == 'fdgrab':
+        printing("Finder grab task started.")
+        reply_data=mkmsg.gfamsg()
+        reply_data.update(process='START',message='Finder grab starts.',status='success')
+        rsp=json.dumps(reply_data)
+        await GFA_server.send_message('ICS',rsp)
+        result = await finder_actions.grab(dict_data['ExpTime'])
+        reply_data=mkmsg.gfamsg()
+        reply_data.update(result)
+        reply_data.update(process='Done')
+        rsp=json.dumps(reply_data)
+        printing(reply_data['message'])
+        await GFA_server.send_message('ICS',rsp)
+
+        
 def savedata(ra,dec,xp,yp,mag):
     with open('./Lib/KSPEC.ini','r') as f:
         inidata=json.load(f)
 
-    gfafilepath=inidata['GFA']['gfafilepath']
+    gfafilepath=inidata['GFA']['gfafilepath']        # guide stars info. is saved in GFA/etc directory. It would not be necessary.
 
     try:
         with open(gfafilepath+'position.radec','w') as savefile:
@@ -121,47 +136,16 @@ def savedata(ra,dec,xp,yp,mag):
     return 'success', msg
 
 
-#    savefile=open(gfafilepath+'position.radec','w')
-#    for i in range(len(ra)):
-#        savefile.write("%12.6f %12.6f %12.6f %12.6f %9.4f\n" % (ra[i],dec[i],xp[i],yp[i],mag[i]))
-#    savefile.close
 
-#    msg="'Guide stars are loaded.'"
-#    return msg
-
-# Below functions are for simulation. When connect the instruments, please annotate.
-
-#async def autoguide(exptime,subserver):
-#    msg=random.randrange(1,11)
-#    if msg < 7:
-#        reply=mkmsg.gfamsg()
-#        comment='Autoguiding continue.......'
-#        dict_data={'inst': 'GFA', 'savedata': 'False','filename': 'None','message': comment, 'thred': msg}
-#        reply.update(dict_data)
-#        rsp=json.dumps(reply)
-#        rsp=reply
-#    else:
-#        reply=mkmsg.gfamsg()
-#        comment=f'Telescope offset {msg}'
-#        print('\033[32m'+'[GFA]', comment+'\033[0m')
-#        dict_data={'inst': 'GFA', 'savedata': 'False','filename': 'None','message': comment, 'thred': msg}
-#        reply.update(dict_data)
-#        rsp=json.dumps(reply)
-#        rsp=reply
-#    return rsp
-
-
-async def handle_guiding(GFA_server, gfa_actions, expt):
+async def handle_guiding(GFA_server, gfa_actions, expt, save):
     try:
-#        while True:
-        result = await gfa_actions.guiding(expt)
-        reply_data = mkmsg.gfamsg()
-        reply_data.update(result)
-        reply_data.update(process='ING')
-        rsp=json.dumps(reply_data)
-        await GFA_server.send_message('ICS',rsp)
-
-        await asyncio.sleep(30)
+        while True:
+            result = await gfa_actions.guiding(expt,save)
+            reply_data = mkmsg.gfamsg()
+            reply_data.update(result)
+            reply_data.update(process='ING')
+            rsp=json.dumps(reply_data)
+            await GFA_server.send_message('ICS',rsp)
 
     except asyncio.CancelledError:
         printing("handle_guiding task was cancelled.")

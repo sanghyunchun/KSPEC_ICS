@@ -6,8 +6,6 @@ import asyncio
 import time
 import random
 import shutil
-#from .kspec_gfa_controller.src.gfa_actions import GFAActions
-#from KSPEC_Server.GFA.kspec_gfa_controller.src.gfa_actions import gfa_actions
 
 
 guiding_task = None

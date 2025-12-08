@@ -15,4 +15,6 @@ def mtlcal(data_dir='./MTL/data/'):
 
     _, _, dx, dy, _ = fitdistortion(x, y, fid_flag, xobs, yobs, imatch, theta_guess)
 
-    return dx, dy 
+
+    comment='Metrology analysis finished successfully. Offsets were calculated.'
+    return 'success', comment, dx, dy 
