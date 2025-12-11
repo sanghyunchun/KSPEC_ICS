@@ -11,6 +11,8 @@ from MTL.Simul.kspec_metrology.analysis import mtlcal
 async def identify_execute(MTL_server,cmd):
     receive_msg=json.loads(cmd)
     func=receive_msg['func']
+    filename = str(receive_msg['file'])
+    print(f'tewdedf {filename}')
 
     if func == 'mtlstatus':
         comment=mtl_status()
@@ -28,7 +30,7 @@ async def identify_execute(MTL_server,cmd):
         yp=receive_msg['yp']
         clss=receive_msg['class']
 
-        status, comment=savedata(receive_msg)
+        status, comment=savedata(receive_msg)     # save the loaded objects
         reply_data=mkmsg.mtlmsg()
         reply_data.update(message=comment,process='Done',status=status)
         rsp=json.dumps(reply_data)
@@ -37,35 +39,35 @@ async def identify_execute(MTL_server,cmd):
 
     if func == 'mtlexp':
         reply_data=mkmsg.mtlmsg()
-        reply_data.update(message='MTL exposure starts.',process='Done',status='success')
+        reply_data.update(message='MTL exposure starts.',process='ING',status='success')
         rsp=json.dumps(reply_data)
         await MTL_server.send_message('ICS',rsp)
 
         exptime=float(receive_msg['time'])
-        status, comment=mtlexp.mtlexp(exptime)
+        filename = str(receive_msg['file'])
+        status, comment=mtlexp.mtlexp(exptime,filename)
         reply_data=mkmsg.mtlmsg()
         reply_data.update(message=comment,process='Done',status=status)
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[MTL]', comment+'\033[0m')
         await MTL_server.send_message('ICS',rsp)
 
-
     if func == 'mtlcal':
         reply_data=mkmsg.mtlmsg()
-        reply_data.update(message='MTL calculation starts.',process='Done',status='success')
+        reply_data.update(message='MTL calculation starts.',process='ING',status='success')
         rsp=json.dumps(reply_data)
         await MTL_server.send_message('ICS',rsp)
 
-        status, offx,offy = mtlcal.mtlcal()
-        comment='Metrology analysis finished successfully. Offsets were calculated.'
+        status, comment, offx,offy = mtlcal.mtlcal()
+#        comment='Metrology analysis finished successfully. Offsets were calculated.'
         reply_data=mkmsg.mtlmsg()
-        reply_data.update(savedata='True',filename='MTLresult.json',offsetx=offx.tolist(),offsety=offy.tolist(),message=comment,status=status)
+        reply_data.update(savedata='True',filename='MTLresult.json',offsetx=offx.tolist(),offsety=offy.tolist(),message=comment)
         reply_data.update(process='Done')
         rsp=json.dumps(reply_data)
 
         with open('./Lib/KSPEC.ini','r') as fs:
             kspecinfo=json.load(fs)
-
+    
         mtlfilepath=kspecinfo['MTL']['mtlfilepath']
 
         with open(mtlfilepath+'MTLresult.json',"w") as f:
@@ -91,8 +93,6 @@ def savedata(data):
 
     msg="'Objects are loaded in MTL server.'"
     return 'success', msg
-
-
 
 # Below functions are for simulation. When connect the instruments, pleas annotate.
 def mtl_status():

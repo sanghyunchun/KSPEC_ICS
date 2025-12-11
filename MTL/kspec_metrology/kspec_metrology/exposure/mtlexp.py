@@ -4,7 +4,7 @@ from astropy.io import fits
 from pathlib import Path
 import json
 
-def mtlexp(exptime
+def mtlexp(exptime,filename : str                                  # Need filename 
            , readmode=1
            , usb_traffic=40
            , gain=10
@@ -33,8 +33,9 @@ def mtlexp(exptime
         hdr['texp'] = exptime
 
         empty_primary = fits.PrimaryHDU(header=hdr, data=im)
-        empty_primary.writeto(data_dir+f'test{i}.fits', overwrite=True)
+#        empty_primary.writeto(data_dir+f'test{i}.fits', overwrite=True)
+        empty_primary.writeto(data_dir+f'{filename}', overwrite=True)
 
     qc.CamExit()
-    msg=f'Metrology {exptime} seconds exposure finished'
+    msg=f'Metrology {exptime} seconds exposure finished. Fits file {filename} is saved'     # Need to edit in real observation
     return 'success', msg

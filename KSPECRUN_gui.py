@@ -151,25 +151,13 @@ class MainWindow(QMainWindow):
     def __init__(self):
 
         super(MainWindow, self).__init__()
-#        self.showMaximized()
-
-        screen = QGuiApplication.primaryScreen()
-        geometry = screen.availableGeometry()
-
         self.setWindowTitle("K-SPEC ICS")
-
-        # Window size
-        screen_width = geometry.width()
-        screen_height = geometry.height()
-
-        window_width = int(screen_width * 0.8)
-        window_height = int(screen_height * 0.8)
-
-        self.resize(window_width, window_height)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-
         self.scriptrun=script()
+#        self.showMaximized()
+
+        QTimer.singleShot(0, self.adjust_window_size_by_screen)
 
         ### All Response queue of asyncio ###
         self.response_queue = asyncio.Queue()
@@ -355,6 +343,20 @@ class MainWindow(QMainWindow):
         self.canvas_G6=MplCanvas(self,dpi=100,left=0.0,right=1.,bottom=0.,top=1.)
         self.G6_layout=QVBoxLayout(self.ui.Guide6)
         self.G6_layout.addWidget(self.canvas_G6)
+
+
+    def adjust_window_size_by_screen(self):
+        screen = QGuiApplication.primaryScreen()
+        geometry = screen.availableGeometry()
+
+        # Window size
+        screen_width = geometry.width()
+        screen_height = geometry.height()
+
+        window_width = int(screen_width * 0.5)
+        window_height = int(screen_height * 0.5)
+
+        self.resize(window_width, window_height)
 
 
     def logging(self,message,status: str='success', level: str='send', save: str=True):
@@ -1070,8 +1072,9 @@ class MainWindow(QMainWindow):
             self.ui.lineEdit_MTL_exptime.setText('5')
 
         self.mtlexp = float(self.ui.lineEdit_MTL_exptime.text())
+        self.mtlfile = str(self.ui.lineEdit_MTL_file.text())
         self.logging(f'Sent MTL exposure', level='send')
-        await handle_mtl(f'mtlexp {self.mtlexp}', self.ICS_client)
+        await handle_mtl(f'mtlexp {self.mtlexp} {self.mtlfile}', self.ICS_client)
 
     @asyncSlot()
     async def MTL_cal_button_clicked(self):
@@ -1096,6 +1099,7 @@ class MainWindow(QMainWindow):
             self.ui.lineEdit_MTL_exptime.setText('5')
 
         self.mtlexp = float(self.ui.lineEdit_MTL_exptime.text())
+    #    self.mtlfile = str(self.ui.lineEdit_MTL_file.text())
         self.logging(f'Set MTL exposure time to {self.mtlexp}', level='send')
         self.scriptrun.MTL_set(self.mtlexp)
         

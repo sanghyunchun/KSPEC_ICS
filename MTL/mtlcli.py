@@ -15,8 +15,8 @@ def create_mtl_command(func, **kwargs):
 
 def mtl_status(): return create_mtl_command('mtlstatus',message='Show Metrology status')
 def mtl_cal(): return create_mtl_command('mtlcal',message='Calculate offset between Target and Fiber position')
-def mtl_exp(exptime): 
-    return create_mtl_command('mtlexp',time=exptime,message=f'Exposure Metrology camera {exptime} seconds')
+def mtl_exp(exptime,filename): 
+    return create_mtl_command('mtlexp',time=exptime,file=filename,message=f'Exposure Metrology camera {exptime} seconds')
 
 
 async def handle_mtl(arg, ICS_client):
@@ -29,15 +29,17 @@ async def handle_mtl(arg, ICS_client):
     }
 
     if cmd == 'mtlexp':
-        if len(params) != 1:
-            print("Error: 'mtlexp' need one exposure time value. ex) mtlexp 10 ")
+        if len(params) != 2:
+            print("Error: 'mtlexp' need one exposure time value and filename. ex) mtlexp 10 test.fits")
             return
         try:
             exptime = float(params[0])
+            filename = str(params[1])
         except ValueError:
             print(f"Error: Input parameters of 'mtlexp' should be float. input value: {params[0]}")
             return
-        command_map[cmd] = lambda: mtl_exp(exptime)
+        print(filename)
+        command_map[cmd] = lambda: mtl_exp(exptime,filename)
 
     # Right command
     if cmd in command_map:

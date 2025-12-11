@@ -5,7 +5,7 @@ from pathlib import Path
 import json
 import time
 
-def mtlexp(exptime
+def mtlexp(exptime,filename
            , readmode=1
            , usb_traffic=40
            , gain=10
@@ -38,5 +38,5 @@ def mtlexp(exptime
 
 #    qc.CamExit()
     time.sleep(exptime)
-    msg=f'Metrology {exptime} seconds exposure finished'
+    msg=f'Metrology {exptime} seconds exposure finished. Fits file {filename} is saved.'
     return 'success', msg

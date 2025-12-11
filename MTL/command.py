@@ -4,13 +4,14 @@ from Lib.AMQ import *
 import Lib.mkmessage as mkmsg
 import json
 import asyncio
-from MTL.kspec_metrology.kspec_metrology.exposure import mtlexp
-from MTL.kspec_metrology.kspec_metrology.analysis import mtlcal
+from .MTL.kspec_metrology.kspec_metrology.exposure import mtlexp
+from .MTL.kspec_metrology.kspec_metrology.analysis import mtlcal
 
 
 async def identify_execute(MTL_server,cmd):
     receive_msg=json.loads(cmd)
     func=receive_msg['func']
+    filename = str(receive_msg['file'])
 
     if func == 'mtlstatus':
         comment=mtl_status()
@@ -42,7 +43,8 @@ async def identify_execute(MTL_server,cmd):
         await MTL_server.send_message('ICS',rsp)
 
         exptime=float(receive_msg['time'])
-        status, comment=mtlexp.mtlexp(exptime)
+        filename = str(receive_msg['file'])
+        status, comment=mtlexp.mtlexp(exptime,filename)
         reply_data=mkmsg.mtlmsg()
         reply_data.update(message=comment,process='Done',status=status)
         rsp=json.dumps(reply_data)

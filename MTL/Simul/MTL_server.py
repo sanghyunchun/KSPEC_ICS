@@ -35,6 +35,7 @@ async def main():
         async with message.process():
             try:
                 dict_data = json.loads(message.body)
+                print(dict_data)
                 message_text = dict_data['message']
                 print('\033[94m' + '[MTL] received: ' + message_text + '\033[0m')
 
