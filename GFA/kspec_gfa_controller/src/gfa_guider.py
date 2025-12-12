@@ -819,13 +819,14 @@ class GFAGuider:
 
         fdx, fdy = self.cal_final_offset(dxp, dyp, pindp)
         self.logger.info(
-            f"Computed final offset: ΔX = {fdx:.4f} arcsec, ΔY = {fdy:.4f} arcsec"
+            f"Computed final offset: ΔX = {fdx} arcsec, ΔY = {fdy} arcsec"
         )
 
         fwhm = self.cal_seeing(cutoutn_stack)
-        self.logger.info(f"Estimated FWHM from cutouts: {fwhm:.3f} arcsec")
+        self.logger.info(f"Estimated FWHM from cutouts: {fwhm} arcsec")
 
         self.logger.info(
             "========== Guide star calibration completed successfully =========="
         )
+        
         return fdx, fdy, fwhm

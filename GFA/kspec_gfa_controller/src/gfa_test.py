@@ -54,19 +54,19 @@ async def test_gfa_actions():
     env = create_environment(role="plate")
     actions = GFAActions(env)
 
-    print("Grabbing from Cam1:")
-    result = await actions.grab(CamNum=1, ExpTime=0.5, Binning=2)
+    print("Grabbing from Cam all:")
+    result = await actions.grab(CamNum=0, ExpTime=0.5, Binning=2)
     print(result)
 
-    print("Guiding test (simulate offset calc):")
-    result = await actions.guiding(ExpTime=0.5, save=True)
-    print(result)
+    #print("Guiding test (simulate offset calc):")
+    #result = await actions.guiding(ExpTime=0.5, save=True)
+    #print(result)
 
-    print("Ping all:")
-    print(actions.ping())
+    #print("Ping all:")
+    #print(actions.ping())
 
-    print("Retrieve all cam params:")
-    print(actions.cam_params())
+    #print("Retrieve all cam params:")
+    #print(actions.cam_params())
 
 
 async def test_finder_actions():
@@ -75,10 +75,10 @@ async def test_finder_actions():
     actions = FinderGFAActions(env)
 
     print("Grab image:")
-    #result = await actions.grab(ExpTime=0.3)
-    #print(result)
+    result = await actions.grab(ExpTime=0.3)
+    print(result)
 
-    print("Focusing (guiding) frame:")
+    #print("Focusing (guiding) frame:")
     #result = await actions.guiding(ExpTime=0.3, save=True)
     #print(result)
 

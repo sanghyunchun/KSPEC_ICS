@@ -69,8 +69,8 @@ class FinderGFAActions:
         ExpTime: float = 1.0,
         Binning: int = 1,
         *,
-        packet_size: int = 8192,
-        cam_ipd: int = 360000,
+        packet_size: int = None,
+        cam_ipd: int = None,
         cam_ftd_base: int = 0,
     ) -> Dict[str, Any]:
         """
@@ -83,9 +83,9 @@ class FinderGFAActions:
         Binning : int, optional
             Binning factor.
         packet_size : int, optional
-            Packet size for image transmission.
+            Packet size for image transmission. If None, use cams.json.
         cam_ipd : int, optional
-            Inter-packet delay.
+            Inter-packet delay. If None, use cams.json.
         cam_ftd_base : int, optional
             Frame transmission delay base.
 
@@ -121,6 +121,7 @@ class FinderGFAActions:
         except Exception as e:
             self.env.logger.error(f"Grab failed: {e}")
             return self._generate_response("error", f"Grab failed: {e}")
+
 
     async def guiding(self, ExpTime: float = 1.0, save: bool = False) -> Dict[str, Any]:
         """

@@ -68,8 +68,8 @@ class GFAActions:
         ExpTime: float = 1.0,
         Binning: int = 4,
         *,
-        packet_size: int = 8192,
-        cam_ipd: int = 367318,
+        packet_size: int = None,
+        cam_ipd: int = None,
         cam_ftd_base: int = 0,
     ) -> Dict[str, Any]:
         """
@@ -84,9 +84,9 @@ class GFAActions:
         Binning : int, optional
             Binning factor.
         packet_size : int, optional
-            GigE packet size.
+            GigE packet size. If None, use cams.json per camera.
         cam_ipd : int, optional
-            Inter-packet delay.
+            Inter-packet delay. If None, use cams.json per camera.
         cam_ftd_base : int, optional
             Frame transmission delay base.
 
@@ -124,11 +124,13 @@ class GFAActions:
 
             if isinstance(CamNum, int) and CamNum == 0:
                 self.env.logger.info("Grabbing from all plate cameras...")
+
+                tasks = []
                 for cam_id in self.env.camera_ids:
                     self.env.logger.info(
                         f"Grabbing from Cam{cam_id} (ExpTime={ExpTime}, Binning={Binning})"
                     )
-                    res = await self.env.controller.grabone(
+                    task = self.env.controller.grabone(
                         CamNum=cam_id,
                         ExpTime=ExpTime,
                         Binning=Binning,
@@ -137,6 +139,12 @@ class GFAActions:
                         ipd=cam_ipd,
                         ftd_base=cam_ftd_base,
                     )
+                    tasks.append(task)
+
+                # Run all camera grabs concurrently
+                results = await asyncio.gather(*tasks)
+                timeout_cameras = []
+                for res in results:
                     timeout_cameras.extend(res)
 
                 msg = "Images grabbed from all cameras."
@@ -148,9 +156,13 @@ class GFAActions:
                 self.env.logger.info(
                     f"Grabbing from cameras {CamNum} (ExpTime={ExpTime}, Binning={Binning})"
                 )
-                for num in CamNum:
-                    res = await self.env.controller.grabone(
-                        CamNum=num,
+                tasks = []
+                for cam_id in CamNum:
+                    self.env.logger.info(
+                        f"Grabbing from Cam{cam_id} (ExpTime={ExpTime}, Binning={Binning})"
+                    )
+                    task = self.env.controller.grabone(
+                        CamNum=cam_id,
                         ExpTime=ExpTime,
                         Binning=Binning,
                         output_dir=grab_save_path,
@@ -158,6 +170,12 @@ class GFAActions:
                         ipd=cam_ipd,
                         ftd_base=cam_ftd_base,
                     )
+                    tasks.append(task)
+
+                # Run all camera grabs concurrently
+                results = await asyncio.gather(*tasks)
+                timeout_cameras = []
+                for res in results:
                     timeout_cameras.extend(res)
 
                 msg = f"Images grabbed from cameras {CamNum}."
@@ -172,6 +190,7 @@ class GFAActions:
             return self._generate_response(
                 "error", f"Grab failed: {e} (CamNum={CamNum}, ExpTime={ExpTime})"
             )
+
 
     async def guiding(self, ExpTime: float = 1.0, save: bool = False) -> Dict[str, Any]:
         """
@@ -219,13 +238,19 @@ class GFAActions:
 
             self.env.logger.info("Clearing temp astrometry data...")
             self.env.astrometry.clear_raw_and_processed_files()
+            
+            try:
+                fwhm_val = float(fwhm)
+            except ValueError:
+                fwhm_val = 0.0  # 또는 예외 처리
 
-            msg = f"Offsets: fdx={fdx}, fdy={fdy}, FWHM={fwhm:.5f} arcsec"
-            return self._generate_response("success", msg, fdx=fdx, fdy=fdy, fwhm=fwhm)
+            msg = f"Offsets: fdx={fdx}, fdy={fdy}, FWHM={fwhm_val} arcsec"
+            return self._generate_response("success", msg, fdx=fdx, fdy=fdy, fwhm=fwhm_val)
 
         except Exception as e:
-            self.env.logger.error(f"Guiding failed: {e}")
-            return self._generate_response("error", f"Guiding failed: {e}")
+            self.env.logger.error(f"Guiding failed: {str(e)}")
+            return self._generate_response("error", f"Guiding failed: {str(e)}")
+
 
     def status(self) -> Dict[str, Any]:
         """
