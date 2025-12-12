@@ -6,7 +6,7 @@ import aio_pika
 import json
 from GFA.command import *
 from GFA.kspec_gfa_controller.src.gfa_actions import GFAActions
-from GFA.Simul.kspec_gfa_controller.src.finder_actions import FinderGFAActions
+from GFA.kspec_gfa_controller.src.finder_actions import FinderGFAActions
 #from GFA.endo_controller.endo_actions import endo_actions
 #import configparser as cp
 
