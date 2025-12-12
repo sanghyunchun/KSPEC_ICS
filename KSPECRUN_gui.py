@@ -226,6 +226,10 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_GFA_set.clicked.connect(self.GFA_set_button_clicked)
 
 
+        # Finder 
+        self.ui.pushbtn_finder_exp.clicked.connect(self.finder_button_clicked)
+
+
         # ADC adjust
         self.ui.pushbtn_ADCadjust.setCheckable(True)
         self.ui.pushbtn_ADCadjust.clicked.connect(self.ADCadjust_button_clicked)
@@ -948,6 +952,21 @@ class MainWindow(QMainWindow):
             self.S_zmin, self.S_zmax = zs.zscale(data)
             can.imshows(data,vmin=self.S_zmin,vmax=self.S_zmax,cmap='gray',origin='lower')
 
+    ### Finder ###
+    @asyncSlot()
+    async def finder_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        if not self.ui.lineEdit_finder_exptime.text():
+            self.ui.lineEdit_finder_exptime.setText('1')
+
+        self.finderexpt = float(self.ui.lineEdit_finder_exptime.text())
+
+        await handle_gfa(f'fdgrab {self.finderexpt}',self.ICS_client)
 
 
     ### ADC ###

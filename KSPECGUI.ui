@@ -18582,7 +18582,7 @@
          <string>Spectrograph</string>
         </property>
        </widget>
-       <widget class="QGroupBox" name="group_metrology_2">
+       <widget class="QGroupBox" name="group_finder">
         <property name="geometry">
          <rect>
           <x>0</x>
@@ -18603,11 +18603,11 @@
         <property name="title">
          <string>Finder</string>
         </property>
-        <widget class="QPushButton" name="pushbtn_Finder_exp_3">
+        <widget class="QPushButton" name="pushbtn_finder_exp">
          <property name="geometry">
           <rect>
            <x>180</x>
-           <y>40</y>
+           <y>38</y>
            <width>71</width>
            <height>31</height>
           </rect>
@@ -18616,7 +18616,7 @@
           <string>GO</string>
          </property>
         </widget>
-        <widget class="QLineEdit" name="lineEdit_MTL_exptime_3">
+        <widget class="QLineEdit" name="lineEdit_finder_exptime">
          <property name="geometry">
           <rect>
            <x>100</x>
@@ -18628,14 +18628,17 @@
          <property name="font">
           <font>
            <family>Arial</family>
-           <pointsize>14</pointsize>
+           <pointsize>9</pointsize>
            <weight>50</weight>
            <bold>false</bold>
            <strikeout>false</strikeout>
           </font>
          </property>
+         <property name="placeholderText">
+          <string>default 1</string>
+         </property>
         </widget>
-        <widget class="QLabel" name="label_MTL_exptime_3">
+        <widget class="QLabel" name="label_finder_exptime">
          <property name="geometry">
           <rect>
            <x>10</x>
