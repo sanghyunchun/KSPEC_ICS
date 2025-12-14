@@ -91,5 +91,5 @@ async def test_finder_actions():
 
 if __name__ == "__main__":
     #asyncio.run(test_gfa_controller())
-    #asyncio.run(test_gfa_actions())
-    asyncio.run(test_finder_actions())
+    asyncio.run(test_gfa_actions())
+    #asyncio.run(test_finder_actions())

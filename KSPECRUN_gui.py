@@ -416,6 +416,7 @@ class MainWindow(QMainWindow):
             self.logging(f"Create directory '{self.dir_path}'.",level='normal')
 
 
+
 #### Calling Status #####
     def QWidgetLabelColor(self, widget, textcolor, bgcolor=None):
         if bgcolor == None:
@@ -867,6 +868,12 @@ class MainWindow(QMainWindow):
 
 
         gfasave=self.ui.gfa_checkBox.isChecked()
+    #    ra_bytes= await self.send_telcom_command('getra')
+    #    dec_bytes= await self.send_telcom_command('getdec')
+    #    ra=self.bytes_to_sexagesimal(ra_bytes)
+    #    dec=self.bytes_to_sexagesimal(dec_bytes)
+
+#        print(f'Current Telescope pointing {ra} {dec}')
         await handle_gfa(f'gfagrab {self.gfacam} {self.gfaexpt}',self.ICS_client)
         if self.gfacam == 0:
             self.logging(f'Sent Expose all GFA cameras for {self.gfaexpt} seconds.', level='send')
@@ -1552,7 +1559,7 @@ class MainWindow(QMainWindow):
         return {
             "adc": ["adcstatus", "adcactivate", "adcadjust", "adcinit", "adcconnect", "adcdisconnect", "adchome", "adczero",
             "adcpoweroff", "adcrotate1", "adcrotate2", "adcstop", "adcpark", "adcrotateop", "adcrotatesame"],
-            "gfa": ["gfastatus", "gfagrab", "gfaguidestop", "gfaguide", "fdgrab"],
+            "gfa": ["gfastatus", "gfagrab", "fdgrab"],
             "fbp": ["fbpstatus", "fbpzero", "fbpmove", "fbpoffset"],
 #            "endo": ["endoguide", "endotest", "endofocus", "endostop","endoexpset","endoclear","endostatus"],
             "mtl": ["mtlstatus", "mtlexp", "mtlcal"],

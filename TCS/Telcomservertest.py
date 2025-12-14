@@ -20,9 +20,9 @@ class AsyncTCPServer:
                 cmd=message.split(" ")
 
                 if cmd[4] == 'RA':
-                    answer='310.4567'
+                    answer='052313.45'
                 elif cmd[4] == 'DEC':
-                    answer='-31.4455'
+                    answer='-313456.4'
 
                 writer.write(answer.encode())
                 await writer.drain()

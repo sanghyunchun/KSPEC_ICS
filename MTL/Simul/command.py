@@ -11,8 +11,8 @@ from MTL.Simul.kspec_metrology.analysis import mtlcal
 async def identify_execute(MTL_server,cmd):
     receive_msg=json.loads(cmd)
     func=receive_msg['func']
-    filename = str(receive_msg['file'])
-    print(f'tewdedf {filename}')
+#    filename = str(receive_msg['file'])
+#    print(f'tewdedf {filename}')
 
     if func == 'mtlstatus':
         comment=mtl_status()

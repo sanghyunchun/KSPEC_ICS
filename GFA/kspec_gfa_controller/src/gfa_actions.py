@@ -13,6 +13,7 @@ from typing import Union, List, Dict, Any, Optional
 
 from .gfa_logger import GFALogger
 from .gfa_environment import create_environment, GFAEnvironment
+from .gfa_getcrval import get_crvals_from_images
 
 logger = GFALogger(__file__)
 
@@ -71,6 +72,8 @@ class GFAActions:
         packet_size: int = None,
         cam_ipd: int = None,
         cam_ftd_base: int = 0,
+        ra: str = None,
+        dec: str = None
     ) -> Dict[str, Any]:
         """
         Grab images from one or more plate cameras.
@@ -115,6 +118,8 @@ class GFAActions:
                     packet_size=packet_size,
                     ipd=cam_ipd,
                     ftd_base=cam_ftd_base,
+                    ra=ra,
+                    dec=dec
                 )
                 timeout_cameras.extend(result)
                 msg = f"Image grabbed from camera {CamNum}."
@@ -138,6 +143,8 @@ class GFAActions:
                         packet_size=packet_size,
                         ipd=cam_ipd,
                         ftd_base=cam_ftd_base,
+                        ra=ra,
+                        dec=dec
                     )
                     tasks.append(task)
 
@@ -169,6 +176,8 @@ class GFAActions:
                         packet_size=packet_size,
                         ipd=cam_ipd,
                         ftd_base=cam_ftd_base,
+                        ra=ra,
+                        dec=dec
                     )
                     tasks.append(task)
 
@@ -192,7 +201,7 @@ class GFAActions:
             )
 
 
-    async def guiding(self, ExpTime: float = 1.0, save: bool = False) -> Dict[str, Any]:
+    async def guiding(self, ExpTime: float = 1.0, save: bool = False, ra: str = None, dec: str = None) -> Dict[str, Any]:
         """
         Execute guiding procedure using all plate cameras.
 
@@ -219,7 +228,7 @@ class GFAActions:
 
             os.makedirs(raw_save_path, exist_ok=True)
             self.env.logger.info("Grabbing raw image...")
-            self.env.controller.grab(0, ExpTime, 4, output_dir=raw_save_path)
+            self.env.controller.grab(0, ExpTime, 4, output_dir=raw_save_path, ra=ra, dec=dec)
 
             if save:
                 os.makedirs(grab_save_path, exist_ok=True)
@@ -250,6 +259,109 @@ class GFAActions:
         except Exception as e:
             self.env.logger.error(f"Guiding failed: {str(e)}")
             return self._generate_response("error", f"Guiding failed: {str(e)}")
+
+    async def pointing(
+        self,
+        ra: float,
+        dec: float,
+        ExpTime: float = 1.0,
+        Binning: int = 4,
+        CamNum: int = 0,
+        max_workers: int = 4,
+        save_by_date: bool = True,
+        clear_dir: bool = True,
+    ) -> Dict[str, Any]:
+        """
+        Pointing procedure:
+        1) Grab images (CamNum=0 default) with RA/DEC hint.
+        2) Save to pointing_raw directory.
+        3) Read images in that directory.
+        4) Run get_crvals_from_images(images) to get CRVAL1/CRVAL2 lists.
+
+        Parameters
+        ----------
+        ra, dec : float
+            Requested reference pointing coordinates (passed to grab and written in header).
+        ExpTime : float
+            Exposure time.
+        Binning : int
+            Binning factor.
+        CamNum : int
+            Camera number (0 = all cameras).
+        max_workers : int
+            Parallel workers for solve-field runs.
+        save_by_date : bool
+            If True, save under img/pointing_raw/YYYY-MM-DD/.
+        clear_dir : bool
+            If True, delete existing files in pointing_raw directory before grabbing.
+
+        Returns
+        -------
+        dict
+            {status, message, images, crval1, crval2}
+        """
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        date_str = datetime.now().strftime("%Y-%m-%d")
+
+        if save_by_date:
+            pointing_raw_path = os.path.join(base_dir, "img", "pointing_raw", date_str)
+        else:
+            pointing_raw_path = os.path.join(base_dir, "img", "pointing_raw")
+
+        try:
+            self.env.logger.info("Starting pointing sequence...")
+            self.env.logger.info(f"Target RA/DEC: {ra}, {dec}")
+            self.env.logger.info(f"Pointing raw save path: {pointing_raw_path}")
+
+            os.makedirs(pointing_raw_path, exist_ok=True)
+
+            # (선택) 디렉토리 정리: 이전 프레임이 섞이면 결과 해석이 어려워서 권장
+            if clear_dir:
+                for fn in os.listdir(pointing_raw_path):
+                    fp = os.path.join(pointing_raw_path, fn)
+                    if os.path.isfile(fp):
+                        os.remove(fp)
+
+            # 1) Grab images -> pointing_raw 저장
+            # guiding()에서처럼 controller.grab을 사용 (동기 함수인 경우가 많음)
+            self.env.logger.info(f"Grabbing pointing images (CamNum={CamNum}, ExpTime={ExpTime}, Binning={Binning})...")
+            self.env.controller.grab(CamNum, ExpTime, Binning, output_dir=pointing_raw_path, ra=ra, dec=dec)
+
+            # 2) 디렉토리의 FITS 이미지 목록 읽기
+            images = []
+            for fn in sorted(os.listdir(pointing_raw_path)):
+                if fn.lower().endswith((".fits", ".fit", ".fts")):
+                    images.append(os.path.join(pointing_raw_path, fn))
+
+            if not images:
+                msg = f"No FITS images found in {pointing_raw_path}"
+                self.env.logger.error(msg)
+                return self._generate_response("error", msg, images=[], crval1=[], crval2=[])
+
+            self.env.logger.info(f"Found {len(images)} images for pointing.")
+
+            # 3) CRVAL 계산 (병렬 가능)
+            self.env.logger.info(f"Solving astrometry for CRVALs (max_workers={max_workers})...")
+            crval1_list, crval2_list = get_crvals_from_images(
+                images,
+                max_workers=max_workers,
+            )
+
+            # (옵션) NaN 제거 후 평균/중앙값 같은 요약이 필요하면 여기서 계산 가능
+            # 지금은 요청대로 리스트 그대로 반환
+
+            msg = f"Pointing completed. Computed CRVALs for {len(images)} images."
+            return self._generate_response(
+                "success",
+                msg,
+                images=images,
+                crval1=crval1_list,
+                crval2=crval2_list,
+            )
+
+        except Exception as e:
+            self.env.logger.error(f"Pointing failed: {str(e)}")
+            return self._generate_response("error", f"Pointing failed: {str(e)}")
 
 
     def status(self) -> Dict[str, Any]:

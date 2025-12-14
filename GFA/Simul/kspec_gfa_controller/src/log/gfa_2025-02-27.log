@@ -1,8 +1,0 @@
-2025-02-27 08:33:16,551 [INFO] Configuration file found: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/etc/cams.json (at gfa_actions.py)
-2025-02-27 08:33:16,551 [INFO] Configuration file found: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/etc/astrometry_params.json (at gfa_actions.py)
-2025-02-27 08:33:16,551 [INFO] Initializing gfa_astrometry class. (at gfa_actions.py)
-2025-02-27 08:33:16,552 [INFO] Loaded 4 FITS files. (at gfa_actions.py)
-2025-02-27 08:33:16,552 [INFO] Initializing GFAGuider... (at gfa_actions.py)
-2025-02-27 08:33:16,552 [INFO] GFAGuider setup complete. (at gfa_actions.py)
-2025-02-27 08:42:18,876 [INFO] Image save path: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/grab (at gfa_actions.py)
-2025-02-27 08:42:18,877 [INFO] Grabbing image from camera 10 (ExpTime=5.0, Binning=4). (at gfa_actions.py)

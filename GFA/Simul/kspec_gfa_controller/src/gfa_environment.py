@@ -9,7 +9,7 @@ import os
 import json
 from typing import List, Optional, Literal
 
-#from gfa_controller import GFAController
+#from .gfa_controller import GFAController
 from .gfa_logger import GFALogger
 from .gfa_astrometry import GFAAstrometry
 from .gfa_guider import GFAGuider

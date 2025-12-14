@@ -9,7 +9,7 @@ from astropy.coordinates import Angle, SkyCoord
 import astropy.units as u
 from astropy.io import fits
 
-from TCS import tcscli
+#from TCS import tcscli
 from GFA.gfacli import handle_gfa
 from MTL.mtlcli import handle_mtl
 from FBP.fbpcli import handle_fbp
@@ -19,8 +19,7 @@ from SPECTRO.speccli import handle_spec
 from ENDO.ENDOcli import handle_endo
 from SCIOBS.sciobscli import sciobscli
 import Lib.process as processes
-
-
+from TCS.tcscli import handle_telcom
 
 
 def printing(message):
@@ -28,14 +27,41 @@ def printing(message):
     print(f"\n\033[32m[ICS] {message}\033[0m\n",flush=True)
 
 
-def convert_to_sexagesimal(ra_deg, dec_deg):
-    """Converts RA and DEC from degrees to sexagesimal format."""
-    ra = Angle(ra_deg, unit=u.degree)
-    dec = Angle(dec_deg, unit=u.degree)
+#def convert_to_sexagesimal(ra_deg, dec_deg):
+#    """Converts RA and DEC from degrees to sexagesimal format."""
+#    ra = Angle(ra_deg, unit=u.degree)
+#    dec = Angle(dec_deg, unit=u.degree)
 
-    ra_hms = ra.to_string(unit=u.hour, sep=':', precision=2, pad=True)
-    dec_dms = dec.to_string(unit=u.degree, sep=':', alwayssign=True, precision=2)
-    return ra_hms, dec_dms
+#    ra_hms = ra.to_string(unit=u.hour, sep=':', precision=2, pad=True)
+#    dec_dms = dec.to_string(unit=u.degree, sep=':', alwayssign=True, precision=2)
+#    return ra_hms, dec_dms
+
+def bytes_to_sexagesimal(value: bytes, encoding="ascii") -> str:
+        """
+        b"453467.8"  -> "45:34:67.8"
+        b"-453456.7" -> "-45:34:56.7"
+        """
+        # bytes → str
+        s = value.decode(encoding).strip()
+
+        sign = "-" if s.startswith("-") else ""
+        s = s.lstrip("+-")
+
+        if "." in s:
+            integer, frac = s.split(".", 1)
+            frac = "." + frac
+        else:
+            integer = s
+            frac = ""
+
+        if len(integer) < 6:
+            raise ValueError(f"Not enough Digit for sexagesimal convert: {s}")
+
+        h = integer[0:2]
+        m = integer[2:4]
+        sec = integer[4:] + frac
+
+        return f"{sign}{h}:{m}:{sec}"
 
 
 def apply_offset(ra: str, dec: str, offset_ra: float, offset_dec: float):
@@ -68,7 +94,6 @@ async def clear_queue(queue):
     while not queue.empty():
         queue.get_nowait()
         queue.task_done()
-
 
 
 class script():
@@ -204,7 +229,7 @@ class script():
             logging('Run Calibration Task finished', level='normal')
 
 
-    async def run_autoguide(self,scriptrun, exptime: float = 5.0, save: str = False):
+    async def run_autoguide(self,scriptrun, exptime: float = 5.0, save: bool = False):
         """Starts the autoguiding process asynchronously."""
         if self.autoguide_task and not self.autoguide_task.done():
             print("Autoguide task is already running. Ignoring duplicate start.")
@@ -225,14 +250,13 @@ class script():
                 
                 if "fdx" in response_data:
                     fdx=response_data['fdx']
-                #    print(f'ttttt {fdx}')
                     fdy=response_data['fdy']
                     self.fwhm=response_data['fwhm']
-                    ra= await scriptrun.send_telcom_command('getra')
-                    dec= await scriptrun.send_telcom_command('getdec')
-                    ra=ra.decode()
-                    dec=dec.decode()
-                    rahms,decdms=convert_to_sexagesimal(ra,dec)
+                    ra_bytes = await scriptrun.send_telcom_command('getra')
+                    dec_bytes = await scriptrun.send_telcom_command('getdec')
+
+                    rahms=bytes_to_sexagesimal(ra_bytes)
+                    decdms=bytes_to_sexagesimal(dec_bytes) 
                     new_coord=apply_offset(rahms,decdms,fdx,fdy)
                     messagetcs = 'KSPEC>TC ' + 'tmradec ' + new_coord
                     await scriptrun.send_udp_message(messagetcs)
@@ -481,10 +505,10 @@ async def handle_script(arg, scriptrun=None, logging=None):
 #                scriptrun.response_queue, scriptrun.GFA_response_queue, scriptrun.ADC_response_queue, scriptrun.SPEC_response_queue, scriptrun.logging)
         await command_map[cmd](scriptrun,logging)
     elif cmd == 'autoguide':
-    #    if not params:
-    #        await scriptrun.run_autoguide(scriptrun)
-    #    else:
-        await scriptrun.run_autoguide(scriptrun,params[0],params[1])
+        if not params:
+            await scriptrun.run_autoguide(scriptrun)
+        else:
+            await scriptrun.run_autoguide(scriptrun,params[0],params[1])
 
     elif cmd == 'autoguidestop':
         await scriptrun.autoguidestop(scriptrun)

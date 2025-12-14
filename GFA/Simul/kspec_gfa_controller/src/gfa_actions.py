@@ -8,12 +8,12 @@
 import os
 import asyncio
 import shutil
-import time
 from datetime import datetime
 from typing import Union, List, Dict, Any, Optional
 
 from .gfa_logger import GFALogger
 from .gfa_environment import create_environment, GFAEnvironment
+from .gfa_getcrval import get_crvals_from_images
 
 logger = GFALogger(__file__)
 
@@ -40,7 +40,6 @@ class GFAActions:
         if env is None:
             env = create_environment(role="plate")
         self.env = env
-        self.file_index=0
 
     def _generate_response(self, status: str, message: str, **kwargs) -> dict:
         """
@@ -70,9 +69,11 @@ class GFAActions:
         ExpTime: float = 1.0,
         Binning: int = 4,
         *,
-        packet_size: int = 8192,
-        cam_ipd: int = 367318,
+        packet_size: int = None,
+        cam_ipd: int = None,
         cam_ftd_base: int = 0,
+        ra: str = None,
+        dec: str = None
     ) -> Dict[str, Any]:
         """
         Grab images from one or more plate cameras.
@@ -86,9 +87,9 @@ class GFAActions:
         Binning : int, optional
             Binning factor.
         packet_size : int, optional
-            GigE packet size.
+            GigE packet size. If None, use cams.json per camera.
         cam_ipd : int, optional
-            Inter-packet delay.
+            Inter-packet delay. If None, use cams.json per camera.
         cam_ftd_base : int, optional
             Frame transmission delay base.
 
@@ -104,6 +105,7 @@ class GFAActions:
 
         timeout_cameras: List[int] = []
 
+
         try:
             if isinstance(CamNum, int) and CamNum != 0:
                 self.env.logger.info(
@@ -117,6 +119,8 @@ class GFAActions:
 #                    packet_size=packet_size,
 #                    ipd=cam_ipd,
 #                    ftd_base=cam_ftd_base,
+#                    ra=ra,
+#                    dec=dec
 #                )
 #                timeout_cameras.extend(result)
                 msg = f"Image grabbed from camera {CamNum}."
@@ -126,11 +130,13 @@ class GFAActions:
 
             if isinstance(CamNum, int) and CamNum == 0:
                 self.env.logger.info("Grabbing from all plate cameras...")
+
+                tasks = []
                 for cam_id in self.env.camera_ids:
                     self.env.logger.info(
                         f"Grabbing from Cam{cam_id} (ExpTime={ExpTime}, Binning={Binning})"
                     )
-#                    res = await self.env.controller.grabone(
+#                    task = self.env.controller.grabone(
 #                        CamNum=cam_id,
 #                        ExpTime=ExpTime,
 #                        Binning=Binning,
@@ -138,7 +144,15 @@ class GFAActions:
 #                        packet_size=packet_size,
 #                        ipd=cam_ipd,
 #                        ftd_base=cam_ftd_base,
+#                        ra=ra,
+#                        dec=dec
 #                    )
+#                    tasks.append(task)
+
+                # Run all camera grabs concurrently
+#                results = await asyncio.gather(*tasks)
+                timeout_cameras = []
+#                for res in results:
 #                    timeout_cameras.extend(res)
 
                 msg = "Images grabbed from all cameras."
@@ -150,16 +164,28 @@ class GFAActions:
                 self.env.logger.info(
                     f"Grabbing from cameras {CamNum} (ExpTime={ExpTime}, Binning={Binning})"
                 )
-#                for num in CamNum:
-#                    res = await self.env.controller.grabone(
-#                        CamNum=num,
+                tasks = []
+                for cam_id in CamNum:
+                    self.env.logger.info(
+                        f"Grabbing from Cam{cam_id} (ExpTime={ExpTime}, Binning={Binning})"
+                    )
+#                    task = self.env.controller.grabone(
+#                        CamNum=cam_id,
 #                        ExpTime=ExpTime,
 #                        Binning=Binning,
 #                        output_dir=grab_save_path,
 #                        packet_size=packet_size,
 #                        ipd=cam_ipd,
 #                        ftd_base=cam_ftd_base,
+#                        ra=ra,
+#                        dec=dec
 #                    )
+#                    tasks.append(task)
+
+                # Run all camera grabs concurrently
+#                results = await asyncio.gather(*tasks)
+                timeout_cameras = []
+#                for res in results:
 #                    timeout_cameras.extend(res)
 
                 msg = f"Images grabbed from cameras {CamNum}."
@@ -175,7 +201,8 @@ class GFAActions:
                 "error", f"Grab failed: {e} (CamNum={CamNum}, ExpTime={ExpTime})"
             )
 
-    async def guiding(self, ExpTime: float = 1.0, save: bool = False) -> Dict[str, Any]:
+
+    async def guiding(self, ExpTime: float = 1.0, save: bool = False, ra: str = None, dec: str = None) -> Dict[str, Any]:
         """
         Execute guiding procedure using all plate cameras.
 
@@ -196,22 +223,17 @@ class GFAActions:
 
         raw_save_path = os.path.join(base_dir, "img", "raw")
         grab_save_path = os.path.join(base_dir, "img", "grab", date_str)
-#        src_dir = os.path.join(base_dir, "img", "GFA_data")
 
         try:
             self.env.logger.info("Starting guiding sequence...")
 
             os.makedirs(raw_save_path, exist_ok=True)
             self.env.logger.info("Grabbing raw image...")
-#            self.env.controller.grab(0, ExpTime, 4, output_dir=raw_save_path)
+#            self.env.controller.grab(0, ExpTime, 4, output_dir=raw_save_path, ra=ra, dec=dec)
 
-#            self.copy_files(src_dir,raw_save_path)
-            await asyncio.sleep(5)
-
-            print(f'Save index is {save}')
+            print(save)
 
             if save:
-                print("Fits files saved")
                 os.makedirs(grab_save_path, exist_ok=True)
                 for fname in os.listdir(raw_save_path):
                     src = os.path.join(raw_save_path, fname)
@@ -227,47 +249,126 @@ class GFAActions:
 #            fdx, fdy, fwhm = self.env.guider.exe_cal()
 
             self.env.logger.info("Clearing temp astrometry data...")
-            self.env.astrometry.clear_raw_and_processed_files()
+#            self.env.astrometry.clear_raw_and_processed_files()
+            
+#            try:
+#                fwhm_val = float(fwhm)
+#            except ValueError:
+#                fwhm_val = 0.0  # 또는 예외 처리
 
             fdx=0.022
             fdy=-0.045
-            fwhm=1.21
+            fwhm_val=1.21
 
-            msg = f"Offsets: fdx={fdx}, fdy={fdy}, FWHM={fwhm:.5f} arcsec."
-            return self._generate_response("success", msg, fdx=fdx, fdy=fdy, fwhm=fwhm)
+            msg = f"Offsets: fdx={fdx}, fdy={fdy}, FWHM={fwhm_val} arcsec"
+            return self._generate_response("success", msg, fdx=fdx, fdy=fdy, fwhm=fwhm_val)
 
         except Exception as e:
-            self.env.logger.error(f"Guiding failed: {e}")
-            return self._generate_response("error", f"Guiding failed: {e}")
+            self.env.logger.error(f"Guiding failed: {str(e)}")
+            return self._generate_response("error", f"Guiding failed: {str(e)}")
 
+    async def pointing(
+        self,
+        ra: float,
+        dec: float,
+        ExpTime: float = 1.0,
+        Binning: int = 4,
+        CamNum: int = 0,
+        max_workers: int = 4,
+        save_by_date: bool = True,
+        clear_dir: bool = True,
+    ) -> Dict[str, Any]:
+        """
+        Pointing procedure:
+        1) Grab images (CamNum=0 default) with RA/DEC hint.
+        2) Save to pointing_raw directory.
+        3) Read images in that directory.
+        4) Run get_crvals_from_images(images) to get CRVAL1/CRVAL2 lists.
 
-    def copy_files(self,src_dir,dest_dir):
-        print(f'file index is {self.file_index}')
-        prefix='KMTN'
-        dates=['20230905T094050.0001','20230905T094259.0001','20230905T094503.0001']
-#        dates=['20230905T094503.0001','20230905T094259.0001','20230905T094050.0001']
-        filename1=prefix+'ge.'+dates[self.file_index]+'.fits'
-        filename2=prefix+'gn.'+dates[self.file_index]+'.fits'
-        filename3=prefix+'gs.'+dates[self.file_index]+'.fits'
-#        filename4=prefix+'gw.'+dates[self.file_index]+'.fits'
-        src_path1=os.path.join(src_dir,filename1)
-        src_path2=os.path.join(src_dir,filename2)
-        src_path3=os.path.join(src_dir,filename3)
-#        src_path4=os.path.join(src_dir,filename4)
-        dest_path=os.path.join(dest_dir)
+        Parameters
+        ----------
+        ra, dec : float
+            Requested reference pointing coordinates (passed to grab and written in header).
+        ExpTime : float
+            Exposure time.
+        Binning : int
+            Binning factor.
+        CamNum : int
+            Camera number (0 = all cameras).
+        max_workers : int
+            Parallel workers for solve-field runs.
+        save_by_date : bool
+            If True, save under img/pointing_raw/YYYY-MM-DD/.
+        clear_dir : bool
+            If True, delete existing files in pointing_raw directory before grabbing.
 
-        print(f'{filename1} copy')
-        shutil.copy(src_path1,dest_path)
-        print(f'{filename2} copy')
-        shutil.copy(src_path2,dest_path)
-        print(f'{filename3} copy')
-        shutil.copy(src_path3,dest_path)
-#        print(f'{filename4} copy')
-#        shutil.copy(src_path4,dest_path)
-        print('Fits image copyed')
+        Returns
+        -------
+        dict
+            {status, message, images, crval1, crval2}
+        """
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        date_str = datetime.now().strftime("%Y-%m-%d")
 
-        self.file_index +=1
+        if save_by_date:
+            pointing_raw_path = os.path.join(base_dir, "img", "pointing_raw", date_str)
+        else:
+            pointing_raw_path = os.path.join(base_dir, "img", "pointing_raw")
 
+        try:
+            self.env.logger.info("Starting pointing sequence...")
+            self.env.logger.info(f"Target RA/DEC: {ra}, {dec}")
+            self.env.logger.info(f"Pointing raw save path: {pointing_raw_path}")
+
+            os.makedirs(pointing_raw_path, exist_ok=True)
+
+            # (선택) 디렉토리 정리: 이전 프레임이 섞이면 결과 해석이 어려워서 권장
+            if clear_dir:
+                for fn in os.listdir(pointing_raw_path):
+                    fp = os.path.join(pointing_raw_path, fn)
+                    if os.path.isfile(fp):
+                        os.remove(fp)
+
+            # 1) Grab images -> pointing_raw 저장
+            # guiding()에서처럼 controller.grab을 사용 (동기 함수인 경우가 많음)
+            self.env.logger.info(f"Grabbing pointing images (CamNum={CamNum}, ExpTime={ExpTime}, Binning={Binning})...")
+#            self.env.controller.grab(CamNum, ExpTime, Binning, output_dir=pointing_raw_path, ra=ra, dec=dec)
+
+            # 2) 디렉토리의 FITS 이미지 목록 읽기
+            images = []
+            for fn in sorted(os.listdir(pointing_raw_path)):
+                if fn.lower().endswith((".fits", ".fit", ".fts")):
+                    images.append(os.path.join(pointing_raw_path, fn))
+
+            if not images:
+                msg = f"No FITS images found in {pointing_raw_path}"
+                self.env.logger.error(msg)
+                return self._generate_response("error", msg, images=[], crval1=[], crval2=[])
+
+            self.env.logger.info(f"Found {len(images)} images for pointing.")
+
+            # 3) CRVAL 계산 (병렬 가능)
+            self.env.logger.info(f"Solving astrometry for CRVALs (max_workers={max_workers})...")
+#            crval1_list, crval2_list = get_crvals_from_images(
+#                images,
+#                max_workers=max_workers,
+#            )
+
+            # (옵션) NaN 제거 후 평균/중앙값 같은 요약이 필요하면 여기서 계산 가능
+            # 지금은 요청대로 리스트 그대로 반환
+
+#            msg = f"Pointing completed. Computed CRVALs for {len(images)} images."
+#            return self._generate_response(
+#                "success",
+#                msg,
+#                images=images,
+#                crval1=crval1_list,
+#                crval2=crval2_list,
+#            )
+
+        except Exception as e:
+            self.env.logger.error(f"Pointing failed: {str(e)}")
+            return self._generate_response("error", f"Pointing failed: {str(e)}")
 
 
     def status(self) -> Dict[str, Any]:
@@ -282,8 +383,8 @@ class GFAActions:
         try:
             self.env.logger.info("Querying camera statuses...")
 #            status_info = self.env.controller.status()
-            time.sleep(5)
-            return self._generate_response("success", 'GFA cameras are ready')
+#            return self._generate_response("success", status_info)
+            return self._generate_response("success", "GFA status below...")
         except Exception as e:
             self.env.logger.error(f"Status query failed: {e}")
             return self._generate_response("error", f"Status query failed: {e}")

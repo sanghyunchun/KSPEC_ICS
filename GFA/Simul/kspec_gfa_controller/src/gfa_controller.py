@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from typing import List
 
 
-from gfa_img import GFAImage
+from .gfa_img import GFAImage
 
 __all__ = ["GFAController"]
 
@@ -231,6 +231,8 @@ class GFAController:
         output_dir: str = None,
         serial_hint: str = None,
         ftd: int = None,
+        ra: str = None,
+        dec: str = None
     ):
         """Configure camera and grab an image."""
         loop = asyncio.get_running_loop()
@@ -273,6 +275,8 @@ class GFAController:
                 filename=filename,
                 exptime=ExpTime,
                 output_directory=output_dir,
+                ra=ra,
+                dec=dec
             )
             return img
 
@@ -287,18 +291,55 @@ class GFAController:
         CamNum: int,
         ExpTime: float,
         Binning: int,
-        packet_size: int,
-        ipd: int,
-        ftd_base: int,
+        packet_size: int = None,
+        ipd: int = None,
+        ftd_base: int = 39000,
         output_dir: str = None,
         ftd: int = None,
+        ra: str = None,
+        dec: str = None
     ) -> list:
-        """Grab one image from a single camera."""
+        """
+        Grab one image from a single camera.
+
+        If packet_size or ipd is None, automatically use the value from cams.json.
+        Otherwise, use the input parameter value.
+
+        Parameters
+        ----------
+        CamNum : int
+            Camera number (e.g., 1–7).
+        ExpTime : float
+            Exposure time in seconds.
+        Binning : int
+            Binning value.
+        packet_size : int, optional
+            Packet size for the camera. If None, use cams.json value.
+        ipd : int, optional
+            InterPacketDelay for the camera. If None, use cams.json value.
+        ftd_base : int
+            Frame Transmission Delay base value.
+        output_dir : str, optional
+            Output directory for image saving.
+        ftd : int, optional
+            Frame Transmission Delay (overrides ftd_base if set).
+
+        Returns
+        -------
+        list
+            List containing CamNum if timeout occurred, else empty list.
+        """
         key = f"Cam{CamNum}"
         cam = self.open_cameras.get(key)
         if cam is None:
             self.logger.error(f"Camera {key} not opened.")
             return [CamNum]
+
+        # --- PacketSize, IPD 우선순위 적용 ---
+        if packet_size is None:
+            packet_size = self.get_camera_param(CamNum, "PacketSize")
+        if ipd is None:
+            ipd = self.get_camera_param(CamNum, "InterPacketDelay")
 
         timeout_occurred = False
 
@@ -315,6 +356,8 @@ class GFAController:
                 output_dir=output_dir,
                 serial_hint=serial,
                 ftd=ftd,
+                ra=ra,
+                dec=dec
             )
 
             if img is None:
@@ -335,14 +378,41 @@ class GFAController:
         CamNum,
         ExpTime: float,
         Binning: int,
-        packet_size: int = 8000,
-        ipd: int = 39000,
+        packet_size: int = None,
+        ipd: int = None,
         ftd_base: int = 39000,
         output_dir: str = None,
+        ra: str = None,
+        dec: str = None
     ):
-        """Grab images from one or more cameras."""
+        """
+        Grab images from one or more cameras.
+
+        Parameters
+        ----------
+        CamNum : int or list
+            Camera number(s) to operate. 0 means all cameras.
+        ExpTime : float
+            Exposure time in seconds.
+        Binning : int
+            Binning value.
+        packet_size : int, optional
+            Packet size. If None, use cams.json value per camera.
+        ipd : int, optional
+            InterPacketDelay. If None, use cams.json value per camera.
+        ftd_base : int
+            Frame Transmission Delay base value.
+        output_dir : str, optional
+            Output directory for image saving.
+
+        Returns
+        -------
+        list
+            List of camera numbers where timeout occurred.
+        """
         timeout_cams = []
 
+        # Determine camera list
         if isinstance(CamNum, int) and CamNum == 0:
             cam_list = list(range(1, self.NUM_CAMERAS + 1))
         elif isinstance(CamNum, list):
@@ -350,6 +420,7 @@ class GFAController:
         else:
             cam_list = [CamNum]
 
+        # Prepare async grab tasks for all target cameras
         tasks = [
             self.grabone(
                 CamNum=cam_num,
@@ -359,16 +430,32 @@ class GFAController:
                 ipd=ipd,
                 ftd_base=ftd_base,
                 output_dir=output_dir,
+                ra=ra,
+                dec=dec
             )
             for cam_num in cam_list
         ]
         results = await asyncio.gather(*tasks)
 
+        # Aggregate timeout results
         for r in results:
             if r:
                 timeout_cams.extend(r)
 
         return timeout_cams
+
+    def get_camera_param(self, CamNum: int, param_name: str):
+        key = f"Cam{CamNum}"
+        value = self.cameras_info.get(key, {}).get(param_name)
+        if value is None:
+            self.logger.warning(f"{param_name} for {key} not found in config, using default.")
+            return None
+        try:
+            return int(value)
+        except Exception:
+            self.logger.warning(f"{param_name} value for {key} is not an integer: {value}")
+            return None
+
 
     def open_selected_cameras(self, camera_ids: List[int]):
         for cam_id in camera_ids:

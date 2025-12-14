@@ -1,6 +1,0 @@
-2025-05-14 16:46:32,098 [INFO] Configuration file found: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/etc/cams.json (at gfa_actions.py)
-2025-05-14 16:46:32,098 [INFO] Configuration file found: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/etc/astrometry_params.json (at gfa_actions.py)
-2025-05-14 16:46:32,098 [INFO] Initializing gfa_astrometry class. (at gfa_actions.py)
-2025-05-14 16:46:32,099 [INFO] Loaded 4 FITS files. (at gfa_actions.py)
-2025-05-14 16:46:32,099 [INFO] Initializing GFAGuider... (at gfa_actions.py)
-2025-05-14 16:46:32,099 [INFO] GFAGuider setup complete. (at gfa_actions.py)

@@ -36,7 +36,7 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
         await GFA_server.send_message('ICS',rsp)
 
     elif func == 'gfagrab':
-        result = await gfa_actions.grab(dict_data['CamNum'],dict_data['ExpTime'])
+        result = await gfa_actions.grab(dict_data['CamNum'],dict_data['ExpTime'],ra=dict_data['ra'],dec=dict_data['dec'])
         reply_data=mkmsg.gfamsg()
         reply_data.update(result)
         reply_data.update(process='Done')
@@ -61,7 +61,7 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
         rsp=json.dumps(reply_data)
         await GFA_server.send_message('ICS',rsp)
         save = dict_data['save'] == 'True'
-        guiding_task = asyncio.create_task(handle_guiding(GFA_server, gfa_actions, dict_data['ExpTime'],save))
+        guiding_task = asyncio.create_task(handle_guiding(GFA_server, gfa_actions, dict_data['ExpTime'],save,dict_data['ra'],dict_data['dec']))
 
     elif func == 'gfaguidestop':
         if guiding_task and not guiding_task.done():
@@ -131,32 +131,11 @@ def savedata(ra,dec,xp,yp,mag):
     msg="'Guide stars are loaded.'"
     return 'success', msg
 
-# Below functions are for simulation. When connect the instruments, please annotate.
 
-#async def autoguide(exptime,subserver):
-#    msg=random.randrange(1,11)
-#    if msg < 7:
-#        reply=mkmsg.gfamsg()
-#        comment='Autoguiding continue.......'
-#        dict_data={'inst': 'GFA', 'savedata': 'False','filename': 'None','message': comment, 'thred': msg}
-#        reply.update(dict_data)
-#        rsp=json.dumps(reply)
-#        rsp=reply
-#    else:
-#        reply=mkmsg.gfamsg()
-#        comment=f'Telescope offset {msg}'
-#        print('\033[32m'+'[GFA]', comment+'\033[0m')
-#        dict_data={'inst': 'GFA', 'savedata': 'False','filename': 'None','message': comment, 'thred': msg}
-#        reply.update(dict_data)
-#        rsp=json.dumps(reply)
-#        rsp=reply
-#    return rsp
-
-
-async def handle_guiding(GFA_server, gfa_actions, expt, save):
+async def handle_guiding(GFA_server, gfa_actions, expt, save, ra: str, dec: str):
     try:
         while True:
-            result = await gfa_actions.guiding(expt,save)
+            result = await gfa_actions.guiding(expt,save,ra=ra, dec=dec)
             reply_data = mkmsg.gfamsg()
             reply_data.update(result)
             reply_data.update(process='ING')
@@ -177,5 +156,26 @@ async def handle_guiding(GFA_server, gfa_actions, expt, save):
         await GFA_server.send_message('ICS',rsp)
     else:
         printing("handle_guiding completed successfully.")
+
+
+# Below functions are for simulation. When connect the instruments, please annotate.
+#async def autoguide(exptime,subserver):
+#    msg=random.randrange(1,11)
+#    if msg < 7:
+#        reply=mkmsg.gfamsg()
+#        comment='Autoguiding continue.......'
+#        dict_data={'inst': 'GFA', 'savedata': 'False','filename': 'None','message': comment, 'thred': msg}
+#        reply.update(dict_data)
+#        rsp=json.dumps(reply)
+#        rsp=reply
+#    else:
+#        reply=mkmsg.gfamsg()
+#        comment=f'Telescope offset {msg}'
+#        print('\033[32m'+'[GFA]', comment+'\033[0m')
+#        dict_data={'inst': 'GFA', 'savedata': 'False','filename': 'None','message': comment, 'thred': msg}
+#        reply.update(dict_data)
+#        rsp=json.dumps(reply)
+#        rsp=reply
+#    return rsp
 
 

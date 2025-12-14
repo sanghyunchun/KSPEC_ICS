@@ -69,9 +69,11 @@ class FinderGFAActions:
         ExpTime: float = 1.0,
         Binning: int = 1,
         *,
-        packet_size: int = 8192,
-        cam_ipd: int = 360000,
+        packet_size: int = None,
+        cam_ipd: int = None,
         cam_ftd_base: int = 0,
+        ra: str = None,
+        dec: str = None
     ) -> Dict[str, Any]:
         """
         Grab a single image from the finder camera and save it.
@@ -83,9 +85,9 @@ class FinderGFAActions:
         Binning : int, optional
             Binning factor.
         packet_size : int, optional
-            Packet size for image transmission.
+            Packet size for image transmission. If None, use cams.json.
         cam_ipd : int, optional
-            Inter-packet delay.
+            Inter-packet delay. If None, use cams.json.
         cam_ftd_base : int, optional
             Frame transmission delay base.
 
@@ -111,6 +113,8 @@ class FinderGFAActions:
 #                packet_size=packet_size,
 #                ipd=cam_ipd,
 #                ftd_base=cam_ftd_base,
+#                ra=ra,
+#                dec=dec
 #            )
 
             msg = f"Image grabbed from Cam{self.cam_id}."
@@ -122,7 +126,8 @@ class FinderGFAActions:
             self.env.logger.error(f"Grab failed: {e}")
             return self._generate_response("error", f"Grab failed: {e}")
 
-    async def guiding(self, ExpTime: float = 1.0, save: bool = False) -> Dict[str, Any]:
+
+    async def guiding(self, ExpTime: float = 1.0, save: bool = False, ra: str = None, dec: str = None) -> Dict[str, Any]:
         """
         Acquire an image for focusing. For the finder camera, this replaces guiding.
 
@@ -149,7 +154,7 @@ class FinderGFAActions:
 
             os.makedirs(raw_save_path, exist_ok=True)
             self.env.logger.info("Grabbing raw image...")
-#            self.env.controller.grab(0, ExpTime, 4, output_dir=raw_save_path)
+#            self.env.controller.grab(0, ExpTime, 4, output_dir=raw_save_path, ra=ra, dec=dec)
 
             if save:
                 os.makedirs(grab_save_path, exist_ok=True)
