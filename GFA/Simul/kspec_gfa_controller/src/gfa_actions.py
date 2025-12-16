@@ -269,8 +269,8 @@ class GFAActions:
 
     async def pointing(
         self,
-        ra: float,
-        dec: float,
+        ra: str,
+        dec: str,
         ExpTime: float = 1.0,
         Binning: int = 4,
         CamNum: int = 0,
@@ -366,6 +366,16 @@ class GFAActions:
 #                crval2=crval2_list,
 #            )
 
+            ### Simulation parts ####
+            msg='Pointing completed.'
+            return self._generate_response(
+                "success",
+                msg,
+                images=images,
+                crval1='None',
+                crval2='None',
+            )
+            ### Simulation parts end ###
         except Exception as e:
             self.env.logger.error(f"Pointing failed: {str(e)}")
             return self._generate_response("error", f"Pointing failed: {str(e)}")

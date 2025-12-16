@@ -226,6 +226,12 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_GFA_set.clicked.connect(self.GFA_set_button_clicked)
 
 
+
+        # Pointing and Astrometry
+        self.ui.pushbtn_pointing.clicked.connect(self.pointing_button_clicked)
+        self.ui.pushbtn_offset.clicked.connect(self.offset_button_clicked)
+
+
         # Finder 
         self.ui.pushbtn_finder_exp.clicked.connect(self.finder_button_clicked)
 
@@ -868,12 +874,7 @@ class MainWindow(QMainWindow):
 
 
         gfasave=self.ui.gfa_checkBox.isChecked()
-    #    ra_bytes= await self.send_telcom_command('getra')
-    #    dec_bytes= await self.send_telcom_command('getdec')
-    #    ra=self.bytes_to_sexagesimal(ra_bytes)
-    #    dec=self.bytes_to_sexagesimal(dec_bytes)
 
-#        print(f'Current Telescope pointing {ra} {dec}')
         await handle_gfa(f'gfagrab {self.gfacam} {self.gfaexpt}',self.ICS_client)
         if self.gfacam == 0:
             self.logging(f'Sent Expose all GFA cameras for {self.gfaexpt} seconds.', level='send')
@@ -958,6 +959,34 @@ class MainWindow(QMainWindow):
 
             self.S_zmin, self.S_zmax = zs.zscale(data)
             can.imshows(data,vmin=self.S_zmin,vmax=self.S_zmax,cmap='gray',origin='lower')
+
+
+    ### Pointing ###
+    @asyncSlot()
+    async def pointing_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        if not self.ui.lineEdit_GFA_exptime.text():
+            self.ui.lineEdit_GFA_exptime.setText('5')      # Default guiding exposure time : 5 sec
+
+        self.gfaexpt = float(self.ui.lineEdit_GFA_exptime.text())
+
+
+        print(self.ra)
+        if not self.ra or not self.dec:
+           self.logging(f'Please load Tile or slew telescope.',level='error')
+           return
+    
+        await handle_gfa(f'pointing {self.gfaexpt} {self.ra} {self.dec}',self.ICS_client)
+
+    ### Pointing Offset ###
+    @asyncSlot()
+    async def offset_button_clicked(self):
+        self.logging(f'Sent Offset',level='send')
 
     ### Finder ###
     @asyncSlot()

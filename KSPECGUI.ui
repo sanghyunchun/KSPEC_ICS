@@ -50,7 +50,7 @@
        <enum>QTabWidget::Triangular</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideLeft</enum>
@@ -215,7 +215,7 @@
           </sizepolicy>
          </property>
          <property name="currentIndex">
-          <number>2</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="Blue">
           <attribute name="title">
@@ -2646,9 +2646,9 @@
          <widget class="QPushButton" name="pushbtn_stop_sequence">
           <property name="geometry">
            <rect>
-            <x>290</x>
-            <y>250</y>
-            <width>91</width>
+            <x>390</x>
+            <y>260</y>
+            <width>121</width>
             <height>41</height>
            </rect>
           </property>
@@ -2671,8 +2671,8 @@
          <widget class="QPushButton" name="pushbtn_run_obs">
           <property name="geometry">
            <rect>
-            <x>290</x>
-            <y>140</y>
+            <x>280</x>
+            <y>260</y>
             <width>91</width>
             <height>41</height>
            </rect>
@@ -2696,9 +2696,9 @@
          <widget class="QPushButton" name="pushbtn_set_sequence">
           <property name="geometry">
            <rect>
-            <x>290</x>
-            <y>90</y>
-            <width>71</width>
+            <x>280</x>
+            <y>210</y>
+            <width>91</width>
             <height>41</height>
            </rect>
           </property>
@@ -2721,10 +2721,10 @@
          <widget class="QWidget" name="formLayoutWidget_3">
           <property name="geometry">
            <rect>
-            <x>10</x>
+            <x>0</x>
             <y>50</y>
             <width>271</width>
-            <height>241</height>
+            <height>251</height>
            </rect>
           </property>
           <layout class="QFormLayout" name="formLayout_3">
@@ -2762,7 +2762,7 @@
               </font>
              </property>
              <property name="text">
-              <string>R.A. :        </string>
+              <string>Tile R.A. :        </string>
              </property>
             </widget>
            </item>
@@ -2778,7 +2778,7 @@
               </font>
              </property>
              <property name="text">
-              <string>Dec. :   </string>
+              <string>Tile DEC. :   </string>
              </property>
             </widget>
            </item>
@@ -2975,9 +2975,9 @@
          <widget class="QWidget" name="formLayoutWidget_5">
           <property name="geometry">
            <rect>
-            <x>290</x>
+            <x>280</x>
             <y>0</y>
-            <width>221</width>
+            <width>231</width>
             <height>61</height>
            </rect>
           </property>
@@ -3058,8 +3058,8 @@
           <property name="geometry">
            <rect>
             <x>390</x>
-            <y>140</y>
-            <width>101</width>
+            <y>210</y>
+            <width>121</width>
             <height>41</height>
            </rect>
           </property>
@@ -3079,60 +3079,178 @@
            <string>Run Calib</string>
           </property>
          </widget>
-         <widget class="QPushButton" name="pushbtn_stop_sequence_3">
+         <widget class="QWidget" name="formLayoutWidget_9">
           <property name="geometry">
            <rect>
-            <x>390</x>
-            <y>250</y>
-            <width>81</width>
-            <height>41</height>
+            <x>280</x>
+            <y>70</y>
+            <width>231</width>
+            <height>131</height>
            </rect>
           </property>
-          <property name="font">
-           <font>
-            <family>Arial</family>
-            <pointsize>14</pointsize>
-            <weight>75</weight>
-            <bold>true</bold>
-            <strikeout>false</strikeout>
-           </font>
-          </property>
-          <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-          <property name="text">
-           <string>END</string>
-          </property>
-         </widget>
-         <widget class="QPushButton" name="pushbtn_Test_sequence">
-          <property name="geometry">
-           <rect>
-            <x>390</x>
-            <y>90</y>
-            <width>61</width>
-            <height>41</height>
-           </rect>
-          </property>
-          <property name="font">
-           <font>
-            <family>Arial</family>
-            <pointsize>14</pointsize>
-            <weight>75</weight>
-            <bold>true</bold>
-            <strikeout>false</strikeout>
-           </font>
-          </property>
-          <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-          <property name="text">
-           <string>Test</string>
-          </property>
+          <layout class="QFormLayout" name="formLayout_9">
+           <item row="0" column="0">
+            <widget class="QPushButton" name="pushbtn_pointing">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+               <strikeout>false</strikeout>
+              </font>
+             </property>
+             <property name="toolTip">
+              <string/>
+             </property>
+             <property name="text">
+              <string> Pointing</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QPushButton" name="pushbtn_offset">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+               <strikeout>false</strikeout>
+              </font>
+             </property>
+             <property name="toolTip">
+              <string/>
+             </property>
+             <property name="text">
+              <string>OFFSET</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_offset">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+               <weight>50</weight>
+               <bold>false</bold>
+               <strikeout>false</strikeout>
+               <kerning>false</kerning>
+              </font>
+             </property>
+             <property name="layoutDirection">
+              <enum>Qt::LeftToRight</enum>
+             </property>
+             <property name="text">
+              <string> ∆ Offset :   </string>
+             </property>
+             <property name="scaledContents">
+              <bool>false</bool>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="margin">
+              <number>0</number>
+             </property>
+             <property name="indent">
+              <number>-1</number>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="lineEdit_offset">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_raoffset">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+               <weight>50</weight>
+               <bold>false</bold>
+               <strikeout>false</strikeout>
+              </font>
+             </property>
+             <property name="text">
+              <string> ∆ R.A :       </string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLineEdit" name="lineEdit_raoffset">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_decoffset">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+               <weight>50</weight>
+               <bold>false</bold>
+               <strikeout>false</strikeout>
+              </font>
+             </property>
+             <property name="text">
+              <string> ∆ DEC. :    </string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QLineEdit" name="lineEdit_decoffset">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </widget>
         </widget>
         <widget class="QWidget" name="tab_single">
          <attribute name="title">
-          <string>Single Mode</string>
+          <string>Simple Mode</string>
          </attribute>
          <widget class="QLabel" name="label">
           <property name="geometry">
@@ -3152,16 +3270,16 @@
            </font>
           </property>
           <property name="text">
-           <string>Set the Observation</string>
+           <string>Simple Observation</string>
           </property>
          </widget>
          <widget class="QWidget" name="formLayoutWidget">
           <property name="geometry">
            <rect>
-            <x>10</x>
+            <x>0</x>
             <y>50</y>
             <width>271</width>
-            <height>241</height>
+            <height>251</height>
            </rect>
           </property>
           <layout class="QFormLayout" name="formLayout">
@@ -3434,8 +3552,8 @@
           <property name="geometry">
            <rect>
             <x>290</x>
-            <y>90</y>
-            <width>121</width>
+            <y>50</y>
+            <width>101</width>
             <height>41</height>
            </rect>
           </property>
@@ -3459,8 +3577,8 @@
           <property name="geometry">
            <rect>
             <x>290</x>
-            <y>140</y>
-            <width>121</width>
+            <y>100</y>
+            <width>101</width>
             <height>41</height>
            </rect>
           </property>
@@ -3477,15 +3595,15 @@
            <string/>
           </property>
           <property name="text">
-           <string>Exp. Start</string>
+           <string>GO</string>
           </property>
          </widget>
          <widget class="QPushButton" name="pushbtn_exp_stop">
           <property name="geometry">
            <rect>
-            <x>430</x>
-            <y>140</y>
-            <width>121</width>
+            <x>400</x>
+            <y>100</y>
+            <width>101</width>
             <height>41</height>
            </rect>
           </property>
@@ -3502,7 +3620,7 @@
            <string/>
           </property>
           <property name="text">
-           <string>Exp. Stop</string>
+           <string>STOP</string>
           </property>
          </widget>
         </widget>
@@ -18606,8 +18724,8 @@
         <widget class="QPushButton" name="pushbtn_finder_exp">
          <property name="geometry">
           <rect>
-           <x>180</x>
-           <y>38</y>
+           <x>190</x>
+           <y>40</y>
            <width>71</width>
            <height>31</height>
           </rect>

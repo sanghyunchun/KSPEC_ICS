@@ -66,6 +66,8 @@ def gfa_grab(cam,expt, *,ra: str=None, dec: str=None):
 def fd_grab(expt):
     return create_gfa_command('fdgrab',ExpTime=expt,message=f'Expose finder camera for {expt} seconds.')
 
+def gfa_pointing(expt: float=1.0, ra: str=None, dec: str=None):
+    return create_gfa_command('pointing',ExpTime=expt, ra=ra, dec=dec, message=f'Pointing to RA={ra}, DEC={dec}')
 
 async def send_telcom_command(message):
     tcsagentIP, tcsagentPort, telcomIP, telcomPort = load_config()
@@ -75,6 +77,15 @@ async def send_telcom_command(message):
     await telcom_client.close()
     return result
 
+async def getradec():
+    ra_bytes=await send_telcom_command('getra')
+    dec_bytes=await send_telcom_command('getdec')
+#    print(ra_bytes,dec_bytes)
+
+    ra=bytes_to_sexagesimal(ra_bytes)
+    dec=bytes_to_sexagesimal(dec_bytes)
+    return ra, dec
+
 
 async def handle_gfa(arg, ICS_client):
     cmd, *params = arg.split()
@@ -83,12 +94,12 @@ async def handle_gfa(arg, ICS_client):
         'gfaguidestop' : gfa_guidestop
     }
 
-    ra_bytes=await send_telcom_command('getra')
-    dec_bytes=await send_telcom_command('getdec')
+#    ra_bytes=await send_telcom_command('getra')
+#    dec_bytes=await send_telcom_command('getdec')
 #    print(ra_bytes,dec_bytes)
 
-    ra=bytes_to_sexagesimal(ra_bytes)
-    dec=bytes_to_sexagesimal(dec_bytes)
+#    ra=bytes_to_sexagesimal(ra_bytes)
+#    dec=bytes_to_sexagesimal(dec_bytes)
 
     if cmd == 'gfagrab':
         if len(params) != 2:
@@ -99,10 +110,11 @@ async def handle_gfa(arg, ICS_client):
         except ValueError:
             print(f"Error: Input parameters of 'gfagrab' should be int and float. input value: {params[0]} {params[1]}")
             return
-
+        ra,dec= await getradec()
         command_map[cmd] = lambda: gfa_grab(camNum, ExpT, ra=ra, dec=dec)
 
     elif cmd == 'gfaguide':
+        ra,dec=await getradec()
         if not params:
             command_map[cmd] = lambda: gfa_guiding(ra=ra, dec=dec)
         else:
@@ -119,9 +131,12 @@ async def handle_gfa(arg, ICS_client):
             return
         command_map[cmd] = lambda: fd_grab(ExpT)
 
+    elif cmd == 'pointing':
+        command_map[cmd] = lambda: gfa_pointing(params[0],params[1],params[2])
+
+
     if cmd in command_map:
         gfamsg = command_map[cmd]()
-        print(f'wwwwedde {gfamsg}')
         await ICS_client.send_message("GFA", gfamsg)
     else:
         print(f"Error: '{cmd}' is not right command for GFA.")

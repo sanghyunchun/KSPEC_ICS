@@ -252,3 +252,19 @@
 2025-12-14 13:21:11,403 [INFO] Running astrometry preprocessing...
 2025-12-14 13:21:11,403 [INFO] Executing guider offset calculation...
 2025-12-14 13:21:11,403 [INFO] Clearing temp astrometry data...
+2025-12-14 14:20:23,576 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2025-12-14 14:20:23,576 [INFO] Initializing gfa_astrometry class.
+2025-12-14 14:20:23,577 [INFO] Initializing GFAGuider...
+2025-12-14 14:20:23,577 [DEBUG] Processed dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg
+2025-12-14 14:20:23,577 [DEBUG] Final astro dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/
+2025-12-14 14:20:23,577 [DEBUG] Cutout dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/cutout
+2025-12-14 14:20:23,577 [INFO] GFAGuider setup complete.
+2025-12-14 14:20:23,578 [INFO] Initialized GFAEnvironment with role 'finder' and cameras [7]
+2025-12-14 14:50:17,701 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2025-12-14 14:50:17,701 [INFO] Initializing gfa_astrometry class.
+2025-12-14 14:50:17,702 [INFO] Initializing GFAGuider...
+2025-12-14 14:50:17,703 [DEBUG] Processed dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg
+2025-12-14 14:50:17,703 [DEBUG] Final astro dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/
+2025-12-14 14:50:17,703 [DEBUG] Cutout dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/cutout
+2025-12-14 14:50:17,703 [INFO] GFAGuider setup complete.
+2025-12-14 14:50:17,703 [INFO] Initialized GFAEnvironment with role 'finder' and cameras [7]
