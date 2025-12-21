@@ -1,6 +1,6 @@
 import os, sys
 import json
-import redis
+#import redis
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import asyncio
 import numpy as np

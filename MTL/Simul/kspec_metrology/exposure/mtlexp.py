@@ -25,7 +25,12 @@ def mtlexp(exptime,filename
 
 #    qc.CamSettings(gain, offset, exptime)
 
-#    for i in range(nexposure):
+
+    filehead=filename.split(".fits")[0]
+
+    for i in range(nexposure):
+        time.sleep(exptime)
+        print(f'{filehead}{i}.fits file saved')
 #        im = qc.CamCapture()
 
 #        hdr = fits.Header()
@@ -37,6 +42,6 @@ def mtlexp(exptime,filename
 #        empty_primary.writeto(data_dir+f'test{i}.fits', overwrite=True)
 
 #    qc.CamExit()
-    time.sleep(exptime)
-    msg=f'Metrology {exptime} seconds exposure finished. Fits file {filename} is saved.'
+    
+    msg=f'Metrology {exptime} seconds {nexposure} exposures finished.'
     return 'success', msg

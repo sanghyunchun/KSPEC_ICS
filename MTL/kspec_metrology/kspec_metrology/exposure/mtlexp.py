@@ -24,6 +24,8 @@ def mtlexp(exptime,filename : str                                  # Need filena
 
     qc.CamSettings(gain, offset, exptime*1000000)
 
+    filehead=filename.split(".fits")[0]
+
     for i in range(nexposure):
         im = qc.CamCapture()
 
@@ -34,8 +36,8 @@ def mtlexp(exptime,filename : str                                  # Need filena
 
         empty_primary = fits.PrimaryHDU(header=hdr, data=im)
 #        empty_primary.writeto(data_dir+f'test{i}.fits', overwrite=True)
-        empty_primary.writeto(data_dir+f'{filename}', overwrite=True)
+        empty_primary.writeto(data_dir+f'{name}{i].fits', overwrite=True)
 
     qc.CamExit()
-    msg=f'Metrology {exptime} seconds exposure finished. Fits file {filename} is saved'     # Need to edit in real observation
+    msg=f'Metrology {exptime} seconds {nexposure} exposures finished.'     # Need to edit in real observation
     return 'success', msg

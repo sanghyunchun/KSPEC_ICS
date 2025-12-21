@@ -211,7 +211,7 @@ class MainWindow(QMainWindow):
         # Setting Initial observation
         self.ui.pushbtn_connect.setCheckable(True)
         self.ui.pushbtn_connect.clicked.connect(self.rabbitmq_connect)
-        self.ui.pushbtn_observer.clicked.connect(self.save_observer)
+    #    self.ui.pushbtn_observer.clicked.connect(self.save_observer)
         self.ui.pushbtn_directory.clicked.connect(self.set_directory)
         self.ui.pushbtn_syscheck.clicked.connect(self.syscheck)
 
@@ -393,9 +393,9 @@ class MainWindow(QMainWindow):
                 f.write(f'[{self.uttime}][ICS] {message}\n')
 
 ### Observation Set function ###
-    def save_observer(self):
-        self.observer=self.ui.lineEdit_observer.text()
-        self.logging(f"Observer '{self.observer}' Saved",level='normal')
+#    def save_observer(self):
+#        self.observer=self.ui.lineEdit_observer.text()
+#        self.logging(f"Observer '{self.observer}' Saved",level='normal')
 
 ### Set Save directory ###
     def set_directory(self): 
@@ -1125,11 +1125,18 @@ class MainWindow(QMainWindow):
 
         if not self.ui.lineEdit_MTL_exptime.text():
             self.ui.lineEdit_MTL_exptime.setText('5')
+            
+        if not self.ui.lineEdit_MTL_file.text():
+            self.ui.lineEdit_MTL_file.setText('test.fits')
+            
+        if not self.ui.lineEdit_MTL_expnum.text():
+            self.ui.lineEdit_MTL_expnum.setText('1')
 
         self.mtlexp = float(self.ui.lineEdit_MTL_exptime.text())
         self.mtlfile = str(self.ui.lineEdit_MTL_file.text())
+        self.nexposure = int(self.ui.lineEdit_MTL_expnum.text())
         self.logging(f'Sent MTL exposure', level='send')
-        await handle_mtl(f'mtlexp {self.mtlexp} {self.mtlfile}', self.ICS_client)
+        await handle_mtl(f'mtlexp {self.mtlexp} {self.nexposure} {self.mtlfile}', self.ICS_client)
 
     @asyncSlot()
     async def MTL_cal_button_clicked(self):

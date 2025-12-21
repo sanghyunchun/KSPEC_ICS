@@ -11,8 +11,6 @@ from MTL.Simul.kspec_metrology.analysis import mtlcal
 async def identify_execute(MTL_server,cmd):
     receive_msg=json.loads(cmd)
     func=receive_msg['func']
-#    filename = str(receive_msg['file'])
-#    print(f'tewdedf {filename}')
 
     if func == 'mtlstatus':
         comment=mtl_status()
@@ -45,7 +43,8 @@ async def identify_execute(MTL_server,cmd):
 
         exptime=float(receive_msg['time'])
         filename = str(receive_msg['file'])
-        status, comment=mtlexp.mtlexp(exptime,filename)
+        nexposure = int(receive_msg['nexposure'])
+        status, comment=mtlexp.mtlexp(exptime,filename,nexposure=nexposure)
         reply_data=mkmsg.mtlmsg()
         reply_data.update(message=comment,process='Done',status=status)
         rsp=json.dumps(reply_data)

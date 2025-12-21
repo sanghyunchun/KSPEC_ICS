@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'KSPECGUI.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.8.2
+## Created by: Qt User Interface Compiler version 6.7.2
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -28,7 +28,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1507, 1000)
+        MainWindow.resize(1512, 1013)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.horizontalLayout_3 = QHBoxLayout(self.centralwidget)
@@ -45,10 +45,10 @@ class Ui_MainWindow(object):
         self.tabWidget.setFont(font)
         self.tabWidget.setAutoFillBackground(True)
         self.tabWidget.setStyleSheet(u"")
-        self.tabWidget.setInputMethodHints(Qt.ImhLatinOnly|Qt.ImhLowercaseOnly)
-        self.tabWidget.setTabPosition(QTabWidget.North)
-        self.tabWidget.setTabShape(QTabWidget.Triangular)
-        self.tabWidget.setElideMode(Qt.ElideLeft)
+        self.tabWidget.setInputMethodHints(Qt.InputMethodHint.ImhLatinOnly|Qt.InputMethodHint.ImhLowercaseOnly)
+        self.tabWidget.setTabPosition(QTabWidget.TabPosition.North)
+        self.tabWidget.setTabShape(QTabWidget.TabShape.Triangular)
+        self.tabWidget.setElideMode(Qt.TextElideMode.ElideLeft)
         self.tab_home = QWidget()
         self.tab_home.setObjectName(u"tab_home")
         self.group_log = QGroupBox(self.tab_home)
@@ -103,8 +103,8 @@ class Ui_MainWindow(object):
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.frame_B = QFrame(self.Blue)
         self.frame_B.setObjectName(u"frame_B")
-        self.frame_B.setFrameShape(QFrame.StyledPanel)
-        self.frame_B.setFrameShadow(QFrame.Raised)
+        self.frame_B.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_B.setFrameShadow(QFrame.Shadow.Raised)
 
         self.horizontalLayout.addWidget(self.frame_B)
 
@@ -115,8 +115,8 @@ class Ui_MainWindow(object):
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.frame_R = QFrame(self.Red)
         self.frame_R.setObjectName(u"frame_R")
-        self.frame_R.setFrameShape(QFrame.StyledPanel)
-        self.frame_R.setFrameShadow(QFrame.Raised)
+        self.frame_R.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_R.setFrameShadow(QFrame.Shadow.Raised)
 
         self.horizontalLayout_2.addWidget(self.frame_R)
 
@@ -126,14 +126,14 @@ class Ui_MainWindow(object):
         self.frame_finder = QFrame(self.Finder)
         self.frame_finder.setObjectName(u"frame_finder")
         self.frame_finder.setGeometry(QRect(9, 9, 658, 658))
-        self.frame_finder.setFrameShape(QFrame.StyledPanel)
-        self.frame_finder.setFrameShadow(QFrame.Raised)
+        self.frame_finder.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_finder.setFrameShadow(QFrame.Shadow.Raised)
         self.tabWidget_2.addTab(self.Finder, "")
         self.Guide6 = QFrame(self.group_preview)
         self.Guide6.setObjectName(u"Guide6")
         self.Guide6.setGeometry(QRect(819, 373, 111, 110))
-        self.Guide6.setFrameShape(QFrame.StyledPanel)
-        self.Guide6.setFrameShadow(QFrame.Raised)
+        self.Guide6.setFrameShape(QFrame.Shape.StyledPanel)
+        self.Guide6.setFrameShadow(QFrame.Shadow.Raised)
         self.label_gfa1 = QLabel(self.group_preview)
         self.label_gfa1.setObjectName(u"label_gfa1")
         self.label_gfa1.setGeometry(QRect(720, 53, 71, 16))
@@ -145,8 +145,8 @@ class Ui_MainWindow(object):
         self.Guide5 = QFrame(self.group_preview)
         self.Guide5.setObjectName(u"Guide5")
         self.Guide5.setGeometry(QRect(700, 373, 110, 110))
-        self.Guide5.setFrameShape(QFrame.StyledPanel)
-        self.Guide5.setFrameShadow(QFrame.Raised)
+        self.Guide5.setFrameShape(QFrame.Shape.StyledPanel)
+        self.Guide5.setFrameShadow(QFrame.Shadow.Raised)
         self.label_gfa2 = QLabel(self.group_preview)
         self.label_gfa2.setObjectName(u"label_gfa2")
         self.label_gfa2.setGeometry(QRect(840, 53, 71, 16))
@@ -154,18 +154,18 @@ class Ui_MainWindow(object):
         self.Guide2 = QFrame(self.group_preview)
         self.Guide2.setObjectName(u"Guide2")
         self.Guide2.setGeometry(QRect(819, 73, 110, 110))
-        self.Guide2.setFrameShape(QFrame.StyledPanel)
-        self.Guide2.setFrameShadow(QFrame.Raised)
+        self.Guide2.setFrameShape(QFrame.Shape.StyledPanel)
+        self.Guide2.setFrameShadow(QFrame.Shadow.Raised)
         self.Guide4 = QFrame(self.group_preview)
         self.Guide4.setObjectName(u"Guide4")
         self.Guide4.setGeometry(QRect(819, 223, 110, 110))
-        self.Guide4.setFrameShape(QFrame.StyledPanel)
-        self.Guide4.setFrameShadow(QFrame.Raised)
+        self.Guide4.setFrameShape(QFrame.Shape.StyledPanel)
+        self.Guide4.setFrameShadow(QFrame.Shadow.Raised)
         self.Guide1 = QFrame(self.group_preview)
         self.Guide1.setObjectName(u"Guide1")
         self.Guide1.setGeometry(QRect(700, 73, 110, 110))
-        self.Guide1.setFrameShape(QFrame.StyledPanel)
-        self.Guide1.setFrameShadow(QFrame.Raised)
+        self.Guide1.setFrameShape(QFrame.Shape.StyledPanel)
+        self.Guide1.setFrameShadow(QFrame.Shadow.Raised)
         self.label_gfa6 = QLabel(self.group_preview)
         self.label_gfa6.setObjectName(u"label_gfa6")
         self.label_gfa6.setGeometry(QRect(840, 353, 71, 16))
@@ -173,8 +173,8 @@ class Ui_MainWindow(object):
         self.Guide3 = QFrame(self.group_preview)
         self.Guide3.setObjectName(u"Guide3")
         self.Guide3.setGeometry(QRect(700, 223, 110, 110))
-        self.Guide3.setFrameShape(QFrame.StyledPanel)
-        self.Guide3.setFrameShadow(QFrame.Raised)
+        self.Guide3.setFrameShape(QFrame.Shape.StyledPanel)
+        self.Guide3.setFrameShadow(QFrame.Shadow.Raised)
         self.label_gfa5 = QLabel(self.group_preview)
         self.label_gfa5.setObjectName(u"label_gfa5")
         self.label_gfa5.setGeometry(QRect(721, 353, 71, 16))
@@ -198,7 +198,7 @@ class Ui_MainWindow(object):
         self.lineEdit_airmass = QLineEdit(self.formLayoutWidget_2)
         self.lineEdit_airmass.setObjectName(u"lineEdit_airmass")
         self.lineEdit_airmass.setFont(font2)
-        self.lineEdit_airmass.setAlignment(Qt.AlignCenter)
+        self.lineEdit_airmass.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lineEdit_airmass.setReadOnly(True)
 
         self.formLayout_2.setWidget(0, QFormLayout.FieldRole, self.lineEdit_airmass)
@@ -206,7 +206,7 @@ class Ui_MainWindow(object):
         self.lineEdit_seeing = QLineEdit(self.formLayoutWidget_2)
         self.lineEdit_seeing.setObjectName(u"lineEdit_seeing")
         self.lineEdit_seeing.setFont(font2)
-        self.lineEdit_seeing.setAlignment(Qt.AlignCenter)
+        self.lineEdit_seeing.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lineEdit_seeing.setReadOnly(True)
 
         self.formLayout_2.setWidget(1, QFormLayout.FieldRole, self.lineEdit_seeing)
@@ -239,7 +239,7 @@ class Ui_MainWindow(object):
         self.lineEdit_fttvalue.setObjectName(u"lineEdit_fttvalue")
         self.lineEdit_fttvalue.setGeometry(QRect(830, 648, 101, 31))
         self.lineEdit_fttvalue.setFont(font2)
-        self.lineEdit_fttvalue.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+        self.lineEdit_fttvalue.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignTrailing|Qt.AlignmentFlag.AlignVCenter)
         self.lineEdit_cmd = QLineEdit(self.tab_home)
         self.lineEdit_cmd.setObjectName(u"lineEdit_cmd")
         self.lineEdit_cmd.setGeometry(QRect(50, 895, 391, 30))
@@ -247,7 +247,7 @@ class Ui_MainWindow(object):
         self.lineEdit_cmd.setSizePolicy(sizePolicy1)
         self.groupBox = QGroupBox(self.tab_home)
         self.groupBox.setObjectName(u"groupBox")
-        self.groupBox.setGeometry(QRect(0, 0, 521, 171))
+        self.groupBox.setGeometry(QRect(0, 0, 521, 161))
         font3 = QFont()
         font3.setPointSize(14)
         font3.setBold(True)
@@ -255,17 +255,29 @@ class Ui_MainWindow(object):
         self.groupBox.setFont(font3)
         self.gridLayout_3 = QGridLayout(self.groupBox)
         self.gridLayout_3.setObjectName(u"gridLayout_3")
-        self.horizontalLayout_4 = QHBoxLayout()
-        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
-        self.label_lt = QLabel(self.groupBox)
-        self.label_lt.setObjectName(u"label_lt")
-        self.label_lt.setFont(font2)
+        self.pushbtn_syscheck = QPushButton(self.groupBox)
+        self.pushbtn_syscheck.setObjectName(u"pushbtn_syscheck")
+        self.pushbtn_syscheck.setFont(font1)
 
-        self.horizontalLayout_4.addWidget(self.label_lt)
+        self.gridLayout_3.addWidget(self.pushbtn_syscheck, 1, 2, 1, 1)
 
-        self.lcd_lt = QLCDNumber(self.groupBox)
-        self.lcd_lt.setObjectName(u"lcd_lt")
-        self.lcd_lt.setEnabled(True)
+        self.pushbtn_directory = QPushButton(self.groupBox)
+        self.pushbtn_directory.setObjectName(u"pushbtn_directory")
+        self.pushbtn_directory.setFont(font1)
+
+        self.gridLayout_3.addWidget(self.pushbtn_directory, 2, 2, 1, 1)
+
+        self.horizontalLayout_5 = QHBoxLayout()
+        self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
+        self.label_utc = QLabel(self.groupBox)
+        self.label_utc.setObjectName(u"label_utc")
+        self.label_utc.setFont(font2)
+
+        self.horizontalLayout_5.addWidget(self.label_utc)
+
+        self.lcd_utc = QLCDNumber(self.groupBox)
+        self.lcd_utc.setObjectName(u"lcd_utc")
+        self.lcd_utc.setEnabled(True)
         palette = QPalette()
         brush = QBrush(QColor(0, 0, 0, 255))
         brush.setStyle(Qt.SolidPattern)
@@ -343,40 +355,46 @@ class Ui_MainWindow(object):
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette.setBrush(QPalette.Disabled, QPalette.PlaceholderText, brush10)
 #endif
-        self.lcd_lt.setPalette(palette)
+        self.lcd_utc.setPalette(palette)
         font4 = QFont()
         font4.setFamilies([u"Arial"])
         font4.setPointSize(13)
         font4.setBold(False)
         font4.setStrikeOut(False)
-        self.lcd_lt.setFont(font4)
-        self.lcd_lt.setFocusPolicy(Qt.NoFocus)
-        self.lcd_lt.setContextMenuPolicy(Qt.DefaultContextMenu)
-        self.lcd_lt.setFrameShape(QFrame.Box)
-        self.lcd_lt.setFrameShadow(QFrame.Raised)
-        self.lcd_lt.setLineWidth(1)
-        self.lcd_lt.setMidLineWidth(0)
-        self.lcd_lt.setSmallDecimalPoint(False)
-        self.lcd_lt.setDigitCount(21)
-        self.lcd_lt.setMode(QLCDNumber.Oct)
-        self.lcd_lt.setSegmentStyle(QLCDNumber.Flat)
+        self.lcd_utc.setFont(font4)
+        self.lcd_utc.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.lcd_utc.setContextMenuPolicy(Qt.ContextMenuPolicy.DefaultContextMenu)
+        self.lcd_utc.setFrameShape(QFrame.Shape.Box)
+        self.lcd_utc.setFrameShadow(QFrame.Shadow.Raised)
+        self.lcd_utc.setLineWidth(1)
+        self.lcd_utc.setMidLineWidth(0)
+        self.lcd_utc.setSmallDecimalPoint(False)
+        self.lcd_utc.setDigitCount(21)
+        self.lcd_utc.setMode(QLCDNumber.Mode.Oct)
+        self.lcd_utc.setSegmentStyle(QLCDNumber.SegmentStyle.Flat)
 
-        self.horizontalLayout_4.addWidget(self.lcd_lt)
+        self.horizontalLayout_5.addWidget(self.lcd_utc)
 
 
-        self.gridLayout_3.addLayout(self.horizontalLayout_4, 0, 0, 1, 1)
+        self.gridLayout_3.addLayout(self.horizontalLayout_5, 1, 0, 1, 1)
 
-        self.horizontalLayout_5 = QHBoxLayout()
-        self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
-        self.label_utc = QLabel(self.groupBox)
-        self.label_utc.setObjectName(u"label_utc")
-        self.label_utc.setFont(font2)
+        self.pushbtn_connect = QPushButton(self.groupBox)
+        self.pushbtn_connect.setObjectName(u"pushbtn_connect")
+        self.pushbtn_connect.setFont(font1)
 
-        self.horizontalLayout_5.addWidget(self.label_utc)
+        self.gridLayout_3.addWidget(self.pushbtn_connect, 0, 2, 1, 1)
 
-        self.lcd_utc = QLCDNumber(self.groupBox)
-        self.lcd_utc.setObjectName(u"lcd_utc")
-        self.lcd_utc.setEnabled(True)
+        self.horizontalLayout_4 = QHBoxLayout()
+        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.label_lt = QLabel(self.groupBox)
+        self.label_lt.setObjectName(u"label_lt")
+        self.label_lt.setFont(font2)
+
+        self.horizontalLayout_4.addWidget(self.label_lt)
+
+        self.lcd_lt = QLCDNumber(self.groupBox)
+        self.lcd_lt.setObjectName(u"lcd_lt")
+        self.lcd_lt.setEnabled(True)
         palette1 = QPalette()
         palette1.setBrush(QPalette.Active, QPalette.WindowText, brush)
         palette1.setBrush(QPalette.Active, QPalette.Button, brush1)
@@ -432,45 +450,23 @@ class Ui_MainWindow(object):
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette1.setBrush(QPalette.Disabled, QPalette.PlaceholderText, brush10)
 #endif
-        self.lcd_utc.setPalette(palette1)
-        self.lcd_utc.setFont(font4)
-        self.lcd_utc.setFocusPolicy(Qt.NoFocus)
-        self.lcd_utc.setContextMenuPolicy(Qt.DefaultContextMenu)
-        self.lcd_utc.setFrameShape(QFrame.Box)
-        self.lcd_utc.setFrameShadow(QFrame.Raised)
-        self.lcd_utc.setLineWidth(1)
-        self.lcd_utc.setMidLineWidth(0)
-        self.lcd_utc.setSmallDecimalPoint(False)
-        self.lcd_utc.setDigitCount(21)
-        self.lcd_utc.setMode(QLCDNumber.Oct)
-        self.lcd_utc.setSegmentStyle(QLCDNumber.Flat)
+        self.lcd_lt.setPalette(palette1)
+        self.lcd_lt.setFont(font4)
+        self.lcd_lt.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.lcd_lt.setContextMenuPolicy(Qt.ContextMenuPolicy.DefaultContextMenu)
+        self.lcd_lt.setFrameShape(QFrame.Shape.Box)
+        self.lcd_lt.setFrameShadow(QFrame.Shadow.Raised)
+        self.lcd_lt.setLineWidth(1)
+        self.lcd_lt.setMidLineWidth(0)
+        self.lcd_lt.setSmallDecimalPoint(False)
+        self.lcd_lt.setDigitCount(21)
+        self.lcd_lt.setMode(QLCDNumber.Mode.Oct)
+        self.lcd_lt.setSegmentStyle(QLCDNumber.SegmentStyle.Flat)
 
-        self.horizontalLayout_5.addWidget(self.lcd_utc)
-
-
-        self.gridLayout_3.addLayout(self.horizontalLayout_5, 1, 0, 1, 1)
-
-        self.horizontalLayout_6 = QHBoxLayout()
-        self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
-        self.label_observer = QLabel(self.groupBox)
-        self.label_observer.setObjectName(u"label_observer")
-        self.label_observer.setFont(font2)
-
-        self.horizontalLayout_6.addWidget(self.label_observer)
-
-        self.lineEdit_observer = QLineEdit(self.groupBox)
-        self.lineEdit_observer.setObjectName(u"lineEdit_observer")
-        font5 = QFont()
-        font5.setPointSize(14)
-        font5.setBold(False)
-        font5.setStrikeOut(False)
-        self.lineEdit_observer.setFont(font5)
-        self.lineEdit_observer.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
-
-        self.horizontalLayout_6.addWidget(self.lineEdit_observer)
+        self.horizontalLayout_4.addWidget(self.lcd_lt)
 
 
-        self.gridLayout_3.addLayout(self.horizontalLayout_6, 2, 0, 1, 1)
+        self.gridLayout_3.addLayout(self.horizontalLayout_4, 0, 0, 1, 1)
 
         self.horizontalLayout_7 = QHBoxLayout()
         self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
@@ -482,37 +478,17 @@ class Ui_MainWindow(object):
 
         self.lineEdit_directory = QLineEdit(self.groupBox)
         self.lineEdit_directory.setObjectName(u"lineEdit_directory")
+        font5 = QFont()
+        font5.setPointSize(14)
+        font5.setBold(False)
+        font5.setStrikeOut(False)
         self.lineEdit_directory.setFont(font5)
-        self.lineEdit_directory.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+        self.lineEdit_directory.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignTrailing|Qt.AlignmentFlag.AlignVCenter)
 
         self.horizontalLayout_7.addWidget(self.lineEdit_directory)
 
 
-        self.gridLayout_3.addLayout(self.horizontalLayout_7, 3, 0, 1, 1)
-
-        self.pushbtn_connect = QPushButton(self.groupBox)
-        self.pushbtn_connect.setObjectName(u"pushbtn_connect")
-        self.pushbtn_connect.setFont(font1)
-
-        self.gridLayout_3.addWidget(self.pushbtn_connect, 0, 2, 1, 1)
-
-        self.pushbtn_syscheck = QPushButton(self.groupBox)
-        self.pushbtn_syscheck.setObjectName(u"pushbtn_syscheck")
-        self.pushbtn_syscheck.setFont(font1)
-
-        self.gridLayout_3.addWidget(self.pushbtn_syscheck, 1, 2, 1, 1)
-
-        self.pushbtn_observer = QPushButton(self.groupBox)
-        self.pushbtn_observer.setObjectName(u"pushbtn_observer")
-        self.pushbtn_observer.setFont(font1)
-
-        self.gridLayout_3.addWidget(self.pushbtn_observer, 2, 2, 1, 1)
-
-        self.pushbtn_directory = QPushButton(self.groupBox)
-        self.pushbtn_directory.setObjectName(u"pushbtn_directory")
-        self.pushbtn_directory.setFont(font1)
-
-        self.gridLayout_3.addWidget(self.pushbtn_directory, 3, 2, 1, 1)
+        self.gridLayout_3.addLayout(self.horizontalLayout_7, 2, 0, 1, 1)
 
         self.group_status = QGroupBox(self.tab_home)
         self.group_status.setObjectName(u"group_status")
@@ -533,43 +509,43 @@ class Ui_MainWindow(object):
         font6.setItalic(False)
         font6.setStrikeOut(False)
         self.ok_status_gfa.setFont(font6)
-        self.ok_status_gfa.setTextFormat(Qt.PlainText)
-        self.ok_status_gfa.setAlignment(Qt.AlignCenter)
+        self.ok_status_gfa.setTextFormat(Qt.TextFormat.PlainText)
+        self.ok_status_gfa.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label_status_gfa = QLabel(self.group_status)
         self.label_status_gfa.setObjectName(u"label_status_gfa")
         self.label_status_gfa.setGeometry(QRect(28, 41, 61, 29))
         self.label_status_gfa.setFont(font2)
-        self.label_status_gfa.setAlignment(Qt.AlignCenter)
+        self.label_status_gfa.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label_status_adc = QLabel(self.group_status)
         self.label_status_adc.setObjectName(u"label_status_adc")
         self.label_status_adc.setGeometry(QRect(110, 41, 61, 29))
         self.label_status_adc.setFont(font2)
-        self.label_status_adc.setAlignment(Qt.AlignCenter)
+        self.label_status_adc.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label_status_fiber = QLabel(self.group_status)
         self.label_status_fiber.setObjectName(u"label_status_fiber")
         self.label_status_fiber.setGeometry(QRect(200, 41, 61, 29))
         self.label_status_fiber.setFont(font2)
-        self.label_status_fiber.setAlignment(Qt.AlignCenter)
+        self.label_status_fiber.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label_status_finder = QLabel(self.group_status)
         self.label_status_finder.setObjectName(u"label_status_finder")
         self.label_status_finder.setGeometry(QRect(290, 41, 71, 29))
         self.label_status_finder.setFont(font2)
-        self.label_status_finder.setAlignment(Qt.AlignCenter)
+        self.label_status_finder.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label_status_metrology = QLabel(self.group_status)
         self.label_status_metrology.setObjectName(u"label_status_metrology")
         self.label_status_metrology.setGeometry(QRect(390, 41, 101, 29))
         self.label_status_metrology.setFont(font2)
-        self.label_status_metrology.setAlignment(Qt.AlignCenter)
+        self.label_status_metrology.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label_status_spectrograph = QLabel(self.group_status)
         self.label_status_spectrograph.setObjectName(u"label_status_spectrograph")
         self.label_status_spectrograph.setGeometry(QRect(516, 41, 141, 29))
         self.label_status_spectrograph.setFont(font2)
-        self.label_status_spectrograph.setAlignment(Qt.AlignCenter)
+        self.label_status_spectrograph.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label_status_lamp = QLabel(self.group_status)
         self.label_status_lamp.setObjectName(u"label_status_lamp")
         self.label_status_lamp.setGeometry(QRect(682, 41, 61, 29))
         self.label_status_lamp.setFont(font2)
-        self.label_status_lamp.setAlignment(Qt.AlignCenter)
+        self.label_status_lamp.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.pushbtn_reset1 = QPushButton(self.group_status)
         self.pushbtn_reset1.setObjectName(u"pushbtn_reset1")
         self.pushbtn_reset1.setGeometry(QRect(770, 30, 171, 51))
@@ -584,48 +560,48 @@ class Ui_MainWindow(object):
         sizePolicy2.setHeightForWidth(self.ok_status_adc.sizePolicy().hasHeightForWidth())
         self.ok_status_adc.setSizePolicy(sizePolicy2)
         self.ok_status_adc.setFont(font6)
-        self.ok_status_adc.setTextFormat(Qt.PlainText)
-        self.ok_status_adc.setAlignment(Qt.AlignCenter)
+        self.ok_status_adc.setTextFormat(Qt.TextFormat.PlainText)
+        self.ok_status_adc.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ok_status_fiber = QLabel(self.group_status)
         self.ok_status_fiber.setObjectName(u"ok_status_fiber")
         self.ok_status_fiber.setGeometry(QRect(179, 39, 29, 29))
         sizePolicy2.setHeightForWidth(self.ok_status_fiber.sizePolicy().hasHeightForWidth())
         self.ok_status_fiber.setSizePolicy(sizePolicy2)
         self.ok_status_fiber.setFont(font6)
-        self.ok_status_fiber.setTextFormat(Qt.PlainText)
-        self.ok_status_fiber.setAlignment(Qt.AlignCenter)
+        self.ok_status_fiber.setTextFormat(Qt.TextFormat.PlainText)
+        self.ok_status_fiber.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ok_status_finder = QLabel(self.group_status)
         self.ok_status_finder.setObjectName(u"ok_status_finder")
         self.ok_status_finder.setGeometry(QRect(269, 39, 29, 29))
         sizePolicy2.setHeightForWidth(self.ok_status_finder.sizePolicy().hasHeightForWidth())
         self.ok_status_finder.setSizePolicy(sizePolicy2)
         self.ok_status_finder.setFont(font6)
-        self.ok_status_finder.setTextFormat(Qt.PlainText)
-        self.ok_status_finder.setAlignment(Qt.AlignCenter)
+        self.ok_status_finder.setTextFormat(Qt.TextFormat.PlainText)
+        self.ok_status_finder.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ok_status_metrology = QLabel(self.group_status)
         self.ok_status_metrology.setObjectName(u"ok_status_metrology")
         self.ok_status_metrology.setGeometry(QRect(369, 39, 29, 29))
         sizePolicy2.setHeightForWidth(self.ok_status_metrology.sizePolicy().hasHeightForWidth())
         self.ok_status_metrology.setSizePolicy(sizePolicy2)
         self.ok_status_metrology.setFont(font6)
-        self.ok_status_metrology.setTextFormat(Qt.PlainText)
-        self.ok_status_metrology.setAlignment(Qt.AlignCenter)
+        self.ok_status_metrology.setTextFormat(Qt.TextFormat.PlainText)
+        self.ok_status_metrology.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ok_status_spectrograph = QLabel(self.group_status)
         self.ok_status_spectrograph.setObjectName(u"ok_status_spectrograph")
         self.ok_status_spectrograph.setGeometry(QRect(499, 39, 29, 29))
         sizePolicy2.setHeightForWidth(self.ok_status_spectrograph.sizePolicy().hasHeightForWidth())
         self.ok_status_spectrograph.setSizePolicy(sizePolicy2)
         self.ok_status_spectrograph.setFont(font6)
-        self.ok_status_spectrograph.setTextFormat(Qt.PlainText)
-        self.ok_status_spectrograph.setAlignment(Qt.AlignCenter)
+        self.ok_status_spectrograph.setTextFormat(Qt.TextFormat.PlainText)
+        self.ok_status_spectrograph.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ok_status_lamp = QLabel(self.group_status)
         self.ok_status_lamp.setObjectName(u"ok_status_lamp")
         self.ok_status_lamp.setGeometry(QRect(659, 39, 29, 29))
         sizePolicy2.setHeightForWidth(self.ok_status_lamp.sizePolicy().hasHeightForWidth())
         self.ok_status_lamp.setSizePolicy(sizePolicy2)
         self.ok_status_lamp.setFont(font6)
-        self.ok_status_lamp.setTextFormat(Qt.PlainText)
-        self.ok_status_lamp.setAlignment(Qt.AlignCenter)
+        self.ok_status_lamp.setTextFormat(Qt.TextFormat.PlainText)
+        self.ok_status_lamp.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.group_subsytem = QGroupBox(self.tab_home)
         self.group_subsytem.setObjectName(u"group_subsytem")
         self.group_subsytem.setGeometry(QRect(530, 90, 951, 81))
@@ -664,7 +640,7 @@ class Ui_MainWindow(object):
         self.pushbtn_illumi.setFont(font1)
         self.group_obs = QTabWidget(self.tab_home)
         self.group_obs.setObjectName(u"group_obs")
-        self.group_obs.setGeometry(QRect(0, 177, 521, 331))
+        self.group_obs.setGeometry(QRect(0, 167, 521, 341))
         sizePolicy.setHeightForWidth(self.group_obs.sizePolicy().hasHeightForWidth())
         self.group_obs.setSizePolicy(sizePolicy)
         self.tab_queue = QWidget()
@@ -695,45 +671,9 @@ class Ui_MainWindow(object):
         self.label_target_target_name_2.setObjectName(u"label_target_target_name_2")
         self.label_target_target_name_2.setFont(font2)
         self.label_target_target_name_2.setScaledContents(False)
-        self.label_target_target_name_2.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
+        self.label_target_target_name_2.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
 
         self.formLayout_3.setWidget(0, QFormLayout.LabelRole, self.label_target_target_name_2)
-
-        self.label_ra_4 = QLabel(self.formLayoutWidget_3)
-        self.label_ra_4.setObjectName(u"label_ra_4")
-        self.label_ra_4.setFont(font2)
-
-        self.formLayout_3.setWidget(1, QFormLayout.LabelRole, self.label_ra_4)
-
-        self.label_dec_4 = QLabel(self.formLayoutWidget_3)
-        self.label_dec_4.setObjectName(u"label_dec_4")
-        self.label_dec_4.setFont(font2)
-
-        self.formLayout_3.setWidget(2, QFormLayout.LabelRole, self.label_dec_4)
-
-        self.label_obs_type_3 = QLabel(self.formLayoutWidget_3)
-        self.label_obs_type_3.setObjectName(u"label_obs_type_3")
-        self.label_obs_type_3.setFont(font2)
-
-        self.formLayout_3.setWidget(3, QFormLayout.LabelRole, self.label_obs_type_3)
-
-        self.label_exp_time_4 = QLabel(self.formLayoutWidget_3)
-        self.label_exp_time_4.setObjectName(u"label_exp_time_4")
-        self.label_exp_time_4.setFont(font2)
-
-        self.formLayout_3.setWidget(4, QFormLayout.LabelRole, self.label_exp_time_4)
-
-        self.label_num_exp_4 = QLabel(self.formLayoutWidget_3)
-        self.label_num_exp_4.setObjectName(u"label_num_exp_4")
-        self.label_num_exp_4.setFont(font2)
-
-        self.formLayout_3.setWidget(5, QFormLayout.LabelRole, self.label_num_exp_4)
-
-        self.label_obs_status_4 = QLabel(self.formLayoutWidget_3)
-        self.label_obs_status_4.setObjectName(u"label_obs_status_4")
-        self.label_obs_status_4.setFont(font2)
-
-        self.formLayout_3.setWidget(6, QFormLayout.LabelRole, self.label_obs_status_4)
 
         self.lineEdit_TileID = QLineEdit(self.formLayoutWidget_3)
         self.lineEdit_TileID.setObjectName(u"lineEdit_TileID")
@@ -747,6 +687,12 @@ class Ui_MainWindow(object):
 
         self.formLayout_3.setWidget(0, QFormLayout.FieldRole, self.lineEdit_TileID)
 
+        self.label_ra_4 = QLabel(self.formLayoutWidget_3)
+        self.label_ra_4.setObjectName(u"label_ra_4")
+        self.label_ra_4.setFont(font2)
+
+        self.formLayout_3.setWidget(1, QFormLayout.LabelRole, self.label_ra_4)
+
         self.lineEdit_ra_1 = QLineEdit(self.formLayoutWidget_3)
         self.lineEdit_ra_1.setObjectName(u"lineEdit_ra_1")
         self.lineEdit_ra_1.setEnabled(True)
@@ -755,6 +701,12 @@ class Ui_MainWindow(object):
         self.lineEdit_ra_1.setReadOnly(True)
 
         self.formLayout_3.setWidget(1, QFormLayout.FieldRole, self.lineEdit_ra_1)
+
+        self.label_dec_4 = QLabel(self.formLayoutWidget_3)
+        self.label_dec_4.setObjectName(u"label_dec_4")
+        self.label_dec_4.setFont(font2)
+
+        self.formLayout_3.setWidget(2, QFormLayout.LabelRole, self.label_dec_4)
 
         self.lineEdit_dec_1 = QLineEdit(self.formLayoutWidget_3)
         self.lineEdit_dec_1.setObjectName(u"lineEdit_dec_1")
@@ -765,6 +717,12 @@ class Ui_MainWindow(object):
 
         self.formLayout_3.setWidget(2, QFormLayout.FieldRole, self.lineEdit_dec_1)
 
+        self.label_exp_time_4 = QLabel(self.formLayoutWidget_3)
+        self.label_exp_time_4.setObjectName(u"label_exp_time_4")
+        self.label_exp_time_4.setFont(font2)
+
+        self.formLayout_3.setWidget(3, QFormLayout.LabelRole, self.label_exp_time_4)
+
         self.lineEdit_exp_time_1 = QLineEdit(self.formLayoutWidget_3)
         self.lineEdit_exp_time_1.setObjectName(u"lineEdit_exp_time_1")
         self.lineEdit_exp_time_1.setEnabled(True)
@@ -772,7 +730,13 @@ class Ui_MainWindow(object):
         self.lineEdit_exp_time_1.setSizePolicy(sizePolicy3)
         self.lineEdit_exp_time_1.setReadOnly(True)
 
-        self.formLayout_3.setWidget(4, QFormLayout.FieldRole, self.lineEdit_exp_time_1)
+        self.formLayout_3.setWidget(3, QFormLayout.FieldRole, self.lineEdit_exp_time_1)
+
+        self.label_num_exp_4 = QLabel(self.formLayoutWidget_3)
+        self.label_num_exp_4.setObjectName(u"label_num_exp_4")
+        self.label_num_exp_4.setFont(font2)
+
+        self.formLayout_3.setWidget(4, QFormLayout.LabelRole, self.label_num_exp_4)
 
         self.lineEdit_n_exp_1 = QLineEdit(self.formLayoutWidget_3)
         self.lineEdit_n_exp_1.setObjectName(u"lineEdit_n_exp_1")
@@ -781,17 +745,13 @@ class Ui_MainWindow(object):
         self.lineEdit_n_exp_1.setSizePolicy(sizePolicy3)
         self.lineEdit_n_exp_1.setReadOnly(True)
 
-        self.formLayout_3.setWidget(5, QFormLayout.FieldRole, self.lineEdit_n_exp_1)
+        self.formLayout_3.setWidget(4, QFormLayout.FieldRole, self.lineEdit_n_exp_1)
 
-        self.obstype_1 = QComboBox(self.formLayoutWidget_3)
-        self.obstype_1.addItem("")
-        self.obstype_1.addItem("")
-        self.obstype_1.addItem("")
-        self.obstype_1.addItem("")
-        self.obstype_1.addItem("")
-        self.obstype_1.setObjectName(u"obstype_1")
+        self.label_obs_status_4 = QLabel(self.formLayoutWidget_3)
+        self.label_obs_status_4.setObjectName(u"label_obs_status_4")
+        self.label_obs_status_4.setFont(font2)
 
-        self.formLayout_3.setWidget(3, QFormLayout.FieldRole, self.obstype_1)
+        self.formLayout_3.setWidget(5, QFormLayout.LabelRole, self.label_obs_status_4)
 
         self.progressBar_svc = QProgressBar(self.formLayoutWidget_3)
         self.progressBar_svc.setObjectName(u"progressBar_svc")
@@ -802,7 +762,7 @@ class Ui_MainWindow(object):
         self.progressBar_svc.setFont(font7)
         self.progressBar_svc.setValue(24)
 
-        self.formLayout_3.setWidget(6, QFormLayout.FieldRole, self.progressBar_svc)
+        self.formLayout_3.setWidget(5, QFormLayout.FieldRole, self.progressBar_svc)
 
         self.formLayoutWidget_5 = QWidget(self.tab_queue)
         self.formLayoutWidget_5.setObjectName(u"formLayoutWidget_5")
@@ -820,7 +780,7 @@ class Ui_MainWindow(object):
         self.lineEdit_CProj.setObjectName(u"lineEdit_CProj")
         sizePolicy3.setHeightForWidth(self.lineEdit_CProj.sizePolicy().hasHeightForWidth())
         self.lineEdit_CProj.setSizePolicy(sizePolicy3)
-        self.lineEdit_CProj.setAlignment(Qt.AlignCenter)
+        self.lineEdit_CProj.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lineEdit_CProj.setReadOnly(False)
 
         self.formLayout_5.setWidget(0, QFormLayout.FieldRole, self.lineEdit_CProj)
@@ -835,7 +795,7 @@ class Ui_MainWindow(object):
         self.lineEdit_CTile.setObjectName(u"lineEdit_CTile")
         sizePolicy3.setHeightForWidth(self.lineEdit_CTile.sizePolicy().hasHeightForWidth())
         self.lineEdit_CTile.setSizePolicy(sizePolicy3)
-        self.lineEdit_CTile.setAlignment(Qt.AlignCenter)
+        self.lineEdit_CTile.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lineEdit_CTile.setReadOnly(False)
 
         self.formLayout_5.setWidget(1, QFormLayout.FieldRole, self.lineEdit_CTile)
@@ -871,9 +831,9 @@ class Ui_MainWindow(object):
         font8.setStrikeOut(False)
         font8.setKerning(False)
         self.label_offset.setFont(font8)
-        self.label_offset.setLayoutDirection(Qt.LeftToRight)
+        self.label_offset.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
         self.label_offset.setScaledContents(False)
-        self.label_offset.setAlignment(Qt.AlignCenter)
+        self.label_offset.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label_offset.setMargin(0)
         self.label_offset.setIndent(-1)
 
@@ -897,7 +857,7 @@ class Ui_MainWindow(object):
         self.lineEdit_raoffset.setObjectName(u"lineEdit_raoffset")
         sizePolicy3.setHeightForWidth(self.lineEdit_raoffset.sizePolicy().hasHeightForWidth())
         self.lineEdit_raoffset.setSizePolicy(sizePolicy3)
-        self.lineEdit_raoffset.setAlignment(Qt.AlignCenter)
+        self.lineEdit_raoffset.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lineEdit_raoffset.setReadOnly(True)
 
         self.formLayout_9.setWidget(2, QFormLayout.FieldRole, self.lineEdit_raoffset)
@@ -912,7 +872,7 @@ class Ui_MainWindow(object):
         self.lineEdit_decoffset.setObjectName(u"lineEdit_decoffset")
         sizePolicy3.setHeightForWidth(self.lineEdit_decoffset.sizePolicy().hasHeightForWidth())
         self.lineEdit_decoffset.setSizePolicy(sizePolicy3)
-        self.lineEdit_decoffset.setAlignment(Qt.AlignCenter)
+        self.lineEdit_decoffset.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lineEdit_decoffset.setReadOnly(True)
 
         self.formLayout_9.setWidget(3, QFormLayout.FieldRole, self.lineEdit_decoffset)
@@ -934,7 +894,7 @@ class Ui_MainWindow(object):
         self.label_target_target_name.setObjectName(u"label_target_target_name")
         self.label_target_target_name.setFont(font2)
         self.label_target_target_name.setScaledContents(False)
-        self.label_target_target_name.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
+        self.label_target_target_name.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
 
         self.formLayout.setWidget(0, QFormLayout.LabelRole, self.label_target_target_name)
 
@@ -942,7 +902,7 @@ class Ui_MainWindow(object):
         self.lineEdit_target_name.setObjectName(u"lineEdit_target_name")
         sizePolicy3.setHeightForWidth(self.lineEdit_target_name.sizePolicy().hasHeightForWidth())
         self.lineEdit_target_name.setSizePolicy(sizePolicy3)
-        self.lineEdit_target_name.setAlignment(Qt.AlignCenter)
+        self.lineEdit_target_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lineEdit_target_name.setReadOnly(False)
 
         self.formLayout.setWidget(0, QFormLayout.FieldRole, self.lineEdit_target_name)
@@ -957,7 +917,7 @@ class Ui_MainWindow(object):
         self.lineEdit_ra_2.setObjectName(u"lineEdit_ra_2")
         sizePolicy3.setHeightForWidth(self.lineEdit_ra_2.sizePolicy().hasHeightForWidth())
         self.lineEdit_ra_2.setSizePolicy(sizePolicy3)
-        self.lineEdit_ra_2.setAlignment(Qt.AlignCenter)
+        self.lineEdit_ra_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lineEdit_ra_2.setReadOnly(False)
 
         self.formLayout.setWidget(1, QFormLayout.FieldRole, self.lineEdit_ra_2)
@@ -972,7 +932,7 @@ class Ui_MainWindow(object):
         self.lineEdit_dec_2.setObjectName(u"lineEdit_dec_2")
         sizePolicy3.setHeightForWidth(self.lineEdit_dec_2.sizePolicy().hasHeightForWidth())
         self.lineEdit_dec_2.setSizePolicy(sizePolicy3)
-        self.lineEdit_dec_2.setAlignment(Qt.AlignCenter)
+        self.lineEdit_dec_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lineEdit_dec_2.setReadOnly(False)
 
         self.formLayout.setWidget(2, QFormLayout.FieldRole, self.lineEdit_dec_2)
@@ -993,7 +953,7 @@ class Ui_MainWindow(object):
         self.lineEdit_exp_time_2.setObjectName(u"lineEdit_exp_time_2")
         sizePolicy3.setHeightForWidth(self.lineEdit_exp_time_2.sizePolicy().hasHeightForWidth())
         self.lineEdit_exp_time_2.setSizePolicy(sizePolicy3)
-        self.lineEdit_exp_time_2.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+        self.lineEdit_exp_time_2.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignTrailing|Qt.AlignmentFlag.AlignVCenter)
         self.lineEdit_exp_time_2.setReadOnly(False)
 
         self.formLayout.setWidget(4, QFormLayout.FieldRole, self.lineEdit_exp_time_2)
@@ -1008,7 +968,7 @@ class Ui_MainWindow(object):
         self.lineEdit_n_exp_2.setObjectName(u"lineEdit_n_exp_2")
         sizePolicy3.setHeightForWidth(self.lineEdit_n_exp_2.sizePolicy().hasHeightForWidth())
         self.lineEdit_n_exp_2.setSizePolicy(sizePolicy3)
-        self.lineEdit_n_exp_2.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+        self.lineEdit_n_exp_2.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignTrailing|Qt.AlignmentFlag.AlignVCenter)
         self.lineEdit_n_exp_2.setReadOnly(False)
 
         self.formLayout.setWidget(5, QFormLayout.FieldRole, self.lineEdit_n_exp_2)
@@ -1055,7 +1015,7 @@ class Ui_MainWindow(object):
         self.label_cmd.setFont(font2)
         self.pushbtn_send_cmd = QPushButton(self.tab_home)
         self.pushbtn_send_cmd.setObjectName(u"pushbtn_send_cmd")
-        self.pushbtn_send_cmd.setGeometry(QRect(450, 895, 71, 31))
+        self.pushbtn_send_cmd.setGeometry(QRect(449, 891, 71, 41))
         self.pushbtn_send_cmd.setFont(font1)
         self.tabWidget.addTab(self.tab_home, "")
         self.tab_status = QWidget()
@@ -1066,8 +1026,8 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.group_fiber.sizePolicy().hasHeightForWidth())
         self.group_fiber.setSizePolicy(sizePolicy)
         self.group_fiber.setFont(font1)
-        self.group_fiber.setLayoutDirection(Qt.LeftToRight)
-        self.group_fiber.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
+        self.group_fiber.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        self.group_fiber.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
         self.pushbtn_fiber_initialize = QPushButton(self.group_fiber)
         self.pushbtn_fiber_initialize.setObjectName(u"pushbtn_fiber_initialize")
         self.pushbtn_fiber_initialize.setGeometry(QRect(840, 680, 101, 51))
@@ -1122,7 +1082,7 @@ class Ui_MainWindow(object):
         self.label_F0_37.setSizePolicy(sizePolicy4)
         self.label_F0_37.setMaximumSize(QSize(1500000, 1500000))
         self.label_F0_37.setFont(font4)
-        self.label_F0_37.setAlignment(Qt.AlignCenter)
+        self.label_F0_37.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_F0_37, 11, 13, 1, 1)
 
@@ -1132,7 +1092,7 @@ class Ui_MainWindow(object):
         self.label_D0_27.setSizePolicy(sizePolicy4)
         self.label_D0_27.setMaximumSize(QSize(1500000, 1500000))
         self.label_D0_27.setFont(font4)
-        self.label_D0_27.setAlignment(Qt.AlignCenter)
+        self.label_D0_27.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_D0_27, 7, 5, 1, 1)
 
@@ -1142,7 +1102,7 @@ class Ui_MainWindow(object):
         self.label_I0_38.setSizePolicy(sizePolicy4)
         self.label_I0_38.setMaximumSize(QSize(1500000, 1500000))
         self.label_I0_38.setFont(font4)
-        self.label_I0_38.setAlignment(Qt.AlignCenter)
+        self.label_I0_38.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_I0_38, 1, 21, 1, 1)
 
@@ -1152,7 +1112,7 @@ class Ui_MainWindow(object):
         self.label_H0_43.setSizePolicy(sizePolicy4)
         self.label_H0_43.setMaximumSize(QSize(1500000, 1500000))
         self.label_H0_43.setFont(font4)
-        self.label_H0_43.setAlignment(Qt.AlignCenter)
+        self.label_H0_43.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_H0_43, 15, 9, 1, 1)
 
@@ -1162,7 +1122,7 @@ class Ui_MainWindow(object):
         self.label_J0_38.setSizePolicy(sizePolicy4)
         self.label_J0_38.setMaximumSize(QSize(1500000, 1500000))
         self.label_J0_38.setFont(font4)
-        self.label_J0_38.setAlignment(Qt.AlignCenter)
+        self.label_J0_38.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_J0_38, 3, 16, 1, 1)
 
@@ -1172,7 +1132,7 @@ class Ui_MainWindow(object):
         self.label_F0_38.setSizePolicy(sizePolicy4)
         self.label_F0_38.setMaximumSize(QSize(1500000, 1500000))
         self.label_F0_38.setFont(font4)
-        self.label_F0_38.setAlignment(Qt.AlignCenter)
+        self.label_F0_38.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_F0_38, 11, 5, 1, 1)
 
@@ -1188,8 +1148,8 @@ class Ui_MainWindow(object):
         font9.setItalic(False)
         font9.setStrikeOut(False)
         self.circle_A1_179.setFont(font9)
-        self.circle_A1_179.setTextFormat(Qt.PlainText)
-        self.circle_A1_179.setAlignment(Qt.AlignCenter)
+        self.circle_A1_179.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_179.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_179.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_179, 12, 11, 1, 1)
@@ -1200,7 +1160,7 @@ class Ui_MainWindow(object):
         self.label_J0_37.setSizePolicy(sizePolicy4)
         self.label_J0_37.setMaximumSize(QSize(1500000, 1500000))
         self.label_J0_37.setFont(font4)
-        self.label_J0_37.setAlignment(Qt.AlignCenter)
+        self.label_J0_37.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_J0_37, 3, 19, 1, 1)
 
@@ -1210,7 +1170,7 @@ class Ui_MainWindow(object):
         self.label_M0_23.setSizePolicy(sizePolicy4)
         self.label_M0_23.setMaximumSize(QSize(1500000, 1500000))
         self.label_M0_23.setFont(font4)
-        self.label_M0_23.setAlignment(Qt.AlignCenter)
+        self.label_M0_23.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_M0_23, 9, 23, 1, 1)
 
@@ -1227,8 +1187,8 @@ class Ui_MainWindow(object):
         font10.setUnderline(False)
         font10.setStrikeOut(False)
         self.circle_M0_27.setFont(font10)
-        self.circle_M0_27.setTextFormat(Qt.PlainText)
-        self.circle_M0_27.setAlignment(Qt.AlignCenter)
+        self.circle_M0_27.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_M0_27.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_M0_27.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_M0_27, 8, 22, 1, 1)
@@ -1239,7 +1199,7 @@ class Ui_MainWindow(object):
         self.label_O0_21.setSizePolicy(sizePolicy4)
         self.label_O0_21.setMaximumSize(QSize(1500000, 1500000))
         self.label_O0_21.setFont(font4)
-        self.label_O0_21.setAlignment(Qt.AlignCenter)
+        self.label_O0_21.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_O0_21, 13, 20, 1, 1)
 
@@ -1249,8 +1209,8 @@ class Ui_MainWindow(object):
         self.circle_A1_162.setSizePolicy(sizePolicy4)
         self.circle_A1_162.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_162.setFont(font9)
-        self.circle_A1_162.setTextFormat(Qt.PlainText)
-        self.circle_A1_162.setAlignment(Qt.AlignCenter)
+        self.circle_A1_162.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_162.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_162.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_162, 0, 20, 1, 1)
@@ -1261,7 +1221,7 @@ class Ui_MainWindow(object):
         self.label_J0_31.setSizePolicy(sizePolicy4)
         self.label_J0_31.setMaximumSize(QSize(1500000, 1500000))
         self.label_J0_31.setFont(font4)
-        self.label_J0_31.setAlignment(Qt.AlignCenter)
+        self.label_J0_31.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_J0_31, 3, 14, 1, 1)
 
@@ -1271,8 +1231,8 @@ class Ui_MainWindow(object):
         self.circle_A1_160.setSizePolicy(sizePolicy4)
         self.circle_A1_160.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_160.setFont(font9)
-        self.circle_A1_160.setTextFormat(Qt.PlainText)
-        self.circle_A1_160.setAlignment(Qt.AlignCenter)
+        self.circle_A1_160.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_160.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_160.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_160, 2, 19, 1, 1)
@@ -1289,7 +1249,7 @@ class Ui_MainWindow(object):
         font11.setUnderline(False)
         font11.setStrikeOut(False)
         self.circle_A_7.setFont(font11)
-        self.circle_A_7.setAlignment(Qt.AlignCenter)
+        self.circle_A_7.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A_7.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A_7, 0, 0, 1, 1)
@@ -1305,7 +1265,7 @@ class Ui_MainWindow(object):
         font12.setBold(False)
         font12.setStrikeOut(False)
         self.circle_L_3.setFont(font12)
-        self.circle_L_3.setAlignment(Qt.AlignCenter)
+        self.circle_L_3.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_L_3.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_L_3, 6, 13, 1, 1)
@@ -1316,7 +1276,7 @@ class Ui_MainWindow(object):
         self.label_G0_42.setSizePolicy(sizePolicy4)
         self.label_G0_42.setMaximumSize(QSize(1500000, 1500000))
         self.label_G0_42.setFont(font4)
-        self.label_G0_42.setAlignment(Qt.AlignCenter)
+        self.label_G0_42.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_G0_42, 13, 2, 1, 1)
 
@@ -1326,8 +1286,8 @@ class Ui_MainWindow(object):
         self.circle_A1_201.setSizePolicy(sizePolicy4)
         self.circle_A1_201.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_201.setFont(font9)
-        self.circle_A1_201.setTextFormat(Qt.PlainText)
-        self.circle_A1_201.setAlignment(Qt.AlignCenter)
+        self.circle_A1_201.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_201.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_201.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_201, 4, 3, 1, 1)
@@ -1338,8 +1298,8 @@ class Ui_MainWindow(object):
         self.circle_A1_151.setSizePolicy(sizePolicy4)
         self.circle_A1_151.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_151.setFont(font9)
-        self.circle_A1_151.setTextFormat(Qt.PlainText)
-        self.circle_A1_151.setAlignment(Qt.AlignCenter)
+        self.circle_A1_151.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_151.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_151.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_151, 12, 9, 1, 1)
@@ -1350,7 +1310,7 @@ class Ui_MainWindow(object):
         self.label_L0_32.setSizePolicy(sizePolicy4)
         self.label_L0_32.setMaximumSize(QSize(1500000, 1500000))
         self.label_L0_32.setFont(font4)
-        self.label_L0_32.setAlignment(Qt.AlignCenter)
+        self.label_L0_32.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_L0_32, 7, 18, 1, 1)
 
@@ -1360,8 +1320,8 @@ class Ui_MainWindow(object):
         self.circle_L0_21.setSizePolicy(sizePolicy4)
         self.circle_L0_21.setMaximumSize(QSize(1500000, 1500000))
         self.circle_L0_21.setFont(font9)
-        self.circle_L0_21.setTextFormat(Qt.PlainText)
-        self.circle_L0_21.setAlignment(Qt.AlignCenter)
+        self.circle_L0_21.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_L0_21.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_L0_21.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_L0_21, 6, 20, 1, 1)
@@ -1372,8 +1332,8 @@ class Ui_MainWindow(object):
         self.circle_A1_192.setSizePolicy(sizePolicy4)
         self.circle_A1_192.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_192.setFont(font9)
-        self.circle_A1_192.setTextFormat(Qt.PlainText)
-        self.circle_A1_192.setAlignment(Qt.AlignCenter)
+        self.circle_A1_192.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_192.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_192.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_192, 4, 22, 1, 1)
@@ -1384,7 +1344,7 @@ class Ui_MainWindow(object):
         self.label_K0_36.setSizePolicy(sizePolicy4)
         self.label_K0_36.setMaximumSize(QSize(1500000, 1500000))
         self.label_K0_36.setFont(font4)
-        self.label_K0_36.setAlignment(Qt.AlignCenter)
+        self.label_K0_36.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_K0_36, 5, 14, 1, 1)
 
@@ -1394,8 +1354,8 @@ class Ui_MainWindow(object):
         self.circle_E0_23.setSizePolicy(sizePolicy4)
         self.circle_E0_23.setMaximumSize(QSize(1500000, 1500000))
         self.circle_E0_23.setFont(font10)
-        self.circle_E0_23.setTextFormat(Qt.PlainText)
-        self.circle_E0_23.setAlignment(Qt.AlignCenter)
+        self.circle_E0_23.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_E0_23.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_E0_23.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_E0_23, 8, 11, 1, 1)
@@ -1406,8 +1366,8 @@ class Ui_MainWindow(object):
         self.circle_N0_12.setSizePolicy(sizePolicy4)
         self.circle_N0_12.setMaximumSize(QSize(1500000, 1500000))
         self.circle_N0_12.setFont(font9)
-        self.circle_N0_12.setTextFormat(Qt.PlainText)
-        self.circle_N0_12.setAlignment(Qt.AlignCenter)
+        self.circle_N0_12.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_N0_12.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_N0_12.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_N0_12, 10, 17, 1, 1)
@@ -1418,7 +1378,7 @@ class Ui_MainWindow(object):
         self.label_M0_25.setSizePolicy(sizePolicy4)
         self.label_M0_25.setMaximumSize(QSize(1500000, 1500000))
         self.label_M0_25.setFont(font4)
-        self.label_M0_25.setAlignment(Qt.AlignCenter)
+        self.label_M0_25.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_M0_25, 9, 21, 1, 1)
 
@@ -1434,7 +1394,7 @@ class Ui_MainWindow(object):
         font13.setUnderline(False)
         font13.setStrikeOut(False)
         self.circle_N_3.setFont(font13)
-        self.circle_N_3.setAlignment(Qt.AlignCenter)
+        self.circle_N_3.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_N_3.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_N_3, 10, 15, 1, 1)
@@ -1445,8 +1405,8 @@ class Ui_MainWindow(object):
         self.circle_F0_23.setSizePolicy(sizePolicy4)
         self.circle_F0_23.setMaximumSize(QSize(1500000, 1500000))
         self.circle_F0_23.setFont(font10)
-        self.circle_F0_23.setTextFormat(Qt.PlainText)
-        self.circle_F0_23.setAlignment(Qt.AlignCenter)
+        self.circle_F0_23.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_F0_23.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_F0_23.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_F0_23, 10, 9, 1, 1)
@@ -1457,7 +1417,7 @@ class Ui_MainWindow(object):
         self.label_J0_32.setSizePolicy(sizePolicy4)
         self.label_J0_32.setMaximumSize(QSize(1500000, 1500000))
         self.label_J0_32.setFont(font4)
-        self.label_J0_32.setAlignment(Qt.AlignCenter)
+        self.label_J0_32.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_J0_32, 3, 12, 1, 1)
 
@@ -1467,7 +1427,7 @@ class Ui_MainWindow(object):
         self.label_H0_37.setSizePolicy(sizePolicy4)
         self.label_H0_37.setMaximumSize(QSize(1500000, 1500000))
         self.label_H0_37.setFont(font4)
-        self.label_H0_37.setAlignment(Qt.AlignCenter)
+        self.label_H0_37.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_H0_37, 15, 13, 1, 1)
 
@@ -1477,7 +1437,7 @@ class Ui_MainWindow(object):
         self.label_Z0_17.setSizePolicy(sizePolicy4)
         self.label_Z0_17.setMaximumSize(QSize(1500000, 1500000))
         self.label_Z0_17.setFont(font4)
-        self.label_Z0_17.setAlignment(Qt.AlignCenter)
+        self.label_Z0_17.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_Z0_17, 15, 19, 1, 1)
 
@@ -1487,8 +1447,8 @@ class Ui_MainWindow(object):
         self.circle_M0_28.setSizePolicy(sizePolicy4)
         self.circle_M0_28.setMaximumSize(QSize(1500000, 1500000))
         self.circle_M0_28.setFont(font10)
-        self.circle_M0_28.setTextFormat(Qt.PlainText)
-        self.circle_M0_28.setAlignment(Qt.AlignCenter)
+        self.circle_M0_28.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_M0_28.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_M0_28.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_M0_28, 8, 16, 1, 1)
@@ -1499,7 +1459,7 @@ class Ui_MainWindow(object):
         self.label_Z0_20.setSizePolicy(sizePolicy4)
         self.label_Z0_20.setMaximumSize(QSize(1500000, 1500000))
         self.label_Z0_20.setFont(font4)
-        self.label_Z0_20.setAlignment(Qt.AlignCenter)
+        self.label_Z0_20.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_Z0_20, 15, 18, 1, 1)
 
@@ -1515,8 +1475,8 @@ class Ui_MainWindow(object):
         font14.setUnderline(False)
         font14.setStrikeOut(False)
         self.label_A0_22.setFont(font14)
-        self.label_A0_22.setLayoutDirection(Qt.LeftToRight)
-        self.label_A0_22.setAlignment(Qt.AlignCenter)
+        self.label_A0_22.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        self.label_A0_22.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_A0_22, 1, 1, 1, 1)
 
@@ -1526,7 +1486,7 @@ class Ui_MainWindow(object):
         self.circle_A_32.setSizePolicy(sizePolicy4)
         self.circle_A_32.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A_32.setFont(font11)
-        self.circle_A_32.setAlignment(Qt.AlignCenter)
+        self.circle_A_32.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A_32.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A_32, 8, 0, 1, 1)
@@ -1537,8 +1497,8 @@ class Ui_MainWindow(object):
         self.circle_M0_22.setSizePolicy(sizePolicy4)
         self.circle_M0_22.setMaximumSize(QSize(1500000, 1500000))
         self.circle_M0_22.setFont(font10)
-        self.circle_M0_22.setTextFormat(Qt.PlainText)
-        self.circle_M0_22.setAlignment(Qt.AlignCenter)
+        self.circle_M0_22.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_M0_22.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_M0_22.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_M0_22, 8, 20, 1, 1)
@@ -1549,8 +1509,8 @@ class Ui_MainWindow(object):
         self.label_A0_21.setSizePolicy(sizePolicy4)
         self.label_A0_21.setMaximumSize(QSize(1500000, 1500000))
         self.label_A0_21.setFont(font14)
-        self.label_A0_21.setLayoutDirection(Qt.LeftToRight)
-        self.label_A0_21.setAlignment(Qt.AlignCenter)
+        self.label_A0_21.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        self.label_A0_21.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_A0_21, 1, 5, 1, 1)
 
@@ -1560,8 +1520,8 @@ class Ui_MainWindow(object):
         self.circle_A1_188.setSizePolicy(sizePolicy4)
         self.circle_A1_188.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_188.setFont(font9)
-        self.circle_A1_188.setTextFormat(Qt.PlainText)
-        self.circle_A1_188.setAlignment(Qt.AlignCenter)
+        self.circle_A1_188.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_188.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_188.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_188, 2, 21, 1, 1)
@@ -1572,8 +1532,8 @@ class Ui_MainWindow(object):
         self.circle_A1_222.setSizePolicy(sizePolicy4)
         self.circle_A1_222.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_222.setFont(font9)
-        self.circle_A1_222.setTextFormat(Qt.PlainText)
-        self.circle_A1_222.setAlignment(Qt.AlignCenter)
+        self.circle_A1_222.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_222.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_222.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_222, 2, 5, 1, 1)
@@ -1584,7 +1544,7 @@ class Ui_MainWindow(object):
         self.label_N0_23.setSizePolicy(sizePolicy4)
         self.label_N0_23.setMaximumSize(QSize(1500000, 1500000))
         self.label_N0_23.setFont(font4)
-        self.label_N0_23.setAlignment(Qt.AlignCenter)
+        self.label_N0_23.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_N0_23, 11, 23, 1, 1)
 
@@ -1594,7 +1554,7 @@ class Ui_MainWindow(object):
         self.label_D0_28.setSizePolicy(sizePolicy4)
         self.label_D0_28.setMaximumSize(QSize(1500000, 1500000))
         self.label_D0_28.setFont(font4)
-        self.label_D0_28.setAlignment(Qt.AlignCenter)
+        self.label_D0_28.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_D0_28, 7, 9, 1, 1)
 
@@ -1604,8 +1564,8 @@ class Ui_MainWindow(object):
         self.circle_E0_29.setSizePolicy(sizePolicy4)
         self.circle_E0_29.setMaximumSize(QSize(1500000, 1500000))
         self.circle_E0_29.setFont(font10)
-        self.circle_E0_29.setTextFormat(Qt.PlainText)
-        self.circle_E0_29.setAlignment(Qt.AlignCenter)
+        self.circle_E0_29.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_E0_29.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_E0_29.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_E0_29, 8, 9, 1, 1)
@@ -1616,8 +1576,8 @@ class Ui_MainWindow(object):
         self.circle_F0_24.setSizePolicy(sizePolicy4)
         self.circle_F0_24.setMaximumSize(QSize(1500000, 1500000))
         self.circle_F0_24.setFont(font10)
-        self.circle_F0_24.setTextFormat(Qt.PlainText)
-        self.circle_F0_24.setAlignment(Qt.AlignCenter)
+        self.circle_F0_24.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_F0_24.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_F0_24.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_F0_24, 10, 8, 1, 1)
@@ -1628,8 +1588,8 @@ class Ui_MainWindow(object):
         self.label_A0_23.setSizePolicy(sizePolicy4)
         self.label_A0_23.setMaximumSize(QSize(1500000, 1500000))
         self.label_A0_23.setFont(font14)
-        self.label_A0_23.setLayoutDirection(Qt.LeftToRight)
-        self.label_A0_23.setAlignment(Qt.AlignCenter)
+        self.label_A0_23.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        self.label_A0_23.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_A0_23, 1, 7, 1, 1)
 
@@ -1639,8 +1599,8 @@ class Ui_MainWindow(object):
         self.circle_H1_36.setSizePolicy(sizePolicy4)
         self.circle_H1_36.setMaximumSize(QSize(1500000, 1500000))
         self.circle_H1_36.setFont(font9)
-        self.circle_H1_36.setTextFormat(Qt.PlainText)
-        self.circle_H1_36.setAlignment(Qt.AlignCenter)
+        self.circle_H1_36.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_H1_36.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_H1_36.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_H1_36, 14, 11, 1, 1)
@@ -1651,8 +1611,8 @@ class Ui_MainWindow(object):
         self.circle_H1_35.setSizePolicy(sizePolicy4)
         self.circle_H1_35.setMaximumSize(QSize(1500000, 1500000))
         self.circle_H1_35.setFont(font9)
-        self.circle_H1_35.setTextFormat(Qt.PlainText)
-        self.circle_H1_35.setAlignment(Qt.AlignCenter)
+        self.circle_H1_35.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_H1_35.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_H1_35.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_H1_35, 14, 7, 1, 1)
@@ -1663,7 +1623,7 @@ class Ui_MainWindow(object):
         self.label_B1_3.setSizePolicy(sizePolicy4)
         self.label_B1_3.setMaximumSize(QSize(1500000, 1500000))
         self.label_B1_3.setFont(font4)
-        self.label_B1_3.setAlignment(Qt.AlignCenter)
+        self.label_B1_3.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_B1_3, 3, 2, 1, 1)
 
@@ -1673,7 +1633,7 @@ class Ui_MainWindow(object):
         self.label_L0_26.setSizePolicy(sizePolicy4)
         self.label_L0_26.setMaximumSize(QSize(1500000, 1500000))
         self.label_L0_26.setFont(font4)
-        self.label_L0_26.setAlignment(Qt.AlignCenter)
+        self.label_L0_26.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_L0_26, 7, 19, 1, 1)
 
@@ -1683,8 +1643,8 @@ class Ui_MainWindow(object):
         self.circle_L0_27.setSizePolicy(sizePolicy4)
         self.circle_L0_27.setMaximumSize(QSize(1500000, 1500000))
         self.circle_L0_27.setFont(font9)
-        self.circle_L0_27.setTextFormat(Qt.PlainText)
-        self.circle_L0_27.setAlignment(Qt.AlignCenter)
+        self.circle_L0_27.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_L0_27.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_L0_27.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_L0_27, 6, 14, 1, 1)
@@ -1695,7 +1655,7 @@ class Ui_MainWindow(object):
         self.label_E1_33.setSizePolicy(sizePolicy4)
         self.label_E1_33.setMaximumSize(QSize(1500000, 1500000))
         self.label_E1_33.setFont(font4)
-        self.label_E1_33.setAlignment(Qt.AlignCenter)
+        self.label_E1_33.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_E1_33, 9, 4, 1, 1)
 
@@ -1705,7 +1665,7 @@ class Ui_MainWindow(object):
         self.label_J0_33.setSizePolicy(sizePolicy4)
         self.label_J0_33.setMaximumSize(QSize(1500000, 1500000))
         self.label_J0_33.setFont(font4)
-        self.label_J0_33.setAlignment(Qt.AlignCenter)
+        self.label_J0_33.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_J0_33, 3, 23, 1, 1)
 
@@ -1715,7 +1675,7 @@ class Ui_MainWindow(object):
         self.label_L0_25.setSizePolicy(sizePolicy4)
         self.label_L0_25.setMaximumSize(QSize(1500000, 1500000))
         self.label_L0_25.setFont(font4)
-        self.label_L0_25.setAlignment(Qt.AlignCenter)
+        self.label_L0_25.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_L0_25, 7, 15, 1, 1)
 
@@ -1725,7 +1685,7 @@ class Ui_MainWindow(object):
         self.label_F0_31.setSizePolicy(sizePolicy4)
         self.label_F0_31.setMaximumSize(QSize(1500000, 1500000))
         self.label_F0_31.setFont(font4)
-        self.label_F0_31.setAlignment(Qt.AlignCenter)
+        self.label_F0_31.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_F0_31, 11, 3, 1, 1)
 
@@ -1735,8 +1695,8 @@ class Ui_MainWindow(object):
         self.circle_F0_33.setSizePolicy(sizePolicy4)
         self.circle_F0_33.setMaximumSize(QSize(1500000, 1500000))
         self.circle_F0_33.setFont(font10)
-        self.circle_F0_33.setTextFormat(Qt.PlainText)
-        self.circle_F0_33.setAlignment(Qt.AlignCenter)
+        self.circle_F0_33.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_F0_33.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_F0_33.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_F0_33, 10, 7, 1, 1)
@@ -1747,8 +1707,8 @@ class Ui_MainWindow(object):
         self.circle_A1_174.setSizePolicy(sizePolicy4)
         self.circle_A1_174.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_174.setFont(font9)
-        self.circle_A1_174.setTextFormat(Qt.PlainText)
-        self.circle_A1_174.setAlignment(Qt.AlignCenter)
+        self.circle_A1_174.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_174.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_174.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_174, 4, 8, 1, 1)
@@ -1759,7 +1719,7 @@ class Ui_MainWindow(object):
         self.label_C0_28.setSizePolicy(sizePolicy4)
         self.label_C0_28.setMaximumSize(QSize(1500000, 1500000))
         self.label_C0_28.setFont(font4)
-        self.label_C0_28.setAlignment(Qt.AlignCenter)
+        self.label_C0_28.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_C0_28, 5, 7, 1, 1)
 
@@ -1769,7 +1729,7 @@ class Ui_MainWindow(object):
         self.label_C0_27.setSizePolicy(sizePolicy4)
         self.label_C0_27.setMaximumSize(QSize(1500000, 1500000))
         self.label_C0_27.setFont(font4)
-        self.label_C0_27.setAlignment(Qt.AlignCenter)
+        self.label_C0_27.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_C0_27, 5, 8, 1, 1)
 
@@ -1779,7 +1739,7 @@ class Ui_MainWindow(object):
         self.label_B6_3.setSizePolicy(sizePolicy4)
         self.label_B6_3.setMaximumSize(QSize(1500000, 1500000))
         self.label_B6_3.setFont(font4)
-        self.label_B6_3.setAlignment(Qt.AlignCenter)
+        self.label_B6_3.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_B6_3, 3, 7, 1, 1)
 
@@ -1789,7 +1749,7 @@ class Ui_MainWindow(object):
         self.label_F0_36.setSizePolicy(sizePolicy4)
         self.label_F0_36.setMaximumSize(QSize(1500000, 1500000))
         self.label_F0_36.setFont(font4)
-        self.label_F0_36.setAlignment(Qt.AlignCenter)
+        self.label_F0_36.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_F0_36, 11, 2, 1, 1)
 
@@ -1799,7 +1759,7 @@ class Ui_MainWindow(object):
         self.label_E1_23.setSizePolicy(sizePolicy4)
         self.label_E1_23.setMaximumSize(QSize(1500000, 1500000))
         self.label_E1_23.setFont(font4)
-        self.label_E1_23.setAlignment(Qt.AlignCenter)
+        self.label_E1_23.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_E1_23, 9, 7, 1, 1)
 
@@ -1809,8 +1769,8 @@ class Ui_MainWindow(object):
         self.circle_M0_21.setSizePolicy(sizePolicy4)
         self.circle_M0_21.setMaximumSize(QSize(1500000, 1500000))
         self.circle_M0_21.setFont(font10)
-        self.circle_M0_21.setTextFormat(Qt.PlainText)
-        self.circle_M0_21.setAlignment(Qt.AlignCenter)
+        self.circle_M0_21.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_M0_21.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_M0_21.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_M0_21, 8, 24, 1, 1)
@@ -1821,8 +1781,8 @@ class Ui_MainWindow(object):
         self.circle_A1_182.setSizePolicy(sizePolicy4)
         self.circle_A1_182.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_182.setFont(font9)
-        self.circle_A1_182.setTextFormat(Qt.PlainText)
-        self.circle_A1_182.setAlignment(Qt.AlignCenter)
+        self.circle_A1_182.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_182.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_182.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_182, 4, 6, 1, 1)
@@ -1833,8 +1793,8 @@ class Ui_MainWindow(object):
         self.circle_E0_28.setSizePolicy(sizePolicy4)
         self.circle_E0_28.setMaximumSize(QSize(1500000, 1500000))
         self.circle_E0_28.setFont(font10)
-        self.circle_E0_28.setTextFormat(Qt.PlainText)
-        self.circle_E0_28.setAlignment(Qt.AlignCenter)
+        self.circle_E0_28.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_E0_28.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_E0_28.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_E0_28, 8, 10, 1, 1)
@@ -1845,8 +1805,8 @@ class Ui_MainWindow(object):
         self.label_A0_24.setSizePolicy(sizePolicy4)
         self.label_A0_24.setMaximumSize(QSize(1500000, 1500000))
         self.label_A0_24.setFont(font14)
-        self.label_A0_24.setLayoutDirection(Qt.LeftToRight)
-        self.label_A0_24.setAlignment(Qt.AlignCenter)
+        self.label_A0_24.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        self.label_A0_24.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_A0_24, 1, 8, 1, 1)
 
@@ -1856,7 +1816,7 @@ class Ui_MainWindow(object):
         self.label_D0_26.setSizePolicy(sizePolicy4)
         self.label_D0_26.setMaximumSize(QSize(1500000, 1500000))
         self.label_D0_26.setFont(font4)
-        self.label_D0_26.setAlignment(Qt.AlignCenter)
+        self.label_D0_26.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_D0_26, 7, 3, 1, 1)
 
@@ -1866,8 +1826,8 @@ class Ui_MainWindow(object):
         self.circle_A1_210.setSizePolicy(sizePolicy4)
         self.circle_A1_210.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_210.setFont(font9)
-        self.circle_A1_210.setTextFormat(Qt.PlainText)
-        self.circle_A1_210.setAlignment(Qt.AlignCenter)
+        self.circle_A1_210.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_210.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_210.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_210, 4, 10, 1, 1)
@@ -1878,7 +1838,7 @@ class Ui_MainWindow(object):
         self.label_Z0_15.setSizePolicy(sizePolicy4)
         self.label_Z0_15.setMaximumSize(QSize(1500000, 1500000))
         self.label_Z0_15.setFont(font4)
-        self.label_Z0_15.setAlignment(Qt.AlignCenter)
+        self.label_Z0_15.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_Z0_15, 15, 22, 1, 1)
 
@@ -1888,8 +1848,8 @@ class Ui_MainWindow(object):
         self.circle_N0_11.setSizePolicy(sizePolicy4)
         self.circle_N0_11.setMaximumSize(QSize(1500000, 1500000))
         self.circle_N0_11.setFont(font9)
-        self.circle_N0_11.setTextFormat(Qt.PlainText)
-        self.circle_N0_11.setAlignment(Qt.AlignCenter)
+        self.circle_N0_11.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_N0_11.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_N0_11.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_N0_11, 10, 18, 1, 1)
@@ -1907,8 +1867,8 @@ class Ui_MainWindow(object):
         font15.setUnderline(False)
         font15.setStrikeOut(False)
         self.circle_A0_83.setFont(font15)
-        self.circle_A0_83.setTextFormat(Qt.PlainText)
-        self.circle_A0_83.setAlignment(Qt.AlignCenter)
+        self.circle_A0_83.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A0_83.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_83.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_83, 6, 15, 1, 1)
@@ -1919,7 +1879,7 @@ class Ui_MainWindow(object):
         self.label_G0_39.setSizePolicy(sizePolicy4)
         self.label_G0_39.setMaximumSize(QSize(1500000, 1500000))
         self.label_G0_39.setFont(font4)
-        self.label_G0_39.setAlignment(Qt.AlignCenter)
+        self.label_G0_39.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_G0_39, 13, 1, 1, 1)
 
@@ -1929,7 +1889,7 @@ class Ui_MainWindow(object):
         self.label_Z0_18.setSizePolicy(sizePolicy4)
         self.label_Z0_18.setMaximumSize(QSize(1500000, 1500000))
         self.label_Z0_18.setFont(font4)
-        self.label_Z0_18.setAlignment(Qt.AlignCenter)
+        self.label_Z0_18.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_Z0_18, 15, 21, 1, 1)
 
@@ -1939,7 +1899,7 @@ class Ui_MainWindow(object):
         self.label_B4_3.setSizePolicy(sizePolicy4)
         self.label_B4_3.setMaximumSize(QSize(1500000, 1500000))
         self.label_B4_3.setFont(font4)
-        self.label_B4_3.setAlignment(Qt.AlignCenter)
+        self.label_B4_3.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_B4_3, 3, 5, 1, 1)
 
@@ -1949,8 +1909,8 @@ class Ui_MainWindow(object):
         self.circle_N0_13.setSizePolicy(sizePolicy4)
         self.circle_N0_13.setMaximumSize(QSize(1500000, 1500000))
         self.circle_N0_13.setFont(font9)
-        self.circle_N0_13.setTextFormat(Qt.PlainText)
-        self.circle_N0_13.setAlignment(Qt.AlignCenter)
+        self.circle_N0_13.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_N0_13.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_N0_13.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_N0_13, 10, 16, 1, 1)
@@ -1961,8 +1921,8 @@ class Ui_MainWindow(object):
         self.circle_H1_37.setSizePolicy(sizePolicy4)
         self.circle_H1_37.setMaximumSize(QSize(1500000, 1500000))
         self.circle_H1_37.setFont(font9)
-        self.circle_H1_37.setTextFormat(Qt.PlainText)
-        self.circle_H1_37.setAlignment(Qt.AlignCenter)
+        self.circle_H1_37.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_H1_37.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_H1_37.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_H1_37, 14, 13, 1, 1)
@@ -1973,7 +1933,7 @@ class Ui_MainWindow(object):
         self.label_C0_22.setSizePolicy(sizePolicy4)
         self.label_C0_22.setMaximumSize(QSize(1500000, 1500000))
         self.label_C0_22.setFont(font4)
-        self.label_C0_22.setAlignment(Qt.AlignCenter)
+        self.label_C0_22.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_C0_22, 5, 10, 1, 1)
 
@@ -1983,8 +1943,8 @@ class Ui_MainWindow(object):
         self.circle_F0_28.setSizePolicy(sizePolicy4)
         self.circle_F0_28.setMaximumSize(QSize(1500000, 1500000))
         self.circle_F0_28.setFont(font10)
-        self.circle_F0_28.setTextFormat(Qt.PlainText)
-        self.circle_F0_28.setAlignment(Qt.AlignCenter)
+        self.circle_F0_28.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_F0_28.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_F0_28.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_F0_28, 10, 4, 1, 1)
@@ -1995,7 +1955,7 @@ class Ui_MainWindow(object):
         self.label_L0_28.setSizePolicy(sizePolicy4)
         self.label_L0_28.setMaximumSize(QSize(1500000, 1500000))
         self.label_L0_28.setFont(font4)
-        self.label_L0_28.setAlignment(Qt.AlignCenter)
+        self.label_L0_28.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_L0_28, 7, 23, 1, 1)
 
@@ -2005,7 +1965,7 @@ class Ui_MainWindow(object):
         self.label_J0_34.setSizePolicy(sizePolicy4)
         self.label_J0_34.setMaximumSize(QSize(1500000, 1500000))
         self.label_J0_34.setFont(font4)
-        self.label_J0_34.setAlignment(Qt.AlignCenter)
+        self.label_J0_34.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_J0_34, 3, 22, 1, 1)
 
@@ -2015,8 +1975,8 @@ class Ui_MainWindow(object):
         self.circle_A1_199.setSizePolicy(sizePolicy4)
         self.circle_A1_199.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_199.setFont(font9)
-        self.circle_A1_199.setTextFormat(Qt.PlainText)
-        self.circle_A1_199.setAlignment(Qt.AlignCenter)
+        self.circle_A1_199.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_199.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_199.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_199, 2, 1, 1, 1)
@@ -2027,8 +1987,8 @@ class Ui_MainWindow(object):
         self.circle_A1_152.setSizePolicy(sizePolicy4)
         self.circle_A1_152.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_152.setFont(font9)
-        self.circle_A1_152.setTextFormat(Qt.PlainText)
-        self.circle_A1_152.setAlignment(Qt.AlignCenter)
+        self.circle_A1_152.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_152.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_152.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_152, 0, 14, 1, 1)
@@ -2039,8 +1999,8 @@ class Ui_MainWindow(object):
         self.circle_A1_189.setSizePolicy(sizePolicy4)
         self.circle_A1_189.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_189.setFont(font9)
-        self.circle_A1_189.setTextFormat(Qt.PlainText)
-        self.circle_A1_189.setAlignment(Qt.AlignCenter)
+        self.circle_A1_189.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_189.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_189.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_189, 0, 19, 1, 1)
@@ -2051,7 +2011,7 @@ class Ui_MainWindow(object):
         self.label_I0_42.setSizePolicy(sizePolicy4)
         self.label_I0_42.setMaximumSize(QSize(1500000, 1500000))
         self.label_I0_42.setFont(font4)
-        self.label_I0_42.setAlignment(Qt.AlignCenter)
+        self.label_I0_42.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_I0_42, 1, 14, 1, 1)
 
@@ -2061,7 +2021,7 @@ class Ui_MainWindow(object):
         self.label_N0_24.setSizePolicy(sizePolicy4)
         self.label_N0_24.setMaximumSize(QSize(1500000, 1500000))
         self.label_N0_24.setFont(font4)
-        self.label_N0_24.setAlignment(Qt.AlignCenter)
+        self.label_N0_24.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_N0_24, 11, 24, 1, 1)
 
@@ -2071,7 +2031,7 @@ class Ui_MainWindow(object):
         self.label_I0_39.setSizePolicy(sizePolicy4)
         self.label_I0_39.setMaximumSize(QSize(1500000, 1500000))
         self.label_I0_39.setFont(font4)
-        self.label_I0_39.setAlignment(Qt.AlignCenter)
+        self.label_I0_39.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_I0_39, 1, 11, 1, 1)
 
@@ -2081,8 +2041,8 @@ class Ui_MainWindow(object):
         self.circle_A0_82.setSizePolicy(sizePolicy4)
         self.circle_A0_82.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_82.setFont(font15)
-        self.circle_A0_82.setTextFormat(Qt.PlainText)
-        self.circle_A0_82.setAlignment(Qt.AlignCenter)
+        self.circle_A0_82.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A0_82.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_82.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_82, 6, 10, 1, 1)
@@ -2093,7 +2053,7 @@ class Ui_MainWindow(object):
         self.label_L0_23.setSizePolicy(sizePolicy4)
         self.label_L0_23.setMaximumSize(QSize(1500000, 1500000))
         self.label_L0_23.setFont(font4)
-        self.label_L0_23.setAlignment(Qt.AlignCenter)
+        self.label_L0_23.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_L0_23, 7, 21, 1, 1)
 
@@ -2103,7 +2063,7 @@ class Ui_MainWindow(object):
         self.circle_K_3.setSizePolicy(sizePolicy4)
         self.circle_K_3.setMaximumSize(QSize(1500000, 1500000))
         self.circle_K_3.setFont(font12)
-        self.circle_K_3.setAlignment(Qt.AlignCenter)
+        self.circle_K_3.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_K_3.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_K_3, 4, 12, 1, 1)
@@ -2114,7 +2074,7 @@ class Ui_MainWindow(object):
         self.label_E1_26.setSizePolicy(sizePolicy4)
         self.label_E1_26.setMaximumSize(QSize(1500000, 1500000))
         self.label_E1_26.setFont(font4)
-        self.label_E1_26.setAlignment(Qt.AlignCenter)
+        self.label_E1_26.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_E1_26, 9, 6, 1, 1)
 
@@ -2124,7 +2084,7 @@ class Ui_MainWindow(object):
         self.label_O0_19.setSizePolicy(sizePolicy4)
         self.label_O0_19.setMaximumSize(QSize(1500000, 1500000))
         self.label_O0_19.setFont(font4)
-        self.label_O0_19.setAlignment(Qt.AlignCenter)
+        self.label_O0_19.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_O0_19, 13, 19, 1, 1)
 
@@ -2134,8 +2094,8 @@ class Ui_MainWindow(object):
         self.circle_A1_196.setSizePolicy(sizePolicy4)
         self.circle_A1_196.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_196.setFont(font9)
-        self.circle_A1_196.setTextFormat(Qt.PlainText)
-        self.circle_A1_196.setAlignment(Qt.AlignCenter)
+        self.circle_A1_196.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_196.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_196.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_196, 0, 21, 1, 1)
@@ -2146,7 +2106,7 @@ class Ui_MainWindow(object):
         self.label_O0_24.setSizePolicy(sizePolicy4)
         self.label_O0_24.setMaximumSize(QSize(1500000, 1500000))
         self.label_O0_24.setFont(font4)
-        self.label_O0_24.setAlignment(Qt.AlignCenter)
+        self.label_O0_24.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_O0_24, 13, 24, 1, 1)
 
@@ -2156,7 +2116,7 @@ class Ui_MainWindow(object):
         self.label_J0_39.setSizePolicy(sizePolicy4)
         self.label_J0_39.setMaximumSize(QSize(1500000, 1500000))
         self.label_J0_39.setFont(font4)
-        self.label_J0_39.setAlignment(Qt.AlignCenter)
+        self.label_J0_39.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_J0_39, 3, 21, 1, 1)
 
@@ -2166,8 +2126,8 @@ class Ui_MainWindow(object):
         self.circle_A1_207.setSizePolicy(sizePolicy4)
         self.circle_A1_207.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_207.setFont(font9)
-        self.circle_A1_207.setTextFormat(Qt.PlainText)
-        self.circle_A1_207.setAlignment(Qt.AlignCenter)
+        self.circle_A1_207.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_207.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_207.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_207, 4, 14, 1, 1)
@@ -2178,8 +2138,8 @@ class Ui_MainWindow(object):
         self.circle_A1_173.setSizePolicy(sizePolicy4)
         self.circle_A1_173.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_173.setFont(font9)
-        self.circle_A1_173.setTextFormat(Qt.PlainText)
-        self.circle_A1_173.setAlignment(Qt.AlignCenter)
+        self.circle_A1_173.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_173.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_173.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_173, 4, 16, 1, 1)
@@ -2190,7 +2150,7 @@ class Ui_MainWindow(object):
         self.label_J0_36.setSizePolicy(sizePolicy4)
         self.label_J0_36.setMaximumSize(QSize(1500000, 1500000))
         self.label_J0_36.setFont(font4)
-        self.label_J0_36.setAlignment(Qt.AlignCenter)
+        self.label_J0_36.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_J0_36, 3, 13, 1, 1)
 
@@ -2200,7 +2160,7 @@ class Ui_MainWindow(object):
         self.label_F0_33.setSizePolicy(sizePolicy4)
         self.label_F0_33.setMaximumSize(QSize(1500000, 1500000))
         self.label_F0_33.setFont(font4)
-        self.label_F0_33.setAlignment(Qt.AlignCenter)
+        self.label_F0_33.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_F0_33, 11, 4, 1, 1)
 
@@ -2210,8 +2170,8 @@ class Ui_MainWindow(object):
         self.circle_A0_70.setSizePolicy(sizePolicy4)
         self.circle_A0_70.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_70.setFont(font15)
-        self.circle_A0_70.setTextFormat(Qt.PlainText)
-        self.circle_A0_70.setAlignment(Qt.AlignCenter)
+        self.circle_A0_70.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A0_70.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_70.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_70, 0, 1, 1, 1)
@@ -2222,8 +2182,8 @@ class Ui_MainWindow(object):
         self.circle_N6_7.setSizePolicy(sizePolicy4)
         self.circle_N6_7.setMaximumSize(QSize(1500000, 1500000))
         self.circle_N6_7.setFont(font9)
-        self.circle_N6_7.setTextFormat(Qt.PlainText)
-        self.circle_N6_7.setAlignment(Qt.AlignCenter)
+        self.circle_N6_7.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_N6_7.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_N6_7.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_N6_7, 10, 22, 1, 1)
@@ -2234,8 +2194,8 @@ class Ui_MainWindow(object):
         self.circle_L0_23.setSizePolicy(sizePolicy4)
         self.circle_L0_23.setMaximumSize(QSize(1500000, 1500000))
         self.circle_L0_23.setFont(font9)
-        self.circle_L0_23.setTextFormat(Qt.PlainText)
-        self.circle_L0_23.setAlignment(Qt.AlignCenter)
+        self.circle_L0_23.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_L0_23.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_L0_23.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_L0_23, 6, 21, 1, 1)
@@ -2246,7 +2206,7 @@ class Ui_MainWindow(object):
         self.label_I0_34.setSizePolicy(sizePolicy4)
         self.label_I0_34.setMaximumSize(QSize(1500000, 1500000))
         self.label_I0_34.setFont(font4)
-        self.label_I0_34.setAlignment(Qt.AlignCenter)
+        self.label_I0_34.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_I0_34, 1, 23, 1, 1)
 
@@ -2256,8 +2216,8 @@ class Ui_MainWindow(object):
         self.circle_A1_164.setSizePolicy(sizePolicy4)
         self.circle_A1_164.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_164.setFont(font9)
-        self.circle_A1_164.setTextFormat(Qt.PlainText)
-        self.circle_A1_164.setAlignment(Qt.AlignCenter)
+        self.circle_A1_164.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_164.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_164.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_164, 4, 24, 1, 1)
@@ -2268,7 +2228,7 @@ class Ui_MainWindow(object):
         self.label_H0_44.setSizePolicy(sizePolicy4)
         self.label_H0_44.setMaximumSize(QSize(1500000, 1500000))
         self.label_H0_44.setFont(font4)
-        self.label_H0_44.setAlignment(Qt.AlignCenter)
+        self.label_H0_44.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_H0_44, 15, 1, 1, 1)
 
@@ -2278,8 +2238,8 @@ class Ui_MainWindow(object):
         self.circle_M0_26.setSizePolicy(sizePolicy4)
         self.circle_M0_26.setMaximumSize(QSize(1500000, 1500000))
         self.circle_M0_26.setFont(font10)
-        self.circle_M0_26.setTextFormat(Qt.PlainText)
-        self.circle_M0_26.setAlignment(Qt.AlignCenter)
+        self.circle_M0_26.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_M0_26.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_M0_26.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_M0_26, 8, 21, 1, 1)
@@ -2290,7 +2250,7 @@ class Ui_MainWindow(object):
         self.circle_A_31.setSizePolicy(sizePolicy4)
         self.circle_A_31.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A_31.setFont(font11)
-        self.circle_A_31.setAlignment(Qt.AlignCenter)
+        self.circle_A_31.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A_31.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A_31, 4, 0, 1, 1)
@@ -2301,8 +2261,8 @@ class Ui_MainWindow(object):
         self.circle_D0_19.setSizePolicy(sizePolicy4)
         self.circle_D0_19.setMaximumSize(QSize(1500000, 1500000))
         self.circle_D0_19.setFont(font10)
-        self.circle_D0_19.setTextFormat(Qt.PlainText)
-        self.circle_D0_19.setAlignment(Qt.AlignCenter)
+        self.circle_D0_19.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_D0_19.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_D0_19.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_D0_19, 6, 8, 1, 1)
@@ -2313,7 +2273,7 @@ class Ui_MainWindow(object):
         self.circle_O_3.setSizePolicy(sizePolicy4)
         self.circle_O_3.setMaximumSize(QSize(1500000, 1500000))
         self.circle_O_3.setFont(font12)
-        self.circle_O_3.setAlignment(Qt.AlignCenter)
+        self.circle_O_3.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_O_3.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_O_3, 12, 16, 1, 1)
@@ -2324,8 +2284,8 @@ class Ui_MainWindow(object):
         self.circle_A0_74.setSizePolicy(sizePolicy4)
         self.circle_A0_74.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_74.setFont(font15)
-        self.circle_A0_74.setTextFormat(Qt.PlainText)
-        self.circle_A0_74.setAlignment(Qt.AlignCenter)
+        self.circle_A0_74.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A0_74.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_74.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_74, 0, 7, 1, 1)
@@ -2336,7 +2296,7 @@ class Ui_MainWindow(object):
         self.label_N0_26.setSizePolicy(sizePolicy4)
         self.label_N0_26.setMaximumSize(QSize(1500000, 1500000))
         self.label_N0_26.setFont(font4)
-        self.label_N0_26.setAlignment(Qt.AlignCenter)
+        self.label_N0_26.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_N0_26, 11, 16, 1, 1)
 
@@ -2346,8 +2306,8 @@ class Ui_MainWindow(object):
         self.circle_D0_20.setSizePolicy(sizePolicy4)
         self.circle_D0_20.setMaximumSize(QSize(1500000, 1500000))
         self.circle_D0_20.setFont(font10)
-        self.circle_D0_20.setTextFormat(Qt.PlainText)
-        self.circle_D0_20.setAlignment(Qt.AlignCenter)
+        self.circle_D0_20.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_D0_20.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_D0_20.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_D0_20, 6, 6, 1, 1)
@@ -2358,7 +2318,7 @@ class Ui_MainWindow(object):
         self.label_H0_40.setSizePolicy(sizePolicy4)
         self.label_H0_40.setMaximumSize(QSize(1500000, 1500000))
         self.label_H0_40.setFont(font4)
-        self.label_H0_40.setAlignment(Qt.AlignCenter)
+        self.label_H0_40.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_H0_40, 15, 2, 1, 1)
 
@@ -2368,8 +2328,8 @@ class Ui_MainWindow(object):
         self.label_A0_17.setSizePolicy(sizePolicy4)
         self.label_A0_17.setMaximumSize(QSize(1500000, 1500000))
         self.label_A0_17.setFont(font14)
-        self.label_A0_17.setLayoutDirection(Qt.LeftToRight)
-        self.label_A0_17.setAlignment(Qt.AlignCenter)
+        self.label_A0_17.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        self.label_A0_17.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_A0_17, 1, 6, 1, 1)
 
@@ -2379,8 +2339,8 @@ class Ui_MainWindow(object):
         self.circle_D0_27.setSizePolicy(sizePolicy4)
         self.circle_D0_27.setMaximumSize(QSize(1500000, 1500000))
         self.circle_D0_27.setFont(font10)
-        self.circle_D0_27.setTextFormat(Qt.PlainText)
-        self.circle_D0_27.setAlignment(Qt.AlignCenter)
+        self.circle_D0_27.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_D0_27.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_D0_27.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_D0_27, 6, 11, 1, 1)
@@ -2391,7 +2351,7 @@ class Ui_MainWindow(object):
         self.label_C0_21.setSizePolicy(sizePolicy4)
         self.label_C0_21.setMaximumSize(QSize(1500000, 1500000))
         self.label_C0_21.setFont(font4)
-        self.label_C0_21.setAlignment(Qt.AlignCenter)
+        self.label_C0_21.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_C0_21, 5, 9, 1, 1)
 
@@ -2401,7 +2361,7 @@ class Ui_MainWindow(object):
         self.label_K0_32.setSizePolicy(sizePolicy4)
         self.label_K0_32.setMaximumSize(QSize(1500000, 1500000))
         self.label_K0_32.setFont(font4)
-        self.label_K0_32.setAlignment(Qt.AlignCenter)
+        self.label_K0_32.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_K0_32, 5, 20, 1, 1)
 
@@ -2411,7 +2371,7 @@ class Ui_MainWindow(object):
         self.label_D0_29.setSizePolicy(sizePolicy4)
         self.label_D0_29.setMaximumSize(QSize(1500000, 1500000))
         self.label_D0_29.setFont(font4)
-        self.label_D0_29.setAlignment(Qt.AlignCenter)
+        self.label_D0_29.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_D0_29, 7, 4, 1, 1)
 
@@ -2421,7 +2381,7 @@ class Ui_MainWindow(object):
         self.label_G0_34.setSizePolicy(sizePolicy4)
         self.label_G0_34.setMaximumSize(QSize(1500000, 1500000))
         self.label_G0_34.setFont(font4)
-        self.label_G0_34.setAlignment(Qt.AlignCenter)
+        self.label_G0_34.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_G0_34, 13, 4, 1, 1)
 
@@ -2431,7 +2391,7 @@ class Ui_MainWindow(object):
         self.label_B3_3.setSizePolicy(sizePolicy4)
         self.label_B3_3.setMaximumSize(QSize(1500000, 1500000))
         self.label_B3_3.setFont(font4)
-        self.label_B3_3.setAlignment(Qt.AlignCenter)
+        self.label_B3_3.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_B3_3, 3, 4, 1, 1)
 
@@ -2441,7 +2401,7 @@ class Ui_MainWindow(object):
         self.label_M0_27.setSizePolicy(sizePolicy4)
         self.label_M0_27.setMaximumSize(QSize(1500000, 1500000))
         self.label_M0_27.setFont(font4)
-        self.label_M0_27.setAlignment(Qt.AlignCenter)
+        self.label_M0_27.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_M0_27, 9, 18, 1, 1)
 
@@ -2451,8 +2411,8 @@ class Ui_MainWindow(object):
         self.circle_A0_81.setSizePolicy(sizePolicy4)
         self.circle_A0_81.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_81.setFont(font15)
-        self.circle_A0_81.setTextFormat(Qt.PlainText)
-        self.circle_A0_81.setAlignment(Qt.AlignCenter)
+        self.circle_A0_81.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A0_81.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_81.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_81, 6, 7, 1, 1)
@@ -2463,8 +2423,8 @@ class Ui_MainWindow(object):
         self.circle_A1_198.setSizePolicy(sizePolicy4)
         self.circle_A1_198.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_198.setFont(font9)
-        self.circle_A1_198.setTextFormat(Qt.PlainText)
-        self.circle_A1_198.setAlignment(Qt.AlignCenter)
+        self.circle_A1_198.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_198.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_198.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_198, 4, 23, 1, 1)
@@ -2475,7 +2435,7 @@ class Ui_MainWindow(object):
         self.label_G0_29.setSizePolicy(sizePolicy4)
         self.label_G0_29.setMaximumSize(QSize(1500000, 1500000))
         self.label_G0_29.setFont(font4)
-        self.label_G0_29.setAlignment(Qt.AlignCenter)
+        self.label_G0_29.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_G0_29, 13, 6, 1, 1)
 
@@ -2485,7 +2445,7 @@ class Ui_MainWindow(object):
         self.label_J0_40.setSizePolicy(sizePolicy4)
         self.label_J0_40.setMaximumSize(QSize(1500000, 1500000))
         self.label_J0_40.setFont(font4)
-        self.label_J0_40.setAlignment(Qt.AlignCenter)
+        self.label_J0_40.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_J0_40, 3, 20, 1, 1)
 
@@ -2495,8 +2455,8 @@ class Ui_MainWindow(object):
         self.circle_A1_155.setSizePolicy(sizePolicy4)
         self.circle_A1_155.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_155.setFont(font9)
-        self.circle_A1_155.setTextFormat(Qt.PlainText)
-        self.circle_A1_155.setAlignment(Qt.AlignCenter)
+        self.circle_A1_155.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_155.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_155.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_155, 0, 18, 1, 1)
@@ -2507,8 +2467,8 @@ class Ui_MainWindow(object):
         self.circle_F0_30.setSizePolicy(sizePolicy4)
         self.circle_F0_30.setMaximumSize(QSize(1500000, 1500000))
         self.circle_F0_30.setFont(font10)
-        self.circle_F0_30.setTextFormat(Qt.PlainText)
-        self.circle_F0_30.setAlignment(Qt.AlignCenter)
+        self.circle_F0_30.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_F0_30.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_F0_30.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_F0_30, 10, 11, 1, 1)
@@ -2519,8 +2479,8 @@ class Ui_MainWindow(object):
         self.circle_F0_31.setSizePolicy(sizePolicy4)
         self.circle_F0_31.setMaximumSize(QSize(1500000, 1500000))
         self.circle_F0_31.setFont(font10)
-        self.circle_F0_31.setTextFormat(Qt.PlainText)
-        self.circle_F0_31.setAlignment(Qt.AlignCenter)
+        self.circle_F0_31.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_F0_31.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_F0_31.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_F0_31, 10, 5, 1, 1)
@@ -2531,8 +2491,8 @@ class Ui_MainWindow(object):
         self.circle_A1_184.setSizePolicy(sizePolicy4)
         self.circle_A1_184.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_184.setFont(font9)
-        self.circle_A1_184.setTextFormat(Qt.PlainText)
-        self.circle_A1_184.setAlignment(Qt.AlignCenter)
+        self.circle_A1_184.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_184.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_184.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_184, 2, 24, 1, 1)
@@ -2543,7 +2503,7 @@ class Ui_MainWindow(object):
         self.label_C0_24.setSizePolicy(sizePolicy4)
         self.label_C0_24.setMaximumSize(QSize(1500000, 1500000))
         self.label_C0_24.setFont(font4)
-        self.label_C0_24.setAlignment(Qt.AlignCenter)
+        self.label_C0_24.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_C0_24, 5, 1, 1, 1)
 
@@ -2553,8 +2513,8 @@ class Ui_MainWindow(object):
         self.circle_A1_193.setSizePolicy(sizePolicy4)
         self.circle_A1_193.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_193.setFont(font9)
-        self.circle_A1_193.setTextFormat(Qt.PlainText)
-        self.circle_A1_193.setAlignment(Qt.AlignCenter)
+        self.circle_A1_193.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_193.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_193.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_193, 2, 17, 1, 1)
@@ -2565,8 +2525,8 @@ class Ui_MainWindow(object):
         self.circle_H1_39.setSizePolicy(sizePolicy4)
         self.circle_H1_39.setMaximumSize(QSize(1500000, 1500000))
         self.circle_H1_39.setFont(font9)
-        self.circle_H1_39.setTextFormat(Qt.PlainText)
-        self.circle_H1_39.setAlignment(Qt.AlignCenter)
+        self.circle_H1_39.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_H1_39.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_H1_39.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_H1_39, 14, 10, 1, 1)
@@ -2577,8 +2537,8 @@ class Ui_MainWindow(object):
         self.circle_H1_33.setSizePolicy(sizePolicy4)
         self.circle_H1_33.setMaximumSize(QSize(1500000, 1500000))
         self.circle_H1_33.setFont(font9)
-        self.circle_H1_33.setTextFormat(Qt.PlainText)
-        self.circle_H1_33.setAlignment(Qt.AlignCenter)
+        self.circle_H1_33.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_H1_33.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_H1_33.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_H1_33, 14, 12, 1, 1)
@@ -2589,7 +2549,7 @@ class Ui_MainWindow(object):
         self.label_M0_28.setSizePolicy(sizePolicy4)
         self.label_M0_28.setMaximumSize(QSize(1500000, 1500000))
         self.label_M0_28.setFont(font4)
-        self.label_M0_28.setAlignment(Qt.AlignCenter)
+        self.label_M0_28.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_M0_28, 9, 16, 1, 1)
 
@@ -2599,7 +2559,7 @@ class Ui_MainWindow(object):
         self.label_J0_35.setSizePolicy(sizePolicy4)
         self.label_J0_35.setMaximumSize(QSize(1500000, 1500000))
         self.label_J0_35.setFont(font4)
-        self.label_J0_35.setAlignment(Qt.AlignCenter)
+        self.label_J0_35.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_J0_35, 3, 18, 1, 1)
 
@@ -2609,7 +2569,7 @@ class Ui_MainWindow(object):
         self.label_I0_41.setSizePolicy(sizePolicy4)
         self.label_I0_41.setMaximumSize(QSize(1500000, 1500000))
         self.label_I0_41.setFont(font4)
-        self.label_I0_41.setAlignment(Qt.AlignCenter)
+        self.label_I0_41.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_I0_41, 1, 16, 1, 1)
 
@@ -2619,8 +2579,8 @@ class Ui_MainWindow(object):
         self.circle_O1_17.setSizePolicy(sizePolicy4)
         self.circle_O1_17.setMaximumSize(QSize(1500000, 1500000))
         self.circle_O1_17.setFont(font9)
-        self.circle_O1_17.setTextFormat(Qt.PlainText)
-        self.circle_O1_17.setAlignment(Qt.AlignCenter)
+        self.circle_O1_17.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_O1_17.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_O1_17.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_O1_17, 12, 18, 1, 1)
@@ -2631,8 +2591,8 @@ class Ui_MainWindow(object):
         self.label_A0_20.setSizePolicy(sizePolicy4)
         self.label_A0_20.setMaximumSize(QSize(1500000, 1500000))
         self.label_A0_20.setFont(font14)
-        self.label_A0_20.setLayoutDirection(Qt.LeftToRight)
-        self.label_A0_20.setAlignment(Qt.AlignCenter)
+        self.label_A0_20.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        self.label_A0_20.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_A0_20, 1, 2, 1, 1)
 
@@ -2642,7 +2602,7 @@ class Ui_MainWindow(object):
         self.label_K0_33.setSizePolicy(sizePolicy4)
         self.label_K0_33.setMaximumSize(QSize(1500000, 1500000))
         self.label_K0_33.setFont(font4)
-        self.label_K0_33.setAlignment(Qt.AlignCenter)
+        self.label_K0_33.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_K0_33, 5, 16, 1, 1)
 
@@ -2652,7 +2612,7 @@ class Ui_MainWindow(object):
         self.label_O0_17.setSizePolicy(sizePolicy4)
         self.label_O0_17.setMaximumSize(QSize(1500000, 1500000))
         self.label_O0_17.setFont(font4)
-        self.label_O0_17.setAlignment(Qt.AlignCenter)
+        self.label_O0_17.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_O0_17, 13, 22, 1, 1)
 
@@ -2662,7 +2622,7 @@ class Ui_MainWindow(object):
         self.label_L0_29.setSizePolicy(sizePolicy4)
         self.label_L0_29.setMaximumSize(QSize(1500000, 1500000))
         self.label_L0_29.setFont(font4)
-        self.label_L0_29.setAlignment(Qt.AlignCenter)
+        self.label_L0_29.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_L0_29, 7, 14, 1, 1)
 
@@ -2672,8 +2632,8 @@ class Ui_MainWindow(object):
         self.circle_A1_180.setSizePolicy(sizePolicy4)
         self.circle_A1_180.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_180.setFont(font9)
-        self.circle_A1_180.setTextFormat(Qt.PlainText)
-        self.circle_A1_180.setAlignment(Qt.AlignCenter)
+        self.circle_A1_180.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_180.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_180.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_180, 0, 3, 1, 1)
@@ -2684,8 +2644,8 @@ class Ui_MainWindow(object):
         self.circle_E0_24.setSizePolicy(sizePolicy4)
         self.circle_E0_24.setMaximumSize(QSize(1500000, 1500000))
         self.circle_E0_24.setFont(font10)
-        self.circle_E0_24.setTextFormat(Qt.PlainText)
-        self.circle_E0_24.setAlignment(Qt.AlignCenter)
+        self.circle_E0_24.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_E0_24.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_E0_24.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_E0_24, 8, 12, 1, 1)
@@ -2696,7 +2656,7 @@ class Ui_MainWindow(object):
         self.label_G0_38.setSizePolicy(sizePolicy4)
         self.label_G0_38.setMaximumSize(QSize(1500000, 1500000))
         self.label_G0_38.setFont(font4)
-        self.label_G0_38.setAlignment(Qt.AlignCenter)
+        self.label_G0_38.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_G0_38, 13, 13, 1, 1)
 
@@ -2706,7 +2666,7 @@ class Ui_MainWindow(object):
         self.label_K0_25.setSizePolicy(sizePolicy4)
         self.label_K0_25.setMaximumSize(QSize(1500000, 1500000))
         self.label_K0_25.setFont(font4)
-        self.label_K0_25.setAlignment(Qt.AlignCenter)
+        self.label_K0_25.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_K0_25, 5, 22, 1, 1)
 
@@ -2716,8 +2676,8 @@ class Ui_MainWindow(object):
         self.circle_H1_30.setSizePolicy(sizePolicy4)
         self.circle_H1_30.setMaximumSize(QSize(1500000, 1500000))
         self.circle_H1_30.setFont(font9)
-        self.circle_H1_30.setTextFormat(Qt.PlainText)
-        self.circle_H1_30.setAlignment(Qt.AlignCenter)
+        self.circle_H1_30.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_H1_30.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_H1_30.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_H1_30, 14, 5, 1, 1)
@@ -2728,8 +2688,8 @@ class Ui_MainWindow(object):
         self.circle_A1_217.setSizePolicy(sizePolicy4)
         self.circle_A1_217.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_217.setFont(font9)
-        self.circle_A1_217.setTextFormat(Qt.PlainText)
-        self.circle_A1_217.setAlignment(Qt.AlignCenter)
+        self.circle_A1_217.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_217.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_217.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_217, 2, 7, 1, 1)
@@ -2740,8 +2700,8 @@ class Ui_MainWindow(object):
         self.circle_A0_80.setSizePolicy(sizePolicy4)
         self.circle_A0_80.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_80.setFont(font15)
-        self.circle_A0_80.setTextFormat(Qt.PlainText)
-        self.circle_A0_80.setAlignment(Qt.AlignCenter)
+        self.circle_A0_80.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A0_80.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_80.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_80, 4, 21, 1, 1)
@@ -2752,7 +2712,7 @@ class Ui_MainWindow(object):
         self.label_B8_3.setSizePolicy(sizePolicy4)
         self.label_B8_3.setMaximumSize(QSize(1500000, 1500000))
         self.label_B8_3.setFont(font4)
-        self.label_B8_3.setAlignment(Qt.AlignCenter)
+        self.label_B8_3.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_B8_3, 3, 9, 1, 1)
 
@@ -2762,7 +2722,7 @@ class Ui_MainWindow(object):
         self.circle_M_3.setSizePolicy(sizePolicy4)
         self.circle_M_3.setMaximumSize(QSize(1500000, 1500000))
         self.circle_M_3.setFont(font12)
-        self.circle_M_3.setAlignment(Qt.AlignCenter)
+        self.circle_M_3.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_M_3.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_M_3, 8, 14, 1, 1)
@@ -2773,7 +2733,7 @@ class Ui_MainWindow(object):
         self.label_K0_29.setSizePolicy(sizePolicy4)
         self.label_K0_29.setMaximumSize(QSize(1500000, 1500000))
         self.label_K0_29.setFont(font4)
-        self.label_K0_29.setAlignment(Qt.AlignCenter)
+        self.label_K0_29.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_K0_29, 5, 21, 1, 1)
 
@@ -2783,8 +2743,8 @@ class Ui_MainWindow(object):
         self.circle_L0_20.setSizePolicy(sizePolicy4)
         self.circle_L0_20.setMaximumSize(QSize(1500000, 1500000))
         self.circle_L0_20.setFont(font9)
-        self.circle_L0_20.setTextFormat(Qt.PlainText)
-        self.circle_L0_20.setAlignment(Qt.AlignCenter)
+        self.circle_L0_20.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_L0_20.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_L0_20.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_L0_20, 6, 23, 1, 1)
@@ -2795,8 +2755,8 @@ class Ui_MainWindow(object):
         self.circle_A1_165.setSizePolicy(sizePolicy4)
         self.circle_A1_165.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_165.setFont(font9)
-        self.circle_A1_165.setTextFormat(Qt.PlainText)
-        self.circle_A1_165.setAlignment(Qt.AlignCenter)
+        self.circle_A1_165.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_165.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_165.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_165, 12, 1, 1, 1)
@@ -2807,7 +2767,7 @@ class Ui_MainWindow(object):
         self.label_G0_40.setSizePolicy(sizePolicy4)
         self.label_G0_40.setMaximumSize(QSize(1500000, 1500000))
         self.label_G0_40.setFont(font4)
-        self.label_G0_40.setAlignment(Qt.AlignCenter)
+        self.label_G0_40.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_G0_40, 13, 5, 1, 1)
 
@@ -2817,8 +2777,8 @@ class Ui_MainWindow(object):
         self.circle_A1_205.setSizePolicy(sizePolicy4)
         self.circle_A1_205.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_205.setFont(font9)
-        self.circle_A1_205.setTextFormat(Qt.PlainText)
-        self.circle_A1_205.setAlignment(Qt.AlignCenter)
+        self.circle_A1_205.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_205.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_205.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_205, 2, 4, 1, 1)
@@ -2829,7 +2789,7 @@ class Ui_MainWindow(object):
         self.label_D0_25.setSizePolicy(sizePolicy4)
         self.label_D0_25.setMaximumSize(QSize(1500000, 1500000))
         self.label_D0_25.setFont(font4)
-        self.label_D0_25.setAlignment(Qt.AlignCenter)
+        self.label_D0_25.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_D0_25, 7, 10, 1, 1)
 
@@ -2839,7 +2799,7 @@ class Ui_MainWindow(object):
         self.label_J0_30.setSizePolicy(sizePolicy4)
         self.label_J0_30.setMaximumSize(QSize(1500000, 1500000))
         self.label_J0_30.setFont(font4)
-        self.label_J0_30.setAlignment(Qt.AlignCenter)
+        self.label_J0_30.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_J0_30, 3, 24, 1, 1)
 
@@ -2849,8 +2809,8 @@ class Ui_MainWindow(object):
         self.circle_A1_169.setSizePolicy(sizePolicy4)
         self.circle_A1_169.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_169.setFont(font9)
-        self.circle_A1_169.setTextFormat(Qt.PlainText)
-        self.circle_A1_169.setAlignment(Qt.AlignCenter)
+        self.circle_A1_169.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_169.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_169.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_169, 12, 5, 1, 1)
@@ -2861,7 +2821,7 @@ class Ui_MainWindow(object):
         self.label_G0_41.setSizePolicy(sizePolicy4)
         self.label_G0_41.setMaximumSize(QSize(1500000, 1500000))
         self.label_G0_41.setFont(font4)
-        self.label_G0_41.setAlignment(Qt.AlignCenter)
+        self.label_G0_41.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_G0_41, 13, 7, 1, 1)
 
@@ -2871,8 +2831,8 @@ class Ui_MainWindow(object):
         self.circle_A1_176.setSizePolicy(sizePolicy4)
         self.circle_A1_176.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_176.setFont(font9)
-        self.circle_A1_176.setTextFormat(Qt.PlainText)
-        self.circle_A1_176.setAlignment(Qt.AlignCenter)
+        self.circle_A1_176.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_176.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_176.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_176, 12, 4, 1, 1)
@@ -2883,7 +2843,7 @@ class Ui_MainWindow(object):
         self.label_F0_32.setSizePolicy(sizePolicy4)
         self.label_F0_32.setMaximumSize(QSize(1500000, 1500000))
         self.label_F0_32.setFont(font4)
-        self.label_F0_32.setAlignment(Qt.AlignCenter)
+        self.label_F0_32.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_F0_32, 11, 7, 1, 1)
 
@@ -2893,8 +2853,8 @@ class Ui_MainWindow(object):
         self.circle_A1_218.setSizePolicy(sizePolicy4)
         self.circle_A1_218.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_218.setFont(font9)
-        self.circle_A1_218.setTextFormat(Qt.PlainText)
-        self.circle_A1_218.setAlignment(Qt.AlignCenter)
+        self.circle_A1_218.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_218.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_218.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_218, 2, 22, 1, 1)
@@ -2905,7 +2865,7 @@ class Ui_MainWindow(object):
         self.label_D0_23.setSizePolicy(sizePolicy4)
         self.label_D0_23.setMaximumSize(QSize(1500000, 1500000))
         self.label_D0_23.setFont(font4)
-        self.label_D0_23.setAlignment(Qt.AlignCenter)
+        self.label_D0_23.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_D0_23, 7, 2, 1, 1)
 
@@ -2915,8 +2875,8 @@ class Ui_MainWindow(object):
         self.circle_A1_157.setSizePolicy(sizePolicy4)
         self.circle_A1_157.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_157.setFont(font9)
-        self.circle_A1_157.setTextFormat(Qt.PlainText)
-        self.circle_A1_157.setAlignment(Qt.AlignCenter)
+        self.circle_A1_157.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_157.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_157.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_157, 0, 24, 1, 1)
@@ -2927,8 +2887,8 @@ class Ui_MainWindow(object):
         self.circle_A1_185.setSizePolicy(sizePolicy4)
         self.circle_A1_185.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_185.setFont(font9)
-        self.circle_A1_185.setTextFormat(Qt.PlainText)
-        self.circle_A1_185.setAlignment(Qt.AlignCenter)
+        self.circle_A1_185.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_185.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_185.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_185, 12, 13, 1, 1)
@@ -2939,7 +2899,7 @@ class Ui_MainWindow(object):
         self.label_N0_21.setSizePolicy(sizePolicy4)
         self.label_N0_21.setMaximumSize(QSize(1500000, 1500000))
         self.label_N0_21.setFont(font4)
-        self.label_N0_21.setAlignment(Qt.AlignCenter)
+        self.label_N0_21.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_N0_21, 11, 17, 1, 1)
 
@@ -2949,7 +2909,7 @@ class Ui_MainWindow(object):
         self.label_I0_35.setSizePolicy(sizePolicy4)
         self.label_I0_35.setMaximumSize(QSize(1500000, 1500000))
         self.label_I0_35.setFont(font4)
-        self.label_I0_35.setAlignment(Qt.AlignCenter)
+        self.label_I0_35.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_I0_35, 1, 22, 1, 1)
 
@@ -2959,8 +2919,8 @@ class Ui_MainWindow(object):
         self.circle_E0_31.setSizePolicy(sizePolicy4)
         self.circle_E0_31.setMaximumSize(QSize(1500000, 1500000))
         self.circle_E0_31.setFont(font10)
-        self.circle_E0_31.setTextFormat(Qt.PlainText)
-        self.circle_E0_31.setAlignment(Qt.AlignCenter)
+        self.circle_E0_31.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_E0_31.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_E0_31.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_E0_31, 8, 1, 1, 1)
@@ -2971,7 +2931,7 @@ class Ui_MainWindow(object):
         self.label_C0_25.setSizePolicy(sizePolicy4)
         self.label_C0_25.setMaximumSize(QSize(1500000, 1500000))
         self.label_C0_25.setFont(font4)
-        self.label_C0_25.setAlignment(Qt.AlignCenter)
+        self.label_C0_25.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_C0_25, 5, 3, 1, 1)
 
@@ -2981,7 +2941,7 @@ class Ui_MainWindow(object):
         self.label_E1_25.setSizePolicy(sizePolicy4)
         self.label_E1_25.setMaximumSize(QSize(1500000, 1500000))
         self.label_E1_25.setFont(font4)
-        self.label_E1_25.setAlignment(Qt.AlignCenter)
+        self.label_E1_25.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_E1_25, 9, 11, 1, 1)
 
@@ -2991,7 +2951,7 @@ class Ui_MainWindow(object):
         self.label_K0_35.setSizePolicy(sizePolicy4)
         self.label_K0_35.setMaximumSize(QSize(1500000, 1500000))
         self.label_K0_35.setFont(font4)
-        self.label_K0_35.setAlignment(Qt.AlignCenter)
+        self.label_K0_35.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_K0_35, 5, 23, 1, 1)
 
@@ -3001,8 +2961,8 @@ class Ui_MainWindow(object):
         self.circle_A1_158.setSizePolicy(sizePolicy4)
         self.circle_A1_158.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_158.setFont(font9)
-        self.circle_A1_158.setTextFormat(Qt.PlainText)
-        self.circle_A1_158.setAlignment(Qt.AlignCenter)
+        self.circle_A1_158.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_158.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_158.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_158, 2, 2, 1, 1)
@@ -3013,8 +2973,8 @@ class Ui_MainWindow(object):
         self.circle_H1_38.setSizePolicy(sizePolicy4)
         self.circle_H1_38.setMaximumSize(QSize(1500000, 1500000))
         self.circle_H1_38.setFont(font9)
-        self.circle_H1_38.setTextFormat(Qt.PlainText)
-        self.circle_H1_38.setAlignment(Qt.AlignCenter)
+        self.circle_H1_38.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_H1_38.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_H1_38.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_H1_38, 14, 6, 1, 1)
@@ -3025,8 +2985,8 @@ class Ui_MainWindow(object):
         self.circle_A1_187.setSizePolicy(sizePolicy4)
         self.circle_A1_187.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_187.setFont(font9)
-        self.circle_A1_187.setTextFormat(Qt.PlainText)
-        self.circle_A1_187.setAlignment(Qt.AlignCenter)
+        self.circle_A1_187.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_187.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_187.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_187, 12, 6, 1, 1)
@@ -3037,7 +2997,7 @@ class Ui_MainWindow(object):
         self.label_C0_26.setSizePolicy(sizePolicy4)
         self.label_C0_26.setMaximumSize(QSize(1500000, 1500000))
         self.label_C0_26.setFont(font4)
-        self.label_C0_26.setAlignment(Qt.AlignCenter)
+        self.label_C0_26.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_C0_26, 5, 6, 1, 1)
 
@@ -3047,8 +3007,8 @@ class Ui_MainWindow(object):
         self.circle_A1_181.setSizePolicy(sizePolicy4)
         self.circle_A1_181.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_181.setFont(font9)
-        self.circle_A1_181.setTextFormat(Qt.PlainText)
-        self.circle_A1_181.setAlignment(Qt.AlignCenter)
+        self.circle_A1_181.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_181.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_181.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_181, 2, 20, 1, 1)
@@ -3059,8 +3019,8 @@ class Ui_MainWindow(object):
         self.circle_A1_219.setSizePolicy(sizePolicy4)
         self.circle_A1_219.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_219.setFont(font9)
-        self.circle_A1_219.setTextFormat(Qt.PlainText)
-        self.circle_A1_219.setAlignment(Qt.AlignCenter)
+        self.circle_A1_219.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_219.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_219.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_219, 4, 20, 1, 1)
@@ -3071,7 +3031,7 @@ class Ui_MainWindow(object):
         self.label_E1_27.setSizePolicy(sizePolicy4)
         self.label_E1_27.setMaximumSize(QSize(1500000, 1500000))
         self.label_E1_27.setFont(font4)
-        self.label_E1_27.setAlignment(Qt.AlignCenter)
+        self.label_E1_27.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_E1_27, 9, 8, 1, 1)
 
@@ -3081,7 +3041,7 @@ class Ui_MainWindow(object):
         self.label_H0_31.setSizePolicy(sizePolicy4)
         self.label_H0_31.setMaximumSize(QSize(1500000, 1500000))
         self.label_H0_31.setFont(font4)
-        self.label_H0_31.setAlignment(Qt.AlignCenter)
+        self.label_H0_31.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_H0_31, 15, 3, 1, 1)
 
@@ -3091,8 +3051,8 @@ class Ui_MainWindow(object):
         self.circle_A1_202.setSizePolicy(sizePolicy4)
         self.circle_A1_202.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_202.setFont(font9)
-        self.circle_A1_202.setTextFormat(Qt.PlainText)
-        self.circle_A1_202.setAlignment(Qt.AlignCenter)
+        self.circle_A1_202.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_202.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_202.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_202, 12, 2, 1, 1)
@@ -3103,8 +3063,8 @@ class Ui_MainWindow(object):
         self.circle_D0_25.setSizePolicy(sizePolicy4)
         self.circle_D0_25.setMaximumSize(QSize(1500000, 1500000))
         self.circle_D0_25.setFont(font10)
-        self.circle_D0_25.setTextFormat(Qt.PlainText)
-        self.circle_D0_25.setAlignment(Qt.AlignCenter)
+        self.circle_D0_25.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_D0_25.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_D0_25.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_D0_25, 6, 5, 1, 1)
@@ -3115,7 +3075,7 @@ class Ui_MainWindow(object):
         self.label_I0_40.setSizePolicy(sizePolicy4)
         self.label_I0_40.setMaximumSize(QSize(1500000, 1500000))
         self.label_I0_40.setFont(font4)
-        self.label_I0_40.setAlignment(Qt.AlignCenter)
+        self.label_I0_40.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_I0_40, 1, 13, 1, 1)
 
@@ -3125,8 +3085,8 @@ class Ui_MainWindow(object):
         self.circle_A1_212.setSizePolicy(sizePolicy4)
         self.circle_A1_212.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_212.setFont(font9)
-        self.circle_A1_212.setTextFormat(Qt.PlainText)
-        self.circle_A1_212.setAlignment(Qt.AlignCenter)
+        self.circle_A1_212.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_212.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_212.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_212, 4, 5, 1, 1)
@@ -3137,7 +3097,7 @@ class Ui_MainWindow(object):
         self.label_N0_25.setSizePolicy(sizePolicy4)
         self.label_N0_25.setMaximumSize(QSize(1500000, 1500000))
         self.label_N0_25.setFont(font4)
-        self.label_N0_25.setAlignment(Qt.AlignCenter)
+        self.label_N0_25.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_N0_25, 11, 21, 1, 1)
 
@@ -3147,7 +3107,7 @@ class Ui_MainWindow(object):
         self.label_E1_31.setSizePolicy(sizePolicy4)
         self.label_E1_31.setMaximumSize(QSize(1500000, 1500000))
         self.label_E1_31.setFont(font4)
-        self.label_E1_31.setAlignment(Qt.AlignCenter)
+        self.label_E1_31.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_E1_31, 9, 5, 1, 1)
 
@@ -3157,7 +3117,7 @@ class Ui_MainWindow(object):
         self.label_H0_45.setSizePolicy(sizePolicy4)
         self.label_H0_45.setMaximumSize(QSize(1500000, 1500000))
         self.label_H0_45.setFont(font4)
-        self.label_H0_45.setAlignment(Qt.AlignCenter)
+        self.label_H0_45.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_H0_45, 15, 6, 1, 1)
 
@@ -3167,8 +3127,8 @@ class Ui_MainWindow(object):
         self.circle_E0_26.setSizePolicy(sizePolicy4)
         self.circle_E0_26.setMaximumSize(QSize(1500000, 1500000))
         self.circle_E0_26.setFont(font10)
-        self.circle_E0_26.setTextFormat(Qt.PlainText)
-        self.circle_E0_26.setAlignment(Qt.AlignCenter)
+        self.circle_E0_26.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_E0_26.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_E0_26.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_E0_26, 8, 2, 1, 1)
@@ -3179,7 +3139,7 @@ class Ui_MainWindow(object):
         self.label_C0_30.setSizePolicy(sizePolicy4)
         self.label_C0_30.setMaximumSize(QSize(1500000, 1500000))
         self.label_C0_30.setFont(font4)
-        self.label_C0_30.setAlignment(Qt.AlignCenter)
+        self.label_C0_30.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_C0_30, 5, 4, 1, 1)
 
@@ -3189,8 +3149,8 @@ class Ui_MainWindow(object):
         self.circle_E0_33.setSizePolicy(sizePolicy4)
         self.circle_E0_33.setMaximumSize(QSize(1500000, 1500000))
         self.circle_E0_33.setFont(font10)
-        self.circle_E0_33.setTextFormat(Qt.PlainText)
-        self.circle_E0_33.setAlignment(Qt.AlignCenter)
+        self.circle_E0_33.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_E0_33.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_E0_33.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_E0_33, 8, 7, 1, 1)
@@ -3201,8 +3161,8 @@ class Ui_MainWindow(object):
         self.circle_A1_213.setSizePolicy(sizePolicy4)
         self.circle_A1_213.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_213.setFont(font9)
-        self.circle_A1_213.setTextFormat(Qt.PlainText)
-        self.circle_A1_213.setAlignment(Qt.AlignCenter)
+        self.circle_A1_213.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_213.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_213.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_213, 2, 8, 1, 1)
@@ -3213,8 +3173,8 @@ class Ui_MainWindow(object):
         self.circle_A1_195.setSizePolicy(sizePolicy4)
         self.circle_A1_195.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_195.setFont(font9)
-        self.circle_A1_195.setTextFormat(Qt.PlainText)
-        self.circle_A1_195.setAlignment(Qt.AlignCenter)
+        self.circle_A1_195.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_195.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_195.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_195, 0, 5, 1, 1)
@@ -3225,7 +3185,7 @@ class Ui_MainWindow(object):
         self.label_G0_30.setSizePolicy(sizePolicy4)
         self.label_G0_30.setMaximumSize(QSize(1500000, 1500000))
         self.label_G0_30.setFont(font4)
-        self.label_G0_30.setAlignment(Qt.AlignCenter)
+        self.label_G0_30.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_G0_30, 13, 3, 1, 1)
 
@@ -3235,8 +3195,8 @@ class Ui_MainWindow(object):
         self.circle_D0_21.setSizePolicy(sizePolicy4)
         self.circle_D0_21.setMaximumSize(QSize(1500000, 1500000))
         self.circle_D0_21.setFont(font10)
-        self.circle_D0_21.setTextFormat(Qt.PlainText)
-        self.circle_D0_21.setAlignment(Qt.AlignCenter)
+        self.circle_D0_21.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_D0_21.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_D0_21.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_D0_21, 6, 1, 1, 1)
@@ -3247,7 +3207,7 @@ class Ui_MainWindow(object):
         self.label_D0_33.setSizePolicy(sizePolicy4)
         self.label_D0_33.setMaximumSize(QSize(1500000, 1500000))
         self.label_D0_33.setFont(font4)
-        self.label_D0_33.setAlignment(Qt.AlignCenter)
+        self.label_D0_33.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_D0_33, 7, 6, 1, 1)
 
@@ -3257,7 +3217,7 @@ class Ui_MainWindow(object):
         self.label_O0_23.setSizePolicy(sizePolicy4)
         self.label_O0_23.setMaximumSize(QSize(1500000, 1500000))
         self.label_O0_23.setFont(font4)
-        self.label_O0_23.setAlignment(Qt.AlignCenter)
+        self.label_O0_23.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_O0_23, 13, 23, 1, 1)
 
@@ -3267,7 +3227,7 @@ class Ui_MainWindow(object):
         self.label_F0_34.setSizePolicy(sizePolicy4)
         self.label_F0_34.setMaximumSize(QSize(1500000, 1500000))
         self.label_F0_34.setFont(font4)
-        self.label_F0_34.setAlignment(Qt.AlignCenter)
+        self.label_F0_34.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_F0_34, 11, 10, 1, 1)
 
@@ -3277,7 +3237,7 @@ class Ui_MainWindow(object):
         self.label_N0_20.setSizePolicy(sizePolicy4)
         self.label_N0_20.setMaximumSize(QSize(1500000, 1500000))
         self.label_N0_20.setFont(font4)
-        self.label_N0_20.setAlignment(Qt.AlignCenter)
+        self.label_N0_20.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_N0_20, 11, 18, 1, 1)
 
@@ -3287,8 +3247,8 @@ class Ui_MainWindow(object):
         self.circle_F0_26.setSizePolicy(sizePolicy4)
         self.circle_F0_26.setMaximumSize(QSize(1500000, 1500000))
         self.circle_F0_26.setFont(font10)
-        self.circle_F0_26.setTextFormat(Qt.PlainText)
-        self.circle_F0_26.setAlignment(Qt.AlignCenter)
+        self.circle_F0_26.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_F0_26.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_F0_26.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_F0_26, 10, 3, 1, 1)
@@ -3299,8 +3259,8 @@ class Ui_MainWindow(object):
         self.circle_A1_161.setSizePolicy(sizePolicy4)
         self.circle_A1_161.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_161.setFont(font9)
-        self.circle_A1_161.setTextFormat(Qt.PlainText)
-        self.circle_A1_161.setAlignment(Qt.AlignCenter)
+        self.circle_A1_161.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_161.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_161.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_161, 0, 16, 1, 1)
@@ -3311,8 +3271,8 @@ class Ui_MainWindow(object):
         self.circle_H1_28.setSizePolicy(sizePolicy4)
         self.circle_H1_28.setMaximumSize(QSize(1500000, 1500000))
         self.circle_H1_28.setFont(font9)
-        self.circle_H1_28.setTextFormat(Qt.PlainText)
-        self.circle_H1_28.setAlignment(Qt.AlignCenter)
+        self.circle_H1_28.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_H1_28.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_H1_28.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_H1_28, 14, 3, 1, 1)
@@ -3323,7 +3283,7 @@ class Ui_MainWindow(object):
         self.label_J0_41.setSizePolicy(sizePolicy4)
         self.label_J0_41.setMaximumSize(QSize(1500000, 1500000))
         self.label_J0_41.setFont(font4)
-        self.label_J0_41.setAlignment(Qt.AlignCenter)
+        self.label_J0_41.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_J0_41, 3, 17, 1, 1)
 
@@ -3333,8 +3293,8 @@ class Ui_MainWindow(object):
         self.circle_A1_177.setSizePolicy(sizePolicy4)
         self.circle_A1_177.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_177.setFont(font9)
-        self.circle_A1_177.setTextFormat(Qt.PlainText)
-        self.circle_A1_177.setAlignment(Qt.AlignCenter)
+        self.circle_A1_177.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_177.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_177.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_177, 4, 2, 1, 1)
@@ -3345,8 +3305,8 @@ class Ui_MainWindow(object):
         self.circle_A1_216.setSizePolicy(sizePolicy4)
         self.circle_A1_216.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_216.setFont(font9)
-        self.circle_A1_216.setTextFormat(Qt.PlainText)
-        self.circle_A1_216.setAlignment(Qt.AlignCenter)
+        self.circle_A1_216.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_216.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_216.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_216, 12, 3, 1, 1)
@@ -3357,8 +3317,8 @@ class Ui_MainWindow(object):
         self.circle_F0_32.setSizePolicy(sizePolicy4)
         self.circle_F0_32.setMaximumSize(QSize(1500000, 1500000))
         self.circle_F0_32.setFont(font10)
-        self.circle_F0_32.setTextFormat(Qt.PlainText)
-        self.circle_F0_32.setAlignment(Qt.AlignCenter)
+        self.circle_F0_32.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_F0_32.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_F0_32.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_F0_32, 10, 12, 1, 1)
@@ -3369,7 +3329,7 @@ class Ui_MainWindow(object):
         self.label_N0_22.setSizePolicy(sizePolicy4)
         self.label_N0_22.setMaximumSize(QSize(1500000, 1500000))
         self.label_N0_22.setFont(font4)
-        self.label_N0_22.setAlignment(Qt.AlignCenter)
+        self.label_N0_22.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_N0_22, 11, 19, 1, 1)
 
@@ -3379,8 +3339,8 @@ class Ui_MainWindow(object):
         self.circle_A1_200.setSizePolicy(sizePolicy4)
         self.circle_A1_200.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_200.setFont(font9)
-        self.circle_A1_200.setTextFormat(Qt.PlainText)
-        self.circle_A1_200.setAlignment(Qt.AlignCenter)
+        self.circle_A1_200.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_200.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_200.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_200, 4, 4, 1, 1)
@@ -3391,7 +3351,7 @@ class Ui_MainWindow(object):
         self.label_I0_31.setSizePolicy(sizePolicy4)
         self.label_I0_31.setMaximumSize(QSize(1500000, 1500000))
         self.label_I0_31.setFont(font4)
-        self.label_I0_31.setAlignment(Qt.AlignCenter)
+        self.label_I0_31.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_I0_31, 1, 24, 1, 1)
 
@@ -3401,7 +3361,7 @@ class Ui_MainWindow(object):
         self.label_L0_24.setSizePolicy(sizePolicy4)
         self.label_L0_24.setMaximumSize(QSize(1500000, 1500000))
         self.label_L0_24.setFont(font4)
-        self.label_L0_24.setAlignment(Qt.AlignCenter)
+        self.label_L0_24.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_L0_24, 7, 17, 1, 1)
 
@@ -3411,8 +3371,8 @@ class Ui_MainWindow(object):
         self.circle_A1_167.setSizePolicy(sizePolicy4)
         self.circle_A1_167.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_167.setFont(font9)
-        self.circle_A1_167.setTextFormat(Qt.PlainText)
-        self.circle_A1_167.setAlignment(Qt.AlignCenter)
+        self.circle_A1_167.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_167.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_167.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_167, 4, 1, 1, 1)
@@ -3423,8 +3383,8 @@ class Ui_MainWindow(object):
         self.circle_A1_186.setSizePolicy(sizePolicy4)
         self.circle_A1_186.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_186.setFont(font9)
-        self.circle_A1_186.setTextFormat(Qt.PlainText)
-        self.circle_A1_186.setAlignment(Qt.AlignCenter)
+        self.circle_A1_186.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_186.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_186.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_186, 12, 14, 1, 1)
@@ -3435,7 +3395,7 @@ class Ui_MainWindow(object):
         self.label_B0_3.setSizePolicy(sizePolicy4)
         self.label_B0_3.setMaximumSize(QSize(1500000, 1500000))
         self.label_B0_3.setFont(font4)
-        self.label_B0_3.setAlignment(Qt.AlignCenter)
+        self.label_B0_3.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_B0_3, 3, 1, 1, 1)
 
@@ -3445,8 +3405,8 @@ class Ui_MainWindow(object):
         self.circle_E0_25.setSizePolicy(sizePolicy4)
         self.circle_E0_25.setMaximumSize(QSize(1500000, 1500000))
         self.circle_E0_25.setFont(font10)
-        self.circle_E0_25.setTextFormat(Qt.PlainText)
-        self.circle_E0_25.setAlignment(Qt.AlignCenter)
+        self.circle_E0_25.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_E0_25.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_E0_25.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_E0_25, 8, 6, 1, 1)
@@ -3457,8 +3417,8 @@ class Ui_MainWindow(object):
         self.circle_D0_26.setSizePolicy(sizePolicy4)
         self.circle_D0_26.setMaximumSize(QSize(1500000, 1500000))
         self.circle_D0_26.setFont(font10)
-        self.circle_D0_26.setTextFormat(Qt.PlainText)
-        self.circle_D0_26.setAlignment(Qt.AlignCenter)
+        self.circle_D0_26.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_D0_26.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_D0_26.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_D0_26, 6, 3, 1, 1)
@@ -3469,8 +3429,8 @@ class Ui_MainWindow(object):
         self.circle_D0_22.setSizePolicy(sizePolicy4)
         self.circle_D0_22.setMaximumSize(QSize(1500000, 1500000))
         self.circle_D0_22.setFont(font10)
-        self.circle_D0_22.setTextFormat(Qt.PlainText)
-        self.circle_D0_22.setAlignment(Qt.AlignCenter)
+        self.circle_D0_22.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_D0_22.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_D0_22.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_D0_22, 6, 2, 1, 1)
@@ -3481,7 +3441,7 @@ class Ui_MainWindow(object):
         self.circle_A_26.setSizePolicy(sizePolicy4)
         self.circle_A_26.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A_26.setFont(font11)
-        self.circle_A_26.setAlignment(Qt.AlignCenter)
+        self.circle_A_26.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A_26.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A_26, 14, 17, 1, 1)
@@ -3492,8 +3452,8 @@ class Ui_MainWindow(object):
         self.circle_H1_29.setSizePolicy(sizePolicy4)
         self.circle_H1_29.setMaximumSize(QSize(1500000, 1500000))
         self.circle_H1_29.setFont(font9)
-        self.circle_H1_29.setTextFormat(Qt.PlainText)
-        self.circle_H1_29.setAlignment(Qt.AlignCenter)
+        self.circle_H1_29.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_H1_29.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_H1_29.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_H1_29, 14, 8, 1, 1)
@@ -3504,8 +3464,8 @@ class Ui_MainWindow(object):
         self.circle_A1_171.setSizePolicy(sizePolicy4)
         self.circle_A1_171.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_171.setFont(font9)
-        self.circle_A1_171.setTextFormat(Qt.PlainText)
-        self.circle_A1_171.setAlignment(Qt.AlignCenter)
+        self.circle_A1_171.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_171.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_171.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_171, 12, 8, 1, 1)
@@ -3516,7 +3476,7 @@ class Ui_MainWindow(object):
         self.circle_A_25.setSizePolicy(sizePolicy4)
         self.circle_A_25.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A_25.setFont(font11)
-        self.circle_A_25.setAlignment(Qt.AlignCenter)
+        self.circle_A_25.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A_25.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A_25, 2, 0, 1, 1)
@@ -3527,7 +3487,7 @@ class Ui_MainWindow(object):
         self.label_A_22.setSizePolicy(sizePolicy4)
         self.label_A_22.setMaximumSize(QSize(1500000, 1500000))
         self.label_A_22.setFont(font4)
-        self.label_A_22.setAlignment(Qt.AlignCenter)
+        self.label_A_22.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_A_22, 1, 10, 1, 1)
 
@@ -3537,7 +3497,7 @@ class Ui_MainWindow(object):
         self.label_F0_28.setSizePolicy(sizePolicy4)
         self.label_F0_28.setMaximumSize(QSize(1500000, 1500000))
         self.label_F0_28.setFont(font4)
-        self.label_F0_28.setAlignment(Qt.AlignCenter)
+        self.label_F0_28.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_F0_28, 11, 8, 1, 1)
 
@@ -3547,8 +3507,8 @@ class Ui_MainWindow(object):
         self.circle_H1_32.setSizePolicy(sizePolicy4)
         self.circle_H1_32.setMaximumSize(QSize(1500000, 1500000))
         self.circle_H1_32.setFont(font9)
-        self.circle_H1_32.setTextFormat(Qt.PlainText)
-        self.circle_H1_32.setAlignment(Qt.AlignCenter)
+        self.circle_H1_32.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_H1_32.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_H1_32.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_H1_32, 14, 14, 1, 1)
@@ -3559,8 +3519,8 @@ class Ui_MainWindow(object):
         self.circle_A1_194.setSizePolicy(sizePolicy4)
         self.circle_A1_194.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_194.setFont(font9)
-        self.circle_A1_194.setTextFormat(Qt.PlainText)
-        self.circle_A1_194.setAlignment(Qt.AlignCenter)
+        self.circle_A1_194.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_194.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_194.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_194, 0, 17, 1, 1)
@@ -3571,7 +3531,7 @@ class Ui_MainWindow(object):
         self.label_I0_29.setSizePolicy(sizePolicy4)
         self.label_I0_29.setMaximumSize(QSize(1500000, 1500000))
         self.label_I0_29.setFont(font4)
-        self.label_I0_29.setAlignment(Qt.AlignCenter)
+        self.label_I0_29.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_I0_29, 1, 15, 1, 1)
 
@@ -3581,7 +3541,7 @@ class Ui_MainWindow(object):
         self.label_L0_27.setSizePolicy(sizePolicy4)
         self.label_L0_27.setMaximumSize(QSize(1500000, 1500000))
         self.label_L0_27.setFont(font4)
-        self.label_L0_27.setAlignment(Qt.AlignCenter)
+        self.label_L0_27.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_L0_27, 7, 24, 1, 1)
 
@@ -3591,8 +3551,8 @@ class Ui_MainWindow(object):
         self.circle_A1_209.setSizePolicy(sizePolicy4)
         self.circle_A1_209.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_209.setFont(font9)
-        self.circle_A1_209.setTextFormat(Qt.PlainText)
-        self.circle_A1_209.setAlignment(Qt.AlignCenter)
+        self.circle_A1_209.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_209.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_209.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_209, 2, 15, 1, 1)
@@ -3603,7 +3563,7 @@ class Ui_MainWindow(object):
         self.label_G0_33.setSizePolicy(sizePolicy4)
         self.label_G0_33.setMaximumSize(QSize(1500000, 1500000))
         self.label_G0_33.setFont(font4)
-        self.label_G0_33.setAlignment(Qt.AlignCenter)
+        self.label_G0_33.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_G0_33, 13, 9, 1, 1)
 
@@ -3613,8 +3573,8 @@ class Ui_MainWindow(object):
         self.label_A0_18.setSizePolicy(sizePolicy4)
         self.label_A0_18.setMaximumSize(QSize(1500000, 1500000))
         self.label_A0_18.setFont(font14)
-        self.label_A0_18.setLayoutDirection(Qt.LeftToRight)
-        self.label_A0_18.setAlignment(Qt.AlignCenter)
+        self.label_A0_18.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        self.label_A0_18.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_A0_18, 1, 4, 1, 1)
 
@@ -3624,7 +3584,7 @@ class Ui_MainWindow(object):
         self.label_K0_26.setSizePolicy(sizePolicy4)
         self.label_K0_26.setMaximumSize(QSize(1500000, 1500000))
         self.label_K0_26.setFont(font4)
-        self.label_K0_26.setAlignment(Qt.AlignCenter)
+        self.label_K0_26.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_K0_26, 5, 17, 1, 1)
 
@@ -3634,7 +3594,7 @@ class Ui_MainWindow(object):
         self.label_L0_30.setSizePolicy(sizePolicy4)
         self.label_L0_30.setMaximumSize(QSize(1500000, 1500000))
         self.label_L0_30.setFont(font4)
-        self.label_L0_30.setAlignment(Qt.AlignCenter)
+        self.label_L0_30.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_L0_30, 7, 16, 1, 1)
 
@@ -3644,8 +3604,8 @@ class Ui_MainWindow(object):
         self.circle_N0_14.setSizePolicy(sizePolicy4)
         self.circle_N0_14.setMaximumSize(QSize(1500000, 1500000))
         self.circle_N0_14.setFont(font9)
-        self.circle_N0_14.setTextFormat(Qt.PlainText)
-        self.circle_N0_14.setAlignment(Qt.AlignCenter)
+        self.circle_N0_14.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_N0_14.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_N0_14.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_N0_14, 10, 19, 1, 1)
@@ -3656,7 +3616,7 @@ class Ui_MainWindow(object):
         self.circle_A_29.setSizePolicy(sizePolicy4)
         self.circle_A_29.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A_29.setFont(font11)
-        self.circle_A_29.setAlignment(Qt.AlignCenter)
+        self.circle_A_29.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A_29.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A_29, 10, 0, 1, 1)
@@ -3667,7 +3627,7 @@ class Ui_MainWindow(object):
         self.label_Z0_21.setSizePolicy(sizePolicy4)
         self.label_Z0_21.setMaximumSize(QSize(1500000, 1500000))
         self.label_Z0_21.setFont(font4)
-        self.label_Z0_21.setAlignment(Qt.AlignCenter)
+        self.label_Z0_21.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_Z0_21, 15, 20, 1, 1)
 
@@ -3677,7 +3637,7 @@ class Ui_MainWindow(object):
         self.label_M0_26.setSizePolicy(sizePolicy4)
         self.label_M0_26.setMaximumSize(QSize(1500000, 1500000))
         self.label_M0_26.setFont(font4)
-        self.label_M0_26.setAlignment(Qt.AlignCenter)
+        self.label_M0_26.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_M0_26, 9, 24, 1, 1)
 
@@ -3687,7 +3647,7 @@ class Ui_MainWindow(object):
         self.circle_A0_60.setSizePolicy(sizePolicy4)
         self.circle_A0_60.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_60.setFont(font15)
-        self.circle_A0_60.setAlignment(Qt.AlignCenter)
+        self.circle_A0_60.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_60.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_60, 12, 24, 1, 1)
@@ -3698,7 +3658,7 @@ class Ui_MainWindow(object):
         self.circle_A0_71.setSizePolicy(sizePolicy4)
         self.circle_A0_71.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_71.setFont(font15)
-        self.circle_A0_71.setAlignment(Qt.AlignCenter)
+        self.circle_A0_71.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_71.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_71, 14, 24, 1, 1)
@@ -3709,8 +3669,8 @@ class Ui_MainWindow(object):
         self.circle_H1_31.setSizePolicy(sizePolicy4)
         self.circle_H1_31.setMaximumSize(QSize(1500000, 1500000))
         self.circle_H1_31.setFont(font9)
-        self.circle_H1_31.setTextFormat(Qt.PlainText)
-        self.circle_H1_31.setAlignment(Qt.AlignCenter)
+        self.circle_H1_31.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_H1_31.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_H1_31.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_H1_31, 14, 4, 1, 1)
@@ -3721,8 +3681,8 @@ class Ui_MainWindow(object):
         self.circle_E0_30.setSizePolicy(sizePolicy4)
         self.circle_E0_30.setMaximumSize(QSize(1500000, 1500000))
         self.circle_E0_30.setFont(font10)
-        self.circle_E0_30.setTextFormat(Qt.PlainText)
-        self.circle_E0_30.setAlignment(Qt.AlignCenter)
+        self.circle_E0_30.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_E0_30.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_E0_30.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_E0_30, 8, 3, 1, 1)
@@ -3733,7 +3693,7 @@ class Ui_MainWindow(object):
         self.circle_J_4.setSizePolicy(sizePolicy4)
         self.circle_J_4.setMaximumSize(QSize(1500000, 1500000))
         self.circle_J_4.setFont(font12)
-        self.circle_J_4.setAlignment(Qt.AlignCenter)
+        self.circle_J_4.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_J_4.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_J_4, 2, 11, 1, 1)
@@ -3744,8 +3704,8 @@ class Ui_MainWindow(object):
         self.circle_A1_211.setSizePolicy(sizePolicy4)
         self.circle_A1_211.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_211.setFont(font9)
-        self.circle_A1_211.setTextFormat(Qt.PlainText)
-        self.circle_A1_211.setAlignment(Qt.AlignCenter)
+        self.circle_A1_211.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_211.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_211.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_211, 2, 16, 1, 1)
@@ -3756,7 +3716,7 @@ class Ui_MainWindow(object):
         self.circle_A_30.setSizePolicy(sizePolicy4)
         self.circle_A_30.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A_30.setFont(font11)
-        self.circle_A_30.setAlignment(Qt.AlignCenter)
+        self.circle_A_30.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A_30.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A_30, 14, 0, 1, 1)
@@ -3767,7 +3727,7 @@ class Ui_MainWindow(object):
         self.label_G0_31.setSizePolicy(sizePolicy4)
         self.label_G0_31.setMaximumSize(QSize(1500000, 1500000))
         self.label_G0_31.setFont(font4)
-        self.label_G0_31.setAlignment(Qt.AlignCenter)
+        self.label_G0_31.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_G0_31, 13, 12, 1, 1)
 
@@ -3777,8 +3737,8 @@ class Ui_MainWindow(object):
         self.circle_A1_183.setSizePolicy(sizePolicy4)
         self.circle_A1_183.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_183.setFont(font9)
-        self.circle_A1_183.setTextFormat(Qt.PlainText)
-        self.circle_A1_183.setAlignment(Qt.AlignCenter)
+        self.circle_A1_183.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_183.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_183.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_183, 0, 13, 1, 1)
@@ -3789,7 +3749,7 @@ class Ui_MainWindow(object):
         self.label_H0_35.setSizePolicy(sizePolicy4)
         self.label_H0_35.setMaximumSize(QSize(1500000, 1500000))
         self.label_H0_35.setFont(font4)
-        self.label_H0_35.setAlignment(Qt.AlignCenter)
+        self.label_H0_35.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_H0_35, 15, 7, 1, 1)
 
@@ -3799,8 +3759,8 @@ class Ui_MainWindow(object):
         self.circle_A1_203.setSizePolicy(sizePolicy4)
         self.circle_A1_203.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_203.setFont(font9)
-        self.circle_A1_203.setTextFormat(Qt.PlainText)
-        self.circle_A1_203.setAlignment(Qt.AlignCenter)
+        self.circle_A1_203.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_203.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_203.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_203, 10, 1, 1, 1)
@@ -3811,7 +3771,7 @@ class Ui_MainWindow(object):
         self.label_E1_24.setSizePolicy(sizePolicy4)
         self.label_E1_24.setMaximumSize(QSize(1500000, 1500000))
         self.label_E1_24.setFont(font4)
-        self.label_E1_24.setAlignment(Qt.AlignCenter)
+        self.label_E1_24.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_E1_24, 9, 12, 1, 1)
 
@@ -3821,8 +3781,8 @@ class Ui_MainWindow(object):
         self.circle_A1_215.setSizePolicy(sizePolicy4)
         self.circle_A1_215.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_215.setFont(font9)
-        self.circle_A1_215.setTextFormat(Qt.PlainText)
-        self.circle_A1_215.setAlignment(Qt.AlignCenter)
+        self.circle_A1_215.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_215.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_215.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_215, 4, 18, 1, 1)
@@ -3833,8 +3793,8 @@ class Ui_MainWindow(object):
         self.circle_H1_27.setSizePolicy(sizePolicy4)
         self.circle_H1_27.setMaximumSize(QSize(1500000, 1500000))
         self.circle_H1_27.setFont(font9)
-        self.circle_H1_27.setTextFormat(Qt.PlainText)
-        self.circle_H1_27.setAlignment(Qt.AlignCenter)
+        self.circle_H1_27.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_H1_27.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_H1_27.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_H1_27, 14, 2, 1, 1)
@@ -3845,7 +3805,7 @@ class Ui_MainWindow(object):
         self.label_K0_27.setSizePolicy(sizePolicy4)
         self.label_K0_27.setMaximumSize(QSize(1500000, 1500000))
         self.label_K0_27.setFont(font4)
-        self.label_K0_27.setAlignment(Qt.AlignCenter)
+        self.label_K0_27.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_K0_27, 5, 18, 1, 1)
 
@@ -3855,8 +3815,8 @@ class Ui_MainWindow(object):
         self.circle_A1_153.setSizePolicy(sizePolicy4)
         self.circle_A1_153.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_153.setFont(font9)
-        self.circle_A1_153.setTextFormat(Qt.PlainText)
-        self.circle_A1_153.setAlignment(Qt.AlignCenter)
+        self.circle_A1_153.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_153.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_153.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_153, 12, 12, 1, 1)
@@ -3867,8 +3827,8 @@ class Ui_MainWindow(object):
         self.circle_O1_16.setSizePolicy(sizePolicy4)
         self.circle_O1_16.setMaximumSize(QSize(1500000, 1500000))
         self.circle_O1_16.setFont(font9)
-        self.circle_O1_16.setTextFormat(Qt.PlainText)
-        self.circle_O1_16.setAlignment(Qt.AlignCenter)
+        self.circle_O1_16.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_O1_16.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_O1_16.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_O1_16, 12, 23, 1, 1)
@@ -3879,8 +3839,8 @@ class Ui_MainWindow(object):
         self.circle_O1_13.setSizePolicy(sizePolicy4)
         self.circle_O1_13.setMaximumSize(QSize(1500000, 1500000))
         self.circle_O1_13.setFont(font9)
-        self.circle_O1_13.setTextFormat(Qt.PlainText)
-        self.circle_O1_13.setAlignment(Qt.AlignCenter)
+        self.circle_O1_13.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_O1_13.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_O1_13.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_O1_13, 12, 19, 1, 1)
@@ -3891,7 +3851,7 @@ class Ui_MainWindow(object):
         self.label_F0_35.setSizePolicy(sizePolicy4)
         self.label_F0_35.setMaximumSize(QSize(1500000, 1500000))
         self.label_F0_35.setFont(font4)
-        self.label_F0_35.setAlignment(Qt.AlignCenter)
+        self.label_F0_35.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_F0_35, 11, 1, 1, 1)
 
@@ -3901,7 +3861,7 @@ class Ui_MainWindow(object):
         self.label_M0_30.setSizePolicy(sizePolicy4)
         self.label_M0_30.setMaximumSize(QSize(1500000, 1500000))
         self.label_M0_30.setFont(font4)
-        self.label_M0_30.setAlignment(Qt.AlignCenter)
+        self.label_M0_30.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_M0_30, 9, 19, 1, 1)
 
@@ -3911,8 +3871,8 @@ class Ui_MainWindow(object):
         self.circle_A1_191.setSizePolicy(sizePolicy4)
         self.circle_A1_191.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_191.setFont(font9)
-        self.circle_A1_191.setTextFormat(Qt.PlainText)
-        self.circle_A1_191.setAlignment(Qt.AlignCenter)
+        self.circle_A1_191.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_191.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_191.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_191, 0, 22, 1, 1)
@@ -3923,8 +3883,8 @@ class Ui_MainWindow(object):
         self.circle_N6_9.setSizePolicy(sizePolicy4)
         self.circle_N6_9.setMaximumSize(QSize(1500000, 1500000))
         self.circle_N6_9.setFont(font9)
-        self.circle_N6_9.setTextFormat(Qt.PlainText)
-        self.circle_N6_9.setAlignment(Qt.AlignCenter)
+        self.circle_N6_9.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_N6_9.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_N6_9.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_N6_9, 10, 24, 1, 1)
@@ -3935,8 +3895,8 @@ class Ui_MainWindow(object):
         self.circle_A1_206.setSizePolicy(sizePolicy4)
         self.circle_A1_206.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_206.setFont(font9)
-        self.circle_A1_206.setTextFormat(Qt.PlainText)
-        self.circle_A1_206.setAlignment(Qt.AlignCenter)
+        self.circle_A1_206.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_206.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_206.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_206, 0, 4, 1, 1)
@@ -3947,7 +3907,7 @@ class Ui_MainWindow(object):
         self.label_O0_22.setSizePolicy(sizePolicy4)
         self.label_O0_22.setMaximumSize(QSize(1500000, 1500000))
         self.label_O0_22.setFont(font4)
-        self.label_O0_22.setAlignment(Qt.AlignCenter)
+        self.label_O0_22.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_O0_22, 13, 18, 1, 1)
 
@@ -3957,7 +3917,7 @@ class Ui_MainWindow(object):
         self.label_H0_42.setSizePolicy(sizePolicy4)
         self.label_H0_42.setMaximumSize(QSize(1500000, 1500000))
         self.label_H0_42.setFont(font4)
-        self.label_H0_42.setAlignment(Qt.AlignCenter)
+        self.label_H0_42.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_H0_42, 15, 11, 1, 1)
 
@@ -3972,7 +3932,7 @@ class Ui_MainWindow(object):
         font16.setBold(False)
         font16.setStrikeOut(False)
         self.circle_I_4.setFont(font16)
-        self.circle_I_4.setAlignment(Qt.AlignCenter)
+        self.circle_I_4.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_I_4.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_I_4, 0, 10, 1, 1)
@@ -3983,8 +3943,8 @@ class Ui_MainWindow(object):
         self.circle_A1_172.setSizePolicy(sizePolicy4)
         self.circle_A1_172.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_172.setFont(font9)
-        self.circle_A1_172.setTextFormat(Qt.PlainText)
-        self.circle_A1_172.setAlignment(Qt.AlignCenter)
+        self.circle_A1_172.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_172.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_172.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_172, 4, 9, 1, 1)
@@ -3995,8 +3955,8 @@ class Ui_MainWindow(object):
         self.circle_A1_204.setSizePolicy(sizePolicy4)
         self.circle_A1_204.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_204.setFont(font9)
-        self.circle_A1_204.setTextFormat(Qt.PlainText)
-        self.circle_A1_204.setAlignment(Qt.AlignCenter)
+        self.circle_A1_204.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_204.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_204.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_204, 2, 12, 1, 1)
@@ -4007,7 +3967,7 @@ class Ui_MainWindow(object):
         self.label_J0_29.setSizePolicy(sizePolicy4)
         self.label_J0_29.setMaximumSize(QSize(1500000, 1500000))
         self.label_J0_29.setFont(font4)
-        self.label_J0_29.setAlignment(Qt.AlignCenter)
+        self.label_J0_29.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_J0_29, 3, 15, 1, 1)
 
@@ -4017,7 +3977,7 @@ class Ui_MainWindow(object):
         self.label_F0_29.setSizePolicy(sizePolicy4)
         self.label_F0_29.setMaximumSize(QSize(1500000, 1500000))
         self.label_F0_29.setFont(font4)
-        self.label_F0_29.setAlignment(Qt.AlignCenter)
+        self.label_F0_29.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_F0_29, 11, 11, 1, 1)
 
@@ -4027,7 +3987,7 @@ class Ui_MainWindow(object):
         self.label_O0_18.setSizePolicy(sizePolicy4)
         self.label_O0_18.setMaximumSize(QSize(1500000, 1500000))
         self.label_O0_18.setFont(font4)
-        self.label_O0_18.setAlignment(Qt.AlignCenter)
+        self.label_O0_18.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_O0_18, 13, 17, 1, 1)
 
@@ -4037,7 +3997,7 @@ class Ui_MainWindow(object):
         self.label_H0_38.setSizePolicy(sizePolicy4)
         self.label_H0_38.setMaximumSize(QSize(1500000, 1500000))
         self.label_H0_38.setFont(font4)
-        self.label_H0_38.setAlignment(Qt.AlignCenter)
+        self.label_H0_38.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_H0_38, 15, 10, 1, 1)
 
@@ -4047,8 +4007,8 @@ class Ui_MainWindow(object):
         self.circle_M0_30.setSizePolicy(sizePolicy4)
         self.circle_M0_30.setMaximumSize(QSize(1500000, 1500000))
         self.circle_M0_30.setFont(font10)
-        self.circle_M0_30.setTextFormat(Qt.PlainText)
-        self.circle_M0_30.setAlignment(Qt.AlignCenter)
+        self.circle_M0_30.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_M0_30.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_M0_30.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_M0_30, 8, 18, 1, 1)
@@ -4059,7 +4019,7 @@ class Ui_MainWindow(object):
         self.label_F0_27.setSizePolicy(sizePolicy4)
         self.label_F0_27.setMaximumSize(QSize(1500000, 1500000))
         self.label_F0_27.setFont(font4)
-        self.label_F0_27.setAlignment(Qt.AlignCenter)
+        self.label_F0_27.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_F0_27, 11, 6, 1, 1)
 
@@ -4069,7 +4029,7 @@ class Ui_MainWindow(object):
         self.label_M0_22.setSizePolicy(sizePolicy4)
         self.label_M0_22.setMaximumSize(QSize(1500000, 1500000))
         self.label_M0_22.setFont(font4)
-        self.label_M0_22.setAlignment(Qt.AlignCenter)
+        self.label_M0_22.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_M0_22, 9, 15, 1, 1)
 
@@ -4079,7 +4039,7 @@ class Ui_MainWindow(object):
         self.label_F0_39.setSizePolicy(sizePolicy4)
         self.label_F0_39.setMaximumSize(QSize(1500000, 1500000))
         self.label_F0_39.setFont(font4)
-        self.label_F0_39.setAlignment(Qt.AlignCenter)
+        self.label_F0_39.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_F0_39, 11, 12, 1, 1)
 
@@ -4089,7 +4049,7 @@ class Ui_MainWindow(object):
         self.label_H0_39.setSizePolicy(sizePolicy4)
         self.label_H0_39.setMaximumSize(QSize(1500000, 1500000))
         self.label_H0_39.setFont(font4)
-        self.label_H0_39.setAlignment(Qt.AlignCenter)
+        self.label_H0_39.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_H0_39, 15, 14, 1, 1)
 
@@ -4099,7 +4059,7 @@ class Ui_MainWindow(object):
         self.label_H0_32.setSizePolicy(sizePolicy4)
         self.label_H0_32.setMaximumSize(QSize(1500000, 1500000))
         self.label_H0_32.setFont(font4)
-        self.label_H0_32.setAlignment(Qt.AlignCenter)
+        self.label_H0_32.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_H0_32, 15, 15, 1, 1)
 
@@ -4109,7 +4069,7 @@ class Ui_MainWindow(object):
         self.label_E1_28.setSizePolicy(sizePolicy4)
         self.label_E1_28.setMaximumSize(QSize(1500000, 1500000))
         self.label_E1_28.setFont(font4)
-        self.label_E1_28.setAlignment(Qt.AlignCenter)
+        self.label_E1_28.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_E1_28, 9, 2, 1, 1)
 
@@ -4119,7 +4079,7 @@ class Ui_MainWindow(object):
         self.label_D0_32.setSizePolicy(sizePolicy4)
         self.label_D0_32.setMaximumSize(QSize(1500000, 1500000))
         self.label_D0_32.setFont(font4)
-        self.label_D0_32.setAlignment(Qt.AlignCenter)
+        self.label_D0_32.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_D0_32, 7, 11, 1, 1)
 
@@ -4129,7 +4089,7 @@ class Ui_MainWindow(object):
         self.label_M0_21.setSizePolicy(sizePolicy4)
         self.label_M0_21.setMaximumSize(QSize(1500000, 1500000))
         self.label_M0_21.setFont(font4)
-        self.label_M0_21.setAlignment(Qt.AlignCenter)
+        self.label_M0_21.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_M0_21, 9, 22, 1, 1)
 
@@ -4139,8 +4099,8 @@ class Ui_MainWindow(object):
         self.circle_A1_175.setSizePolicy(sizePolicy4)
         self.circle_A1_175.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_175.setFont(font9)
-        self.circle_A1_175.setTextFormat(Qt.PlainText)
-        self.circle_A1_175.setAlignment(Qt.AlignCenter)
+        self.circle_A1_175.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_175.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_175.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_175, 2, 13, 1, 1)
@@ -4151,7 +4111,7 @@ class Ui_MainWindow(object):
         self.label_G0_37.setSizePolicy(sizePolicy4)
         self.label_G0_37.setMaximumSize(QSize(1500000, 1500000))
         self.label_G0_37.setFont(font4)
-        self.label_G0_37.setAlignment(Qt.AlignCenter)
+        self.label_G0_37.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_G0_37, 13, 8, 1, 1)
 
@@ -4161,8 +4121,8 @@ class Ui_MainWindow(object):
         self.circle_A1_166.setSizePolicy(sizePolicy4)
         self.circle_A1_166.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_166.setFont(font9)
-        self.circle_A1_166.setTextFormat(Qt.PlainText)
-        self.circle_A1_166.setAlignment(Qt.AlignCenter)
+        self.circle_A1_166.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_166.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_166.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_166, 0, 23, 1, 1)
@@ -4173,8 +4133,8 @@ class Ui_MainWindow(object):
         self.circle_N6_8.setSizePolicy(sizePolicy4)
         self.circle_N6_8.setMaximumSize(QSize(1500000, 1500000))
         self.circle_N6_8.setFont(font9)
-        self.circle_N6_8.setTextFormat(Qt.PlainText)
-        self.circle_N6_8.setAlignment(Qt.AlignCenter)
+        self.circle_N6_8.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_N6_8.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_N6_8.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_N6_8, 10, 23, 1, 1)
@@ -4185,8 +4145,8 @@ class Ui_MainWindow(object):
         self.circle_M0_29.setSizePolicy(sizePolicy4)
         self.circle_M0_29.setMaximumSize(QSize(1500000, 1500000))
         self.circle_M0_29.setFont(font10)
-        self.circle_M0_29.setTextFormat(Qt.PlainText)
-        self.circle_M0_29.setAlignment(Qt.AlignCenter)
+        self.circle_M0_29.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_M0_29.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_M0_29.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_M0_29, 8, 17, 1, 1)
@@ -4197,8 +4157,8 @@ class Ui_MainWindow(object):
         self.circle_A1_221.setSizePolicy(sizePolicy4)
         self.circle_A1_221.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_221.setFont(font9)
-        self.circle_A1_221.setTextFormat(Qt.PlainText)
-        self.circle_A1_221.setAlignment(Qt.AlignCenter)
+        self.circle_A1_221.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_221.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_221.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_221, 0, 6, 1, 1)
@@ -4209,7 +4169,7 @@ class Ui_MainWindow(object):
         self.label_C0_29.setSizePolicy(sizePolicy4)
         self.label_C0_29.setMaximumSize(QSize(1500000, 1500000))
         self.label_C0_29.setFont(font4)
-        self.label_C0_29.setAlignment(Qt.AlignCenter)
+        self.label_C0_29.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_C0_29, 5, 5, 1, 1)
 
@@ -4219,7 +4179,7 @@ class Ui_MainWindow(object):
         self.label_N0_19.setSizePolicy(sizePolicy4)
         self.label_N0_19.setMaximumSize(QSize(1500000, 1500000))
         self.label_N0_19.setFont(font4)
-        self.label_N0_19.setAlignment(Qt.AlignCenter)
+        self.label_N0_19.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_N0_19, 11, 22, 1, 1)
 
@@ -4229,7 +4189,7 @@ class Ui_MainWindow(object):
         self.label_G0_35.setSizePolicy(sizePolicy4)
         self.label_G0_35.setMaximumSize(QSize(1500000, 1500000))
         self.label_G0_35.setFont(font4)
-        self.label_G0_35.setAlignment(Qt.AlignCenter)
+        self.label_G0_35.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_G0_35, 13, 10, 1, 1)
 
@@ -4239,7 +4199,7 @@ class Ui_MainWindow(object):
         self.label_G0_36.setSizePolicy(sizePolicy4)
         self.label_G0_36.setMaximumSize(QSize(1500000, 1500000))
         self.label_G0_36.setFont(font4)
-        self.label_G0_36.setAlignment(Qt.AlignCenter)
+        self.label_G0_36.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_G0_36, 13, 11, 1, 1)
 
@@ -4249,7 +4209,7 @@ class Ui_MainWindow(object):
         self.label_B5_3.setSizePolicy(sizePolicy4)
         self.label_B5_3.setMaximumSize(QSize(1500000, 1500000))
         self.label_B5_3.setFont(font4)
-        self.label_B5_3.setAlignment(Qt.AlignCenter)
+        self.label_B5_3.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_B5_3, 3, 6, 1, 1)
 
@@ -4259,7 +4219,7 @@ class Ui_MainWindow(object):
         self.label_L0_31.setSizePolicy(sizePolicy4)
         self.label_L0_31.setMaximumSize(QSize(1500000, 1500000))
         self.label_L0_31.setFont(font4)
-        self.label_L0_31.setAlignment(Qt.AlignCenter)
+        self.label_L0_31.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_L0_31, 7, 22, 1, 1)
 
@@ -4269,8 +4229,8 @@ class Ui_MainWindow(object):
         self.circle_D0_23.setSizePolicy(sizePolicy4)
         self.circle_D0_23.setMaximumSize(QSize(1500000, 1500000))
         self.circle_D0_23.setFont(font10)
-        self.circle_D0_23.setTextFormat(Qt.PlainText)
-        self.circle_D0_23.setAlignment(Qt.AlignCenter)
+        self.circle_D0_23.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_D0_23.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_D0_23.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_D0_23, 6, 9, 1, 1)
@@ -4281,7 +4241,7 @@ class Ui_MainWindow(object):
         self.label_F0_30.setSizePolicy(sizePolicy4)
         self.label_F0_30.setMaximumSize(QSize(1500000, 1500000))
         self.label_F0_30.setFont(font4)
-        self.label_F0_30.setAlignment(Qt.AlignCenter)
+        self.label_F0_30.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_F0_30, 11, 9, 1, 1)
 
@@ -4291,8 +4251,8 @@ class Ui_MainWindow(object):
         self.circle_O1_18.setSizePolicy(sizePolicy4)
         self.circle_O1_18.setMaximumSize(QSize(1500000, 1500000))
         self.circle_O1_18.setFont(font9)
-        self.circle_O1_18.setTextFormat(Qt.PlainText)
-        self.circle_O1_18.setAlignment(Qt.AlignCenter)
+        self.circle_O1_18.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_O1_18.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_O1_18.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_O1_18, 12, 20, 1, 1)
@@ -4303,8 +4263,8 @@ class Ui_MainWindow(object):
         self.circle_M0_25.setSizePolicy(sizePolicy4)
         self.circle_M0_25.setMaximumSize(QSize(1500000, 1500000))
         self.circle_M0_25.setFont(font10)
-        self.circle_M0_25.setTextFormat(Qt.PlainText)
-        self.circle_M0_25.setAlignment(Qt.AlignCenter)
+        self.circle_M0_25.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_M0_25.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_M0_25.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_M0_25, 8, 23, 1, 1)
@@ -4315,8 +4275,8 @@ class Ui_MainWindow(object):
         self.circle_L0_24.setSizePolicy(sizePolicy4)
         self.circle_L0_24.setMaximumSize(QSize(1500000, 1500000))
         self.circle_L0_24.setFont(font9)
-        self.circle_L0_24.setTextFormat(Qt.PlainText)
-        self.circle_L0_24.setAlignment(Qt.AlignCenter)
+        self.circle_L0_24.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_L0_24.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_L0_24.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_L0_24, 6, 19, 1, 1)
@@ -4327,8 +4287,8 @@ class Ui_MainWindow(object):
         self.circle_A1_178.setSizePolicy(sizePolicy4)
         self.circle_A1_178.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_178.setFont(font9)
-        self.circle_A1_178.setTextFormat(Qt.PlainText)
-        self.circle_A1_178.setAlignment(Qt.AlignCenter)
+        self.circle_A1_178.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_178.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_178.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_178, 4, 19, 1, 1)
@@ -4339,7 +4299,7 @@ class Ui_MainWindow(object):
         self.label_K0_34.setSizePolicy(sizePolicy4)
         self.label_K0_34.setMaximumSize(QSize(1500000, 1500000))
         self.label_K0_34.setFont(font4)
-        self.label_K0_34.setAlignment(Qt.AlignCenter)
+        self.label_K0_34.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_K0_34, 5, 13, 1, 1)
 
@@ -4349,8 +4309,8 @@ class Ui_MainWindow(object):
         self.circle_D0_24.setSizePolicy(sizePolicy4)
         self.circle_D0_24.setMaximumSize(QSize(1500000, 1500000))
         self.circle_D0_24.setFont(font10)
-        self.circle_D0_24.setTextFormat(Qt.PlainText)
-        self.circle_D0_24.setAlignment(Qt.AlignCenter)
+        self.circle_D0_24.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_D0_24.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_D0_24.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_D0_24, 6, 4, 1, 1)
@@ -4361,7 +4321,7 @@ class Ui_MainWindow(object):
         self.label_K0_30.setSizePolicy(sizePolicy4)
         self.label_K0_30.setMaximumSize(QSize(1500000, 1500000))
         self.label_K0_30.setFont(font4)
-        self.label_K0_30.setAlignment(Qt.AlignCenter)
+        self.label_K0_30.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_K0_30, 5, 15, 1, 1)
 
@@ -4371,8 +4331,8 @@ class Ui_MainWindow(object):
         self.circle_F0_27.setSizePolicy(sizePolicy4)
         self.circle_F0_27.setMaximumSize(QSize(1500000, 1500000))
         self.circle_F0_27.setFont(font10)
-        self.circle_F0_27.setTextFormat(Qt.PlainText)
-        self.circle_F0_27.setAlignment(Qt.AlignCenter)
+        self.circle_F0_27.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_F0_27.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_F0_27.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_F0_27, 10, 6, 1, 1)
@@ -4383,7 +4343,7 @@ class Ui_MainWindow(object):
         self.label_K0_31.setSizePolicy(sizePolicy4)
         self.label_K0_31.setMaximumSize(QSize(1500000, 1500000))
         self.label_K0_31.setFont(font4)
-        self.label_K0_31.setAlignment(Qt.AlignCenter)
+        self.label_K0_31.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_K0_31, 5, 19, 1, 1)
 
@@ -4393,7 +4353,7 @@ class Ui_MainWindow(object):
         self.label_D0_30.setSizePolicy(sizePolicy4)
         self.label_D0_30.setMaximumSize(QSize(1500000, 1500000))
         self.label_D0_30.setFont(font4)
-        self.label_D0_30.setAlignment(Qt.AlignCenter)
+        self.label_D0_30.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_D0_30, 7, 7, 1, 1)
 
@@ -4403,7 +4363,7 @@ class Ui_MainWindow(object):
         self.label_H0_36.setSizePolicy(sizePolicy4)
         self.label_H0_36.setMaximumSize(QSize(1500000, 1500000))
         self.label_H0_36.setFont(font4)
-        self.label_H0_36.setAlignment(Qt.AlignCenter)
+        self.label_H0_36.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_H0_36, 15, 8, 1, 1)
 
@@ -4413,7 +4373,7 @@ class Ui_MainWindow(object):
         self.label_H0_33.setSizePolicy(sizePolicy4)
         self.label_H0_33.setMaximumSize(QSize(1500000, 1500000))
         self.label_H0_33.setFont(font4)
-        self.label_H0_33.setAlignment(Qt.AlignCenter)
+        self.label_H0_33.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_H0_33, 15, 5, 1, 1)
 
@@ -4423,8 +4383,8 @@ class Ui_MainWindow(object):
         self.circle_O1_14.setSizePolicy(sizePolicy4)
         self.circle_O1_14.setMaximumSize(QSize(1500000, 1500000))
         self.circle_O1_14.setFont(font9)
-        self.circle_O1_14.setTextFormat(Qt.PlainText)
-        self.circle_O1_14.setAlignment(Qt.AlignCenter)
+        self.circle_O1_14.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_O1_14.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_O1_14.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_O1_14, 12, 21, 1, 1)
@@ -4435,7 +4395,7 @@ class Ui_MainWindow(object):
         self.circle_A_28.setSizePolicy(sizePolicy4)
         self.circle_A_28.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A_28.setFont(font11)
-        self.circle_A_28.setAlignment(Qt.AlignCenter)
+        self.circle_A_28.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A_28.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A_28, 6, 0, 1, 1)
@@ -4446,8 +4406,8 @@ class Ui_MainWindow(object):
         self.circle_A1_150.setSizePolicy(sizePolicy4)
         self.circle_A1_150.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_150.setFont(font9)
-        self.circle_A1_150.setTextFormat(Qt.PlainText)
-        self.circle_A1_150.setAlignment(Qt.AlignCenter)
+        self.circle_A1_150.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_150.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_150.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_150, 4, 13, 1, 1)
@@ -4458,8 +4418,8 @@ class Ui_MainWindow(object):
         self.circle_H1_34.setSizePolicy(sizePolicy4)
         self.circle_H1_34.setMaximumSize(QSize(1500000, 1500000))
         self.circle_H1_34.setFont(font9)
-        self.circle_H1_34.setTextFormat(Qt.PlainText)
-        self.circle_H1_34.setAlignment(Qt.AlignCenter)
+        self.circle_H1_34.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_H1_34.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_H1_34.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_H1_34, 14, 9, 1, 1)
@@ -4470,8 +4430,8 @@ class Ui_MainWindow(object):
         self.circle_E0_27.setSizePolicy(sizePolicy4)
         self.circle_E0_27.setMaximumSize(QSize(1500000, 1500000))
         self.circle_E0_27.setFont(font10)
-        self.circle_E0_27.setTextFormat(Qt.PlainText)
-        self.circle_E0_27.setAlignment(Qt.AlignCenter)
+        self.circle_E0_27.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_E0_27.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_E0_27.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_E0_27, 8, 8, 1, 1)
@@ -4482,8 +4442,8 @@ class Ui_MainWindow(object):
         self.label_A0_19.setSizePolicy(sizePolicy4)
         self.label_A0_19.setMaximumSize(QSize(1500000, 1500000))
         self.label_A0_19.setFont(font14)
-        self.label_A0_19.setLayoutDirection(Qt.LeftToRight)
-        self.label_A0_19.setAlignment(Qt.AlignCenter)
+        self.label_A0_19.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        self.label_A0_19.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_A0_19, 1, 3, 1, 1)
 
@@ -4493,7 +4453,7 @@ class Ui_MainWindow(object):
         self.label_I0_36.setSizePolicy(sizePolicy4)
         self.label_I0_36.setMaximumSize(QSize(1500000, 1500000))
         self.label_I0_36.setFont(font4)
-        self.label_I0_36.setAlignment(Qt.AlignCenter)
+        self.label_I0_36.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_I0_36, 1, 17, 1, 1)
 
@@ -4503,7 +4463,7 @@ class Ui_MainWindow(object):
         self.label_B2_3.setSizePolicy(sizePolicy4)
         self.label_B2_3.setMaximumSize(QSize(1500000, 1500000))
         self.label_B2_3.setFont(font4)
-        self.label_B2_3.setAlignment(Qt.AlignCenter)
+        self.label_B2_3.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_B2_3, 3, 3, 1, 1)
 
@@ -4513,8 +4473,8 @@ class Ui_MainWindow(object):
         self.circle_A1_156.setSizePolicy(sizePolicy4)
         self.circle_A1_156.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_156.setFont(font9)
-        self.circle_A1_156.setTextFormat(Qt.PlainText)
-        self.circle_A1_156.setAlignment(Qt.AlignCenter)
+        self.circle_A1_156.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_156.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_156.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_156, 4, 17, 1, 1)
@@ -4525,7 +4485,7 @@ class Ui_MainWindow(object):
         self.label_Z0_19.setSizePolicy(sizePolicy4)
         self.label_Z0_19.setMaximumSize(QSize(1500000, 1500000))
         self.label_Z0_19.setFont(font4)
-        self.label_Z0_19.setAlignment(Qt.AlignCenter)
+        self.label_Z0_19.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_Z0_19, 15, 24, 1, 1)
 
@@ -4535,8 +4495,8 @@ class Ui_MainWindow(object):
         self.circle_O1_15.setSizePolicy(sizePolicy4)
         self.circle_O1_15.setMaximumSize(QSize(1500000, 1500000))
         self.circle_O1_15.setFont(font9)
-        self.circle_O1_15.setTextFormat(Qt.PlainText)
-        self.circle_O1_15.setAlignment(Qt.AlignCenter)
+        self.circle_O1_15.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_O1_15.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_O1_15.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_O1_15, 12, 22, 1, 1)
@@ -4547,7 +4507,7 @@ class Ui_MainWindow(object):
         self.label_D0_24.setSizePolicy(sizePolicy4)
         self.label_D0_24.setMaximumSize(QSize(1500000, 1500000))
         self.label_D0_24.setFont(font4)
-        self.label_D0_24.setAlignment(Qt.AlignCenter)
+        self.label_D0_24.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_D0_24, 7, 1, 1, 1)
 
@@ -4557,8 +4517,8 @@ class Ui_MainWindow(object):
         self.circle_L0_25.setSizePolicy(sizePolicy4)
         self.circle_L0_25.setMaximumSize(QSize(1500000, 1500000))
         self.circle_L0_25.setFont(font9)
-        self.circle_L0_25.setTextFormat(Qt.PlainText)
-        self.circle_L0_25.setAlignment(Qt.AlignCenter)
+        self.circle_L0_25.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_L0_25.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_L0_25.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_L0_25, 6, 24, 1, 1)
@@ -4569,8 +4529,8 @@ class Ui_MainWindow(object):
         self.circle_M0_24.setSizePolicy(sizePolicy4)
         self.circle_M0_24.setMaximumSize(QSize(1500000, 1500000))
         self.circle_M0_24.setFont(font10)
-        self.circle_M0_24.setTextFormat(Qt.PlainText)
-        self.circle_M0_24.setAlignment(Qt.AlignCenter)
+        self.circle_M0_24.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_M0_24.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_M0_24.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_M0_24, 8, 15, 1, 1)
@@ -4581,8 +4541,8 @@ class Ui_MainWindow(object):
         self.circle_A1_154.setSizePolicy(sizePolicy4)
         self.circle_A1_154.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_154.setFont(font9)
-        self.circle_A1_154.setTextFormat(Qt.PlainText)
-        self.circle_A1_154.setAlignment(Qt.AlignCenter)
+        self.circle_A1_154.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_154.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_154.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_154, 2, 14, 1, 1)
@@ -4593,7 +4553,7 @@ class Ui_MainWindow(object):
         self.label_H0_41.setSizePolicy(sizePolicy4)
         self.label_H0_41.setMaximumSize(QSize(1500000, 1500000))
         self.label_H0_41.setFont(font4)
-        self.label_H0_41.setAlignment(Qt.AlignCenter)
+        self.label_H0_41.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_H0_41, 15, 4, 1, 1)
 
@@ -4603,8 +4563,8 @@ class Ui_MainWindow(object):
         self.circle_M0_23.setSizePolicy(sizePolicy4)
         self.circle_M0_23.setMaximumSize(QSize(1500000, 1500000))
         self.circle_M0_23.setFont(font10)
-        self.circle_M0_23.setTextFormat(Qt.PlainText)
-        self.circle_M0_23.setAlignment(Qt.AlignCenter)
+        self.circle_M0_23.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_M0_23.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_M0_23.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_M0_23, 8, 19, 1, 1)
@@ -4615,7 +4575,7 @@ class Ui_MainWindow(object):
         self.label_E1_30.setSizePolicy(sizePolicy4)
         self.label_E1_30.setMaximumSize(QSize(1500000, 1500000))
         self.label_E1_30.setFont(font4)
-        self.label_E1_30.setAlignment(Qt.AlignCenter)
+        self.label_E1_30.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_E1_30, 9, 3, 1, 1)
 
@@ -4625,7 +4585,7 @@ class Ui_MainWindow(object):
         self.label_L0_33.setSizePolicy(sizePolicy4)
         self.label_L0_33.setMaximumSize(QSize(1500000, 1500000))
         self.label_L0_33.setFont(font4)
-        self.label_L0_33.setAlignment(Qt.AlignCenter)
+        self.label_L0_33.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_L0_33, 7, 20, 1, 1)
 
@@ -4635,8 +4595,8 @@ class Ui_MainWindow(object):
         self.circle_A1_163.setSizePolicy(sizePolicy4)
         self.circle_A1_163.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_163.setFont(font9)
-        self.circle_A1_163.setTextFormat(Qt.PlainText)
-        self.circle_A1_163.setAlignment(Qt.AlignCenter)
+        self.circle_A1_163.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_163.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_163.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_163, 0, 11, 1, 1)
@@ -4647,8 +4607,8 @@ class Ui_MainWindow(object):
         self.circle_A1_197.setSizePolicy(sizePolicy4)
         self.circle_A1_197.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_197.setFont(font9)
-        self.circle_A1_197.setTextFormat(Qt.PlainText)
-        self.circle_A1_197.setAlignment(Qt.AlignCenter)
+        self.circle_A1_197.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_197.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_197.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_197, 2, 3, 1, 1)
@@ -4659,7 +4619,7 @@ class Ui_MainWindow(object):
         self.label_M0_24.setSizePolicy(sizePolicy4)
         self.label_M0_24.setMaximumSize(QSize(1500000, 1500000))
         self.label_M0_24.setFont(font4)
-        self.label_M0_24.setAlignment(Qt.AlignCenter)
+        self.label_M0_24.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_M0_24, 9, 17, 1, 1)
 
@@ -4669,7 +4629,7 @@ class Ui_MainWindow(object):
         self.label_I0_32.setSizePolicy(sizePolicy4)
         self.label_I0_32.setMaximumSize(QSize(1500000, 1500000))
         self.label_I0_32.setFont(font4)
-        self.label_I0_32.setAlignment(Qt.AlignCenter)
+        self.label_I0_32.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_I0_32, 1, 12, 1, 1)
 
@@ -4679,7 +4639,7 @@ class Ui_MainWindow(object):
         self.label_K0_28.setSizePolicy(sizePolicy4)
         self.label_K0_28.setMaximumSize(QSize(1500000, 1500000))
         self.label_K0_28.setFont(font4)
-        self.label_K0_28.setAlignment(Qt.AlignCenter)
+        self.label_K0_28.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_K0_28, 5, 24, 1, 1)
 
@@ -4689,7 +4649,7 @@ class Ui_MainWindow(object):
         self.label_C0_23.setSizePolicy(sizePolicy4)
         self.label_C0_23.setMaximumSize(QSize(1500000, 1500000))
         self.label_C0_23.setFont(font4)
-        self.label_C0_23.setAlignment(Qt.AlignCenter)
+        self.label_C0_23.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_C0_23, 5, 2, 1, 1)
 
@@ -4699,7 +4659,7 @@ class Ui_MainWindow(object):
         self.label_O0_20.setSizePolicy(sizePolicy4)
         self.label_O0_20.setMaximumSize(QSize(1500000, 1500000))
         self.label_O0_20.setFont(font4)
-        self.label_O0_20.setAlignment(Qt.AlignCenter)
+        self.label_O0_20.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_O0_20, 13, 21, 1, 1)
 
@@ -4709,8 +4669,8 @@ class Ui_MainWindow(object):
         self.circle_A1_159.setSizePolicy(sizePolicy4)
         self.circle_A1_159.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_159.setFont(font9)
-        self.circle_A1_159.setTextFormat(Qt.PlainText)
-        self.circle_A1_159.setAlignment(Qt.AlignCenter)
+        self.circle_A1_159.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_159.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_159.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_159, 12, 7, 1, 1)
@@ -4721,8 +4681,8 @@ class Ui_MainWindow(object):
         self.circle_L0_19.setSizePolicy(sizePolicy4)
         self.circle_L0_19.setMaximumSize(QSize(1500000, 1500000))
         self.circle_L0_19.setFont(font9)
-        self.circle_L0_19.setTextFormat(Qt.PlainText)
-        self.circle_L0_19.setAlignment(Qt.AlignCenter)
+        self.circle_L0_19.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_L0_19.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_L0_19.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_L0_19, 6, 17, 1, 1)
@@ -4733,7 +4693,7 @@ class Ui_MainWindow(object):
         self.label_Z0_16.setSizePolicy(sizePolicy4)
         self.label_Z0_16.setMaximumSize(QSize(1500000, 1500000))
         self.label_Z0_16.setFont(font4)
-        self.label_Z0_16.setAlignment(Qt.AlignCenter)
+        self.label_Z0_16.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_Z0_16, 15, 23, 1, 1)
 
@@ -4743,8 +4703,8 @@ class Ui_MainWindow(object):
         self.circle_A1_208.setSizePolicy(sizePolicy4)
         self.circle_A1_208.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_208.setFont(font9)
-        self.circle_A1_208.setTextFormat(Qt.PlainText)
-        self.circle_A1_208.setAlignment(Qt.AlignCenter)
+        self.circle_A1_208.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_208.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_208.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_208, 4, 7, 1, 1)
@@ -4755,7 +4715,7 @@ class Ui_MainWindow(object):
         self.label_I0_33.setSizePolicy(sizePolicy4)
         self.label_I0_33.setMaximumSize(QSize(1500000, 1500000))
         self.label_I0_33.setFont(font4)
-        self.label_I0_33.setAlignment(Qt.AlignCenter)
+        self.label_I0_33.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_I0_33, 1, 18, 1, 1)
 
@@ -4765,7 +4725,7 @@ class Ui_MainWindow(object):
         self.circle_A_27.setSizePolicy(sizePolicy4)
         self.circle_A_27.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A_27.setFont(font11)
-        self.circle_A_27.setAlignment(Qt.AlignCenter)
+        self.circle_A_27.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A_27.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A_27, 12, 0, 1, 1)
@@ -4776,7 +4736,7 @@ class Ui_MainWindow(object):
         self.label_H0_34.setSizePolicy(sizePolicy4)
         self.label_H0_34.setMaximumSize(QSize(1500000, 1500000))
         self.label_H0_34.setFont(font4)
-        self.label_H0_34.setAlignment(Qt.AlignCenter)
+        self.label_H0_34.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_H0_34, 15, 12, 1, 1)
 
@@ -4786,8 +4746,8 @@ class Ui_MainWindow(object):
         self.circle_A1_190.setSizePolicy(sizePolicy4)
         self.circle_A1_190.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_190.setFont(font9)
-        self.circle_A1_190.setTextFormat(Qt.PlainText)
-        self.circle_A1_190.setAlignment(Qt.AlignCenter)
+        self.circle_A1_190.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_190.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_190.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_190, 2, 18, 1, 1)
@@ -4798,7 +4758,7 @@ class Ui_MainWindow(object):
         self.label_B7_3.setSizePolicy(sizePolicy4)
         self.label_B7_3.setMaximumSize(QSize(1500000, 1500000))
         self.label_B7_3.setFont(font4)
-        self.label_B7_3.setAlignment(Qt.AlignCenter)
+        self.label_B7_3.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_B7_3, 3, 8, 1, 1)
 
@@ -4808,8 +4768,8 @@ class Ui_MainWindow(object):
         self.circle_F0_25.setSizePolicy(sizePolicy4)
         self.circle_F0_25.setMaximumSize(QSize(1500000, 1500000))
         self.circle_F0_25.setFont(font10)
-        self.circle_F0_25.setTextFormat(Qt.PlainText)
-        self.circle_F0_25.setAlignment(Qt.AlignCenter)
+        self.circle_F0_25.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_F0_25.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_F0_25.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_F0_25, 10, 10, 1, 1)
@@ -4820,8 +4780,8 @@ class Ui_MainWindow(object):
         self.circle_A1_214.setSizePolicy(sizePolicy4)
         self.circle_A1_214.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_214.setFont(font9)
-        self.circle_A1_214.setTextFormat(Qt.PlainText)
-        self.circle_A1_214.setAlignment(Qt.AlignCenter)
+        self.circle_A1_214.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_214.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_214.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_214, 4, 15, 1, 1)
@@ -4832,7 +4792,7 @@ class Ui_MainWindow(object):
         self.label_M0_29.setSizePolicy(sizePolicy4)
         self.label_M0_29.setMaximumSize(QSize(1500000, 1500000))
         self.label_M0_29.setFont(font4)
-        self.label_M0_29.setAlignment(Qt.AlignCenter)
+        self.label_M0_29.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_M0_29, 9, 20, 1, 1)
 
@@ -4842,8 +4802,8 @@ class Ui_MainWindow(object):
         self.circle_L0_22.setSizePolicy(sizePolicy4)
         self.circle_L0_22.setMaximumSize(QSize(1500000, 1500000))
         self.circle_L0_22.setFont(font9)
-        self.circle_L0_22.setTextFormat(Qt.PlainText)
-        self.circle_L0_22.setAlignment(Qt.AlignCenter)
+        self.circle_L0_22.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_L0_22.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_L0_22.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_L0_22, 6, 16, 1, 1)
@@ -4854,7 +4814,7 @@ class Ui_MainWindow(object):
         self.label_E0_3.setSizePolicy(sizePolicy4)
         self.label_E0_3.setMaximumSize(QSize(1500000, 1500000))
         self.label_E0_3.setFont(font4)
-        self.label_E0_3.setAlignment(Qt.AlignCenter)
+        self.label_E0_3.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_E0_3, 9, 1, 1, 1)
 
@@ -4864,7 +4824,7 @@ class Ui_MainWindow(object):
         self.label_G0_32.setSizePolicy(sizePolicy4)
         self.label_G0_32.setMaximumSize(QSize(1500000, 1500000))
         self.label_G0_32.setFont(font4)
-        self.label_G0_32.setAlignment(Qt.AlignCenter)
+        self.label_G0_32.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_G0_32, 13, 14, 1, 1)
 
@@ -4874,7 +4834,7 @@ class Ui_MainWindow(object):
         self.label_E1_29.setSizePolicy(sizePolicy4)
         self.label_E1_29.setMaximumSize(QSize(1500000, 1500000))
         self.label_E1_29.setFont(font4)
-        self.label_E1_29.setAlignment(Qt.AlignCenter)
+        self.label_E1_29.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_E1_29, 9, 10, 1, 1)
 
@@ -4884,8 +4844,8 @@ class Ui_MainWindow(object):
         self.circle_A1_170.setSizePolicy(sizePolicy4)
         self.circle_A1_170.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_170.setFont(font9)
-        self.circle_A1_170.setTextFormat(Qt.PlainText)
-        self.circle_A1_170.setAlignment(Qt.AlignCenter)
+        self.circle_A1_170.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_170.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_170.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_170, 0, 8, 1, 1)
@@ -4896,8 +4856,8 @@ class Ui_MainWindow(object):
         self.circle_E0_32.setSizePolicy(sizePolicy4)
         self.circle_E0_32.setMaximumSize(QSize(1500000, 1500000))
         self.circle_E0_32.setFont(font10)
-        self.circle_E0_32.setTextFormat(Qt.PlainText)
-        self.circle_E0_32.setAlignment(Qt.AlignCenter)
+        self.circle_E0_32.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_E0_32.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_E0_32.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_E0_32, 8, 5, 1, 1)
@@ -4908,8 +4868,8 @@ class Ui_MainWindow(object):
         self.circle_A1_223.setSizePolicy(sizePolicy4)
         self.circle_A1_223.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_223.setFont(font9)
-        self.circle_A1_223.setTextFormat(Qt.PlainText)
-        self.circle_A1_223.setAlignment(Qt.AlignCenter)
+        self.circle_A1_223.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_223.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_223.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_223, 2, 6, 1, 1)
@@ -4920,8 +4880,8 @@ class Ui_MainWindow(object):
         self.circle_L0_26.setSizePolicy(sizePolicy4)
         self.circle_L0_26.setMaximumSize(QSize(1500000, 1500000))
         self.circle_L0_26.setFont(font9)
-        self.circle_L0_26.setTextFormat(Qt.PlainText)
-        self.circle_L0_26.setAlignment(Qt.AlignCenter)
+        self.circle_L0_26.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_L0_26.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_L0_26.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_L0_26, 6, 22, 1, 1)
@@ -4932,8 +4892,8 @@ class Ui_MainWindow(object):
         self.circle_A1_220.setSizePolicy(sizePolicy4)
         self.circle_A1_220.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A1_220.setFont(font9)
-        self.circle_A1_220.setTextFormat(Qt.PlainText)
-        self.circle_A1_220.setAlignment(Qt.AlignCenter)
+        self.circle_A1_220.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A1_220.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A1_220.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A1_220, 0, 12, 1, 1)
@@ -4944,8 +4904,8 @@ class Ui_MainWindow(object):
         self.circle_N0_15.setSizePolicy(sizePolicy4)
         self.circle_N0_15.setMaximumSize(QSize(1500000, 1500000))
         self.circle_N0_15.setFont(font9)
-        self.circle_N0_15.setTextFormat(Qt.PlainText)
-        self.circle_N0_15.setAlignment(Qt.AlignCenter)
+        self.circle_N0_15.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_N0_15.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_N0_15.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_N0_15, 10, 20, 1, 1)
@@ -4956,7 +4916,7 @@ class Ui_MainWindow(object):
         self.label_E1_32.setSizePolicy(sizePolicy4)
         self.label_E1_32.setMaximumSize(QSize(1500000, 1500000))
         self.label_E1_32.setFont(font4)
-        self.label_E1_32.setAlignment(Qt.AlignCenter)
+        self.label_E1_32.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_E1_32, 9, 9, 1, 1)
 
@@ -4966,7 +4926,7 @@ class Ui_MainWindow(object):
         self.label_D0_31.setSizePolicy(sizePolicy4)
         self.label_D0_31.setMaximumSize(QSize(1500000, 1500000))
         self.label_D0_31.setFont(font4)
-        self.label_D0_31.setAlignment(Qt.AlignCenter)
+        self.label_D0_31.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_D0_31, 7, 8, 1, 1)
 
@@ -4976,7 +4936,7 @@ class Ui_MainWindow(object):
         self.label_I0_37.setSizePolicy(sizePolicy4)
         self.label_I0_37.setMaximumSize(QSize(1500000, 1500000))
         self.label_I0_37.setFont(font4)
-        self.label_I0_37.setAlignment(Qt.AlignCenter)
+        self.label_I0_37.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_I0_37, 1, 19, 1, 1)
 
@@ -4986,7 +4946,7 @@ class Ui_MainWindow(object):
         self.label_N0_27.setSizePolicy(sizePolicy4)
         self.label_N0_27.setMaximumSize(QSize(1500000, 1500000))
         self.label_N0_27.setFont(font4)
-        self.label_N0_27.setAlignment(Qt.AlignCenter)
+        self.label_N0_27.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_N0_27, 11, 20, 1, 1)
 
@@ -4996,8 +4956,8 @@ class Ui_MainWindow(object):
         self.circle_F0_29.setSizePolicy(sizePolicy4)
         self.circle_F0_29.setMaximumSize(QSize(1500000, 1500000))
         self.circle_F0_29.setFont(font10)
-        self.circle_F0_29.setTextFormat(Qt.PlainText)
-        self.circle_F0_29.setAlignment(Qt.AlignCenter)
+        self.circle_F0_29.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_F0_29.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_F0_29.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_F0_29, 10, 13, 1, 1)
@@ -5008,7 +4968,7 @@ class Ui_MainWindow(object):
         self.label_I0_30.setSizePolicy(sizePolicy4)
         self.label_I0_30.setMaximumSize(QSize(1500000, 1500000))
         self.label_I0_30.setFont(font4)
-        self.label_I0_30.setAlignment(Qt.AlignCenter)
+        self.label_I0_30.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_I0_30, 1, 20, 1, 1)
 
@@ -5018,8 +4978,8 @@ class Ui_MainWindow(object):
         self.circle_A0_84.setSizePolicy(sizePolicy4)
         self.circle_A0_84.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_84.setFont(font15)
-        self.circle_A0_84.setTextFormat(Qt.PlainText)
-        self.circle_A0_84.setAlignment(Qt.AlignCenter)
+        self.circle_A0_84.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A0_84.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_84.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_84, 6, 18, 1, 1)
@@ -5030,8 +4990,8 @@ class Ui_MainWindow(object):
         self.circle_A0_85.setSizePolicy(sizePolicy4)
         self.circle_A0_85.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_85.setFont(font15)
-        self.circle_A0_85.setTextFormat(Qt.PlainText)
-        self.circle_A0_85.setAlignment(Qt.AlignCenter)
+        self.circle_A0_85.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A0_85.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_85.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_85, 8, 4, 1, 1)
@@ -5042,8 +5002,8 @@ class Ui_MainWindow(object):
         self.circle_A0_86.setSizePolicy(sizePolicy4)
         self.circle_A0_86.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_86.setFont(font15)
-        self.circle_A0_86.setTextFormat(Qt.PlainText)
-        self.circle_A0_86.setAlignment(Qt.AlignCenter)
+        self.circle_A0_86.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A0_86.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_86.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_86, 10, 2, 1, 1)
@@ -5054,8 +5014,8 @@ class Ui_MainWindow(object):
         self.circle_A0_87.setSizePolicy(sizePolicy4)
         self.circle_A0_87.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_87.setFont(font15)
-        self.circle_A0_87.setTextFormat(Qt.PlainText)
-        self.circle_A0_87.setAlignment(Qt.AlignCenter)
+        self.circle_A0_87.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A0_87.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_87.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_87, 10, 21, 1, 1)
@@ -5066,8 +5026,8 @@ class Ui_MainWindow(object):
         self.circle_A0_75.setSizePolicy(sizePolicy4)
         self.circle_A0_75.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_75.setFont(font15)
-        self.circle_A0_75.setTextFormat(Qt.PlainText)
-        self.circle_A0_75.setAlignment(Qt.AlignCenter)
+        self.circle_A0_75.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A0_75.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_75.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_75, 12, 10, 1, 1)
@@ -5078,8 +5038,8 @@ class Ui_MainWindow(object):
         self.circle_A0_88.setSizePolicy(sizePolicy4)
         self.circle_A0_88.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_88.setFont(font15)
-        self.circle_A0_88.setTextFormat(Qt.PlainText)
-        self.circle_A0_88.setAlignment(Qt.AlignCenter)
+        self.circle_A0_88.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A0_88.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_88.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_88, 12, 17, 1, 1)
@@ -5090,8 +5050,8 @@ class Ui_MainWindow(object):
         self.circle_A0_76.setSizePolicy(sizePolicy4)
         self.circle_A0_76.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_76.setFont(font15)
-        self.circle_A0_76.setTextFormat(Qt.PlainText)
-        self.circle_A0_76.setAlignment(Qt.AlignCenter)
+        self.circle_A0_76.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A0_76.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_76.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_76, 14, 1, 1, 1)
@@ -5102,8 +5062,8 @@ class Ui_MainWindow(object):
         self.circle_A0_89.setSizePolicy(sizePolicy4)
         self.circle_A0_89.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_89.setFont(font15)
-        self.circle_A0_89.setTextFormat(Qt.PlainText)
-        self.circle_A0_89.setAlignment(Qt.AlignCenter)
+        self.circle_A0_89.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A0_89.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_89.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_89, 14, 15, 1, 1)
@@ -5114,8 +5074,8 @@ class Ui_MainWindow(object):
         self.circle_A0_72.setSizePolicy(sizePolicy4)
         self.circle_A0_72.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_72.setFont(font15)
-        self.circle_A0_72.setTextFormat(Qt.PlainText)
-        self.circle_A0_72.setAlignment(Qt.AlignCenter)
+        self.circle_A0_72.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A0_72.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_72.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_72, 14, 18, 1, 1)
@@ -5126,8 +5086,8 @@ class Ui_MainWindow(object):
         self.circle_A0_73.setSizePolicy(sizePolicy4)
         self.circle_A0_73.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_73.setFont(font15)
-        self.circle_A0_73.setTextFormat(Qt.PlainText)
-        self.circle_A0_73.setAlignment(Qt.AlignCenter)
+        self.circle_A0_73.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A0_73.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_73.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_73, 14, 19, 1, 1)
@@ -5138,8 +5098,8 @@ class Ui_MainWindow(object):
         self.circle_A0_90.setSizePolicy(sizePolicy4)
         self.circle_A0_90.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_90.setFont(font15)
-        self.circle_A0_90.setTextFormat(Qt.PlainText)
-        self.circle_A0_90.setAlignment(Qt.AlignCenter)
+        self.circle_A0_90.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A0_90.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_90.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_90, 14, 20, 1, 1)
@@ -5150,8 +5110,8 @@ class Ui_MainWindow(object):
         self.circle_A0_91.setSizePolicy(sizePolicy4)
         self.circle_A0_91.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_91.setFont(font15)
-        self.circle_A0_91.setTextFormat(Qt.PlainText)
-        self.circle_A0_91.setAlignment(Qt.AlignCenter)
+        self.circle_A0_91.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A0_91.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_91.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_91, 14, 21, 1, 1)
@@ -5162,8 +5122,8 @@ class Ui_MainWindow(object):
         self.circle_A0_92.setSizePolicy(sizePolicy4)
         self.circle_A0_92.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_92.setFont(font15)
-        self.circle_A0_92.setTextFormat(Qt.PlainText)
-        self.circle_A0_92.setAlignment(Qt.AlignCenter)
+        self.circle_A0_92.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A0_92.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_92.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_92, 14, 22, 1, 1)
@@ -5174,8 +5134,8 @@ class Ui_MainWindow(object):
         self.circle_A0_93.setSizePolicy(sizePolicy4)
         self.circle_A0_93.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_93.setFont(font15)
-        self.circle_A0_93.setTextFormat(Qt.PlainText)
-        self.circle_A0_93.setAlignment(Qt.AlignCenter)
+        self.circle_A0_93.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A0_93.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_93.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_93, 14, 23, 1, 1)
@@ -5183,8 +5143,8 @@ class Ui_MainWindow(object):
         self.label_4 = QLabel(self.gridLayoutWidget)
         self.label_4.setObjectName(u"label_4")
         self.label_4.setFont(font9)
-        self.label_4.setTextFormat(Qt.PlainText)
-        self.label_4.setAlignment(Qt.AlignCenter)
+        self.label_4.setTextFormat(Qt.TextFormat.PlainText)
+        self.label_4.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout_4.addWidget(self.label_4, 0, 2, 1, 1)
 
@@ -5194,8 +5154,8 @@ class Ui_MainWindow(object):
         self.circle_A0_77.setSizePolicy(sizePolicy4)
         self.circle_A0_77.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_77.setFont(font15)
-        self.circle_A0_77.setTextFormat(Qt.PlainText)
-        self.circle_A0_77.setAlignment(Qt.AlignCenter)
+        self.circle_A0_77.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A0_77.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_77.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_77, 0, 15, 1, 1)
@@ -5206,8 +5166,8 @@ class Ui_MainWindow(object):
         self.circle_A0_78.setSizePolicy(sizePolicy4)
         self.circle_A0_78.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_78.setFont(font15)
-        self.circle_A0_78.setTextFormat(Qt.PlainText)
-        self.circle_A0_78.setAlignment(Qt.AlignCenter)
+        self.circle_A0_78.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A0_78.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_78.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_78, 2, 9, 1, 1)
@@ -5218,8 +5178,8 @@ class Ui_MainWindow(object):
         self.circle_A0_79.setSizePolicy(sizePolicy4)
         self.circle_A0_79.setMaximumSize(QSize(1500000, 1500000))
         self.circle_A0_79.setFont(font15)
-        self.circle_A0_79.setTextFormat(Qt.PlainText)
-        self.circle_A0_79.setAlignment(Qt.AlignCenter)
+        self.circle_A0_79.setTextFormat(Qt.TextFormat.PlainText)
+        self.circle_A0_79.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.circle_A0_79.setWordWrap(False)
 
         self.gridLayout_4.addWidget(self.circle_A0_79, 2, 23, 1, 1)
@@ -5232,7 +5192,7 @@ class Ui_MainWindow(object):
         self.lineEdit_adc_counts.setObjectName(u"lineEdit_adc_counts")
         self.lineEdit_adc_counts.setGeometry(QRect(200, 62, 61, 25))
         self.lineEdit_adc_counts.setFont(font2)
-        self.lineEdit_adc_counts.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+        self.lineEdit_adc_counts.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignTrailing|Qt.AlignmentFlag.AlignVCenter)
         self.pushbtn_adc_home = QPushButton(self.group_adc)
         self.pushbtn_adc_home.setObjectName(u"pushbtn_adc_home")
         self.pushbtn_adc_home.setGeometry(QRect(100, 100, 71, 31))
@@ -5274,8 +5234,9 @@ class Ui_MainWindow(object):
         self.label_MTL_exptime.setFont(font2)
         self.lineEdit_MTL_exptime = QLineEdit(self.group_metrology)
         self.lineEdit_MTL_exptime.setObjectName(u"lineEdit_MTL_exptime")
-        self.lineEdit_MTL_exptime.setGeometry(QRect(60, 33, 50, 25))
+        self.lineEdit_MTL_exptime.setGeometry(QRect(51, 33, 50, 25))
         self.lineEdit_MTL_exptime.setFont(font2)
+        self.lineEdit_MTL_exptime.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.pushbtn_MTL_cal = QPushButton(self.group_metrology)
         self.pushbtn_MTL_cal.setObjectName(u"pushbtn_MTL_cal")
         self.pushbtn_MTL_cal.setGeometry(QRect(130, 100, 91, 31))
@@ -5292,30 +5253,27 @@ class Ui_MainWindow(object):
         self.label_MTL_file.setFont(font2)
         self.lineEdit_MTL_file = QLineEdit(self.group_metrology)
         self.lineEdit_MTL_file.setObjectName(u"lineEdit_MTL_file")
-        self.lineEdit_MTL_file.setGeometry(QRect(60, 67, 161, 25))
-        font17 = QFont()
-        font17.setFamilies([u"Arial"])
-        font17.setPointSize(9)
-        font17.setBold(False)
-        font17.setStrikeOut(False)
-        self.lineEdit_MTL_file.setFont(font17)
+        self.lineEdit_MTL_file.setGeometry(QRect(50, 67, 171, 25))
+        self.lineEdit_MTL_file.setFont(font2)
+        self.lineEdit_MTL_file.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label__MTL_expnum = QLabel(self.group_metrology)
         self.label__MTL_expnum.setObjectName(u"label__MTL_expnum")
-        self.label__MTL_expnum.setGeometry(QRect(118, 33, 51, 21))
+        self.label__MTL_expnum.setGeometry(QRect(126, 33, 40, 21))
         self.label__MTL_expnum.setFont(font2)
         self.lineEdit_MTL_expnum = QLineEdit(self.group_metrology)
         self.lineEdit_MTL_expnum.setObjectName(u"lineEdit_MTL_expnum")
         self.lineEdit_MTL_expnum.setGeometry(QRect(170, 33, 50, 25))
         self.lineEdit_MTL_expnum.setFont(font2)
+        self.lineEdit_MTL_expnum.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.group_gfa = QGroupBox(self.tab_status)
         self.group_gfa.setObjectName(u"group_gfa")
         self.group_gfa.setGeometry(QRect(0, 144, 281, 121))
         self.group_gfa.setFont(font1)
         self.lineEdit_GFA_exptime = QLineEdit(self.group_gfa)
         self.lineEdit_GFA_exptime.setObjectName(u"lineEdit_GFA_exptime")
-        self.lineEdit_GFA_exptime.setGeometry(QRect(100, 30, 61, 25))
-        self.lineEdit_GFA_exptime.setFont(font17)
-        self.lineEdit_GFA_exptime.setAlignment(Qt.AlignCenter)
+        self.lineEdit_GFA_exptime.setGeometry(QRect(90, 30, 71, 25))
+        self.lineEdit_GFA_exptime.setFont(font2)
+        self.lineEdit_GFA_exptime.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label_GFA_exptime = QLabel(self.group_gfa)
         self.label_GFA_exptime.setObjectName(u"label_GFA_exptime")
         self.label_GFA_exptime.setGeometry(QRect(10, 30, 97, 23))
@@ -5326,9 +5284,9 @@ class Ui_MainWindow(object):
         self.label_GFA_exptime_2.setFont(font2)
         self.lineEdit_GFA_cam = QLineEdit(self.group_gfa)
         self.lineEdit_GFA_cam.setObjectName(u"lineEdit_GFA_cam")
-        self.lineEdit_GFA_cam.setGeometry(QRect(100, 60, 61, 25))
-        self.lineEdit_GFA_cam.setFont(font17)
-        self.lineEdit_GFA_cam.setAlignment(Qt.AlignCenter)
+        self.lineEdit_GFA_cam.setGeometry(QRect(90, 60, 71, 25))
+        self.lineEdit_GFA_cam.setFont(font2)
+        self.lineEdit_GFA_cam.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.pushbtn_GFArun = QPushButton(self.group_gfa)
         self.pushbtn_GFArun.setObjectName(u"pushbtn_GFArun")
         self.pushbtn_GFArun.setGeometry(QRect(180, 80, 71, 31))
@@ -5369,37 +5327,37 @@ class Ui_MainWindow(object):
         self.label_status_gfa_2.setObjectName(u"label_status_gfa_2")
         self.label_status_gfa_2.setGeometry(QRect(24, 41, 69, 29))
         self.label_status_gfa_2.setFont(font2)
-        self.label_status_gfa_2.setAlignment(Qt.AlignCenter)
+        self.label_status_gfa_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label_status_adc_2 = QLabel(self.group_status_2)
         self.label_status_adc_2.setObjectName(u"label_status_adc_2")
         self.label_status_adc_2.setGeometry(QRect(106, 41, 69, 29))
         self.label_status_adc_2.setFont(font2)
-        self.label_status_adc_2.setAlignment(Qt.AlignCenter)
+        self.label_status_adc_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label_status_fiber_2 = QLabel(self.group_status_2)
         self.label_status_fiber_2.setObjectName(u"label_status_fiber_2")
         self.label_status_fiber_2.setGeometry(QRect(195, 41, 71, 29))
         self.label_status_fiber_2.setFont(font2)
-        self.label_status_fiber_2.setAlignment(Qt.AlignCenter)
+        self.label_status_fiber_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label_status_finder_2 = QLabel(self.group_status_2)
         self.label_status_finder_2.setObjectName(u"label_status_finder_2")
         self.label_status_finder_2.setGeometry(QRect(290, 41, 71, 29))
         self.label_status_finder_2.setFont(font2)
-        self.label_status_finder_2.setAlignment(Qt.AlignCenter)
+        self.label_status_finder_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label_status_metrology_2 = QLabel(self.group_status_2)
         self.label_status_metrology_2.setObjectName(u"label_status_metrology_2")
         self.label_status_metrology_2.setGeometry(QRect(381, 41, 119, 29))
         self.label_status_metrology_2.setFont(font2)
-        self.label_status_metrology_2.setAlignment(Qt.AlignCenter)
+        self.label_status_metrology_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label_status_spectrograph_2 = QLabel(self.group_status_2)
         self.label_status_spectrograph_2.setObjectName(u"label_status_spectrograph_2")
         self.label_status_spectrograph_2.setGeometry(QRect(512, 41, 149, 29))
         self.label_status_spectrograph_2.setFont(font2)
-        self.label_status_spectrograph_2.setAlignment(Qt.AlignCenter)
+        self.label_status_spectrograph_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label_status_lamp_2 = QLabel(self.group_status_2)
         self.label_status_lamp_2.setObjectName(u"label_status_lamp_2")
         self.label_status_lamp_2.setGeometry(QRect(677, 41, 71, 29))
         self.label_status_lamp_2.setFont(font2)
-        self.label_status_lamp_2.setAlignment(Qt.AlignCenter)
+        self.label_status_lamp_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.pushbtn_reset2 = QPushButton(self.group_status_2)
         self.pushbtn_reset2.setObjectName(u"pushbtn_reset2")
         self.pushbtn_reset2.setGeometry(QRect(770, 30, 171, 51))
@@ -5412,56 +5370,56 @@ class Ui_MainWindow(object):
         sizePolicy2.setHeightForWidth(self.ok_status_gfa_2.sizePolicy().hasHeightForWidth())
         self.ok_status_gfa_2.setSizePolicy(sizePolicy2)
         self.ok_status_gfa_2.setFont(font6)
-        self.ok_status_gfa_2.setTextFormat(Qt.PlainText)
-        self.ok_status_gfa_2.setAlignment(Qt.AlignCenter)
+        self.ok_status_gfa_2.setTextFormat(Qt.TextFormat.PlainText)
+        self.ok_status_gfa_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ok_status_adc_2 = QLabel(self.group_status_2)
         self.ok_status_adc_2.setObjectName(u"ok_status_adc_2")
         self.ok_status_adc_2.setGeometry(QRect(89, 39, 29, 29))
         sizePolicy2.setHeightForWidth(self.ok_status_adc_2.sizePolicy().hasHeightForWidth())
         self.ok_status_adc_2.setSizePolicy(sizePolicy2)
         self.ok_status_adc_2.setFont(font6)
-        self.ok_status_adc_2.setTextFormat(Qt.PlainText)
-        self.ok_status_adc_2.setAlignment(Qt.AlignCenter)
+        self.ok_status_adc_2.setTextFormat(Qt.TextFormat.PlainText)
+        self.ok_status_adc_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ok_status_fiber_2 = QLabel(self.group_status_2)
         self.ok_status_fiber_2.setObjectName(u"ok_status_fiber_2")
         self.ok_status_fiber_2.setGeometry(QRect(179, 39, 29, 29))
         sizePolicy2.setHeightForWidth(self.ok_status_fiber_2.sizePolicy().hasHeightForWidth())
         self.ok_status_fiber_2.setSizePolicy(sizePolicy2)
         self.ok_status_fiber_2.setFont(font6)
-        self.ok_status_fiber_2.setTextFormat(Qt.PlainText)
-        self.ok_status_fiber_2.setAlignment(Qt.AlignCenter)
+        self.ok_status_fiber_2.setTextFormat(Qt.TextFormat.PlainText)
+        self.ok_status_fiber_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ok_status_finder_2 = QLabel(self.group_status_2)
         self.ok_status_finder_2.setObjectName(u"ok_status_finder_2")
         self.ok_status_finder_2.setGeometry(QRect(269, 39, 29, 29))
         sizePolicy2.setHeightForWidth(self.ok_status_finder_2.sizePolicy().hasHeightForWidth())
         self.ok_status_finder_2.setSizePolicy(sizePolicy2)
         self.ok_status_finder_2.setFont(font6)
-        self.ok_status_finder_2.setTextFormat(Qt.PlainText)
-        self.ok_status_finder_2.setAlignment(Qt.AlignCenter)
+        self.ok_status_finder_2.setTextFormat(Qt.TextFormat.PlainText)
+        self.ok_status_finder_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ok_status_metrology_2 = QLabel(self.group_status_2)
         self.ok_status_metrology_2.setObjectName(u"ok_status_metrology_2")
         self.ok_status_metrology_2.setGeometry(QRect(369, 39, 29, 29))
         sizePolicy2.setHeightForWidth(self.ok_status_metrology_2.sizePolicy().hasHeightForWidth())
         self.ok_status_metrology_2.setSizePolicy(sizePolicy2)
         self.ok_status_metrology_2.setFont(font6)
-        self.ok_status_metrology_2.setTextFormat(Qt.PlainText)
-        self.ok_status_metrology_2.setAlignment(Qt.AlignCenter)
+        self.ok_status_metrology_2.setTextFormat(Qt.TextFormat.PlainText)
+        self.ok_status_metrology_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ok_status_spectrograph_2 = QLabel(self.group_status_2)
         self.ok_status_spectrograph_2.setObjectName(u"ok_status_spectrograph_2")
         self.ok_status_spectrograph_2.setGeometry(QRect(499, 39, 29, 29))
         sizePolicy2.setHeightForWidth(self.ok_status_spectrograph_2.sizePolicy().hasHeightForWidth())
         self.ok_status_spectrograph_2.setSizePolicy(sizePolicy2)
         self.ok_status_spectrograph_2.setFont(font6)
-        self.ok_status_spectrograph_2.setTextFormat(Qt.PlainText)
-        self.ok_status_spectrograph_2.setAlignment(Qt.AlignCenter)
+        self.ok_status_spectrograph_2.setTextFormat(Qt.TextFormat.PlainText)
+        self.ok_status_spectrograph_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ok_status_lamp_2 = QLabel(self.group_status_2)
         self.ok_status_lamp_2.setObjectName(u"ok_status_lamp_2")
         self.ok_status_lamp_2.setGeometry(QRect(659, 39, 29, 31))
         sizePolicy2.setHeightForWidth(self.ok_status_lamp_2.sizePolicy().hasHeightForWidth())
         self.ok_status_lamp_2.setSizePolicy(sizePolicy2)
         self.ok_status_lamp_2.setFont(font6)
-        self.ok_status_lamp_2.setTextFormat(Qt.PlainText)
-        self.ok_status_lamp_2.setAlignment(Qt.AlignCenter)
+        self.ok_status_lamp_2.setTextFormat(Qt.TextFormat.PlainText)
+        self.ok_status_lamp_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.group_subsytem_2 = QGroupBox(self.tab_status)
         self.group_subsytem_2.setObjectName(u"group_subsytem_2")
         self.group_subsytem_2.setGeometry(QRect(530, 90, 951, 81))
@@ -5527,8 +5485,9 @@ class Ui_MainWindow(object):
         self.pushbtn_finder_exp.setGeometry(QRect(190, 40, 71, 31))
         self.lineEdit_finder_exptime = QLineEdit(self.group_finder)
         self.lineEdit_finder_exptime.setObjectName(u"lineEdit_finder_exptime")
-        self.lineEdit_finder_exptime.setGeometry(QRect(100, 40, 61, 25))
-        self.lineEdit_finder_exptime.setFont(font17)
+        self.lineEdit_finder_exptime.setGeometry(QRect(90, 40, 71, 25))
+        self.lineEdit_finder_exptime.setFont(font2)
+        self.lineEdit_finder_exptime.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label_finder_exptime = QLabel(self.group_finder)
         self.label_finder_exptime.setObjectName(u"label_finder_exptime")
         self.label_finder_exptime.setGeometry(QRect(10, 40, 97, 23))
@@ -5544,7 +5503,7 @@ class Ui_MainWindow(object):
         self.label_cmd_2.setFont(font2)
         self.pushbtn_send_cmd_2 = QPushButton(self.tab_status)
         self.pushbtn_send_cmd_2.setObjectName(u"pushbtn_send_cmd_2")
-        self.pushbtn_send_cmd_2.setGeometry(QRect(450, 895, 71, 31))
+        self.pushbtn_send_cmd_2.setGeometry(QRect(449, 891, 71, 41))
         self.pushbtn_send_cmd_2.setFont(font1)
         self.tabWidget.addTab(self.tab_status, "")
 
@@ -5557,7 +5516,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
         self.tabWidget_2.setCurrentIndex(0)
         self.group_obs.setCurrentIndex(0)
 
@@ -5601,13 +5560,14 @@ class Ui_MainWindow(object):
         self.pushbtn_fttgoto.setText(QCoreApplication.translate("MainWindow", u"fttgoto", None))
         self.lineEdit_fttvalue.setPlaceholderText(QCoreApplication.translate("MainWindow", u"ex) -4.518", None))
         self.groupBox.setTitle(QCoreApplication.translate("MainWindow", u" Infromation", None))
-        self.label_lt.setText(QCoreApplication.translate("MainWindow", u"Date(LT)", None))
-#if QT_CONFIG(whatsthis)
-        self.lcd_lt.setWhatsThis("")
-#endif // QT_CONFIG(whatsthis)
-#if QT_CONFIG(accessibility)
-        self.lcd_lt.setAccessibleName("")
-#endif // QT_CONFIG(accessibility)
+#if QT_CONFIG(tooltip)
+        self.pushbtn_syscheck.setToolTip("")
+#endif // QT_CONFIG(tooltip)
+        self.pushbtn_syscheck.setText(QCoreApplication.translate("MainWindow", u"Sys check", None))
+#if QT_CONFIG(tooltip)
+        self.pushbtn_directory.setToolTip("")
+#endif // QT_CONFIG(tooltip)
+        self.pushbtn_directory.setText(QCoreApplication.translate("MainWindow", u"Set", None))
         self.label_utc.setText(QCoreApplication.translate("MainWindow", u"Date(UTC)", None))
 #if QT_CONFIG(whatsthis)
         self.lcd_utc.setWhatsThis("")
@@ -5615,24 +5575,18 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(accessibility)
         self.lcd_utc.setAccessibleName("")
 #endif // QT_CONFIG(accessibility)
-        self.label_observer.setText(QCoreApplication.translate("MainWindow", u"Observer", None))
-        self.label_directory.setText(QCoreApplication.translate("MainWindow", u"Directory", None))
 #if QT_CONFIG(tooltip)
         self.pushbtn_connect.setToolTip("")
 #endif // QT_CONFIG(tooltip)
         self.pushbtn_connect.setText(QCoreApplication.translate("MainWindow", u"Connect", None))
-#if QT_CONFIG(tooltip)
-        self.pushbtn_syscheck.setToolTip("")
-#endif // QT_CONFIG(tooltip)
-        self.pushbtn_syscheck.setText(QCoreApplication.translate("MainWindow", u"Sys check", None))
-#if QT_CONFIG(tooltip)
-        self.pushbtn_observer.setToolTip("")
-#endif // QT_CONFIG(tooltip)
-        self.pushbtn_observer.setText(QCoreApplication.translate("MainWindow", u"Save", None))
-#if QT_CONFIG(tooltip)
-        self.pushbtn_directory.setToolTip("")
-#endif // QT_CONFIG(tooltip)
-        self.pushbtn_directory.setText(QCoreApplication.translate("MainWindow", u"Set", None))
+        self.label_lt.setText(QCoreApplication.translate("MainWindow", u"Date(LT)", None))
+#if QT_CONFIG(whatsthis)
+        self.lcd_lt.setWhatsThis("")
+#endif // QT_CONFIG(whatsthis)
+#if QT_CONFIG(accessibility)
+        self.lcd_lt.setAccessibleName("")
+#endif // QT_CONFIG(accessibility)
+        self.label_directory.setText(QCoreApplication.translate("MainWindow", u"Directory", None))
         self.group_status.setTitle(QCoreApplication.translate("MainWindow", u" System Status", None))
         self.ok_status_gfa.setText(QCoreApplication.translate("MainWindow", u"\u25cf", None))
         self.label_status_gfa.setText(QCoreApplication.translate("MainWindow", u"GFA", None))
@@ -5699,18 +5653,11 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.pushbtn_set_sequence.setText(QCoreApplication.translate("MainWindow", u"Set", None))
         self.label_target_target_name_2.setText(QCoreApplication.translate("MainWindow", u"Tile ID :", None))
-        self.label_ra_4.setText(QCoreApplication.translate("MainWindow", u"Tile R.A. :        ", None))
+        self.label_ra_4.setText(QCoreApplication.translate("MainWindow", u"Tile R.A. :  ", None))
         self.label_dec_4.setText(QCoreApplication.translate("MainWindow", u"Tile DEC. :   ", None))
-        self.label_obs_type_3.setText(QCoreApplication.translate("MainWindow", u"Obs type :", None))
         self.label_exp_time_4.setText(QCoreApplication.translate("MainWindow", u"Exp. Time :", None))
         self.label_num_exp_4.setText(QCoreApplication.translate("MainWindow", u"# of Exposure :", None))
         self.label_obs_status_4.setText(QCoreApplication.translate("MainWindow", u"Status :", None))
-        self.obstype_1.setItemText(0, QCoreApplication.translate("MainWindow", u"None", None))
-        self.obstype_1.setItemText(1, QCoreApplication.translate("MainWindow", u"Bias", None))
-        self.obstype_1.setItemText(2, QCoreApplication.translate("MainWindow", u"Arc", None))
-        self.obstype_1.setItemText(3, QCoreApplication.translate("MainWindow", u"Flat", None))
-        self.obstype_1.setItemText(4, QCoreApplication.translate("MainWindow", u"Object", None))
-
         self.label_CProj.setText(QCoreApplication.translate("MainWindow", u"Current ProJect:", None))
         self.lineEdit_CProj.setText("")
         self.label_CTile.setText(QCoreApplication.translate("MainWindow", u"Current Tile:", None))
@@ -6748,6 +6695,7 @@ class Ui_MainWindow(object):
         self.pushbtn_adc_rotate.setText(QCoreApplication.translate("MainWindow", u"Rotate", None))
         self.group_metrology.setTitle(QCoreApplication.translate("MainWindow", u"Metrology", None))
         self.label_MTL_exptime.setText(QCoreApplication.translate("MainWindow", u"Time", None))
+        self.lineEdit_MTL_exptime.setPlaceholderText(QCoreApplication.translate("MainWindow", u"ex) 4", None))
         self.pushbtn_MTL_cal.setText(QCoreApplication.translate("MainWindow", u"CALCUL", None))
 #if QT_CONFIG(tooltip)
         self.pushbtn_MTL_exp.setToolTip("")
@@ -6755,7 +6703,9 @@ class Ui_MainWindow(object):
         self.pushbtn_MTL_exp.setText(QCoreApplication.translate("MainWindow", u"GO", None))
         self.pushbtn_MTL_set.setText(QCoreApplication.translate("MainWindow", u"Set", None))
         self.label_MTL_file.setText(QCoreApplication.translate("MainWindow", u"File", None))
+        self.lineEdit_MTL_file.setPlaceholderText(QCoreApplication.translate("MainWindow", u"ex) test.fits", None))
         self.label__MTL_expnum.setText(QCoreApplication.translate("MainWindow", u"# Exp", None))
+        self.lineEdit_MTL_expnum.setPlaceholderText(QCoreApplication.translate("MainWindow", u"ex) 1", None))
         self.group_gfa.setTitle(QCoreApplication.translate("MainWindow", u"GFA", None))
         self.lineEdit_GFA_exptime.setText("")
         self.lineEdit_GFA_exptime.setPlaceholderText(QCoreApplication.translate("MainWindow", u"default 5", None))
