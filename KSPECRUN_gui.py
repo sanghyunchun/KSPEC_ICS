@@ -1496,8 +1496,7 @@ class MainWindow(QMainWindow):
             #    if inst in queue_map and process in ('ING'):
                     await queue_map[inst].put(response_data)
                     if inst == 'GFA' and process == 'ING':
-                        self.fwhm=response_data['fwhm']
-                        print(f'ttttt {self.fwhm}')
+                        self.fwhm=round(response_data['fwhm'],2)
                         self.ui.lineEdit_seeing.setText(f'{self.fwhm}')
                         self.show_guiding()
                 elif inst == 'SPEC' and response_data['filename'] != 'None':
