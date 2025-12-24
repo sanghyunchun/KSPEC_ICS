@@ -86,8 +86,8 @@ def _read_ra_dec(image_path: Union[str, Path]) -> Tuple[float, float]:
 
     # Some FITS store RA/DEC as strings; try float conversion.
     try:
-        ra_f = float(ra)
-        dec_f = float(dec)
+        ra_f = ra
+        dec_f = dec
     except Exception as e:
         raise ValueError(f"RA/DEC not convertible to float (RA={ra}, DEC={dec})") from e
 
