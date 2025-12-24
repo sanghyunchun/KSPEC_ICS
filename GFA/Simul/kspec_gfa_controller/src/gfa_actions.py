@@ -323,11 +323,11 @@ class GFAActions:
             os.makedirs(pointing_raw_path, exist_ok=True)
 
             # (선택) 디렉토리 정리: 이전 프레임이 섞이면 결과 해석이 어려워서 권장
-            if clear_dir:
-                for fn in os.listdir(pointing_raw_path):
-                    fp = os.path.join(pointing_raw_path, fn)
-                    if os.path.isfile(fp):
-                        os.remove(fp)
+#            if clear_dir:
+#                for fn in os.listdir(pointing_raw_path):
+#                    fp = os.path.join(pointing_raw_path, fn)
+#                    if os.path.isfile(fp):
+#                        os.remove(fp)
 
             # 1) Grab images -> pointing_raw 저장
             # guiding()에서처럼 controller.grab을 사용 (동기 함수인 경우가 많음)

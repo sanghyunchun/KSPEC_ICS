@@ -67,7 +67,7 @@ def fd_grab(expt):
     return create_gfa_command('fdgrab',ExpTime=expt,message=f'Expose finder camera for {expt} seconds.')
 
 def gfa_pointing(expt: float=1.0, ra: str=None, dec: str=None):
-    return create_gfa_command('pointing',ExpTime=expt, ra=ra, dec=dec, message=f'Pointing to RA={ra}, DEC={dec}')
+    return create_gfa_command('pointing', ExpTime=expt, ra=ra, dec=dec, message=f'Pointing to RA={ra}, DEC={dec}')      # Using six GFA cameras 
 
 async def send_telcom_command(message):
     tcsagentIP, tcsagentPort, telcomIP, telcomPort = load_config()

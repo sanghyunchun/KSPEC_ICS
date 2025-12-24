@@ -116,6 +116,21 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
         printing(reply_data['message'])
         await GFA_server.send_message('ICS',rsp)
 
+
+    if func == 'pointing':
+        reply_data=mkmsg.gfamsg()
+        reply_data.update(process='START',message='Pointing starts.',status='success')
+        rsp=json.dumps(reply_data)
+        await GFA_server.send_message('ICS',rsp)
+
+        result = await gfa_actions.pointing(ra=dict_data['ra'],dec=dict_data['dec'],ExpTime=dict_data['ExpTime'])
+        reply_data=mkmsg.gfamsg()
+        reply_data.update(result)
+        reply_data.update(process='Done')
+        rsp=json.dumps(reply_data)
+        printing(reply_data['message'])
+        await GFA_server.send_message('ICS',rsp)
+
         
 def savedata(ra,dec,xp,yp,mag):
     with open('./Lib/KSPEC.ini','r') as f:

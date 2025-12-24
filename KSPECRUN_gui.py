@@ -938,7 +938,7 @@ class MainWindow(QMainWindow):
 
 
     def show_guiding(self):
-        cutimgpath='/media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/kspec_gfa_controller/src/img/cutout/'
+        cutimgpath='/media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/kspec_gfa_controller/src/img/cutout/'       # Need change when real observation
         guidenum=['1','2','3','4']
         G_canvas=[self.canvas_G1,self.canvas_G2,self.canvas_G3,self.canvas_G4]
 

@@ -316,16 +316,16 @@ class GFAActions:
             os.makedirs(pointing_raw_path, exist_ok=True)
 
             # (선택) 디렉토리 정리: 이전 프레임이 섞이면 결과 해석이 어려워서 권장
-            if clear_dir:
-                for fn in os.listdir(pointing_raw_path):
-                    fp = os.path.join(pointing_raw_path, fn)
-                    if os.path.isfile(fp):
-                        os.remove(fp)
+#            if clear_dir:
+#                for fn in os.listdir(pointing_raw_path):
+#                    fp = os.path.join(pointing_raw_path, fn)
+#                    if os.path.isfile(fp):
+#                        os.remove(fp)
 
             # 1) Grab images -> pointing_raw 저장
             # guiding()에서처럼 controller.grab을 사용 (동기 함수인 경우가 많음)
             self.env.logger.info(f"Grabbing pointing images (CamNum={CamNum}, ExpTime={ExpTime}, Binning={Binning})...")
-            self.env.controller.grab(CamNum, ExpTime, Binning, output_dir=pointing_raw_path, ra=ra, dec=dec)
+#            self.env.controller.grab(CamNum, ExpTime, Binning, output_dir=pointing_raw_path, ra=ra, dec=dec)
 
             # 2) 디렉토리의 FITS 이미지 목록 읽기
             images = []
