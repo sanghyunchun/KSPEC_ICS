@@ -118,7 +118,9 @@ async def handle_gfa(arg, ICS_client):
         if not params:
             command_map[cmd] = lambda: gfa_guiding(ra=ra, dec=dec)
         else:
-            command_map[cmd] = lambda: gfa_guiding(params[0], params[1], ra=ra, dec=dec)
+            ExpT = float(params[0])
+            save = params[1]
+            command_map[cmd] = lambda: gfa_guiding(ExpT, save, ra=ra, dec=dec)
 
     elif cmd == 'fdgrab':
         if len(params) != 1:
@@ -132,7 +134,10 @@ async def handle_gfa(arg, ICS_client):
         command_map[cmd] = lambda: fd_grab(ExpT)
 
     elif cmd == 'pointing':
-        command_map[cmd] = lambda: gfa_pointing(params[0],params[1],params[2])
+        ExpT = float(params[0])
+        ra = params[1]
+        dec = params[2]
+        command_map[cmd] = lambda: gfa_pointing(ExpT,ra,dec)
 
 
     if cmd in command_map:

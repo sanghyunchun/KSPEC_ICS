@@ -889,6 +889,10 @@ class MainWindow(QMainWindow):
         if not self.check_syscheck():
             return
 
+        if not self.ra or not self.dec:
+           self.logging(f'Please load Tile or slew telescope.',level='error')
+           return
+
         if not self.ui.lineEdit_GFA_exptime.text():
             self.ui.lineEdit_GFA_exptime.setText('5')      # Default guiding exposure time : 5 sec
 

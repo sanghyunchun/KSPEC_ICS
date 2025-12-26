@@ -1,1 +1,1 @@
-{"inst": "SPEC", "func": "specinitial", "savedata": "False", "filename": "None", "process": "ING", "message": "Initialize Spectrograph", "script": "False", "status": "error", "time": "None", "numframe": "None", "dirname": "20251224"}
+{"inst": "SPEC", "func": "specinitial", "savedata": "False", "filename": "None", "process": "ING", "message": "Initialize Spectrograph", "script": "False", "status": "error", "time": "None", "numframe": "None", "dirname": "20251226"}

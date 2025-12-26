@@ -228,7 +228,7 @@ class GFAActions:
 
             os.makedirs(raw_save_path, exist_ok=True)
             self.env.logger.info("Grabbing raw image...")
-            self.env.controller.grab(0, ExpTime, 4, output_dir=raw_save_path, ra=ra, dec=dec)
+#            self.env.controller.grab(0, ExpTime, 4, output_dir=raw_save_path, ra=ra, dec=dec)
 
             if save:
                 os.makedirs(grab_save_path, exist_ok=True)
@@ -246,7 +246,7 @@ class GFAActions:
             fdx, fdy, fwhm = self.env.guider.exe_cal()
 
             self.env.logger.info("Clearing temp astrometry data...")
-            self.env.astrometry.clear_raw_and_processed_files()
+#            self.env.astrometry.clear_raw_and_processed_files()
             
             try:
                 fwhm_val = float(fwhm)

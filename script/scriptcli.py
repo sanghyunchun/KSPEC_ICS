@@ -508,7 +508,7 @@ async def handle_script(arg, scriptrun=None, logging=None):
         if not params:
             await scriptrun.run_autoguide(scriptrun)
         else:
-            await scriptrun.run_autoguide(scriptrun,params[0],params[1])
+            await scriptrun.run_autoguide(scriptrun,float(params[0]),params[1])
 
     elif cmd == 'autoguidestop':
         await scriptrun.autoguidestop(scriptrun)
