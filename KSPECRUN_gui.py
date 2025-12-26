@@ -1150,8 +1150,21 @@ class MainWindow(QMainWindow):
         if not self.check_syscheck():
             return
 
+        if not self.ui.lineEdit_MTL_exptime.text():
+            self.ui.lineEdit_MTL_exptime.setText('5')
+            
+        if not self.ui.lineEdit_MTL_file.text():
+            self.ui.lineEdit_MTL_file.setText('test.fits')
+            
+        if not self.ui.lineEdit_MTL_expnum.text():
+            self.ui.lineEdit_MTL_expnum.setText('1')
+
+        self.mtlexp = float(self.ui.lineEdit_MTL_exptime.text())
+        self.mtlfile = str(self.ui.lineEdit_MTL_file.text())
+        self.nexposure = int(self.ui.lineEdit_MTL_expnum.text())
+
         self.logging(f'Sent MTL calculation', level='send')
-        await handle_mtl(f'mtlcal', self.ICS_client)
+        await handle_mtl(f'mtlcal {self.nexposure} {self.mtlfile}', self.ICS_client)
 
     @asyncSlot()
     async def MTL_set_button_clicked(self):

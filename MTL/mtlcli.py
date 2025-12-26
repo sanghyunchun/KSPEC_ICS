@@ -14,7 +14,8 @@ def create_mtl_command(func, **kwargs):
     return json.dumps(cmd_data)
 
 def mtl_status(): return create_mtl_command('mtlstatus',message='Show Metrology status')
-def mtl_cal(): return create_mtl_command('mtlcal',message='Calculate offset between Target and Fiber position')
+def mtl_cal(nexposure,filename):
+    return create_mtl_command('mtlcal',nexposure=nexposure,file=filename,message='Calculate offset between Target and Fiber position')
 def mtl_exp(exptime,nexposure,filename): 
     return create_mtl_command('mtlexp',time=exptime,nexposure=nexposure,file=filename,message=f'Exposure Metrology camera {exptime} seconds, {nexposure} times.')
 
@@ -25,7 +26,7 @@ async def handle_mtl(arg, ICS_client):
 
     # Basic command without parameters
     command_map = {
-        'mtlstatus': mtl_status, 'mtlcal': mtl_cal
+        'mtlstatus': mtl_status
     }
 
     if cmd == 'mtlexp':
@@ -39,8 +40,18 @@ async def handle_mtl(arg, ICS_client):
         except ValueError:
             print(f"Error: Input parameters of 'mtlexp' should be float. input value: {params[0]}")
             return
-        print(filename)
+
         command_map[cmd] = lambda: mtl_exp(exptime,nexposure,filename)
+
+    if cmd == 'mtlcal':
+        try:
+            nexposure = int(params[0])
+            filename = str(params[1])
+        except ValueError:
+            print(f"Error: Input parameters of 'mtlcal' should be nexposure and filename. ex) mtlcal 1 test.fits")
+            return
+
+        command_map[cmd] = lambda: mtl_cal(nexposure,filename)
 
     # Right command
     if cmd in command_map:

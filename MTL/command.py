@@ -43,7 +43,7 @@ async def identify_execute(MTL_server,cmd):
 
         exptime=float(receive_msg['time'])
         filename = str(receive_msg['file'])
-        nexpsure = int(receive_msg['nexposure'])
+        nexposure = int(receive_msg['nexposure'])
         status, comment=mtlexp.mtlexp(exptime,filename,nexposure=nexposure)
         reply_data=mkmsg.mtlmsg()
         reply_data.update(message=comment,process='Done',status=status)
@@ -57,11 +57,14 @@ async def identify_execute(MTL_server,cmd):
         rsp=json.dumps(reply_data)
         await MTL_server.send_message('ICS',rsp)
 
+
+        filename = str(receive_msg['file'])
+        nexposure = int(receive_msg['nexposure'])
         status, comment, offx,offy = mtlcal.mtlcal()
 #        comment='Metrology analysis finished successfully. Offsets were calculated.'
         reply_data=mkmsg.mtlmsg()
         reply_data.update(savedata='True',filename='MTLresult.json',offsetx=offx.tolist(),offsety=offy.tolist(),message=comment)
-        reply_data.update(process='Done')
+        reply_data.update(process='Done',status='success')
         rsp=json.dumps(reply_data)
 
         with open('./Lib/KSPEC.ini','r') as fs:

@@ -4,7 +4,7 @@ from astropy.io import fits
 from kspec_metrology.analysis.utils import com
 from kspec_metrology.logging.log import get_logger
 
-def findpeak(npeaks
+def findpeak(npeaks,filename
             , data_dir='./MTL/data/'
             , nexposure=1
             , threshold=5e3
@@ -18,10 +18,11 @@ def findpeak(npeaks
     xchip = np.linspace(-5879.5, 5879.5, 11760)*3.76e-3
     ychip = np.linspace(-4420.5, 4420.5, 8842)*3.76e-3
     
+    filehead=filename.split(".fits")[0]
     #---Stack "nframe" Image----------------------------------------------------------------------------------------------------------
     im = np.zeros((8842, 11760))
     for iframe in range(nexposure):
-        im += fits.getdata(data_dir + f'test{iframe}.fits').astype(np.float64) / nexposure
+        im += fits.getdata(data_dir + f'{filehead}{iframe}.fits').astype(np.float64) / nexposure
 
 
     #---Find Peaks Using any method---------------------------------------------------------------------------------------------------    

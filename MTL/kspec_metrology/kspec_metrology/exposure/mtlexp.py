@@ -36,7 +36,7 @@ def mtlexp(exptime,filename : str                                  # Need filena
 
         empty_primary = fits.PrimaryHDU(header=hdr, data=im)
 #        empty_primary.writeto(data_dir+f'test{i}.fits', overwrite=True)
-        empty_primary.writeto(data_dir+f'{name}{i].fits', overwrite=True)
+        empty_primary.writeto(data_dir+f'{filehead}{i}.fits', overwrite=True)
 
     qc.CamExit()
     msg=f'Metrology {exptime} seconds {nexposure} exposures finished.'     # Need to edit in real observation
