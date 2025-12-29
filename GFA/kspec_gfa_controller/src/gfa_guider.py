@@ -443,7 +443,7 @@ class GFAGuider:
 
         for i in range(len(dra)):
             try:
-                self.logger.debug(f"\n-- Processing star {i+1} --")
+                self.logger.debug(f"\n-- Processing star {i + 1} --")
                 self.logger.debug(f"Initial integer (dra, ddec): ({dra[i]}, {ddec[i]})")
                 self.logger.debug(
                     f"Initial float (dra_f, ddec_f): ({dra_f[i]:.3f}, {ddec_f[i]:.3f})"
@@ -536,7 +536,7 @@ class GFAGuider:
                 dx.append(0)
                 dy.append(0)
                 peakc.append(-1)
-                self.logger.warning(f"Error finding peaks for star {i+1}: {exc}")
+                self.logger.warning(f"Finding peaks for star {i+1}: {exc}")
 
         self.logger.debug("==== Finished centroid offset calculation ====")
         return dx, dy, peakc, cutoutn_stack
@@ -818,9 +818,7 @@ class GFAGuider:
         self.logger.info(f"Total valid guide star offsets: {len(dxp)}")
 
         fdx, fdy = self.cal_final_offset(dxp, dyp, pindp)
-        self.logger.info(
-            f"Computed final offset: ΔX = {fdx} arcsec, ΔY = {fdy} arcsec"
-        )
+        self.logger.info(f"Computed final offset: ΔX = {fdx} arcsec, ΔY = {fdy} arcsec")
 
         fwhm = self.cal_seeing(cutoutn_stack)
         self.logger.info(f"Estimated FWHM from cutouts: {fwhm} arcsec")
@@ -828,5 +826,5 @@ class GFAGuider:
         self.logger.info(
             "========== Guide star calibration completed successfully =========="
         )
-        
+
         return fdx, fdy, fwhm

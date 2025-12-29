@@ -815,6 +815,7 @@ class Ui_MainWindow(object):
         self.lineEdit_offset.setObjectName(u"lineEdit_offset")
         sizePolicy3.setHeightForWidth(self.lineEdit_offset.sizePolicy().hasHeightForWidth())
         self.lineEdit_offset.setSizePolicy(sizePolicy3)
+        self.lineEdit_offset.setAlignment(Qt.AlignCenter)
         self.lineEdit_offset.setReadOnly(True)
 
         self.formLayout_9.setWidget(1, QFormLayout.FieldRole, self.lineEdit_offset)
@@ -829,6 +830,7 @@ class Ui_MainWindow(object):
         self.lineEdit_raoffset.setObjectName(u"lineEdit_raoffset")
         sizePolicy3.setHeightForWidth(self.lineEdit_raoffset.sizePolicy().hasHeightForWidth())
         self.lineEdit_raoffset.setSizePolicy(sizePolicy3)
+        self.lineEdit_raoffset.setAlignment(Qt.AlignCenter)
         self.lineEdit_raoffset.setReadOnly(True)
 
         self.formLayout_9.setWidget(2, QFormLayout.FieldRole, self.lineEdit_raoffset)
@@ -843,6 +845,7 @@ class Ui_MainWindow(object):
         self.lineEdit_decoffset.setObjectName(u"lineEdit_decoffset")
         sizePolicy3.setHeightForWidth(self.lineEdit_decoffset.sizePolicy().hasHeightForWidth())
         self.lineEdit_decoffset.setSizePolicy(sizePolicy3)
+        self.lineEdit_decoffset.setAlignment(Qt.AlignCenter)
         self.lineEdit_decoffset.setReadOnly(True)
 
         self.formLayout_9.setWidget(3, QFormLayout.FieldRole, self.lineEdit_decoffset)
@@ -5101,7 +5104,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
         self.tabWidget_2.setCurrentIndex(0)
         self.group_obs.setCurrentIndex(0)
 

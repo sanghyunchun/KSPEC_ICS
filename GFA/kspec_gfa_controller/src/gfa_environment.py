@@ -75,19 +75,12 @@ class GFAEnvironment:
             f"Initialized GFAEnvironment with role '{role}' and cameras {self.camera_ids}"
         )
 
-        # Controller for selected cameras
-        self.controller = GFAController(self.gfa_config_path, self.logger)
-
         if role == "plate":
-            if hasattr(self.controller, "open_selected_cameras"):
-                self.controller.open_selected_cameras(self.camera_ids)
-            else:
-                raise AttributeError("GFAController has no method 'open_selected_cameras'")
-
+            self.controller = GFAController(self.gfa_config_path, self.logger)
             self.astrometry = GFAAstrometry(self.ast_config_path, self.logger)
             self.guider = GFAGuider(self.ast_config_path, self.logger)
         elif role == "finder":
-            self.controller.open_camera(7)  # Only finder cam
+            self.controller = GFAController(self.gfa_config_path, self.logger)
             self.astrometry = None
             self.guider = None
 
@@ -98,7 +91,6 @@ class GFAEnvironment:
         else:
             for cam_id in self.camera_ids:
                 self.controller.close_camera(cam_id)
-
 
 
 def create_environment(role: CameraRole = "plate") -> GFAEnvironment:

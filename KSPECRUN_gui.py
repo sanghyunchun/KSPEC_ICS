@@ -508,7 +508,7 @@ class MainWindow(QMainWindow):
             self.QWidgetLabelStyle(inst_map2[inst], color_map[status])
 
         self._handle_fbp_state(inst, process)
-        self._handle_gfa_state(inst, process)
+        self._handle_gfa_state(inst, subinst, process)
         self._handle_adc_state(inst, process)
         self._handle_lamp_state(inst, subinst, process)
 
@@ -523,14 +523,15 @@ class MainWindow(QMainWindow):
             self._set_button_state(self.ui.pushbtn_Fiber_assign, 'FBP Assign', 'black', False)
             self._set_button_state(self.ui.pushbtn_Fiber_assign_2, 'FBP Assign', 'black', False)
 
-    def _handle_gfa_state(self, inst, process):
+    def _handle_gfa_state(self, inst, subinst, process):
         if inst != 'GFA':
             return
 
-        state = (process in ('ING','START'))
-        self.guiding_state = state
-        self._set_toggle_button(self.ui.pushbtn_Guiding, state)
-        self._set_toggle_button(self.ui.pushbtn_Guiding_2, state)
+        if subinst == 'None':
+            state = (process in ('ING','START'))
+            self.guiding_state = state
+            self._set_toggle_button(self.ui.pushbtn_Guiding, state)
+            self._set_toggle_button(self.ui.pushbtn_Guiding_2, state)
 
     def _handle_adc_state(self, inst, process):
         if inst != 'ADC':
@@ -953,6 +954,7 @@ class MainWindow(QMainWindow):
             self.G_zmin, self.G_zmax = zs.zscale(data)
             can.imshows(data,vmin=self.G_zmin,vmax=self.G_zmax,cmap='gray',origin='lower')
 
+
     def show_spec(self, spec_response):
     #    self.fwhm=response_data['fwhm']
         spec_canvas = [self.canvas_B, self.canvas_R, self.canvas_F]
@@ -980,7 +982,6 @@ class MainWindow(QMainWindow):
         self.gfaexpt = float(self.ui.lineEdit_GFA_exptime.text())
 
 
-        print(self.ra)
         if not self.ra or not self.dec:
            self.logging(f'Please load Tile or slew telescope.',level='error')
            return
@@ -990,7 +991,14 @@ class MainWindow(QMainWindow):
     ### Pointing Offset ###
     @asyncSlot()
     async def offset_button_clicked(self):
-        self.logging(f'Sent Offset',level='send')
+        self.logging(f'Apply Offsets {self.delta_ra}, {self.delta_dec}. New (RA,DEC)=({self.new_ra},{self.new_dec})',level='normal')
+        self.logging(f'Slew Telescope to (RA,DEC)=({self.new_ra},{self.new_dec})',level='send')
+        messagetcs = 'KSPEC>TC ' + 'tmradec ' + self.new_ra +' '+ self.new_dec
+        #self.logging(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.', level='send')
+        #print(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.')
+        await self.send_udp_message(messagetcs)
+
+
 
     ### Finder ###
     @asyncSlot()
@@ -1495,6 +1503,7 @@ class MainWindow(QMainWindow):
                 process = response_data.get('process', 'None')
                 message = response_data.get('message','None')
                 status = response_data.get('status', 'fail')
+                subinst = response_data.get('subinst', 'None')
                 self.set_inst_pos_state(response_data)
                 self.show_status(response_data)
                 
@@ -1516,6 +1525,17 @@ class MainWindow(QMainWindow):
                         self.fwhm=round(response_data['fwhm'],2)
                         self.ui.lineEdit_seeing.setText(f'{self.fwhm}')
                         self.show_guiding()
+                    
+                elif inst == 'GFA' and process == 'Done' and subinst == 'POINT':
+                    sepsec=round(response_data['sepsec'],2)
+                    self.delta_ra=round(response_data['dra'],2)
+                    self.delta_dec=round(response_data['ddec'],2)
+                    self.ui.lineEdit_offset.setText(f'{sepsec}')
+                    self.ui.lineEdit_raoffset.setText(f'{self.delta_ra}')
+                    self.ui.lineEdit_decoffset.setText(f'{self.delta_dec}')
+                    self.new_ra = response_data['new_ra']
+                    self.new_dec = response_data['new_dec']
+
                 elif inst == 'SPEC' and response_data['filename'] != 'None':
                     self.show_spec(response_data)
                     await self.response_queue.put(response_data)

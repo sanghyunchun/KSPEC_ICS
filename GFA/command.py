@@ -6,6 +6,9 @@ import asyncio
 import time
 import random
 import shutil
+import math
+import numpy as np
+from .pointing import *
 
 
 guiding_task = None
@@ -119,14 +122,46 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
 
     if func == 'pointing':
         reply_data=mkmsg.gfamsg()
-        reply_data.update(process='START',message='Pointing starts.',status='success')
+        reply_data.update(process='START',message='Pointing starts.',status='success',subinst='POINT')
         rsp=json.dumps(reply_data)
         await GFA_server.send_message('ICS',rsp)
 
         result = await gfa_actions.pointing(ra=dict_data['ra'],dec=dict_data['dec'],ExpTime=dict_data['ExpTime'])
+
+        img_list=result['images']
+        crval1_list=result['crval1']
+        crval2_list=result['crval2']
+
+        ra_m1,dec_m1=get_boresight(crval1_list[0],crval2_list[0],crval1_list[1],crval2_list[1])
+        ra_m2,dec_m2=get_boresight(crval1_list[2],crval2_list[2],crval1_list[4],crval2_list[4])
+        ra_m3,dec_m3=get_boresight(crval1_list[3],crval2_list[3],crval1_list[5],crval2_list[5])
+
+        ra = ra_hms_str_to_deg(dict_data['ra'])
+        dec = dec_dms_str_to_deg(dict_data['dec'])
+
+        ra_c = np.mean([ra_m1,ra_m2,ra_m3])
+        dec_c = np.mean([dec_m1, dec_m2, dec_m3])
+
+        print(f'Telescope Target: RA = {dict_data['ra']} DEC = {dict_data['dec']}')
+        print(f'Current Telescope pointing: RA = {ra_c} DEC= {dec_c}')
+
+        sep = get_separation(ra_c,dec_c,ra,dec)
+
+        print(f'Separtation (arcsec.) : {sep}')
+
+        delra,deldec = offsets_arcsec(ra_c,dec_c,ra,dec)
+
+        print(f'Offset in (RA, DEC) : ({delra}, {deldec})')
+
+        ra_deg, dec_deg = apply_offsets(ra,dec,delra,deldec)
+        ra_new = ra_deg_to_hms(ra_deg)
+        dec_new = dec_deg_to_dms(dec_deg)
+        print(ra_new,dec_new)
+
+
         reply_data=mkmsg.gfamsg()
         reply_data.update(result)
-        reply_data.update(process='Done')
+        reply_data.update(sepsec=sep,dra=delra,ddec=deldec,new_ra=ra_new,new_dec=dec_new,process='Done',status='success',subinst='POINT')
         rsp=json.dumps(reply_data)
         printing(reply_data['message'])
         await GFA_server.send_message('ICS',rsp)
@@ -161,6 +196,8 @@ async def handle_guiding(GFA_server, gfa_actions, expt, save, ra: str=None, dec:
             reply_data.update(process='ING')
             rsp=json.dumps(reply_data)
             await GFA_server.send_message('ICS',rsp)
+
+            await asyncio.sleep(30)
 
     except asyncio.CancelledError:
         printing("handle_guiding task was cancelled.")

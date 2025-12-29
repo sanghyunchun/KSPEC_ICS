@@ -23,6 +23,36 @@ from astropy.table import Table, vstack
 from astropy.utils.data import get_pkg_data_filename
 
 
+# -----------------------------------------------------------------------------
+# ✅ FORCE solve-field path (ignore conda PATH/which)
+# -----------------------------------------------------------------------------
+DEFAULT_SOLVE_FIELD = "/home/yyoon/astrometry/bin/solve-field"
+
+
+def _get_solve_field_path(logger: logging.Logger, env: Optional[dict] = None) -> str:
+    """
+    Always use fixed solve-field path by default (DEFAULT_SOLVE_FIELD),
+    regardless of conda PATH.
+    Optionally allow override via env var ASTROMETRY_SOLVE_FIELD.
+    """
+    p = None
+    if env is not None:
+        p = env.get("ASTROMETRY_SOLVE_FIELD")
+    if not p:
+        p = os.environ.get("ASTROMETRY_SOLVE_FIELD")
+
+    solve_field = (p or DEFAULT_SOLVE_FIELD).strip()
+    sp = Path(solve_field)
+
+    if not sp.exists():
+        raise FileNotFoundError(f"solve-field not found: {solve_field}")
+    if not os.access(str(sp), os.X_OK):
+        raise PermissionError(f"solve-field is not executable: {solve_field}")
+
+    logger.debug(f"Using solve-field from (fixed): {solve_field}")
+    return str(sp)
+
+
 def _get_default_config_path() -> str:
     """
     Returns the default configuration path for astrometry.
@@ -128,6 +158,30 @@ class GFAAstrometry:
         ]:
             os.makedirs(directory, exist_ok=True)
 
+        # ---------------------------------------------------------------------
+        # ✅ Subprocess environment override (solve-field 등 외부 프로세스용)
+        # ---------------------------------------------------------------------
+        self._subprocess_env = None  # type: Optional[dict]
+
+    # -------------------------------------------------------------------------
+    # ✅ Public API: set subprocess env
+    # -------------------------------------------------------------------------
+    def set_subprocess_env(self, env: dict) -> None:
+        """
+        Set environment variables for subprocess calls (solve-field, etc.).
+        """
+        self._subprocess_env = env
+
+    def _get_subprocess_env(self) -> dict:
+        """
+        Return env for subprocess calls. If not set, fallback to current process env.
+        """
+        return (
+            self._subprocess_env
+            if self._subprocess_env is not None
+            else os.environ.copy()
+        )
+
     def process_file(self, flname: str):
         """
         Processes a FITS file: subtracts sky values, crops the image,
@@ -220,14 +274,11 @@ class GFAAstrometry:
         """
         self.logger.info(f"Starting astrometry process for {newname}.")
 
-        solve_field_path = shutil.which("solve-field")
-        if not solve_field_path:
-            raise FileNotFoundError(
-                "solve-field not found! Ensure it is installed and in PATH."
-            )
+        # ✅ use injected subprocess env (if set)
+        env = self._get_subprocess_env()
 
-        # Detailed path -> debug
-        self.logger.debug(f"Using solve-field from: {solve_field_path}")
+        # ✅ ALWAYS use fixed solve-field path (ignore conda PATH/which)
+        solve_field_path = _get_solve_field_path(self.logger, env=env)
 
         scale_low, scale_high = self.inpar["astrometry"]["scale_range"]
         radius = self.inpar["astrometry"]["radius"]
@@ -253,7 +304,12 @@ class GFAAstrometry:
 
         try:
             result = subprocess.run(
-                input_command, shell=True, capture_output=True, text=True, check=True
+                input_command,
+                shell=True,
+                capture_output=True,
+                text=True,
+                check=True,
+                env=env,  # ✅ 핵심
             )
         except subprocess.CalledProcessError as e:
             self.logger.error(f"solve-field execution failed for {newname}")
@@ -266,7 +322,11 @@ class GFAAstrometry:
         )
         list_files_command = f"ls -lh {self.temp_dir}"
         list_files = subprocess.run(
-            list_files_command, shell=True, capture_output=True, text=True
+            list_files_command,
+            shell=True,
+            capture_output=True,
+            text=True,
+            env=env,  # ✅ env 통일
         )
         self.logger.debug(f"Files in temp directory:\n{list_files.stdout}")
 
