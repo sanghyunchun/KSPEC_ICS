@@ -1,32 +1,23 @@
-class KSPECRunner:
-    def __init__(self):
-        """
-        Initializes the KSPEC runner with the ICS client and network clients.
-        """
-        self.command_list = {
-            "adc": ["adcstatus", "adcactivate", "adcadjust", "adcinit"],
-            "gfa": ["gfastatus", "gfagrab", "gfastop", "gfaguide"],
-            "fbp": ["fbpstatus", "fbpzero", "fbpmove", "fbpoffset"],
-            "endo": ["endoguide", "endotest", "endofocus", "endostop"],
-            "mtl": ["mtlstatus", "mtlexp", "mtlcal"],
-            "lamp": ["lampstatus", "arcon", "arcoff", "flaton", "flatoff"],
-            "spec": ["specstatus", "illuon", "illuoff", "getobj", "getbias"]
-        }
+import sys
+import os
 
-    def find_category(self,cmd):
-        for category, commands in self.command_list.items():
-            print(commands)
-#            if cmd in commands:
-#                return category
-#            return None
-        
+from Lib.AMQ import AMQclass, UDPClientProtocol, TCPClient
+from TCS.tcscli import handle_telcom
+import asyncio
+
+async def send_telcom_command(message):
+    """Sends a command to the Telcom system via TCP."""
+    telcom_client = TCPClient('127.0.0.1',8889)
+    await telcom_client.connect()
+    result = await handle_telcom(message,telcom_client)
+    await telcom_client.close()
+    return result
 
 
+async def getra():
+    msg='getra'
+    result= await send_telcom_command(msg)
+    print(result.decode())
 
-
-
-kkk=KSPECRunner()
-
-
-cat=kkk.find_category('illuon')
-print(cat)
+if __name__ == "__main__":
+    asyncio.run(getra())

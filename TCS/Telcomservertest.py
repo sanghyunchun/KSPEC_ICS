@@ -20,9 +20,9 @@ class AsyncTCPServer:
                 cmd=message.split(" ")
 
                 if cmd[4] == 'RA':
-                    answer='052313.45'
+                    answer='KMTNET TCS 123 052313.45'
                 elif cmd[4] == 'DEC':
-                    answer='-313456.4'
+                    answer='KMTNET TCS 123 -313456.43'
 
                 writer.write(answer.encode())
                 await writer.drain()

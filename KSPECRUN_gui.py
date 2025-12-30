@@ -1527,9 +1527,9 @@ class MainWindow(QMainWindow):
                         self.show_guiding()
                     
                 elif inst == 'GFA' and process == 'Done' and subinst == 'POINT':
-                    sepsec=round(response_data['sepsec'],2)
-                    self.delta_ra=round(response_data['dra'],2)
-                    self.delta_dec=round(response_data['ddec'],2)
+                    sepsec=round(response_data['sepsec'],4)
+                    self.delta_ra=round(response_data['dra'],4)
+                    self.delta_dec=round(response_data['ddec'],4)
                     self.ui.lineEdit_offset.setText(f'{sepsec}')
                     self.ui.lineEdit_raoffset.setText(f'{self.delta_ra}')
                     self.ui.lineEdit_decoffset.setText(f'{self.delta_dec}')

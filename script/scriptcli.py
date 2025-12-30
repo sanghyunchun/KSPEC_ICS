@@ -36,32 +36,43 @@ def printing(message):
 #    dec_dms = dec.to_string(unit=u.degree, sep=':', alwayssign=True, precision=2)
 #    return ra_hms, dec_dms
 
-def bytes_to_sexagesimal(value: bytes, encoding="ascii") -> str:
-        """
-        b"453467.8"  -> "45:34:67.8"
-        b"-453456.7" -> "-45:34:56.7"
-        """
-        # bytes → str
-        s = value.decode(encoding).strip()
 
-        sign = "-" if s.startswith("-") else ""
-        s = s.lstrip("+-")
+def bytes_to_sexagesimal(value: bytes, encoding='ascii') -> str:
+    """
+    바이트 문자열에서 마지막 토큰을 읽어 HH:MM:SS.SS 또는 ±DD:MM:SS.SS 형식으로 변환
 
-        if "." in s:
-            integer, frac = s.split(".", 1)
-            frac = "." + frac
-        else:
-            integer = s
-            frac = ""
+    Parameters:
+    - value: bytes 문자열 (e.g., b'... 234342.56\\n\\x00')
+    - encoding: 바이트 인코딩 형식 (기본: 'utf-8')
 
-        if len(integer) < 6:
-            raise ValueError(f"Not enough Digit for sexagesimal convert: {s}")
+    Returns:
+    - str: 변환된 시각 또는 각도 문자열 (예: '23:43:42.56' 또는 '-03:45:06.78')
+    """
+    try:
+        # 1. 바이트 → 문자열 디코딩
+        text = value.decode(encoding, errors='ignore').strip().replace('\x00', '')
+        tokens = text.split()
+        if not tokens:
+            return ''
 
-        h = integer[0:2]
-        m = integer[2:4]
-        sec = integer[4:] + frac
+        last = tokens[-1]
+        num = float(last)
 
-        return f"{sign}{h}:{m}:{sec}"
+        # 2. 부호 분리 (DEC 대비)
+        sign = '-' if num < 0 else ''
+        num = abs(num)
+
+        # 3. 시/도, 분, 초 분해
+        hh = int(num // 10000)
+        mm = int((num % 10000) // 100)
+        ss = num % 100
+
+        # 4. 형식화
+        return f"{sign}{hh:02}:{mm:02}:{ss:05.2f}"
+
+    except Exception as e:
+        print(f"[ERROR] 변환 실패: {e}")
+        return ''
 
 
 def apply_offset(ra: str, dec: str, offset_ra: float, offset_dec: float):
@@ -367,17 +378,18 @@ class script():
             await scriptrun.response_queue.get()
             await asyncio.sleep(2)
 
-            await scriptrun.ICSclient.send_message("FBP", objmsg)
-            await scriptrun.response_queue.get()
-            await asyncio.sleep(2)
+            ##### In commission, FBP is not ready. #####
+            #await scriptrun.ICSclient.send_message("FBP", objmsg)
+            #await scriptrun.response_queue.get()
+            #await asyncio.sleep(2)
 
-            await scriptrun.ICSclient.send_message("FBP", motionmsg1)
-            await scriptrun.response_queue.get()
-            await asyncio.sleep(2)
+            #await scriptrun.ICSclient.send_message("FBP", motionmsg1)
+            #await scriptrun.response_queue.get()
+            #await asyncio.sleep(2)
 
-            await scriptrun.ICSclient.send_message("FBP", motionmsg2)
-            await scriptrun.response_queue.get()
-            await asyncio.sleep(2)
+            #await scriptrun.ICSclient.send_message("FBP", motionmsg2)
+            #await scriptrun.response_queue.get()
+            #await asyncio.sleep(2)
 
             printing(f'All accessary files for observation of Tile ID {self.select_tile} are successfully loaded')
             ### End of CLI version ###
