@@ -50,7 +50,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideLeft</enum>
@@ -2314,6 +2314,9 @@
          </property>
         </widget>
         <widget class="QPushButton" name="pushbtn_Fiber_assign">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="geometry">
           <rect>
            <x>330</x>
@@ -2339,6 +2342,9 @@
          </property>
         </widget>
         <widget class="QPushButton" name="pushbtn_Finder_exp">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="geometry">
           <rect>
            <x>475</x>
@@ -2364,6 +2370,9 @@
          </property>
         </widget>
         <widget class="QPushButton" name="pushbtn_Flat">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="geometry">
           <rect>
            <x>810</x>
@@ -2389,6 +2398,9 @@
          </property>
         </widget>
         <widget class="QPushButton" name="pushbtn_Arc">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="geometry">
           <rect>
            <x>885</x>
@@ -2414,6 +2426,9 @@
          </property>
         </widget>
         <widget class="QPushButton" name="pushbtn_Fiducial">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="geometry">
           <rect>
            <x>705</x>
@@ -2515,6 +2530,9 @@
           </property>
          </widget>
          <widget class="QPushButton" name="pushbtn_stop_sequence">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="geometry">
            <rect>
             <x>390</x>
@@ -2541,7 +2559,7 @@
          </widget>
          <widget class="QPushButton" name="pushbtn_run_obs">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <property name="geometry">
            <rect>
@@ -3379,6 +3397,9 @@
           </property>
          </widget>
          <widget class="QPushButton" name="pushbtn_exp_start">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="geometry">
            <rect>
             <x>290</x>
@@ -3404,6 +3425,9 @@
           </property>
          </widget>
          <widget class="QPushButton" name="pushbtn_exp_stop">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="geometry">
            <rect>
             <x>400</x>
@@ -3515,7 +3539,7 @@
         <widget class="QPushButton" name="pushbtn_fiber_initialize">
          <property name="geometry">
           <rect>
-           <x>840</x>
+           <x>340</x>
            <y>680</y>
            <width>101</width>
            <height>51</height>
@@ -3540,7 +3564,7 @@
         <widget class="QWidget" name="formLayoutWidget_4">
          <property name="geometry">
           <rect>
-           <x>510</x>
+           <x>7</x>
            <y>670</y>
            <width>321</width>
            <height>70</height>
@@ -17140,6 +17164,9 @@
          </property>
         </widget>
         <widget class="QPushButton" name="pushbtn_Fiber_assign_2">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="geometry">
           <rect>
            <x>330</x>
@@ -17165,6 +17192,9 @@
          </property>
         </widget>
         <widget class="QPushButton" name="pushbtn_Finder_exp_2">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="geometry">
           <rect>
            <x>475</x>
@@ -17190,6 +17220,9 @@
          </property>
         </widget>
         <widget class="QPushButton" name="pushbtn_Flat_2">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="geometry">
           <rect>
            <x>810</x>
@@ -17215,6 +17248,9 @@
          </property>
         </widget>
         <widget class="QPushButton" name="pushbtn_Arc_2">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="geometry">
           <rect>
            <x>885</x>
@@ -17240,6 +17276,9 @@
          </property>
         </widget>
         <widget class="QPushButton" name="pushbtn_Fiducial_2">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="geometry">
           <rect>
            <x>705</x>
@@ -17315,6 +17354,9 @@
          <string>Fiber Positioner</string>
         </property>
         <widget class="QPushButton" name="pushbtn_FBP_offset">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="geometry">
           <rect>
            <x>10</x>
@@ -17340,6 +17382,9 @@
          </property>
         </widget>
         <widget class="QPushButton" name="pushbtn_FBP_zero">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="geometry">
           <rect>
            <x>90</x>
@@ -17365,6 +17410,9 @@
          </property>
         </widget>
         <widget class="QPushButton" name="pushbtn_FBP_park">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="geometry">
           <rect>
            <x>160</x>
@@ -17434,6 +17482,9 @@
          <string>Finder</string>
         </property>
         <widget class="QPushButton" name="pushbtn_finder_exp">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="geometry">
           <rect>
            <x>190</x>

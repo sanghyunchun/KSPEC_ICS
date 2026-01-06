@@ -40,6 +40,12 @@ async def handle_telcom(arg, telcom_client):
     
     elif cmd == 'track' and len(params) == 1:
         return await send_command('COMMAND TRACK', telcom_client, params[0])
+
+    elif cmd == 'stepra' and len(params) == 1:
+        return await send_command('COMMAND STEPRA', telcom_client, params[0])
+
+    elif cmd == 'stepdec' and len(params) == 1:
+        return await send_command('COMMAND STEPDEC', telcom_client, params[0])
     
     else:
         print(f"Error: Invalid command '{cmd}' or incorrect parameters.")

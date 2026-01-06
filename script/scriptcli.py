@@ -1,6 +1,6 @@
 import os, sys
 import json
-#import redis
+import redis
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import asyncio
 import numpy as np
@@ -9,7 +9,6 @@ from astropy.coordinates import Angle, SkyCoord
 import astropy.units as u
 from astropy.io import fits
 
-#from TCS import tcscli
 from GFA.gfacli import handle_gfa
 from MTL.mtlcli import handle_mtl
 from FBP.fbpcli import handle_fbp
@@ -162,8 +161,8 @@ class script():
         await clear_queue(scriptrun.SPEC_response_queue)
         await handle_gfa('gfastatus',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
-        await handle_fbp('fbpstatus',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
+    #    await handle_fbp('fbpstatus',scriptrun.ICSclient)
+    #    await scriptrun.response_queue.get()
         await handle_mtl('mtlstatus',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
         await handle_adc('adcconnect',scriptrun.ICSclient)
@@ -174,10 +173,10 @@ class script():
         await scriptrun.response_queue.get()
         await handle_adc('adcstatus',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
-        await handle_spec(f'specinitial {self.dir_name}',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
-        await handle_spec('specstatus',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
+    #    await handle_spec(f'specinitial {self.dir_name}',scriptrun.ICSclient)
+    #    await scriptrun.response_queue.get()
+    #    await handle_spec('specstatus',scriptrun.ICSclient)
+    #    await scriptrun.response_queue.get()
 
     async def run_calib(self,scriptrun,logging):
         """Starts the calibration process asynchronously."""
@@ -396,17 +395,16 @@ class script():
         
         await asyncio.sleep(2)
     
-        printing(f'ADC Adjust Start')
-        message=f'adcadjust {self.ra} {self.dec}'
-        print(message)
-        message=f'adcadjust 19:34:56.44 -31:34:55.67'                           # Just for simulation. Remove or comment when real observation
-        await handle_adc(message,scriptrun.ICSclient)
-        await asyncio.sleep(2)
+    #    printing(f'ADC Adjust Start')
+    #    message=f'adcadjust {self.ra} {self.dec}'
+    #    print(message)
+    #    message=f'adcadjust 19:34:56.44 -31:34:55.67'                           # Just for simulation. Remove or comment when real observation
+    #    await handle_adc(message,scriptrun.ICSclient)
+    #    await asyncio.sleep(2)
         
-        printing(f'Fiber positioner Moving Start')
-        await handle_fbp('fbpmove',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
-     #   sys.stdout.flush()
+    #    printing(f'Fiber positioner Moving Start')
+    #    await handle_fbp('fbpmove',scriptrun.ICSclient)
+    #    await scriptrun.response_queue.get()
 
         messagetcs = 'KSPEC>TC ' + 'tmradec ' + self.ra +' '+ self.dec
         printing(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.')
@@ -419,86 +417,86 @@ class script():
             value=r.get('dome_error')
             print(value)                                                        # Remove or comment in real observation
 
-            if value != '2':
+            if value != '0002':
                 print('Telescope slew finished')
                 logging('Telescope slew finished.', level='receive')
                 break
             print('.',end=' ', flush=True)
             await asyncio.sleep(5)
 
-        await scriptrun.response_queue.get()                                    # ??? Remove in real observation ???
+    #    await scriptrun.response_queue.get()                                    # ??? Remove in real observation ???
 
-        await asyncio.sleep(5)
-        printing(f'Autoguiding Start')
-        logging(f'GFA guiding. Expoture time is {self.GFAexpT}', level='receive')
-        await self.run_autoguide(scriptrun,self.GFAexpT)
-        await asyncio.sleep(2)
+    #    await asyncio.sleep(5)
+    #    printing(f'Autoguiding Start')
+    #    logging(f'GFA guiding. Expoture time is {self.GFAexpT}', level='receive')
+    #    await self.run_autoguide(scriptrun,self.GFAexpT)
+    #    await asyncio.sleep(2)
 
-        await handle_spec('illuon',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
-        await asyncio.sleep(2)
+    #    await handle_spec('illuon',scriptrun.ICSclient)
+    #    await scriptrun.response_queue.get()
+    #    await asyncio.sleep(2)
 
-        await handle_lamp('fiducialon',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
-        await asyncio.sleep(2)
+    #    await handle_lamp('fiducialon',scriptrun.ICSclient)
+    #    await scriptrun.response_queue.get()
+    #    await asyncio.sleep(2)
 
-        await handle_mtl(f'mtlexp {self.MTLexpT}',scriptrun.ICSclient)                       # Change exposure time in real observation
-        await scriptrun.response_queue.get()
-        await scriptrun.response_queue.get()
-        await asyncio.sleep(2)
+    #    await handle_mtl(f'mtlexp {self.MTLexpT}',scriptrun.ICSclient)                       # Change exposure time in real observation
+    #    await scriptrun.response_queue.get()
+    #    await scriptrun.response_queue.get()
+    #    await asyncio.sleep(2)
 
-        await handle_mtl('mtlcal',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
-        await scriptrun.response_queue.get()
-        await asyncio.sleep(2)
+    #    await handle_mtl('mtlcal',scriptrun.ICSclient)
+    #    await scriptrun.response_queue.get()
+    #    await scriptrun.response_queue.get()
+    #    await asyncio.sleep(2)
 
-        await handle_fbp('fbpoffset',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
-        await scriptrun.response_queue.get()
-        await asyncio.sleep(2)
+    #    await handle_fbp('fbpoffset',scriptrun.ICSclient)
+    #    await scriptrun.response_queue.get()
+    #    await scriptrun.response_queue.get()
+    #    await asyncio.sleep(2)
 
-        await handle_spec('illuoff',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
-        await asyncio.sleep(2)
+    #    await handle_spec('illuoff',scriptrun.ICSclient)
+    #    await scriptrun.response_queue.get()
+    #    await asyncio.sleep(2)
 
-        await handle_lamp('fiducialoff',scriptrun.ICSclient)
+    #    await handle_lamp('fiducialoff',scriptrun.ICSclient)
     
     #    print(f'FHWM is {self.fwhm:.5f}.')                                     # Remove in real observation
-        await scriptrun.response_queue.get()
-        await asyncio.sleep(2)
+    #    await scriptrun.response_queue.get()
+    #    await asyncio.sleep(2)
 
 
-        obs_num=self.obsnum
-        printing(f'KSPEC starts {obs_num} exposures with {self.expT} seconds.')
-        for i in range(int(obs_num)):
-            await clear_queue(scriptrun.SPEC_response_queue)
-            await handle_spec(f'getobj {self.expT} 1', scriptrun.ICSclient)
-            printing(f'**** {i+1}/{obs_num}: 30 seconds exposure start. ****')
-            logging(f'**** {i+1}/{obs_num}: 30 seconds exposure start. ****', level='receive')
-            spec_rsp=await scriptrun.response_queue.get()
+    #    obs_num=self.obsnum
+    #    printing(f'KSPEC starts {obs_num} exposures with {self.expT} seconds.')
+    #    for i in range(int(obs_num)):
+    #        await clear_queue(scriptrun.SPEC_response_queue)
+    #        await handle_spec(f'getobj {self.expT} 1', scriptrun.ICSclient)
+    #        printing(f'**** {i+1}/{obs_num}: 30 seconds exposure start. ****')
+    #        logging(f'**** {i+1}/{obs_num}: 30 seconds exposure start. ****', level='receive')
+    #        spec_rsp=await scriptrun.response_queue.get()
 #            print(f'jhkjkjk {spec_rsp}')
-            fram=f'{i+1}/{obs_num}'
-            header_data = {"PROJECT": self.project, "EXPTIME": self.expT, "FRAME": fram, "Tile": self.select_tile, "PRORA": self.ra, "PRODEC": self.dec}
-            update_fits(spec_rsp["filename"],header_data)
-            logging('Fits header updated', level='receive')
-            printing("Fits header updated")
+    #        fram=f'{i+1}/{obs_num}'
+    #        header_data = {"PROJECT": self.project, "EXPTIME": self.expT, "FRAME": fram, "Tile": self.select_tile, "PRORA": self.ra, "PRODEC": self.dec}
+    #        update_fits(spec_rsp["filename"],header_data)
+    #        logging('Fits header updated', level='receive')
+    #        printing("Fits header updated")
 
 
-        printing('All exposures are completed.')
-        logging('All exposures are completed.',level='receive')
+    #    printing('All exposures are completed.')
+    #    logging('All exposures are completed.',level='receive')
 
-        await handle_adc('adcstop',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
-        await self.autoguidestop(scriptrun)
-        await scriptrun.response_queue.get()
-        await handle_adc('adczero',scriptrun.ICSclient)
-        await handle_fbp('fbpzero',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
-        await scriptrun.response_queue.get()
-        await scriptrun.response_queue.get()
+    #    await handle_adc('adcstop',scriptrun.ICSclient)
+    #    await scriptrun.response_queue.get()
+    #    await self.autoguidestop(scriptrun)
+    #    await scriptrun.response_queue.get()
+    #    await handle_adc('adczero',scriptrun.ICSclient)
+    #    await handle_fbp('fbpzero',scriptrun.ICSclient)
+    #    await scriptrun.response_queue.get()
+    #    await scriptrun.response_queue.get()
+    #    await scriptrun.response_queue.get()
 
-        printing(f'###### Observation Script for Tile ID {self.select_tile} END!!! ######')
-        logging(f'###### Observation Script for Tile ID {self.select_tile} END!!! ######',level='comment')
+    #    printing(f'###### Observation Script for Tile ID {self.select_tile} END!!! ######')
+    #    logging(f'###### Observation Script for Tile ID {self.select_tile} END!!! ######',level='comment')
 
 
 

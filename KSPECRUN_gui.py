@@ -26,7 +26,6 @@ from Lib.AMQ import AMQclass, UDPClientProtocol, TCPClient
 from ADC.adccli import handle_adc
 from GFA.gfacli import handle_gfa
 from FBP.fbpcli import handle_fbp
-#from ENDO.ENDOcli import handle_endo
 from MTL.mtlcli import handle_mtl
 from LAMP.lampcli import handle_lamp
 from SPECTRO.speccli import handle_spec
@@ -570,95 +569,6 @@ class MainWindow(QMainWindow):
         button.setText(text)
         button.setStyleSheet(f"color: {color}")
         button.setChecked(checked)
-    
-
-        """
-        if inst == 'FBP':
-            if (process in ("ING", "Done")) and self.fbp_state == 'assign':
-                self.ui.pushbtn_Fiber_assign.setStyleSheet(f"color: green")
-                self.ui.pushbtn_Fiber_assign_2.setStyleSheet(f"color: green")
-                self.ui.pushbtn_Fiber_assign.setText("FBP Assigned")
-                self.ui.pushbtn_Fiber_assign_2.setText("FBP Assigned")
-            if (process == "Done") and (self.fbp_state == 'zero'):
-                self.ui.pushbtn_Fiber_assign.setStyleSheet(f"color: black")
-                self.ui.pushbtn_Fiber_assign_2.setStyleSheet(f"color: black")
-                self.ui.pushbtn_Fiber_assign.setText("FBP Assign")
-                self.ui.pushbtn_Fiber_assign_2.setText("FBP Assign")
-
-        if inst == 'GFA':
-            if process == 'ING':
-                self.guiding_state = True
-                self.ui.pushbtn_Guiding.setStyleSheet(f"color: green")
-                self.ui.pushbtn_Guiding.setChecked(True)
-                self.ui.pushbtn_Guiding_2.setStyleSheet(f"color: green")
-                self.ui.pushbtn_Guiding_2.setChecked(True)
-
-            elif process == 'Done':
-                self.guiding_state = False
-                self.ui.pushbtn_Guiding.setStyleSheet(f"color: black")
-                self.ui.pushbtn_Guiding.setChecked(False)
-                self.ui.pushbtn_Guiding_2.setStyleSheet(f"color: black")
-                self.ui.pushbtn_Guiding_2.setChecked(False)
-
-        if inst == 'ADC':
-            if process == 'ING':
-                self.adcadjusting_state = True
-                self.ui.pushbtn_ADCadjust.setStyleSheet(f"color: green")
-                self.ui.pushbtn_ADCadjust.setChecked(True)
-                self.ui.pushbtn_ADCadjust_2.setStyleSheet(f"color: green")
-                self.ui.pushbtn_ADCadjust_2.setChecked(True)
-
-            elif process == 'Done':
-                self.adcadjusting_state = False
-                self.ui.pushbtn_ADCadjust.setStyleSheet(f"color: black")
-                self.ui.pushbtn_ADCadjust.setChecked(False)
-                self.ui.pushbtn_ADCadjust_2.setStyleSheet(f"color: black")
-                self.ui.pushbtn_ADCadjust_2.setChecked(False)
-
-        if inst == 'LAMP':
-            subinst = dict_data.get('subinst', 'None')
-            if subinst == 'FIDUCIAL' and process == 'ING':
-                self.fiducial_state = True
-                self.ui.pushbtn_Fiducial.setStyleSheet(f"color: green")
-                self.ui.pushbtn_Fiducial.setChecked(True)
-                self.ui.pushbtn_Fiducial_2.setStyleSheet(f"color: green")
-                self.ui.pushbtn_Fiducial_2.setChecked(True)
-
-            elif subinst == 'FIDUCIAL' and process == 'Done':
-                self.Fiducial_state = False
-                self.ui.pushbtn_Fiducial.setStyleSheet(f"color: black")
-                self.ui.pushbtn_Fiducial.setChecked(False)
-                self.ui.pushbtn_Fiducial_2.setStyleSheet(f"color: black")
-                self.ui.pushbtn_Fiducial_2.setChecked(False)
-
-            if subinst == 'ARC' and process == 'ING':
-                self.arc_state = True
-                self.ui.pushbtn_Arc.setStyleSheet(f"color: green")
-                self.ui.pushbtn_Arc.setChecked(True)
-                self.ui.pushbtn_Arc_2.setStyleSheet(f"color: green")
-                self.ui.pushbtn_Arc_2.setChecked(True)
-
-            elif subinst == 'ARC' and process == 'Done':
-                self.arc_state = False
-                self.ui.pushbtn_Arc.setStyleSheet(f"color: black")
-                self.ui.pushbtn_Arc.setChecked(False)
-                self.ui.pushbtn_Arc_2.setStyleSheet(f"color: black")
-                self.ui.pushbtn_Arc_2.setChecked(False)
-
-            if subinst == 'FLAT' and process == 'ING':
-                self.flat_state = True
-                self.ui.pushbtn_Flat.setStyleSheet(f"color: green")
-                self.ui.pushbtn_Flat.setChecked(True)
-                self.ui.pushbtn_Flat_2.setStyleSheet(f"color: green")
-                self.ui.pushbtn_Flat_2.setChecked(True)
-
-            elif subinst == 'FLAT' and process == 'Done':
-                self.flat_state = False
-                self.ui.pushbtn_Flat.setStyleSheet(f"color: black")
-                self.ui.pushbtn_Flat.setChecked(False)
-                self.ui.pushbtn_Flat_2.setStyleSheet(f"color: black")
-                self.ui.pushbtn_Flat_2.setChecked(False)
-            """
             
     def reset_status(self):
         labels =[
@@ -988,15 +898,39 @@ class MainWindow(QMainWindow):
     
         await handle_gfa(f'pointing {self.gfaexpt} {self.ra} {self.dec}',self.ICS_client)
 
+    def format_decimal(self,x):
+        from decimal import Decimal
+        x = Decimal(str(x))
+        sign = "-" if x < 0 else ""
+        value = abs(x)
+        return f"{sign}{int(value * 100):04d}"
+
+
     ### Pointing Offset ###
     @asyncSlot()
     async def offset_button_clicked(self):
-        self.logging(f'Apply Offsets {self.delta_ra}, {self.delta_dec}. New (RA,DEC)=({self.new_ra},{self.new_dec})',level='normal')
-        self.logging(f'Slew Telescope to (RA,DEC)=({self.new_ra},{self.new_dec})',level='send')
-        messagetcs = 'KSPEC>TC ' + 'tmradec ' + self.new_ra +' '+ self.new_dec
-        #self.logging(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.', level='send')
-        #print(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.')
-        await self.send_udp_message(messagetcs)
+
+        ### Apply offset value for telescope offset ###
+    #    self.delta_ra = 0.34
+    #    self.delta_dec = -1.23
+        self.logging(f'Apply Offsets in (RA, DEC) = ({self.delta_ra}, {self.delta_dec})',level='normal')
+        xx = self.format_decimal(self.delta_ra)
+        msg = f'stepra {xx}'
+        result = await self.send_telcom_command(msg)
+        print('\033[94m' + '[ICS] received: ', result.decode() + '\033[0m', flush=True)
+        self.logging(f'RA offset {self.delta_ra} finished', level='receive')
+        await asyncio.sleep(1)
+        yy = self.format_decimal(self.delta_dec)
+        msg = f'stepra {yy}'
+        result = await self.send_telcom_command(msg)
+        print('\033[94m' + '[ICS] received: ', result.decode() + '\033[0m', flush=True)
+        self.logging(f'DEC offset {self.delta_dec} finished', level='receive')
+
+    ### Use  New pointing coordinate for telescope offset ###
+#        self.logging(f'Apply Offsets {self.delta_ra}, {self.delta_dec}. New (RA,DEC)=({self.new_ra},{self.new_dec})',level='normal')
+#        self.logging(f'Slew Telescope to (RA,DEC)=({self.new_ra},{self.new_dec})',level='send')
+#        messagetcs = 'KSPEC>TC ' + 'tmradec ' + self.new_ra +' '+ self.new_dec
+#        await self.send_udp_message(messagetcs)
 
 
 
@@ -1243,20 +1177,20 @@ class MainWindow(QMainWindow):
         await self.response_queue.get()
         await asyncio.sleep(2)
 
-        self.logging('Sent Target information to FBP',level='send')
-        await self.ICS_client.send_message("FBP", self.objmsg)
-        await self.response_queue.get()
-        await asyncio.sleep(2)
+    #    self.logging('Sent Target information to FBP',level='send')
+    #    await self.ICS_client.send_message("FBP", self.objmsg)
+    #    await self.response_queue.get()
+    #    await asyncio.sleep(2)
 
-        self.logging('Sent Motion plan of alpha motor to FBP',level='send')
-        await self.ICS_client.send_message("FBP", self.motionmsg1)
-        await self.response_queue.get()
-        await asyncio.sleep(2)
+    #    self.logging('Sent Motion plan of alpha motor to FBP',level='send')
+    #    await self.ICS_client.send_message("FBP", self.motionmsg1)
+    #    await self.response_queue.get()
+    #    await asyncio.sleep(2)
 
-        self.logging('Sent Motion plan of beta motor to FBP',level='send')
-        await self.ICS_client.send_message("FBP", self.motionmsg2)
-        await self.response_queue.get()
-        await asyncio.sleep(2)
+    #    self.logging('Sent Motion plan of beta motor to FBP',level='send')
+    #    await self.ICS_client.send_message("FBP", self.motionmsg2)
+    #    await self.response_queue.get()
+    #    await asyncio.sleep(2)
 
         self.logging(f'All accessary files for observation of Tile ID {self.select_tile} are successfully loaded', level='receive')
         await asyncio.sleep(2)
@@ -1527,9 +1461,9 @@ class MainWindow(QMainWindow):
                         self.show_guiding()
                     
                 elif inst == 'GFA' and process == 'Done' and subinst == 'POINT':
-                    sepsec=round(response_data['sepsec'],4)
-                    self.delta_ra=round(response_data['dra'],4)
-                    self.delta_dec=round(response_data['ddec'],4)
+                    sepsec=round(response_data['sepsec'],2)
+                    self.delta_ra=round(response_data['dra'],2)
+                    self.delta_dec=round(response_data['ddec'],2)
                     self.ui.lineEdit_offset.setText(f'{sepsec}')
                     self.ui.lineEdit_raoffset.setText(f'{self.delta_ra}')
                     self.ui.lineEdit_decoffset.setText(f'{self.delta_dec}')
@@ -1616,7 +1550,8 @@ class MainWindow(QMainWindow):
                 elif category.lower() == 'telcom':
                     telcom_result = await self.send_telcom_command(message)
                     print('\033[94m' + '[ICS] received: ', telcom_result.decode() + '\033[0m', flush=True)
-                    self.logging(f'<span style="color:green;">[ICS] received from {inst}: {message}</span>',level='receive')
+                    self.logging(telcom_result.decode(), level='receive')
+                #    self.logging(f'<span style="color:green;">[ICS] received from Telcom: {telcom_result.decode()} </span>',level='receive')
                 elif category.lower() == "script":
                     await handle_script(message, scriptrun=self.scriptrun)
                 else:
@@ -1646,7 +1581,7 @@ class MainWindow(QMainWindow):
             "astat", "acmd", "fsastat", "fs", "fttstat",
             "ft", "dfocus", "dtilt", "fttgoto"],
 
-            "telcom": ["getall", "getra", "getdec", "getha", "getel", "getaz", "getsecz", "mvstow", "mvelaz", "mvstop", "mvra", "mvdec", "track"],
+            "telcom": ["getall", "getra", "getdec", "getha", "getel", "getaz", "getsecz", "mvstow", "mvelaz", "mvstop", "mvra", "mvdec", "track", "stepra", "stepdec"],
             "utils": ["?","obsstatus","loadtile","setdir"],
             "script": ["runcalib", "obsinitial", "autoguide", "autoguidestop", "runobs"]
             }
