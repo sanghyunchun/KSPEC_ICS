@@ -239,16 +239,23 @@ class script():
             logging('Run Calibration Task finished', level='normal')
 
 
-    async def run_autoguide(self,scriptrun, exptime: float = 5.0, save: bool = False):
+    async def run_autoguide(self,scriptrun, exptime: float = 5.0, save: bool = False, logging = None):
         """Starts the autoguiding process asynchronously."""
         if self.autoguide_task and not self.autoguide_task.done():
             print("Autoguide task is already running. Ignoring duplicate start.")
             return
         self.autoguide_task = asyncio.create_task(
-                self.handle_autoguide(exptime, save, scriptrun)
+                self.handle_autoguide(exptime, save, scriptrun, logging)
         )
 
-    async def handle_autoguide(self, exptime, save, scriptrun):
+    def format_decimal(self,x):
+        from decimal import Decimal
+        x = Decimal(str(x))
+        sign = "-" if x < 0 else ""
+        value = abs(x)
+        return f"{sign}{int(value * 100):04d}"
+
+    async def handle_autoguide(self, exptime, save, scriptrun, logging):
         try:
             await handle_gfa(f'gfaguide {exptime} {save}',scriptrun.ICSclient)
             while True:
@@ -262,14 +269,34 @@ class script():
                     fdx=response_data['fdx']
                     fdy=response_data['fdy']
                     self.fwhm=response_data['fwhm']
-                    ra_bytes = await scriptrun.send_telcom_command('getra')
-                    dec_bytes = await scriptrun.send_telcom_command('getdec')
 
-                    rahms=bytes_to_sexagesimal(ra_bytes)
-                    decdms=bytes_to_sexagesimal(dec_bytes) 
-                    new_coord=apply_offset(rahms,decdms,fdx,fdy)
-                    messagetcs = 'KSPEC>TC ' + 'tmradec ' + new_coord
-                    await scriptrun.send_udp_message(messagetcs)
+                #### Simulation ### 
+                #fdx = -0.78
+                #fdy = 0.68
+                #self.fwhm = 1.23
+
+                ### Autoguiding using offset ###    
+                    xx = self.format_decimal(fdx)
+                    msg = f'stepra {xx}'
+                    result = await self.send_telcom_command(msg)
+                    print('\033[94m' + '[ICS] received: ', result.decode() + '\033[0m', flush=True)
+                    logging(f'RA offset {fdx} finished', level='receive')
+                    await asyncio.sleep(1)
+                    yy = self.format_decimal(fdy)
+                    msg = f'stepdec {yy}'
+                    result = await self.send_telcom_command(msg)
+                    print('\033[94m' + '[ICS] received: ', result.decode() + '\033[0m', flush=True)
+                    logging(f'DEC offset {fdy} finished', level='receive')
+
+                ### Autoguiding using New coordinate ###
+                #    ra_bytes = await scriptrun.send_telcom_command('getra')
+                #    dec_bytes = await scriptrun.send_telcom_command('getdec')
+
+                #    rahms=bytes_to_sexagesimal(ra_bytes)
+                #    decdms=bytes_to_sexagesimal(dec_bytes) 
+                #    new_coord=apply_offset(rahms,decdms,fdx,fdy)
+                #    messagetcs = 'KSPEC>TC ' + 'tmradec ' + new_coord
+                #    await scriptrun.send_udp_message(messagetcs)
 
         except asyncio.CancelledError:
             print("Autoguide task was cancelled.")
@@ -279,7 +306,7 @@ class script():
             print("Autoguide task finished.")
             self.autoguide_task = None
 
-    async def autoguidestop(self,scriptrun):
+    async def autoguidestop(self,scriptrun,logging):
         """Stops the autoguiding process if it is running."""
         await handle_gfa("gfaguidestop", scriptrun.ICSclient)
         print("Stopping autoguiding task...")
@@ -516,12 +543,12 @@ async def handle_script(arg, scriptrun=None, logging=None):
         await command_map[cmd](scriptrun,logging)
     elif cmd == 'autoguide':
         if not params:
-            await scriptrun.run_autoguide(scriptrun)
+            await scriptrun.run_autoguide(scriptrun,logging=logging)
         else:
-            await scriptrun.run_autoguide(scriptrun,float(params[0]),params[1])
+            await scriptrun.run_autoguide(scriptrun,float(params[0]),params[1],logging=logging)
 
     elif cmd == 'autoguidestop':
-        await scriptrun.autoguidestop(scriptrun)
+        await scriptrun.autoguidestop(scriptrun,logging)
     else:
         print(f"Error: '{cmd}' is not right command for SCRIPT")
 

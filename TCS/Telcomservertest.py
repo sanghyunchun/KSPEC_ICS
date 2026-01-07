@@ -25,6 +25,8 @@ class AsyncTCPServer:
                     answer='KMTNET TCS 123 -313456.43'
                 elif cmd[4]  == 'STEPRA':
                     answer = 'KMTNET TCS 123 OK'
+                elif cmd[4]  == 'STEPDEC':
+                    answer = 'KMTNET TCS 123 OK'
 
                 writer.write(answer.encode())
                 await writer.drain()

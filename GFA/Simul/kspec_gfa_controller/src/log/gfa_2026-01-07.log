@@ -1,0 +1,18 @@
+2026-01-07 16:44:52,095 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2026-01-07 16:44:52,096 [INFO] Initializing gfa_astrometry class.
+2026-01-07 16:44:52,097 [INFO] Initializing GFAGuider...
+2026-01-07 16:44:52,097 [DEBUG] Processed dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg
+2026-01-07 16:44:52,097 [DEBUG] Final astro dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/
+2026-01-07 16:44:52,097 [DEBUG] Cutout dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/cutout
+2026-01-07 16:44:52,097 [INFO] GFAGuider setup complete.
+2026-01-07 16:44:52,097 [INFO] Initialized GFAEnvironment with role 'finder' and cameras [7]
+2026-01-07 16:45:03,199 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2026-01-07 16:45:03,199 [INFO] Initializing gfa_astrometry class.
+2026-01-07 16:45:03,200 [INFO] Initializing GFAGuider...
+2026-01-07 16:45:03,200 [DEBUG] Processed dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg
+2026-01-07 16:45:03,200 [DEBUG] Final astro dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/
+2026-01-07 16:45:03,200 [DEBUG] Cutout dir: /media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/cutout
+2026-01-07 16:45:03,200 [INFO] GFAGuider setup complete.
+2026-01-07 16:45:03,201 [INFO] Initialized GFAEnvironment with role 'finder' and cameras [7]
+2026-01-07 16:46:44,180 [INFO] Querying camera statuses...
+2026-01-07 16:50:30,783 [INFO] Querying camera statuses...

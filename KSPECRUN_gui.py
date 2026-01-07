@@ -826,13 +826,13 @@ class MainWindow(QMainWindow):
         gfasave=self.ui.gfa_checkBox.isChecked()
         if self.guiding_state:
             if not gfasave:
-                await handle_script(f'autoguide {self.gfaexpt} False', scriptrun=self.scriptrun)
+                await handle_script(f'autoguide {self.gfaexpt} False', scriptrun=self.scriptrun,logging=self.logging)
                 self.logging(f'Sent Autoguiding Start. Exposure time is {self.gfaexpt}.', level='send')
             else:
                 print(f'tekjkerjek {gfasave}')
-                await handle_script(f'autoguide {self.gfaexpt} True', scriptrun=self.scriptrun)
+                await handle_script(f'autoguide {self.gfaexpt} True', scriptrun=self.scriptrun,logging=self.logging)
         else:
-            await handle_script('autoguidestop', scriptrun=self.scriptrun)
+            await handle_script('autoguidestop', scriptrun=self.scriptrun,logging=self.logging)
             self.logging('Sent Autoguiding Stop', level='send')
 
 
@@ -921,7 +921,7 @@ class MainWindow(QMainWindow):
         self.logging(f'RA offset {self.delta_ra} finished', level='receive')
         await asyncio.sleep(1)
         yy = self.format_decimal(self.delta_dec)
-        msg = f'stepra {yy}'
+        msg = f'stepdec {yy}'
         result = await self.send_telcom_command(msg)
         print('\033[94m' + '[ICS] received: ', result.decode() + '\033[0m', flush=True)
         self.logging(f'DEC offset {self.delta_dec} finished', level='receive')
