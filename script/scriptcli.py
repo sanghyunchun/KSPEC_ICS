@@ -335,8 +335,8 @@ class script():
         await clear_queue(scriptrun.ADC_response_queue)
         await clear_queue(scriptrun.SPEC_response_queue)
 
-        logging(f'###### Observation for Tile ID {self.select_tile} strats ######',level='comment')
-        printing(f'###### Observation for Tile ID {self.select_tile} strats ######')
+        logging(f'###### Observation for Tile ID {self.select_tile} starts ######',level='comment')
+        printing(f'###### Observation for Tile ID {self.select_tile} starts ######')
         
         if logging == None:
             printing('###### Observation Script Start!!! ######')

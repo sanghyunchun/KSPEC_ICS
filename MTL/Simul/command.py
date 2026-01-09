@@ -26,7 +26,7 @@ async def identify_execute(MTL_server,cmd):
         dec=receive_msg['dec']
         xp=receive_msg['xp']
         yp=receive_msg['yp']
-        clss=receive_msg['class']
+#        clss=receive_msg['class']
 
         status, comment=savedata(receive_msg)     # save the loaded objects
         reply_data=mkmsg.mtlmsg()

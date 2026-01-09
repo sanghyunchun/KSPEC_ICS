@@ -296,14 +296,15 @@ class MainWindow(QMainWindow):
 
 
         # Focusing
-        self.ui.pushbtn_dfp5.clicked.connect(self.dfp5_buttuon_clicked)
-        self.ui.pushbtn_dfm5.clicked.connect(self.dfm5_buttuon_clicked)
-        self.ui.pushbtn_dfp005.clicked.connect(self.dfp005_buttuon_clicked)
-        self.ui.pushbtn_dfm005.clicked.connect(self.dfm005_buttuon_clicked)
-        self.ui.pushbtn_fttgoto.clicked.connect(self.fttgoto_buttuon_clicked)
+        self.ui.pushbtn_dfp5.clicked.connect(self.dfp5_button_clicked)
+        self.ui.pushbtn_dfm5.clicked.connect(self.dfm5_button_clicked)
+        self.ui.pushbtn_dfp005.clicked.connect(self.dfp005_button_clicked)
+        self.ui.pushbtn_dfm005.clicked.connect(self.dfm005_button_clicked)
+        self.ui.pushbtn_fttgoto.clicked.connect(self.fttgoto_button_clicked)
 
         # CLI command 
         self.ui.pushbtn_send_cmd.clicked.connect(self.user_input)
+        self.ui.pushbtn_send_cmd_2.clicked.connect(self.user_input)
 
         # Observer Comment
         self.ui.pushbtn_send_comment_1.clicked.connect(self.comment1_clicked)
@@ -619,31 +620,31 @@ class MainWindow(QMainWindow):
 
     # Focusing button
     @asyncSlot()
-    async def dfp5_buttuon_clicked(self):
+    async def dfp5_button_clicked(self):
         foffset = 0.5
         messagetcs = f'KSPEC>TC dfocus {foffset}'
         await self.send_udp_message(messagetcs)
 
     @asyncSlot()
-    async def dfm5_buttuon_clicked(self):
+    async def dfm5_button_clicked(self):
         foffset = -0.5
         messagetcs = f'KSPEC>TC dfocus {foffset}'
         await self.send_udp_message(messagetcs)
 
     @asyncSlot()
-    async def dfp005_buttuon_clicked(self):
+    async def dfp005_button_clicked(self):
         foffset = 0.005
         messagetcs = f'KSPEC>TC dfocus {foffset}'
         await self.send_udp_message(messagetcs)
 
     @asyncSlot()
-    async def dfm005_buttuon_clicked(self):
+    async def dfm005_button_clicked(self):
         foffset = -0.005
         messagetcs = f'KSPEC>TC dfocus {foffset}'
         await self.send_udp_message(messagetcs)
 
     @asyncSlot()
-    async def fttgoto_buttuon_clicked(self):
+    async def fttgoto_button_clicked(self):
         ftt_value = self.ui.lineEdit_fttvalue.text()
         messagetcs = f'KSPEC>TC fttgoto {ftt_value}'
         await self.send_udp_message(messagetcs)
@@ -1167,10 +1168,10 @@ class MainWindow(QMainWindow):
     async def load_tile(self):
         self.ui.lineEdit_CProj.setText(f'{self.project}')
         self.ui.lineEdit_CTile.setText(f'{self.select_tile}')
-        self.logging('Sent Guide stars information to GFA',level='send')
-        await self.ICS_client.send_message("GFA", self.guidemsg)
-        await self.response_queue.get()
-        await asyncio.sleep(2)
+    #    self.logging('Sent Guide stars information to GFA',level='send')
+    #    await self.ICS_client.send_message("GFA", self.guidemsg)
+    #    await self.response_queue.get()
+    #    await asyncio.sleep(2)
 
         self.logging('Sent Target information to MTL',level='send')
         await self.ICS_client.send_message("MTL", self.objmsg)
@@ -1209,6 +1210,9 @@ class MainWindow(QMainWindow):
         if not self.check_syscheck():
             return
 
+        if not self.ui.lineEdit_ra_1.text() or not self.ui.lineEdit_dec_1.text():
+            self.logging('Please load tile information.', level='error')
+            return
 
         await handle_script(f'runobs',scriptrun=self.scriptrun,logging=self.logging)
         
@@ -1276,6 +1280,8 @@ class MainWindow(QMainWindow):
             self.select_tile=dialog.selected_values[0]
             self.obsnum=dialog.selected_values[2]
             self.expT=dialog.selected_values[3]
+            self.ra = dialog.selected_values[4]        # For commission
+            self.dec = dialog.selected_values[5]       # For commission
 
         sciobs=sciobscli()
         filename=os.path.basename(file_path)
@@ -1284,16 +1290,34 @@ class MainWindow(QMainWindow):
         sciobs.obsdate=wild[-1].split('.')[0]
         self.project=wild[0]
         self.obsdate=wild[-1].split('.')[0]
-        self.tilemsg,self.guidemsg,self.objmsg,self.motionmsg1,self.motionmsg2=sciobs.loadtile(self.select_tile)
-        self.ra, self.dec=self.convert_to_sexagesimal(sciobs.ra,sciobs.dec)
+        print(self.project)
+        print(self.obsdate)
+        print(self.select_tile)
+        print(self.ra)
+        print(self.dec)
 
-        self.scriptrun.configure_cordinate(self.project, self.obsdate, self.select_tile, self.ra, self.dec, self.obsnum, self.expT)
 
+        self.objmsg=sciobs.loadtile(self.select_tile)   # For commission
+        self.ra, self.dec=self.convert_to_sexagesimal(self.ra,self.dec)    # For commission
+        self.scriptrun.configure_cordinate(self.project, self.obsdate, self.select_tile, self.ra, self.dec, self.obsnum, self.expT)   # For commission
         self.ui.lineEdit_TileID.setText(f'{self.select_tile}')
         self.ui.lineEdit_ra_1.setText(f'{self.ra}')
         self.ui.lineEdit_dec_1.setText(f'{self.dec}')
         self.ui.lineEdit_exp_time_1.setText(f'{self.expT}')
         self.ui.lineEdit_n_exp_1.setText(f'{self.obsnum}')
+
+
+    ### Real survey Observation ####    
+    #    self.tilemsg,self.guidemsg,self.objmsg,self.motionmsg1,self.motionmsg2=sciobs.loadtile(self.select_tile)
+    #    self.ra, self.dec=self.convert_to_sexagesimal(sciobs.ra,sciobs.dec)
+
+    #    self.scriptrun.configure_cordinate(self.project, self.obsdate, self.select_tile, self.ra, self.dec, self.obsnum, self.expT)
+
+    #    self.ui.lineEdit_TileID.setText(f'{self.select_tile}')
+    #    self.ui.lineEdit_ra_1.setText(f'{self.ra}')
+    #    self.ui.lineEdit_dec_1.setText(f'{self.dec}')
+    #    self.ui.lineEdit_exp_time_1.setText(f'{self.expT}')
+    #    self.ui.lineEdit_n_exp_1.setText(f'{self.obsnum}')
 
 
     def reload_img(self,filename):
@@ -1504,6 +1528,8 @@ class MainWindow(QMainWindow):
         await telcom_client.connect()
         result = await handle_telcom(message,telcom_client)
         await telcom_client.close()
+        self.ui.lineEdit_cmd.clear()
+        self.ui.lineEdit_cmd_2.clear()
         return result
 
     async def send_command(self, category, message):
@@ -1538,7 +1564,8 @@ class MainWindow(QMainWindow):
 #                    self.running = False
 #                    break
 
-            message=self.ui.lineEdit_cmd.text()
+            message = self.ui.lineEdit_cmd.text().strip() or self.ui.lineEdit_cmd_2.text().strip()
+                
             cmd = message.split(" ")[0]
             category = self.find_category(cmd)
             print(f'Command Category is {category}', flush=True)
@@ -1547,6 +1574,8 @@ class MainWindow(QMainWindow):
                 if category.lower() == 'tcs':
                     messagetcs = 'KSPEC>TC ' + message
                     await self.send_udp_message(messagetcs)
+                    self.ui.lineEdit_cmd.clear()
+                    self.ui.lineEdit_cmd_2.clear()
                 elif category.lower() == 'telcom':
                     telcom_result = await self.send_telcom_command(message)
                     print('\033[94m' + '[ICS] received: ', telcom_result.decode() + '\033[0m', flush=True)

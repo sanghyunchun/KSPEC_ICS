@@ -8,7 +8,6 @@ from Lib.AMQ import AMQclass, UDPClientProtocol, TCPClient
 from ADC.adccli import handle_adc
 from GFA.gfacli import handle_gfa
 from FBP.fbpcli import handle_fbp
-#from ENDO.ENDOcli import handle_endo
 from MTL.mtlcli import handle_mtl
 from LAMP.lampcli import handle_lamp
 from SPECTRO.speccli import handle_spec

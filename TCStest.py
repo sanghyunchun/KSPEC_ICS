@@ -19,5 +19,15 @@ async def getra():
     result= await send_telcom_command(msg)
     print(result.decode())
 
+async def stepra():
+    msg = 'stepra 0067'
+    result= await send_telcom_command(msg)
+    print(result.decode())
+
+async def stepdec():
+    msg = 'stepdec -0089'
+    result= await send_telcom_command(msg)
+    print(result.decode())
+
 if __name__ == "__main__":
-    asyncio.run(getra())
+    asyncio.run(stepdec())
