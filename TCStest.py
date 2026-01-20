@@ -7,7 +7,7 @@ import asyncio
 
 async def send_telcom_command(message):
     """Sends a command to the Telcom system via TCP."""
-    telcom_client = TCPClient('127.0.0.1',8889)
+    telcom_client = TCPClient('192.168.15.121',5750)
     await telcom_client.connect()
     result = await handle_telcom(message,telcom_client)
     await telcom_client.close()
@@ -15,12 +15,12 @@ async def send_telcom_command(message):
 
 
 async def getra():
-    msg='getra'
+    msg='getdec'
     result= await send_telcom_command(msg)
     print(result.decode())
 
 async def stepra():
-    msg = 'stepra 0067'
+    msg = 'stepra 0767'
     result= await send_telcom_command(msg)
     print(result.decode())
 
@@ -30,4 +30,4 @@ async def stepdec():
     print(result.decode())
 
 if __name__ == "__main__":
-    asyncio.run(stepdec())
+    asyncio.run(getra())

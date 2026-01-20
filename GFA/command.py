@@ -76,7 +76,7 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
             await GFA_server.send_message('ICS',rsp)
 
             path_astroimg=kspecinfo['GFA']['final_astrometry_images']
-            shutil.rmtree(path_astroimg)                                        # Remove the guiding images after guiding stop.
+#            shutil.rmtree(path_astroimg)                                        # Remove the guiding images after guiding stop.
             os.makedirs(path_astroimg, exist_ok=True)
 
             try:

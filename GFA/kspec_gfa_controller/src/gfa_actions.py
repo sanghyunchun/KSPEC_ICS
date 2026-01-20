@@ -7,6 +7,7 @@ import shutil
 from datetime import datetime
 from typing import Union, List, Dict, Any, Optional
 from pathlib import Path
+import re
 
 from .gfa_logger import GFALogger
 from .gfa_environment import create_environment, GFAEnvironment
@@ -167,10 +168,10 @@ class GFAActions:
 
             await self.env.controller.open_all_cameras()
             try:
-                # NOTE: output_dir는 실제 raw_save_path로 통일하는 걸 권장
+            # output_dir는 실제 raw_save_path로 통일하는 걸 권장
                 await self.env.controller.grab(
                     0, ExpTime, 4,
-                    output_dir="./test_rawss",
+                    output_dir="./img/raw",
                     ra=ra, dec=dec
                 )
             finally:
@@ -197,6 +198,8 @@ class GFAActions:
 
             self.env.logger.info("Executing guider offset calculation...")
             fdx, fdy, fwhm = self.env.guider.exe_cal()
+            
+            self.env.astrometry.clear_raw_and_processed_files()
 
             try:
                 fwhm_val = float(fwhm)
@@ -211,6 +214,149 @@ class GFAActions:
         except Exception as e:
             self.env.logger.error(f"Guiding failed: {str(e)}")
             return self._generate_response("error", f"Guiding failed: {str(e)}")
+
+
+    async def guiding_from_saved_grab(
+        self,
+        *,
+        grab_save_path: str = None,
+        save: bool = False,
+        ra: str = None,
+        dec: str = None,
+        num_images: int = 6,
+    ) -> Dict[str, Any]:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        date_str = datetime.now().strftime("%Y-%m-%d")
+
+        raw_save_path = os.path.join(base_dir, "img", "raw")
+        default_grab_save_path = os.path.join(base_dir, "img", "grab", date_str)
+        grab_save_path = grab_save_path or default_grab_save_path
+        os.makedirs(raw_save_path, exist_ok=True)
+
+        # 예: D20260116_T124224_40103651_exp3s.fits
+        # key = "20260116_124224"
+        ts_re = re.compile(r"D(\d{8})_T(\d{6})_", re.IGNORECASE)
+
+        try:
+            self.env.logger.info("Starting guiding_from_saved_grab (same T-set) ...")
+            self.env.logger.info(f"Using grab_save_path: {grab_save_path}")
+
+            if not os.path.isdir(grab_save_path):
+                msg = f"grab_save_path does not exist or is not a directory: {grab_save_path}"
+                self.env.logger.error(msg)
+                return self._generate_response("error", msg)
+
+            # 1) 세트(T)가 같은 것끼리 그룹화
+            groups = {}  # key -> [fullpath...]
+            unparsable = []
+
+            for fn in os.listdir(grab_save_path):
+                fp = os.path.join(grab_save_path, fn)
+                if not os.path.isfile(fp):
+                    continue
+                if not fn.lower().endswith((".fits", ".fit", ".fts")):
+                    continue
+
+                m = ts_re.search(fn)
+                if not m:
+                    unparsable.append(fn)
+                    continue
+
+                key = f"{m.group(1)}_{m.group(2)}"  # YYYYMMDD_HHMMSS
+                groups.setdefault(key, []).append(fp)
+
+            if not groups:
+                msg = "No FITS images with parsable DYYYYMMDD_Txxxxxx pattern found."
+                self.env.logger.error(msg)
+                return self._generate_response("error", msg, unparsable=unparsable[:20])
+
+            # 2) 가장 최근 key 선택 (문자열 정렬이 시간 정렬과 동일)
+            latest_key = sorted(groups.keys())[-1]
+            latest_files = groups[latest_key]
+
+            if len(latest_files) < num_images:
+                msg = f"Latest set {latest_key} has only {len(latest_files)} files (<{num_images})."
+                self.env.logger.error(msg)
+                return self._generate_response(
+                    "error",
+                    msg,
+                    latest_key=latest_key,
+                    latest_count=len(latest_files),
+                    latest_files=[os.path.basename(p) for p in sorted(latest_files)],
+                )
+
+            # 3) 최신 세트 안에서 6개 선택
+            # 세트 내 파일은 이름으로 정렬하면 (4010...) 순서가 안정적이라 재현성 좋음
+            latest_files_sorted = sorted(latest_files)
+            selected = latest_files_sorted[:num_images]
+
+            self.env.logger.info(
+                f"Selected set key={latest_key}, files=" +
+                ", ".join(os.path.basename(p) for p in selected)
+            )
+
+            # 4) raw 폴더 정리(파일/링크만) 후 복사
+            for name in os.listdir(raw_save_path):
+                p = os.path.join(raw_save_path, name)
+                if os.path.isfile(p) or os.path.islink(p):
+                    try:
+                        os.remove(p)
+                    except Exception as e:
+                        self.env.logger.warning(f"Failed to remove raw file {p}: {e}")
+
+            copied_names = []
+            for src in selected:
+                dst = os.path.join(raw_save_path, os.path.basename(src))
+                shutil.copy2(src, dst)
+                copied_names.append(os.path.basename(src))
+
+            if save:
+                # 이미 grab_save_path가 존재/저장된 상태라 특별 동작 없음
+                pass
+
+            # --- guiding()와 동일: clean env 적용 ---
+            clean_env = _make_clean_subprocess_env()
+            if hasattr(self.env.astrometry, "set_subprocess_env"):
+                self.env.astrometry.set_subprocess_env(clean_env)
+
+            # 5) preproc -> exe_cal
+            self.env.logger.info("Running astrometry preprocessing...")
+            self.env.astrometry.preproc()
+
+            self.env.logger.info("Executing guider offset calculation...")
+            fdx, fdy, fwhm = self.env.guider.exe_cal()
+
+            try:
+                fwhm_val = float(fwhm)
+            except Exception:
+                fwhm_val = 0.0
+
+            msg = f"Offsets: fdx={fdx}, fdy={fdy}, FWHM={fwhm_val} arcsec"
+            return self._generate_response(
+                "success",
+                msg,
+                fdx=fdx,
+                fdy=fdy,
+                fwhm=fwhm_val,
+                grabbed_from=grab_save_path,
+                selected_set_key=latest_key,
+                selected_images=copied_names,
+            )
+
+        except Exception as e:
+            self.env.logger.error(f"guiding_from_saved_grab failed: {str(e)}")
+            return self._generate_response("error", f"guiding_from_saved_grab failed: {str(e)}")
+
+        finally:
+            # 요청: gfa_astrometry class 함수 실행
+            try:
+                if hasattr(self.env.astrometry, "Clear_raw_and_processed_files"):
+                    self.env.astrometry.Clear_raw_and_processed_files()
+                else:
+                    self.env.logger.warning("env.astrometry has no Clear_raw_and_processed_files()")
+            except Exception as e:
+                self.env.logger.warning(f"Clear_raw_and_processed_files failed: {e}")
+
 
     async def pointing(
         self,
@@ -279,21 +425,24 @@ class GFAActions:
                 f"Solving astrometry for CRVALs (max_workers={max_workers})..."
             )
 
-           # raw_dir = Path("/home/GAFOL/work/kspec_gfa_controller/src/kspec_gfa_controller/img/raw")
-            raw_dir = Path("/home/GAFOL/work/KSPEC_ICS/GFA/kspec_gfa_controller/src/img/raw")
+            raw_dir = Path("/home/GAFOL/work/kspec_gfa_controller/src/kspec_gfa_controller/img/raw")
 
-            image_list = sorted(raw_dir.glob("*.fits"))          # 또는 *.fit, *.fits.gz 등 필요하면 추가
-            image_names = [p.name for p in image_list]
-            # image_list = sorted(raw_dir.rglob("*.fits"))       # 하위 폴더까지 다 찾고 싶으면 rglob
+            image_list = sorted(raw_dir.glob("*.fits"))
+            image_names = [p.name for p in image_list]   # ✅ 파일명만
 
             crval1_list, crval2_list = get_crvals_from_images(
                 image_list,
                 max_workers=max_workers,
             )
-
+            
             msg = f"Pointing completed. Computed CRVALs for {len(image_list)} images."
+
             return self._generate_response(
-                "success", msg, images=image_names, crval1=crval1_list, crval2=crval2_list
+                "success",
+                msg,
+                images=image_names,      # ✅ 파일명 리스트로 반환
+                crval1=crval1_list,
+                crval2=crval2_list,
             )
 
         except Exception as e:

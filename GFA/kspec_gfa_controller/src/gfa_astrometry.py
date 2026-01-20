@@ -216,7 +216,10 @@ class GFAAstrometry:
         with fits.open(data_in_path, mode="update") as hdu_list:
             ori = hdu_list[0].data
             header = hdu_list[0].header
+            print(header)
             ra_in, dec_in = header.get("RA"), header.get("DEC")
+            print("ra_in?????????, dec_in?????????????")
+            print(ra_in, dec_in)
 
             # Extract sky values safely
             try:
@@ -292,7 +295,8 @@ class GFAAstrometry:
             raise FileNotFoundError(
                 f"Input file for solve-field not found: {input_file_path}"
             )
-
+        print("ra_in?????????, dec_in?????????????")
+        print(ra_in, dec_in)
         # This is the actual system command => debug
         input_command = (
             f"{solve_field_path} --cpulimit {cpu_limit} --dir {self.temp_dir} --scale-units degwidth "

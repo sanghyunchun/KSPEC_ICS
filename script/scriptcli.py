@@ -169,8 +169,8 @@ class script():
         await scriptrun.response_queue.get()
         await handle_adc('adchome',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
-        await handle_adc('adczero',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
+    #    await handle_adc('adczero',scriptrun.ICSclient)
+    #    await scriptrun.response_queue.get()
         await handle_adc('adcstatus',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
     #    await handle_spec(f'specinitial {self.dir_name}',scriptrun.ICSclient)
@@ -260,7 +260,7 @@ class script():
             await handle_gfa(f'gfaguide {exptime} {save}',scriptrun.ICSclient)
             while True:
                 try:
-                    response_data = await asyncio.wait_for(scriptrun.GFA_response_queue.get(),timeout=70)
+                    response_data = await asyncio.wait_for(scriptrun.GFA_response_queue.get(),timeout=300)
                 except asyncio.TimeoutError:
                     print("No GFA response")
                     continue
@@ -276,27 +276,28 @@ class script():
                 #self.fwhm = 1.23
 
                 ### Autoguiding using offset ###    
-                    xx = self.format_decimal(fdx)
-                    msg = f'stepra {xx}'
-                    result = await self.send_telcom_command(msg)
-                    print('\033[94m' + '[ICS] received: ', result.decode() + '\033[0m', flush=True)
-                    logging(f'RA offset {fdx} finished', level='receive')
-                    await asyncio.sleep(1)
-                    yy = self.format_decimal(fdy)
-                    msg = f'stepdec {yy}'
-                    result = await self.send_telcom_command(msg)
-                    print('\033[94m' + '[ICS] received: ', result.decode() + '\033[0m', flush=True)
-                    logging(f'DEC offset {fdy} finished', level='receive')
+                #    xx = self.format_decimal(fdx)
+                #    msg = f'stepra {xx}'
+                #    result = await self.send_telcom_command(msg)
+                #    print('\033[94m' + '[ICS] received: ', result.decode() + '\033[0m', flush=True)
+                #    logging(f'RA offset {fdx} finished', level='receive')
+                #    await asyncio.sleep(1)
+                #    yy = self.format_decimal(fdy)
+                #    msg = f'stepdec {yy}'
+                #    result = await self.send_telcom_command(msg)
+                #    print('\033[94m' + '[ICS] received: ', result.decode() + '\033[0m', flush=True)
+                #    logging(f'DEC offset {fdy} finished', level='receive')
 
                 ### Autoguiding using New coordinate ###
-                #    ra_bytes = await scriptrun.send_telcom_command('getra')
-                #    dec_bytes = await scriptrun.send_telcom_command('getdec')
+                    ra_bytes = await scriptrun.send_telcom_command('getra')
+                    dec_bytes = await scriptrun.send_telcom_command('getdec')
 
-                #    rahms=bytes_to_sexagesimal(ra_bytes)
-                #    decdms=bytes_to_sexagesimal(dec_bytes) 
-                #    new_coord=apply_offset(rahms,decdms,fdx,fdy)
-                #    messagetcs = 'KSPEC>TC ' + 'tmradec ' + new_coord
-                #    await scriptrun.send_udp_message(messagetcs)
+                    rahms=bytes_to_sexagesimal(ra_bytes)
+                    decdms=bytes_to_sexagesimal(dec_bytes)
+                    logging(f'Apply offset (RA,DEC)=({fdx}, {fdy})', level='normal')
+                    new_coord=apply_offset(rahms,decdms,fdx,fdy)
+                    messagetcs = 'KSPEC>TC ' + 'tmradec ' + new_coord
+                    await scriptrun.send_udp_message(messagetcs)
 
         except asyncio.CancelledError:
             print("Autoguide task was cancelled.")
@@ -439,7 +440,7 @@ class script():
         print('Telescope is slewing now.', end=' ',flush=True)
 
         while True:
-            r=redis.Redis(host='localhost',port=6379,decode_responses=True)     # Set IP address of KMTNet redis server
+            r=redis.Redis(host='192.168.15.121',port=6379,decode_responses=True)     # Set IP address of KMTNet redis server
 
             value=r.get('dome_error')
             print(value)                                                        # Remove or comment in real observation

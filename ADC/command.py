@@ -5,9 +5,10 @@ import Lib.mkmessage as mkmsg
 from astropy.coordinates import EarthLocation, SkyCoord, AltAz
 from astropy.time import Time
 import astropy.units as u
+from astropy.coordinates import Angle
+
 import numpy as np
 from ADC.kspec_adc_controller.src.adc_calc_angle import ADCCalc
-from ADC.kspec_adc_controller.src.adc_logger import AdcLogger
 
 """Command module for handling ADC-related functionalities.
 
@@ -134,12 +135,12 @@ async def identify_execute(ADC_server, adc_action, cmd):
         printing("New adcadjust task started.")
 
     elif func == 'adcstop':
-        reply_data = mkmsg.adcmsg()
-        result = await adc_action.stop(0)
-        reply_data.update(result)
-        reply_data.update(process='Done')
-        rsp = json.dumps(reply_data)
-        printing(reply_data['message'])
+   #     reply_data = mkmsg.adcmsg()
+   #     result = await adc_action.stop(0)
+   #     reply_data.update(result)
+   #     reply_data.update(process='Done')
+   #     rsp = json.dumps(reply_data)
+   #     printing(reply_data['message'])
 #        await ADC_server.send_message('ICS', rsp)
 
         # Cancel the adcadjust task if it's running
@@ -148,10 +149,16 @@ async def identify_execute(ADC_server, adc_action, cmd):
             adcadjust_task.cancel()
             try:
                 await adcadjust_task
+                reply_data = mkmsg.adcmsg()
+                reply_data.update(result)
+                reply_data.update(message = 'ADC adjust stopped.', process='Done', status='success')
+                rsp = json.dumps(reply_data)
+                
             except asyncio.CancelledError:
                 printing("adcadjust task stopped.")
         else:
             printing("No adcadjust task is currently running.")
+
         await ADC_server.send_message('ICS', rsp)
 
     elif func in {'adcrotate1', 'adcrotate2', 'adcctrotate','adccorotate'}:
@@ -228,9 +235,10 @@ async def handle_adcadjust(ADC_server, adc_action, ra, dec):
     """
     try:
         ini_zdist = calculate_zenith_distance(ra, dec)
-        logger = AdcLogger()
-        calculator = ADCCalc(logger)
-        ini_count = calculator.degree_to_count(calculator.calc_from_za(ini_zdist))
+        print('dkjdfijeijwfijeijfe')
+#        logger = AdcLogger(__file__)
+        #calculator = ADCCalc()
+        ini_count = adc_action.calculator.degree_to_count(adc_action.calculator.calc_from_za(ini_zdist))
         delcount = ini_count
         prev_count=ini_count
 
@@ -238,7 +246,7 @@ async def handle_adcadjust(ADC_server, adc_action, ra, dec):
             comment=f"ADC is now rotating by {delcount} counts."
             printing(comment)
             reply_data=mkmsg.adcmsg()
-            reply_data.update(message=comment)
+            reply_data.update(message=comment,process='ING',status='success')
             rsp=json.dumps(reply_data)
             await ADC_server.send_message('ICS',rsp)
 
@@ -256,7 +264,7 @@ async def handle_adcadjust(ADC_server, adc_action, ra, dec):
 
             await asyncio.sleep(60)                       # Wait for exposure time
             zdist = calculate_zenith_distance(ra, dec)
-            next_count = calculator.degree_to_count(calculator.calc_from_za(zdist))
+            next_count = adc_action.calculator.degree_to_count(adc_action.calculator.calc_from_za(zdist))
             delcount = next_count - prev_count
             prev_count = next_count
 
@@ -274,7 +282,7 @@ async def handle_adcadjust(ADC_server, adc_action, ra, dec):
         printing("handle_adcadjust completed successfully.")
 
 
-def calculate_zenith_distance(ra_obj, dec_obj):
+def calculate_zenith_distance(ra, dec):
     """Calculate the zenith distance for a given RA and DEC.
 
     Args:
@@ -284,8 +292,12 @@ def calculate_zenith_distance(ra_obj, dec_obj):
     Returns:
         float: The zenith distance in degrees.
     """
+    ra_obj = Angle(ra, unit=u.hourangle).degree
+    dec_obj = Angle(dec, unit=u.deg).degree
+    print('dfjhieijiekkkkkkkk')
+    print(ra_obj,dec_obj)
     location = EarthLocation(lat=-31.27118, lon=149.06256, height=1165*u.m)  # AAO coordinates
-    object_coord = SkyCoord(ra=ra_obj, dec=dec_obj, unit=(u.hourangle,u.deg))
+    object_coord = SkyCoord(ra=ra_obj, dec=dec_obj, unit=(u.deg,u.deg))
     current_time = Time.now()
     times = current_time + np.arange(0, 2) * u.minute
     altaz_frame = AltAz(obstime=times, location=location)

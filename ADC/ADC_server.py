@@ -38,20 +38,19 @@ async def main():
 
         await ADC_server.connect()
 
-        sync def on_adc_message(message: aio_pika.IncomingMessage):
-        async with message.process():
-            try:
-                dict_data = json.loads(message.body)
-                message_text = dict_data['message']
-                print('\033[94m'+'[ADC] received: ' + message_text + '\033[0m')
+        async def on_adc_message(message: aio_pika.IncomingMessage):
+            async with message.process():
+                try:
+                    dict_data = json.loads(message.body)
+                    message_text = dict_data['message']
+                    print('\033[94m'+'[ADC] received: ' + message_text + '\033[0m')
 
-                await identify_execute(ADC_server, action, message.body)
+                    await identify_execute(ADC_server, action, message.body)
 
-            except Exception as e:
-                print(f"Error in on_gfa_message: {e}", flush=True)
+                except Exception as e:
+                    print(f"Error in on_gfa_message: {e}", flush=True)
 
             print('Waiting for message from client......')
-
 
         await ADC_server.define_consumer('ADC',on_adc_message)
         print('Waiting for message from client......')

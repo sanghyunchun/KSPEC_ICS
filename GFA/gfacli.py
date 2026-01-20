@@ -8,36 +8,35 @@ import asyncio
 import json
 
 
-"""
-def bytes_to_sexagesimal(value: bytes, encoding="ascii") -> str:
-        """
-        b"453467.8"  -> "45:34:67.8"
-        b"-453456.7" -> "-45:34:56.7"
-        """
-        # bytes → str
-        s = value.decode(encoding).strip()
+#def bytes_to_sexagesimal(value: bytes, encoding="ascii") -> str:
+#        """
+#       # b"453467.8"  -> "45:34:67.8"
+#       # b"-453456.7" -> "-45:34:56.7"
+#        """
+#        # bytes → str
+#        s = value.decode(encoding).strip()
 
         # 부호 처리
-        sign = "-" if s.startswith("-") else ""
-        s = s.lstrip("+-")
+#        sign = "-" if s.startswith("-") else ""
+#        s = s.lstrip("+-")
 
         # 정수부 / 소수부 분리
-        if "." in s:
-            integer, frac = s.split(".", 1)
-            frac = "." + frac
-        else:
-            integer = s
-            frac = ""
+#        if "." in s:
+#            integer, frac = s.split(".", 1)
+#            frac = "." + frac
+#        else:
+#            integer = s
+#            frac = ""
 
-        if len(integer) < 6:
-            raise ValueError(f"sexagesimal 변환에 필요한 자릿수 부족: {s}")
+#        if len(integer) < 6:
+#            raise ValueError(f"sexagesimal 변환에 필요한 자릿수 부족: {s}")
 
-        h = integer[0:2]
-        m = integer[2:4]
-        sec = integer[4:] + frac
+#        h = integer[0:2]
+#        m = integer[2:4]
+#        sec = integer[4:] + frac
+#
+#        return f"{sign}{h}:{m}:{sec}"
 
-        return f"{sign}{h}:{m}:{sec}"
-"""
 def bytes_to_sexagesimal(value: bytes, encoding='ascii') -> str:
     """
     바이트 문자열에서 마지막 토큰을 읽어 HH:MM:SS.SS 또는 ±DD:MM:SS.SS 형식으로 변환
@@ -130,13 +129,6 @@ async def handle_gfa(arg, ICS_client):
         'gfastatus': gfa_status,
         'gfaguidestop' : gfa_guidestop
     }
-
-#    ra_bytes=await send_telcom_command('getra')
-#    dec_bytes=await send_telcom_command('getdec')
-#    print(ra_bytes,dec_bytes)
-
-#    ra=bytes_to_sexagesimal(ra_bytes)
-#    dec=bytes_to_sexagesimal(dec_bytes)
 
     if cmd == 'gfagrab':
         if len(params) != 2:

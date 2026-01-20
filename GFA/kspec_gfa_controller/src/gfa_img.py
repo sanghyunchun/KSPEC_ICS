@@ -11,7 +11,10 @@ from typing import Optional
 
 import numpy as np
 from astropy.io import fits
+from astropy.visualization import ZScaleInterval
 import logging
+from PIL import Image
+
 
 
 __all__ = ["GFAImage"]
@@ -153,4 +156,83 @@ class GFAImage:
             self.logger.info(f"FITS file successfully saved to {filepath}")
         except OSError as e:
             self.logger.error(f"Error writing FITS file {filepath}: {e}")
+            raise
+
+
+    def save_png(
+        self,
+        image_array: np.ndarray,
+        filename: str,
+        output_directory: Optional[str] = None,
+        vmin: Optional[float] = None,
+        vmax: Optional[float] = None,
+        bit_depth: int = 8,
+    ) -> None:
+        """
+        Save an image array to a PNG file using zscale by default.
+        """
+
+        if bit_depth not in (8, 16):
+            raise ValueError("bit_depth must be 8 or 16")
+
+        # 1. Output directory
+        if output_directory is None:
+            output_directory = os.getcwd()
+
+        if not os.path.exists(output_directory):
+            try:
+                os.makedirs(output_directory)
+            except OSError as e:
+                self.logger.error(f"Error creating directory {output_directory}: {e}")
+                raise
+
+        # 2. Ensure filename ends with .png
+        if not filename.lower().endswith(".png"):
+            filename += ".png"
+
+        filename = filename.replace(":", "-")
+        filepath = os.path.join(output_directory, filename)
+
+        self.logger.debug(f"PNG file will be saved to: {filepath}")
+        self.logger.debug(f"Image array shape: {image_array.shape}")
+
+        # 3. Prepare image
+        img = image_array.astype(np.float32)
+        img = np.nan_to_num(img)
+
+        # ---- zscale if vmin/vmax not provided ----
+        if vmin is None or vmax is None:
+            zscale = ZScaleInterval(contrast=0.25)
+            try:
+                vmin, vmax = zscale.get_limits(img)
+                self.logger.debug(f"Using zscale limits: vmin={vmin}, vmax={vmax}")
+            except Exception as e:
+                self.logger.warning(
+                    f"zscale failed ({e}), falling back to min/max"
+                )
+                vmin = np.nanmin(img)
+                vmax = np.nanmax(img)
+
+        if vmax <= vmin:
+            self.logger.error("Invalid normalization range (vmax <= vmin)")
+            raise ValueError("Invalid normalization range")
+
+        # 4. Normalize
+        img = np.clip(img, vmin, vmax)
+        img = (img - vmin) / (vmax - vmin)
+
+        if bit_depth == 8:
+            img = (img * 255).astype(np.uint8)
+            mode = "L"
+        else:
+            img = (img * 65535).astype(np.uint16)
+            mode = "I;16"
+
+        # 5. Save PNG
+        try:
+            pil_img = Image.fromarray(img, mode=mode)
+            pil_img.save(filepath)
+            self.logger.info(f"PNG file successfully saved to {filepath}")
+        except OSError as e:
+            self.logger.error(f"Error writing PNG file {filepath}: {e}")
             raise

@@ -1,0 +1,9 @@
+2026-01-17 15:37:54,539 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2026-01-17 15:37:54,540 [INFO] Initializing gfa_astrometry class.
+2026-01-17 15:37:54,540 [INFO] Initializing GFAGuider...
+2026-01-17 15:37:54,540 [DEBUG] Processed dir: /home/kspecics/work/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/procimg
+2026-01-17 15:37:54,540 [DEBUG] Final astro dir: /home/kspecics/work/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/astroimg/
+2026-01-17 15:37:54,540 [DEBUG] Cutout dir: /home/kspecics/work/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/cutout
+2026-01-17 15:37:54,540 [INFO] GFAGuider setup complete.
+2026-01-17 15:37:54,540 [INFO] Initialized GFAEnvironment with role 'finder' and cameras [7]
+2026-01-17 15:38:27,156 [INFO] Querying camera statuses...

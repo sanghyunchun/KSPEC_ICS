@@ -830,7 +830,7 @@ class MainWindow(QMainWindow):
                 await handle_script(f'autoguide {self.gfaexpt} False', scriptrun=self.scriptrun,logging=self.logging)
                 self.logging(f'Sent Autoguiding Start. Exposure time is {self.gfaexpt}.', level='send')
             else:
-                print(f'tekjkerjek {gfasave}')
+            #    print(f'tekjkerjek {gfasave}')
                 await handle_script(f'autoguide {self.gfaexpt} True', scriptrun=self.scriptrun,logging=self.logging)
         else:
             await handle_script('autoguidestop', scriptrun=self.scriptrun,logging=self.logging)
@@ -896,7 +896,7 @@ class MainWindow(QMainWindow):
         if not self.ra or not self.dec:
            self.logging(f'Please load Tile or slew telescope.',level='error')
            return
-    
+
         await handle_gfa(f'pointing {self.gfaexpt} {self.ra} {self.dec}',self.ICS_client)
 
     def format_decimal(self,x):
@@ -914,24 +914,24 @@ class MainWindow(QMainWindow):
         ### Apply offset value for telescope offset ###
     #    self.delta_ra = 0.34
     #    self.delta_dec = -1.23
-        self.logging(f'Apply Offsets in (RA, DEC) = ({self.delta_ra}, {self.delta_dec})',level='normal')
-        xx = self.format_decimal(self.delta_ra)
-        msg = f'stepra {xx}'
-        result = await self.send_telcom_command(msg)
-        print('\033[94m' + '[ICS] received: ', result.decode() + '\033[0m', flush=True)
-        self.logging(f'RA offset {self.delta_ra} finished', level='receive')
-        await asyncio.sleep(1)
-        yy = self.format_decimal(self.delta_dec)
-        msg = f'stepdec {yy}'
-        result = await self.send_telcom_command(msg)
-        print('\033[94m' + '[ICS] received: ', result.decode() + '\033[0m', flush=True)
-        self.logging(f'DEC offset {self.delta_dec} finished', level='receive')
+    #    self.logging(f'Apply Offsets in (RA, DEC) = ({self.delta_ra}, {self.delta_dec})',level='normal')
+    #    xx = self.format_decimal(self.delta_ra)
+    #    msg = f'stepra {xx}'
+    #    result = await self.send_telcom_command(msg)
+    #    print('\033[94m' + '[ICS] received: ', result.decode() + '\033[0m', flush=True)
+    #    self.logging(f'RA offset {self.delta_ra} finished', level='receive')
+    #    await asyncio.sleep(1)
+    #    yy = self.format_decimal(self.delta_dec)
+    #    msg = f'stepdec {yy}'
+    #    result = await self.send_telcom_command(msg)
+    #    print('\033[94m' + '[ICS] received: ', result.decode() + '\033[0m', flush=True)
+    #    self.logging(f'DEC offset {self.delta_dec} finished', level='receive')
 
     ### Use  New pointing coordinate for telescope offset ###
-#        self.logging(f'Apply Offsets {self.delta_ra}, {self.delta_dec}. New (RA,DEC)=({self.new_ra},{self.new_dec})',level='normal')
-#        self.logging(f'Slew Telescope to (RA,DEC)=({self.new_ra},{self.new_dec})',level='send')
-#        messagetcs = 'KSPEC>TC ' + 'tmradec ' + self.new_ra +' '+ self.new_dec
-#        await self.send_udp_message(messagetcs)
+        self.logging(f'Applied Offsets {self.delta_ra}, {self.delta_dec}. New (RA,DEC)=({self.new_ra},{self.new_dec})',level='normal')
+        self.logging(f'Slew Telescope to (RA,DEC)=({self.new_ra},{self.new_dec})',level='send')
+        messagetcs = 'KSPEC>TC ' + 'tmradec ' + self.new_ra +' '+ self.new_dec
+        await self.send_udp_message(messagetcs)
 
 
 
@@ -980,8 +980,8 @@ class MainWindow(QMainWindow):
 
         if self.adcadjusting_state:
 #            self.ui.pushbtn_ADCadjust.setStyleSheet("color: green; font-weight:900;")
-#            self.ra='09:34:43.2'
-#            self.dec='-31:34:56.4'
+#            self.ra='20:34:43.2'
+#            self.dec='-32:34:56.4'
             await handle_adc(f'adcadjust {self.ra} {self.dec}', self.ICS_client)
             self.logging(f'Sent ADC adjusting for ({self.ra}, {self.dec}) Start.', level='send')
         else:
@@ -1015,8 +1015,8 @@ class MainWindow(QMainWindow):
         if not self.check_connection():
             return
 
-        if not self.check_syscheck():
-            return
+    #    if not self.check_syscheck():
+    #        return
         self.logging(f'Sent ADC adcpark', level='send')
         await handle_adc('adcpark', self.ICS_client)
 
@@ -1025,8 +1025,8 @@ class MainWindow(QMainWindow):
         if not self.check_connection():
             return
 
-        if not self.check_syscheck():
-            return
+    #    if not self.check_syscheck():
+    #        return
         self.logging(f'Sent ADC adchome', level='send')
         await handle_adc('adchome', self.ICS_client)
 
@@ -1278,8 +1278,8 @@ class MainWindow(QMainWindow):
         dialog = SelectTile(header[:4], tile_lines, self)
         if dialog.exec() == QDialog.Accepted and dialog.selected_values:
             self.select_tile=dialog.selected_values[0]
-            self.obsnum=dialog.selected_values[2]
-            self.expT=dialog.selected_values[3]
+            self.obsnum=dialog.selected_values[3]
+            self.expT=dialog.selected_values[2]
             self.ra = dialog.selected_values[4]        # For commission
             self.dec = dialog.selected_values[5]       # For commission
 

@@ -403,8 +403,6 @@ def get_crval_from_image(
             f"{str(image_path)}"
         )
 
-        print(cmd)
-
         lg.info("Running solve-field")
         lg.debug("Running command: %s", cmd)
 

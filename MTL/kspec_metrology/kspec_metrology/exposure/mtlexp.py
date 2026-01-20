@@ -4,7 +4,7 @@ from astropy.io import fits
 from pathlib import Path
 import json
 
-def mtlexp(exptime,filename : str                                  # Need filename 
+def mtlexp(exptime,filename
            , readmode=1
            , usb_traffic=40
            , gain=10

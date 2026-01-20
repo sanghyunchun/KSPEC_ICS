@@ -12,6 +12,8 @@ from scipy.interpolate import CubicSpline
 from scipy.interpolate import PchipInterpolator
 from scipy.interpolate import Akima1DInterpolator
 
+from .adc_logger import AdcLogger
+
 
 def _get_default_lookup_path() -> str:
     """
@@ -43,7 +45,7 @@ class ADCCalc:
         Maximum value of zenith angle in the lookup table (degree)
     """
 
-    def __init__(self, logger, lookup_table=None, method="pchip"):
+    def __init__(self, lookup_table=None, method="pchip"):
         """
         Parameters
         ----------
@@ -54,7 +56,7 @@ class ADCCalc:
         method : {'cubic', 'pchip', 'akima'}, optional
             The interpolation method to be used.
         """
-        self.logger = logger
+        self.logger = AdcLogger(__file__)
 
         # 1) lookup_table이 None이면 _get_default_lookup_path()로 자동 설정
         if lookup_table is None:
@@ -121,11 +123,15 @@ class ADCCalc:
         """
         if isinstance(za, (int, float)):  # For single values
             if za < self.za_min or za > self.za_max:
-                self.logger.error(f"Input zenith angle {za} is out of bounds ({self.za_min}, {self.za_max})")
+                self.logger.error(
+                    f"Input zenith angle {za} is out of bounds ({self.za_min}, {self.za_max})"
+                )
                 raise ValueError(f"Input zenith angle {za} is out of bounds.")
         elif hasattr(za, "min") and hasattr(za, "max"):  # For numpy arrays, etc.
             if za.min() < self.za_min or za.max() > self.za_max:
-                self.logger.error(f"Input zenith angle array is out of bounds ({self.za_min}, {self.za_max})")
+                self.logger.error(
+                    f"Input zenith angle array is out of bounds ({self.za_min}, {self.za_max})"
+                )
                 raise ValueError("Input zenith angle array is out of bounds.")
         else:
             self.logger.error(f"Invalid type for zenith angle: {type(za)}")

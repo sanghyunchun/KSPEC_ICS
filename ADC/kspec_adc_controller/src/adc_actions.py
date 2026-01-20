@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 #
 # @Author: Mingyeong Yang (mmingyeong@kasi.re.kr)
 # @Date: 2024-06-26
@@ -12,10 +12,11 @@ from .adc_calc_angle import ADCCalc
 
 __all__ = ["AdcActions"]
 
+
 class AdcActions:
     """Class to manage ADC actions including connecting, powering on/off, and motor control."""
 
-    def __init__(self, logger=None):
+    def __init__(self):
         """
         Initialize the AdcActions class and set up the ADC controller.
 
@@ -24,11 +25,11 @@ class AdcActions:
         logger : AdcLogger, optional
             Logger instance for logging operations. If None, a default AdcLogger instance is created.
         """
-        self.logger = logger or AdcLogger()  # Use provided logger or create a default one
+        self.logger = AdcLogger(__file__)  # Use provided logger or create a default one
         self.logger.debug("Initializing AdcActions class.")
-        self.controller = AdcController(self.logger)
+        self.controller = AdcController()
         self.controller.find_devices()
-        self.calculator = ADCCalc(self.logger)  # Method change line
+        self.calculator = ADCCalc()  # Method change line
 
     def connect(self):
         """
@@ -43,7 +44,7 @@ class AdcActions:
         try:
             self.controller.connect()
             self.logger.info("Connection successful.")
-            return self._generate_response("success", "Connected to ADC devices.")
+            return self._generate_response("success", "Connected to devices.")
         except Exception as e:
             self.logger.error(f"Error in connect: {e}")
             return self._generate_response("error", f"Failed to connect: {str(e)}")
@@ -89,16 +90,19 @@ class AdcActions:
         try:
             state = self.controller.device_state(motor_num)
             self.logger.info(f"Motor {motor_num} status: {state}")
-            return self._generate_response("success", f"Motor {motor_num} status retrieved: {state}")
+            return self._generate_response(
+                "success", f"Motor {motor_num} status retrieved: {state}"
+            )
         except Exception as e:
             self.logger.error(f"Error in status: {e}")
-            return self._generate_response("error", f"Error retrieving motor {motor_num} status: {str(e)}")
-
+            return self._generate_response(
+                "error", f"Error retrieving motor {motor_num} status: {str(e)}"
+            )
 
     async def move(self, motor_id, pos_count, vel_set=1):
         """
         Move the motor(s) to the specified position with a given velocity.
-        
+
         Parameters
         ----------
         motor_id : int
@@ -107,7 +111,7 @@ class AdcActions:
             The target position to move the motor(s) to.
         vel_set : int, optional
             The velocity at which to move the motor(s). Defaults to 1.
-        
+
         Returns
         -------
         dict
@@ -119,8 +123,12 @@ class AdcActions:
                     f"Starting simultaneous move for motors 1 and 2 to position {pos_count} with velocity {vel_set}."
                 )
 
-                motor1_task = asyncio.to_thread(self.controller.move_motor, 1, -pos_count, vel_set)
-                motor2_task = asyncio.to_thread(self.controller.move_motor, 2, -pos_count, vel_set)
+                motor1_task = asyncio.to_thread(
+                    self.controller.move_motor, 1, -pos_count, vel_set
+                )
+                motor2_task = asyncio.to_thread(
+                    self.controller.move_motor, 2, -pos_count, vel_set
+                )
 
                 # Wait for both motors to complete
                 results = await asyncio.gather(motor1_task, motor2_task)
@@ -137,8 +145,12 @@ class AdcActions:
                     f"Starting simultaneous move for motors 1 and 2 to position {pos_count} with velocity {vel_set} in same direction"
                 )
 
-                motor1_task = asyncio.to_thread(self.controller.move_motor, 1, -pos_count, vel_set)
-                motor2_task = asyncio.to_thread(self.controller.move_motor, 2, pos_count, vel_set)
+                motor1_task = asyncio.to_thread(
+                    self.controller.move_motor, 1, -pos_count, vel_set
+                )
+                motor2_task = asyncio.to_thread(
+                    self.controller.move_motor, 2, pos_count, vel_set
+                )
 
                 # Wait for both motors to complete
                 results = await asyncio.gather(motor1_task, motor2_task)
@@ -154,19 +166,24 @@ class AdcActions:
                 self.logger.debug(
                     f"Moving motor {motor_id} to position {pos_count} with velocity {vel_set}."
                 )
-                result = await asyncio.to_thread(self.controller.move_motor, motor_id, -pos_count, vel_set)
-                self.logger.info(f"Motor {motor_id} moved successfully to position {pos_count}.")
+                result = await asyncio.to_thread(
+                    self.controller.move_motor, motor_id, -pos_count, vel_set
+                )
+                self.logger.info(
+                    f"Motor {motor_id} moved successfully to position {pos_count}."
+                )
                 return self._generate_response(
                     "success",
-                    f"Motor {motor_id} moved to position {pos_count} with velocity {vel_set}. Result: {result}"
+                    f"Motor {motor_id} moved to position {pos_count} with velocity {vel_set}. Result: {result}",
                 )
         except Exception as e:
-            self.logger.error(f"Error moving motor {motor_id} to position {pos_count} with velocity {vel_set}: {e}")
-            return self._generate_response(
-                "error", 
-                f"Failed to move motor {motor_id} to position {pos_count} with velocity {vel_set}: {str(e)}"
+            self.logger.error(
+                f"Error moving motor {motor_id} to position {pos_count} with velocity {vel_set}: {e}"
             )
-
+            return self._generate_response(
+                "error",
+                f"Failed to move motor {motor_id} to position {pos_count} with velocity {vel_set}: {str(e)}",
+            )
 
     async def stop(self, motor_id):
         """
@@ -191,7 +208,7 @@ class AdcActions:
                 self.logger.info("Both motors stopped successfully.")
                 return self._generate_response(
                     "success",
-                    f"Both motors stopped successfully. Results: Motor1: {results[0]}, Motor2: {results[1]}"
+                    f"Both motors stopped successfully. Results: Motor1: {results[0]}, Motor2: {results[1]}",
                 )
             elif motor_id in [1, 2]:
                 self.logger.debug(f"Stopping motor {motor_id}.")
@@ -199,17 +216,15 @@ class AdcActions:
                 self.logger.info(f"Motor {motor_id} stopped successfully.")
                 return self._generate_response(
                     "success",
-                    f"Motor {motor_id} stopped successfully. Result: {result}"
+                    f"Motor {motor_id} stopped successfully. Result: {result}",
                 )
             else:
                 raise ValueError(f"Invalid motor ID: {motor_id}")
         except Exception as e:
             self.logger.error(f"Error stopping motor {motor_id}: {e}")
             return self._generate_response(
-                "error", 
-                f"Failed to stop motor {motor_id}: {str(e)}"
+                "error", f"Failed to stop motor {motor_id}: {str(e)}"
             )
-
 
     async def activate(self, za, vel_set=1) -> dict:
         """
@@ -248,7 +263,9 @@ class AdcActions:
                     f"Setting velocity to {max_velocity} RPM."
                 )
 
-        self.logger.info(f"Activating motors with zenith angle {za}, velocity {vel} RPM.")
+        self.logger.info(
+            f"Activating motors with zenith angle {za}, velocity {vel} RPM."
+        )
 
         try:
             # Calculate angle and position
@@ -259,7 +276,7 @@ class AdcActions:
             self.logger.error(f"Error in calculating motor position: {e}")
             return self._generate_response(
                 "error",
-                f"Failed to calculate motor position for zenith angle {za}: {str(e)}"
+                f"Failed to calculate motor position for zenith angle {za}: {str(e)}",
             )
 
         try:
@@ -270,51 +287,34 @@ class AdcActions:
             # motor 2 L3 위치, 빛의 진행 방향 기준 반시계 방향 회전
             motor2_task = asyncio.to_thread(self.controller.move_motor, 2, -pos, vel)
 
-            results = await asyncio.gather(motor1_task, motor2_task, return_exceptions=True)
+            results = await asyncio.gather(
+                motor1_task, motor2_task, return_exceptions=True
+            )
 
             for i, result in enumerate(results):
                 if isinstance(result, Exception):
-                    self.logger.error(f"Motor {i+1} failed: {result}")
+                    self.logger.error(f"Motor {i + 1} failed: {result}")
                     return self._generate_response(
                         "error",
-                        f"Motor {i+1} activation failed with position {pos} and velocity {vel}. Error: {result}"
+                        f"Motor {i + 1} activation failed with position {pos} and velocity {vel}. Error: {result}",
                     )
 
             self.logger.info("Motors activated successfully.")
             return self._generate_response(
                 "success",
                 f"Motors activated to position {pos} with velocity {vel}. "
-                f"Results: Motor1: {results[0]}, Motor2: {results[1]}"
+                f"Results: Motor1: {results[0]}, Motor2: {results[1]}",
             )
         except Exception as e:
             self.logger.error(f"Failed to activate motors with zenith angle {za}: {e}")
             return self._generate_response(
                 "error",
-                f"Failed to activate motors for zenith angle {za} with velocity {vel}: {str(e)}"
+                f"Failed to activate motors for zenith angle {za} with velocity {vel}: {str(e)}",
             )
-
 
     async def homing(self, homing_vel=1):
         """
         Perform a homing operation with the motor controller.
-        
-        The homing operation attempts to move the motor to its home position. This is usually a predefined
-        starting point or a limit switch where the motor is considered to be at its 'home' position.
-
-        Parameters
-        ----------
-        homing_vel : int, optional
-            The velocity at which to move the motors (in RPM). Defaults to 1.
-            Maximum allowed velocity is 5 RPM. If a value greater than 5 is provided,
-            it will be automatically capped at 5 RPM.
-            If a negative value is provided, it will be reset to the default value of 1 RPM.
-        
-        Returns
-        -------
-        dict
-            A JSON-like dictionary with the operation's status. Contains:
-            - "status": "success" if the homing operation was successful, "error" if it failed.
-            - "message": A string explaining the failure, only present if "status" is "error".
         """
 
         max_velocity = 5
@@ -339,8 +339,20 @@ class AdcActions:
         try:
             self.logger.debug("Calling homing method on controller.")
             await self.controller.homing(vel)
+
+            state = self.controller.device_state(0)
+
+            motor1_pos = state["motor1"]["position_state"]
+            motor2_pos = state["motor2"]["position_state"]
+
             self.logger.info("Homing completed successfully.")
-            return self._generate_response("success", "Homing completed successfully.")
+            return self._generate_response(
+                "success",
+                "Homing completed successfully.",
+                motor_1=motor1_pos,
+                motor_2=motor2_pos,
+            )
+
         except Exception as e:
             self.logger.error(f"Error in homing operation: {str(e)}")
             return self._generate_response("error", str(e))
@@ -359,7 +371,7 @@ class AdcActions:
             Maximum allowed velocity is 5 RPM. If a value greater than 5 is provided,
             it will be automatically capped at 5 RPM.
             If a negative value is provided, it will be reset to the default value of 1 RPM.
-        
+
         Returns
         -------
         dict
@@ -399,7 +411,7 @@ class AdcActions:
     async def zeroing(self, zeroing_vel=1):
         """
         Perform a zeroing operation by adjusting motor positions based on calibrated offsets.
-        
+
         This operation sets the motor's position offsets (e.g., by moving motors by a fixed number of counts).
         This may be required to compensate for any drift or to set a baseline for further operations.
 
@@ -448,11 +460,10 @@ class AdcActions:
             self.logger.error(f"Error in zeroing operation: {str(e)}")
             return self._generate_response("error", str(e))
 
-
     def disconnect(self):
         """
         Disconnect from the ADC controller and related devices.
-        
+
         This function will disconnect any active connections to the motor controller or other connected devices.
 
         Returns
@@ -489,7 +500,9 @@ class AdcActions:
             self.controller.disconnect()
             self.controller.close()
             self.logger.info("Power off successful.")
-            return self._generate_response("success", "Power off and devices disconnected.")
+            return self._generate_response(
+                "success", "Power off and devices disconnected."
+            )
         except Exception as e:
             self.logger.error(f"Error in power off: {str(e)}")
             return self._generate_response("error", str(e))
@@ -499,7 +512,7 @@ class AdcActions:
         Calculate from ZA using the calculator object.
 
         This function computes a value from the provided ZA input using an internal calculator.
-        
+
         Parameters
         ----------
         za : float
@@ -520,7 +533,6 @@ class AdcActions:
         except Exception as e:
             self.logger.error(f"Error calculating from ZA: {str(e)}")
             return self._generate_response("error", str(e))
-
 
     def degree_to_count(self, degree) -> dict:
         """
