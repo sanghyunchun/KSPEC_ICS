@@ -9,34 +9,72 @@ import json
 
 
 
-def bytes_to_sexagesimal(value: bytes, encoding="ascii") -> str:
-        """
-        b"453467.8"  -> "45:34:67.8"
-        b"-453456.7" -> "-45:34:56.7"
-        """
-        # bytes → str
-        s = value.decode(encoding).strip()
+#def bytes_to_sexagesimal(value: bytes, encoding="ascii") -> str:
+#        """
+#        b"453467.8"  -> "45:34:67.8"
+#        b"-453456.7" -> "-45:34:56.7"
+#        """
+#        # bytes → str
+#        s = value.decode(encoding).strip()
 
-        # 부호 처리
-        sign = "-" if s.startswith("-") else ""
-        s = s.lstrip("+-")
+#        # 부호 처리
+#        sign = "-" if s.startswith("-") else ""
+#        s = s.lstrip("+-")
 
         # 정수부 / 소수부 분리
-        if "." in s:
-            integer, frac = s.split(".", 1)
-            frac = "." + frac
-        else:
-            integer = s
-            frac = ""
+#        if "." in s:
+#            integer, frac = s.split(".", 1)
+#            frac = "." + frac
+#        else:
+#            integer = s
+#            frac = ""
 
-        if len(integer) < 6:
-            raise ValueError(f"sexagesimal 변환에 필요한 자릿수 부족: {s}")
+#        if len(integer) < 6:
+#            raise ValueError(f"sexagesimal 변환에 필요한 자릿수 부족: {s}")
 
-        h = integer[0:2]
-        m = integer[2:4]
-        sec = integer[4:] + frac
+#        h = integer[0:2]
+#        m = integer[2:4]
+#        sec = integer[4:] + frac
 
-        return f"{sign}{h}:{m}:{sec}"
+#        return f"{sign}{h}:{m}:{sec}"
+
+def bytes_to_sexagesimal(value: bytes, encoding="ascii") -> str:
+    """
+    b"KMTNET TCS 123 074344.5\n\x00" -> "07:43:44.5"
+    b"KMTNET TCS 123 -453456.7\n\x00" -> "-45:34:56.7"
+    """
+
+    # bytes → str, null 문자 제거
+    s = value.decode(encoding, errors="ignore").replace("\x00", "").strip()
+
+    # 마지막 필드(숫자)만 추출
+    try:
+        s = s.split()[-1]
+    except IndexError:
+        raise ValueError(f"유효한 sexagesimal 값이 없음: {value!r}")
+
+    # 부호 처리
+    sign = "-" if s.startswith("-") else ""
+    s = s.lstrip("+-")
+
+    # 정수부 / 소수부 분리
+    if "." in s:
+        integer, frac = s.split(".", 1)
+        frac = "." + frac
+    else:
+        integer = s
+        frac = ""
+
+    if len(integer) < 6:
+        raise ValueError(f"sexagesimal 변환에 필요한 자릿수 부족: {s}")
+
+    h = integer[0:2]
+    m = integer[2:4]
+    sec = integer[4:] + frac
+
+    return f"{sign}{h}:{m}:{sec}"
+
+
 
 def load_config():
     """Loads configuration settings from KSPEC.ini."""
@@ -80,10 +118,13 @@ async def send_telcom_command(message):
 async def getradec():
     ra_bytes=await send_telcom_command('getra')
     dec_bytes=await send_telcom_command('getdec')
-#    print(ra_bytes,dec_bytes)
+
+    print('tttt')
+    print(ra_bytes)    
 
     ra=bytes_to_sexagesimal(ra_bytes)
     dec=bytes_to_sexagesimal(dec_bytes)
+    print(ra)
     return ra, dec
 
 
