@@ -135,13 +135,13 @@ async def identify_execute(ADC_server, adc_action, cmd):
         printing("New adcadjust task started.")
 
     elif func == 'adcstop':
-   #     reply_data = mkmsg.adcmsg()
-   #     result = await adc_action.stop(0)
-   #     reply_data.update(result)
-   #     reply_data.update(process='Done')
-   #     rsp = json.dumps(reply_data)
-   #     printing(reply_data['message'])
-#        await ADC_server.send_message('ICS', rsp)
+        reply_data = mkmsg.adcmsg()
+        result = await adc_action.stop(0)
+        reply_data.update(result)
+        reply_data.update(process='Done')
+        rsp = json.dumps(reply_data)
+        printing(reply_data['message'])
+        await ADC_server.send_message('ICS', rsp)
 
         # Cancel the adcadjust task if it's running
         if adcadjust_task and not adcadjust_task.done():

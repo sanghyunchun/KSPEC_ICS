@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'KSPECGUI.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.8.2
+## Created by: Qt User Interface Compiler version 6.10.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -184,7 +184,7 @@ class Ui_MainWindow(object):
         self.label_airmass.setObjectName(u"label_airmass")
         self.label_airmass.setFont(font2)
 
-        self.formLayout_2.setWidget(0, QFormLayout.LabelRole, self.label_airmass)
+        self.formLayout_2.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_airmass)
 
         self.lineEdit_airmass = QLineEdit(self.formLayoutWidget_2)
         self.lineEdit_airmass.setObjectName(u"lineEdit_airmass")
@@ -192,7 +192,7 @@ class Ui_MainWindow(object):
         self.lineEdit_airmass.setAlignment(Qt.AlignCenter)
         self.lineEdit_airmass.setReadOnly(True)
 
-        self.formLayout_2.setWidget(0, QFormLayout.FieldRole, self.lineEdit_airmass)
+        self.formLayout_2.setWidget(0, QFormLayout.ItemRole.FieldRole, self.lineEdit_airmass)
 
         self.lineEdit_seeing = QLineEdit(self.formLayoutWidget_2)
         self.lineEdit_seeing.setObjectName(u"lineEdit_seeing")
@@ -200,13 +200,13 @@ class Ui_MainWindow(object):
         self.lineEdit_seeing.setAlignment(Qt.AlignCenter)
         self.lineEdit_seeing.setReadOnly(True)
 
-        self.formLayout_2.setWidget(1, QFormLayout.FieldRole, self.lineEdit_seeing)
+        self.formLayout_2.setWidget(1, QFormLayout.ItemRole.FieldRole, self.lineEdit_seeing)
 
         self.label_seeing = QLabel(self.formLayoutWidget_2)
         self.label_seeing.setObjectName(u"label_seeing")
         self.label_seeing.setFont(font2)
 
-        self.formLayout_2.setWidget(1, QFormLayout.LabelRole, self.label_seeing)
+        self.formLayout_2.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_seeing)
 
         self.pushbtn_dfp5 = QPushButton(self.group_preview)
         self.pushbtn_dfp5.setObjectName(u"pushbtn_dfp5")
@@ -270,80 +270,80 @@ class Ui_MainWindow(object):
         self.lcd_utc.setEnabled(True)
         palette = QPalette()
         brush = QBrush(QColor(0, 0, 0, 255))
-        brush.setStyle(Qt.SolidPattern)
-        palette.setBrush(QPalette.Active, QPalette.WindowText, brush)
+        brush.setStyle(Qt.BrushStyle.SolidPattern)
+        palette.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.WindowText, brush)
         brush1 = QBrush(QColor(236, 236, 236, 255))
-        brush1.setStyle(Qt.SolidPattern)
-        palette.setBrush(QPalette.Active, QPalette.Button, brush1)
+        brush1.setStyle(Qt.BrushStyle.SolidPattern)
+        palette.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.Button, brush1)
         brush2 = QBrush(QColor(255, 255, 255, 255))
-        brush2.setStyle(Qt.SolidPattern)
-        palette.setBrush(QPalette.Active, QPalette.Light, brush2)
+        brush2.setStyle(Qt.BrushStyle.SolidPattern)
+        palette.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.Light, brush2)
         brush3 = QBrush(QColor(245, 245, 245, 255))
-        brush3.setStyle(Qt.SolidPattern)
-        palette.setBrush(QPalette.Active, QPalette.Midlight, brush3)
+        brush3.setStyle(Qt.BrushStyle.SolidPattern)
+        palette.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.Midlight, brush3)
         brush4 = QBrush(QColor(118, 118, 118, 255))
-        brush4.setStyle(Qt.SolidPattern)
-        palette.setBrush(QPalette.Active, QPalette.Dark, brush4)
+        brush4.setStyle(Qt.BrushStyle.SolidPattern)
+        palette.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.Dark, brush4)
         brush5 = QBrush(QColor(157, 157, 157, 255))
-        brush5.setStyle(Qt.SolidPattern)
-        palette.setBrush(QPalette.Active, QPalette.Mid, brush5)
-        palette.setBrush(QPalette.Active, QPalette.Text, brush)
-        palette.setBrush(QPalette.Active, QPalette.BrightText, brush2)
-        palette.setBrush(QPalette.Active, QPalette.ButtonText, brush)
-        palette.setBrush(QPalette.Active, QPalette.Base, brush2)
-        palette.setBrush(QPalette.Active, QPalette.Window, brush1)
-        palette.setBrush(QPalette.Active, QPalette.Shadow, brush)
-        palette.setBrush(QPalette.Active, QPalette.AlternateBase, brush3)
+        brush5.setStyle(Qt.BrushStyle.SolidPattern)
+        palette.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.Mid, brush5)
+        palette.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.Text, brush)
+        palette.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.BrightText, brush2)
+        palette.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.ButtonText, brush)
+        palette.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.Base, brush2)
+        palette.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.Window, brush1)
+        palette.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.Shadow, brush)
+        palette.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.AlternateBase, brush3)
         brush6 = QBrush(QColor(255, 255, 220, 255))
-        brush6.setStyle(Qt.SolidPattern)
-        palette.setBrush(QPalette.Active, QPalette.ToolTipBase, brush6)
-        palette.setBrush(QPalette.Active, QPalette.ToolTipText, brush)
+        brush6.setStyle(Qt.BrushStyle.SolidPattern)
+        palette.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.ToolTipBase, brush6)
+        palette.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.ToolTipText, brush)
         brush7 = QBrush(QColor(0, 0, 0, 127))
-        brush7.setStyle(Qt.SolidPattern)
+        brush7.setStyle(Qt.BrushStyle.SolidPattern)
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
-        palette.setBrush(QPalette.Active, QPalette.PlaceholderText, brush7)
+        palette.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.PlaceholderText, brush7)
 #endif
-        palette.setBrush(QPalette.Inactive, QPalette.WindowText, brush)
-        palette.setBrush(QPalette.Inactive, QPalette.Button, brush1)
-        palette.setBrush(QPalette.Inactive, QPalette.Light, brush2)
-        palette.setBrush(QPalette.Inactive, QPalette.Midlight, brush3)
+        palette.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.WindowText, brush)
+        palette.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Button, brush1)
+        palette.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Light, brush2)
+        palette.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Midlight, brush3)
         brush8 = QBrush(QColor(191, 191, 191, 255))
-        brush8.setStyle(Qt.SolidPattern)
-        palette.setBrush(QPalette.Inactive, QPalette.Dark, brush8)
+        brush8.setStyle(Qt.BrushStyle.SolidPattern)
+        palette.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Dark, brush8)
         brush9 = QBrush(QColor(169, 169, 169, 255))
-        brush9.setStyle(Qt.SolidPattern)
-        palette.setBrush(QPalette.Inactive, QPalette.Mid, brush9)
-        palette.setBrush(QPalette.Inactive, QPalette.Text, brush)
-        palette.setBrush(QPalette.Inactive, QPalette.BrightText, brush2)
-        palette.setBrush(QPalette.Inactive, QPalette.ButtonText, brush)
-        palette.setBrush(QPalette.Inactive, QPalette.Base, brush2)
-        palette.setBrush(QPalette.Inactive, QPalette.Window, brush1)
-        palette.setBrush(QPalette.Inactive, QPalette.Shadow, brush)
-        palette.setBrush(QPalette.Inactive, QPalette.AlternateBase, brush3)
-        palette.setBrush(QPalette.Inactive, QPalette.ToolTipBase, brush2)
-        palette.setBrush(QPalette.Inactive, QPalette.ToolTipText, brush)
+        brush9.setStyle(Qt.BrushStyle.SolidPattern)
+        palette.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Mid, brush9)
+        palette.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Text, brush)
+        palette.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.BrightText, brush2)
+        palette.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.ButtonText, brush)
+        palette.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Base, brush2)
+        palette.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Window, brush1)
+        palette.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Shadow, brush)
+        palette.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.AlternateBase, brush3)
+        palette.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.ToolTipBase, brush2)
+        palette.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.ToolTipText, brush)
         brush10 = QBrush(QColor(0, 0, 0, 63))
-        brush10.setStyle(Qt.SolidPattern)
+        brush10.setStyle(Qt.BrushStyle.SolidPattern)
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
-        palette.setBrush(QPalette.Inactive, QPalette.PlaceholderText, brush10)
+        palette.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.PlaceholderText, brush10)
 #endif
-        palette.setBrush(QPalette.Disabled, QPalette.WindowText, brush4)
-        palette.setBrush(QPalette.Disabled, QPalette.Button, brush1)
-        palette.setBrush(QPalette.Disabled, QPalette.Light, brush2)
-        palette.setBrush(QPalette.Disabled, QPalette.Midlight, brush3)
-        palette.setBrush(QPalette.Disabled, QPalette.Dark, brush4)
-        palette.setBrush(QPalette.Disabled, QPalette.Mid, brush5)
-        palette.setBrush(QPalette.Disabled, QPalette.Text, brush4)
-        palette.setBrush(QPalette.Disabled, QPalette.BrightText, brush2)
-        palette.setBrush(QPalette.Disabled, QPalette.ButtonText, brush4)
-        palette.setBrush(QPalette.Disabled, QPalette.Base, brush1)
-        palette.setBrush(QPalette.Disabled, QPalette.Window, brush1)
-        palette.setBrush(QPalette.Disabled, QPalette.Shadow, brush)
-        palette.setBrush(QPalette.Disabled, QPalette.AlternateBase, brush3)
-        palette.setBrush(QPalette.Disabled, QPalette.ToolTipBase, brush2)
-        palette.setBrush(QPalette.Disabled, QPalette.ToolTipText, brush)
+        palette.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.WindowText, brush4)
+        palette.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Button, brush1)
+        palette.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Light, brush2)
+        palette.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Midlight, brush3)
+        palette.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Dark, brush4)
+        palette.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Mid, brush5)
+        palette.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, brush4)
+        palette.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.BrightText, brush2)
+        palette.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, brush4)
+        palette.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Base, brush1)
+        palette.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Window, brush1)
+        palette.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Shadow, brush)
+        palette.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.AlternateBase, brush3)
+        palette.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ToolTipBase, brush2)
+        palette.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ToolTipText, brush)
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
-        palette.setBrush(QPalette.Disabled, QPalette.PlaceholderText, brush10)
+        palette.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.PlaceholderText, brush10)
 #endif
         self.lcd_utc.setPalette(palette)
         font4 = QFont()
@@ -385,59 +385,59 @@ class Ui_MainWindow(object):
         self.lcd_lt.setObjectName(u"lcd_lt")
         self.lcd_lt.setEnabled(True)
         palette1 = QPalette()
-        palette1.setBrush(QPalette.Active, QPalette.WindowText, brush)
-        palette1.setBrush(QPalette.Active, QPalette.Button, brush1)
-        palette1.setBrush(QPalette.Active, QPalette.Light, brush2)
-        palette1.setBrush(QPalette.Active, QPalette.Midlight, brush3)
-        palette1.setBrush(QPalette.Active, QPalette.Dark, brush4)
-        palette1.setBrush(QPalette.Active, QPalette.Mid, brush5)
-        palette1.setBrush(QPalette.Active, QPalette.Text, brush)
-        palette1.setBrush(QPalette.Active, QPalette.BrightText, brush2)
-        palette1.setBrush(QPalette.Active, QPalette.ButtonText, brush)
-        palette1.setBrush(QPalette.Active, QPalette.Base, brush2)
-        palette1.setBrush(QPalette.Active, QPalette.Window, brush1)
-        palette1.setBrush(QPalette.Active, QPalette.Shadow, brush)
-        palette1.setBrush(QPalette.Active, QPalette.AlternateBase, brush3)
-        palette1.setBrush(QPalette.Active, QPalette.ToolTipBase, brush6)
-        palette1.setBrush(QPalette.Active, QPalette.ToolTipText, brush)
+        palette1.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.WindowText, brush)
+        palette1.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.Button, brush1)
+        palette1.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.Light, brush2)
+        palette1.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.Midlight, brush3)
+        palette1.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.Dark, brush4)
+        palette1.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.Mid, brush5)
+        palette1.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.Text, brush)
+        palette1.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.BrightText, brush2)
+        palette1.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.ButtonText, brush)
+        palette1.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.Base, brush2)
+        palette1.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.Window, brush1)
+        palette1.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.Shadow, brush)
+        palette1.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.AlternateBase, brush3)
+        palette1.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.ToolTipBase, brush6)
+        palette1.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.ToolTipText, brush)
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
-        palette1.setBrush(QPalette.Active, QPalette.PlaceholderText, brush7)
+        palette1.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.PlaceholderText, brush7)
 #endif
-        palette1.setBrush(QPalette.Inactive, QPalette.WindowText, brush)
-        palette1.setBrush(QPalette.Inactive, QPalette.Button, brush1)
-        palette1.setBrush(QPalette.Inactive, QPalette.Light, brush2)
-        palette1.setBrush(QPalette.Inactive, QPalette.Midlight, brush3)
-        palette1.setBrush(QPalette.Inactive, QPalette.Dark, brush8)
-        palette1.setBrush(QPalette.Inactive, QPalette.Mid, brush9)
-        palette1.setBrush(QPalette.Inactive, QPalette.Text, brush)
-        palette1.setBrush(QPalette.Inactive, QPalette.BrightText, brush2)
-        palette1.setBrush(QPalette.Inactive, QPalette.ButtonText, brush)
-        palette1.setBrush(QPalette.Inactive, QPalette.Base, brush2)
-        palette1.setBrush(QPalette.Inactive, QPalette.Window, brush1)
-        palette1.setBrush(QPalette.Inactive, QPalette.Shadow, brush)
-        palette1.setBrush(QPalette.Inactive, QPalette.AlternateBase, brush3)
-        palette1.setBrush(QPalette.Inactive, QPalette.ToolTipBase, brush2)
-        palette1.setBrush(QPalette.Inactive, QPalette.ToolTipText, brush)
+        palette1.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.WindowText, brush)
+        palette1.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Button, brush1)
+        palette1.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Light, brush2)
+        palette1.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Midlight, brush3)
+        palette1.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Dark, brush8)
+        palette1.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Mid, brush9)
+        palette1.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Text, brush)
+        palette1.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.BrightText, brush2)
+        palette1.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.ButtonText, brush)
+        palette1.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Base, brush2)
+        palette1.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Window, brush1)
+        palette1.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Shadow, brush)
+        palette1.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.AlternateBase, brush3)
+        palette1.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.ToolTipBase, brush2)
+        palette1.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.ToolTipText, brush)
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
-        palette1.setBrush(QPalette.Inactive, QPalette.PlaceholderText, brush10)
+        palette1.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.PlaceholderText, brush10)
 #endif
-        palette1.setBrush(QPalette.Disabled, QPalette.WindowText, brush4)
-        palette1.setBrush(QPalette.Disabled, QPalette.Button, brush1)
-        palette1.setBrush(QPalette.Disabled, QPalette.Light, brush2)
-        palette1.setBrush(QPalette.Disabled, QPalette.Midlight, brush3)
-        palette1.setBrush(QPalette.Disabled, QPalette.Dark, brush4)
-        palette1.setBrush(QPalette.Disabled, QPalette.Mid, brush5)
-        palette1.setBrush(QPalette.Disabled, QPalette.Text, brush4)
-        palette1.setBrush(QPalette.Disabled, QPalette.BrightText, brush2)
-        palette1.setBrush(QPalette.Disabled, QPalette.ButtonText, brush4)
-        palette1.setBrush(QPalette.Disabled, QPalette.Base, brush1)
-        palette1.setBrush(QPalette.Disabled, QPalette.Window, brush1)
-        palette1.setBrush(QPalette.Disabled, QPalette.Shadow, brush)
-        palette1.setBrush(QPalette.Disabled, QPalette.AlternateBase, brush3)
-        palette1.setBrush(QPalette.Disabled, QPalette.ToolTipBase, brush2)
-        palette1.setBrush(QPalette.Disabled, QPalette.ToolTipText, brush)
+        palette1.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.WindowText, brush4)
+        palette1.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Button, brush1)
+        palette1.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Light, brush2)
+        palette1.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Midlight, brush3)
+        palette1.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Dark, brush4)
+        palette1.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Mid, brush5)
+        palette1.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, brush4)
+        palette1.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.BrightText, brush2)
+        palette1.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, brush4)
+        palette1.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Base, brush1)
+        palette1.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Window, brush1)
+        palette1.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Shadow, brush)
+        palette1.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.AlternateBase, brush3)
+        palette1.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ToolTipBase, brush2)
+        palette1.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ToolTipText, brush)
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
-        palette1.setBrush(QPalette.Disabled, QPalette.PlaceholderText, brush10)
+        palette1.setBrush(QPalette.ColorGroup.Disabled, QPalette.ColorRole.PlaceholderText, brush10)
 #endif
         self.lcd_lt.setPalette(palette1)
         self.lcd_lt.setFont(font4)
@@ -653,7 +653,7 @@ class Ui_MainWindow(object):
         self.label_target_target_name_2.setFont(font2)
         self.label_target_target_name_2.setScaledContents(False)
 
-        self.formLayout_3.setWidget(0, QFormLayout.LabelRole, self.label_target_target_name_2)
+        self.formLayout_3.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_target_target_name_2)
 
         self.lineEdit_TileID = QLineEdit(self.formLayoutWidget_3)
         self.lineEdit_TileID.setObjectName(u"lineEdit_TileID")
@@ -665,13 +665,13 @@ class Ui_MainWindow(object):
         self.lineEdit_TileID.setSizePolicy(sizePolicy3)
         self.lineEdit_TileID.setReadOnly(True)
 
-        self.formLayout_3.setWidget(0, QFormLayout.FieldRole, self.lineEdit_TileID)
+        self.formLayout_3.setWidget(0, QFormLayout.ItemRole.FieldRole, self.lineEdit_TileID)
 
         self.label_ra_4 = QLabel(self.formLayoutWidget_3)
         self.label_ra_4.setObjectName(u"label_ra_4")
         self.label_ra_4.setFont(font2)
 
-        self.formLayout_3.setWidget(1, QFormLayout.LabelRole, self.label_ra_4)
+        self.formLayout_3.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_ra_4)
 
         self.lineEdit_ra_1 = QLineEdit(self.formLayoutWidget_3)
         self.lineEdit_ra_1.setObjectName(u"lineEdit_ra_1")
@@ -680,13 +680,13 @@ class Ui_MainWindow(object):
         self.lineEdit_ra_1.setSizePolicy(sizePolicy3)
         self.lineEdit_ra_1.setReadOnly(True)
 
-        self.formLayout_3.setWidget(1, QFormLayout.FieldRole, self.lineEdit_ra_1)
+        self.formLayout_3.setWidget(1, QFormLayout.ItemRole.FieldRole, self.lineEdit_ra_1)
 
         self.label_dec_4 = QLabel(self.formLayoutWidget_3)
         self.label_dec_4.setObjectName(u"label_dec_4")
         self.label_dec_4.setFont(font2)
 
-        self.formLayout_3.setWidget(2, QFormLayout.LabelRole, self.label_dec_4)
+        self.formLayout_3.setWidget(2, QFormLayout.ItemRole.LabelRole, self.label_dec_4)
 
         self.lineEdit_dec_1 = QLineEdit(self.formLayoutWidget_3)
         self.lineEdit_dec_1.setObjectName(u"lineEdit_dec_1")
@@ -695,13 +695,13 @@ class Ui_MainWindow(object):
         self.lineEdit_dec_1.setSizePolicy(sizePolicy3)
         self.lineEdit_dec_1.setReadOnly(True)
 
-        self.formLayout_3.setWidget(2, QFormLayout.FieldRole, self.lineEdit_dec_1)
+        self.formLayout_3.setWidget(2, QFormLayout.ItemRole.FieldRole, self.lineEdit_dec_1)
 
         self.label_exp_time_4 = QLabel(self.formLayoutWidget_3)
         self.label_exp_time_4.setObjectName(u"label_exp_time_4")
         self.label_exp_time_4.setFont(font2)
 
-        self.formLayout_3.setWidget(3, QFormLayout.LabelRole, self.label_exp_time_4)
+        self.formLayout_3.setWidget(3, QFormLayout.ItemRole.LabelRole, self.label_exp_time_4)
 
         self.lineEdit_exp_time_1 = QLineEdit(self.formLayoutWidget_3)
         self.lineEdit_exp_time_1.setObjectName(u"lineEdit_exp_time_1")
@@ -710,13 +710,13 @@ class Ui_MainWindow(object):
         self.lineEdit_exp_time_1.setSizePolicy(sizePolicy3)
         self.lineEdit_exp_time_1.setReadOnly(True)
 
-        self.formLayout_3.setWidget(3, QFormLayout.FieldRole, self.lineEdit_exp_time_1)
+        self.formLayout_3.setWidget(3, QFormLayout.ItemRole.FieldRole, self.lineEdit_exp_time_1)
 
         self.label_num_exp_4 = QLabel(self.formLayoutWidget_3)
         self.label_num_exp_4.setObjectName(u"label_num_exp_4")
         self.label_num_exp_4.setFont(font2)
 
-        self.formLayout_3.setWidget(4, QFormLayout.LabelRole, self.label_num_exp_4)
+        self.formLayout_3.setWidget(4, QFormLayout.ItemRole.LabelRole, self.label_num_exp_4)
 
         self.lineEdit_n_exp_1 = QLineEdit(self.formLayoutWidget_3)
         self.lineEdit_n_exp_1.setObjectName(u"lineEdit_n_exp_1")
@@ -725,13 +725,13 @@ class Ui_MainWindow(object):
         self.lineEdit_n_exp_1.setSizePolicy(sizePolicy3)
         self.lineEdit_n_exp_1.setReadOnly(True)
 
-        self.formLayout_3.setWidget(4, QFormLayout.FieldRole, self.lineEdit_n_exp_1)
+        self.formLayout_3.setWidget(4, QFormLayout.ItemRole.FieldRole, self.lineEdit_n_exp_1)
 
         self.label_obs_status_4 = QLabel(self.formLayoutWidget_3)
         self.label_obs_status_4.setObjectName(u"label_obs_status_4")
         self.label_obs_status_4.setFont(font2)
 
-        self.formLayout_3.setWidget(5, QFormLayout.LabelRole, self.label_obs_status_4)
+        self.formLayout_3.setWidget(5, QFormLayout.ItemRole.LabelRole, self.label_obs_status_4)
 
         self.progressBar_svc = QProgressBar(self.formLayoutWidget_3)
         self.progressBar_svc.setObjectName(u"progressBar_svc")
@@ -742,7 +742,7 @@ class Ui_MainWindow(object):
         self.progressBar_svc.setFont(font7)
         self.progressBar_svc.setValue(24)
 
-        self.formLayout_3.setWidget(5, QFormLayout.FieldRole, self.progressBar_svc)
+        self.formLayout_3.setWidget(5, QFormLayout.ItemRole.FieldRole, self.progressBar_svc)
 
         self.formLayoutWidget_5 = QWidget(self.tab_queue)
         self.formLayoutWidget_5.setObjectName(u"formLayoutWidget_5")
@@ -754,7 +754,7 @@ class Ui_MainWindow(object):
         self.label_CProj.setObjectName(u"label_CProj")
         self.label_CProj.setFont(font2)
 
-        self.formLayout_5.setWidget(0, QFormLayout.LabelRole, self.label_CProj)
+        self.formLayout_5.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_CProj)
 
         self.lineEdit_CProj = QLineEdit(self.formLayoutWidget_5)
         self.lineEdit_CProj.setObjectName(u"lineEdit_CProj")
@@ -762,13 +762,13 @@ class Ui_MainWindow(object):
         self.lineEdit_CProj.setSizePolicy(sizePolicy3)
         self.lineEdit_CProj.setReadOnly(False)
 
-        self.formLayout_5.setWidget(0, QFormLayout.FieldRole, self.lineEdit_CProj)
+        self.formLayout_5.setWidget(0, QFormLayout.ItemRole.FieldRole, self.lineEdit_CProj)
 
         self.label_CTile = QLabel(self.formLayoutWidget_5)
         self.label_CTile.setObjectName(u"label_CTile")
         self.label_CTile.setFont(font2)
 
-        self.formLayout_5.setWidget(1, QFormLayout.LabelRole, self.label_CTile)
+        self.formLayout_5.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_CTile)
 
         self.lineEdit_CTile = QLineEdit(self.formLayoutWidget_5)
         self.lineEdit_CTile.setObjectName(u"lineEdit_CTile")
@@ -776,7 +776,7 @@ class Ui_MainWindow(object):
         self.lineEdit_CTile.setSizePolicy(sizePolicy3)
         self.lineEdit_CTile.setReadOnly(False)
 
-        self.formLayout_5.setWidget(1, QFormLayout.FieldRole, self.lineEdit_CTile)
+        self.formLayout_5.setWidget(1, QFormLayout.ItemRole.FieldRole, self.lineEdit_CTile)
 
         self.pushbtn_run_calib = QPushButton(self.tab_queue)
         self.pushbtn_run_calib.setObjectName(u"pushbtn_run_calib")
@@ -793,13 +793,13 @@ class Ui_MainWindow(object):
         self.pushbtn_pointing.setObjectName(u"pushbtn_pointing")
         self.pushbtn_pointing.setFont(font1)
 
-        self.formLayout_9.setWidget(0, QFormLayout.LabelRole, self.pushbtn_pointing)
+        self.formLayout_9.setWidget(0, QFormLayout.ItemRole.LabelRole, self.pushbtn_pointing)
 
         self.pushbtn_offset = QPushButton(self.formLayoutWidget_9)
         self.pushbtn_offset.setObjectName(u"pushbtn_offset")
         self.pushbtn_offset.setFont(font1)
 
-        self.formLayout_9.setWidget(0, QFormLayout.FieldRole, self.pushbtn_offset)
+        self.formLayout_9.setWidget(0, QFormLayout.ItemRole.FieldRole, self.pushbtn_offset)
 
         self.label_offset = QLabel(self.formLayoutWidget_9)
         self.label_offset.setObjectName(u"label_offset")
@@ -815,7 +815,7 @@ class Ui_MainWindow(object):
         self.label_offset.setMargin(0)
         self.label_offset.setIndent(-1)
 
-        self.formLayout_9.setWidget(1, QFormLayout.LabelRole, self.label_offset)
+        self.formLayout_9.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_offset)
 
         self.lineEdit_offset = QLineEdit(self.formLayoutWidget_9)
         self.lineEdit_offset.setObjectName(u"lineEdit_offset")
@@ -824,13 +824,13 @@ class Ui_MainWindow(object):
         self.lineEdit_offset.setAlignment(Qt.AlignCenter)
         self.lineEdit_offset.setReadOnly(True)
 
-        self.formLayout_9.setWidget(1, QFormLayout.FieldRole, self.lineEdit_offset)
+        self.formLayout_9.setWidget(1, QFormLayout.ItemRole.FieldRole, self.lineEdit_offset)
 
         self.label_raoffset = QLabel(self.formLayoutWidget_9)
         self.label_raoffset.setObjectName(u"label_raoffset")
         self.label_raoffset.setFont(font2)
 
-        self.formLayout_9.setWidget(2, QFormLayout.LabelRole, self.label_raoffset)
+        self.formLayout_9.setWidget(2, QFormLayout.ItemRole.LabelRole, self.label_raoffset)
 
         self.lineEdit_raoffset = QLineEdit(self.formLayoutWidget_9)
         self.lineEdit_raoffset.setObjectName(u"lineEdit_raoffset")
@@ -839,13 +839,13 @@ class Ui_MainWindow(object):
         self.lineEdit_raoffset.setAlignment(Qt.AlignCenter)
         self.lineEdit_raoffset.setReadOnly(True)
 
-        self.formLayout_9.setWidget(2, QFormLayout.FieldRole, self.lineEdit_raoffset)
+        self.formLayout_9.setWidget(2, QFormLayout.ItemRole.FieldRole, self.lineEdit_raoffset)
 
         self.label_decoffset = QLabel(self.formLayoutWidget_9)
         self.label_decoffset.setObjectName(u"label_decoffset")
         self.label_decoffset.setFont(font2)
 
-        self.formLayout_9.setWidget(3, QFormLayout.LabelRole, self.label_decoffset)
+        self.formLayout_9.setWidget(3, QFormLayout.ItemRole.LabelRole, self.label_decoffset)
 
         self.lineEdit_decoffset = QLineEdit(self.formLayoutWidget_9)
         self.lineEdit_decoffset.setObjectName(u"lineEdit_decoffset")
@@ -854,7 +854,7 @@ class Ui_MainWindow(object):
         self.lineEdit_decoffset.setAlignment(Qt.AlignCenter)
         self.lineEdit_decoffset.setReadOnly(True)
 
-        self.formLayout_9.setWidget(3, QFormLayout.FieldRole, self.lineEdit_decoffset)
+        self.formLayout_9.setWidget(3, QFormLayout.ItemRole.FieldRole, self.lineEdit_decoffset)
 
         self.group_obs.addTab(self.tab_queue, "")
         self.tab_single = QWidget()
@@ -874,7 +874,7 @@ class Ui_MainWindow(object):
         self.label_target_target_name.setFont(font2)
         self.label_target_target_name.setScaledContents(False)
 
-        self.formLayout.setWidget(0, QFormLayout.LabelRole, self.label_target_target_name)
+        self.formLayout.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_target_target_name)
 
         self.lineEdit_target_name = QLineEdit(self.formLayoutWidget)
         self.lineEdit_target_name.setObjectName(u"lineEdit_target_name")
@@ -882,13 +882,13 @@ class Ui_MainWindow(object):
         self.lineEdit_target_name.setSizePolicy(sizePolicy3)
         self.lineEdit_target_name.setReadOnly(False)
 
-        self.formLayout.setWidget(0, QFormLayout.FieldRole, self.lineEdit_target_name)
+        self.formLayout.setWidget(0, QFormLayout.ItemRole.FieldRole, self.lineEdit_target_name)
 
         self.label_ra_2 = QLabel(self.formLayoutWidget)
         self.label_ra_2.setObjectName(u"label_ra_2")
         self.label_ra_2.setFont(font2)
 
-        self.formLayout.setWidget(1, QFormLayout.LabelRole, self.label_ra_2)
+        self.formLayout.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_ra_2)
 
         self.lineEdit_ra_2 = QLineEdit(self.formLayoutWidget)
         self.lineEdit_ra_2.setObjectName(u"lineEdit_ra_2")
@@ -896,13 +896,13 @@ class Ui_MainWindow(object):
         self.lineEdit_ra_2.setSizePolicy(sizePolicy3)
         self.lineEdit_ra_2.setReadOnly(False)
 
-        self.formLayout.setWidget(1, QFormLayout.FieldRole, self.lineEdit_ra_2)
+        self.formLayout.setWidget(1, QFormLayout.ItemRole.FieldRole, self.lineEdit_ra_2)
 
         self.label_dec_2 = QLabel(self.formLayoutWidget)
         self.label_dec_2.setObjectName(u"label_dec_2")
         self.label_dec_2.setFont(font2)
 
-        self.formLayout.setWidget(2, QFormLayout.LabelRole, self.label_dec_2)
+        self.formLayout.setWidget(2, QFormLayout.ItemRole.LabelRole, self.label_dec_2)
 
         self.lineEdit_dec_2 = QLineEdit(self.formLayoutWidget)
         self.lineEdit_dec_2.setObjectName(u"lineEdit_dec_2")
@@ -910,19 +910,19 @@ class Ui_MainWindow(object):
         self.lineEdit_dec_2.setSizePolicy(sizePolicy3)
         self.lineEdit_dec_2.setReadOnly(False)
 
-        self.formLayout.setWidget(2, QFormLayout.FieldRole, self.lineEdit_dec_2)
+        self.formLayout.setWidget(2, QFormLayout.ItemRole.FieldRole, self.lineEdit_dec_2)
 
         self.label_obs_type_2 = QLabel(self.formLayoutWidget)
         self.label_obs_type_2.setObjectName(u"label_obs_type_2")
         self.label_obs_type_2.setFont(font2)
 
-        self.formLayout.setWidget(3, QFormLayout.LabelRole, self.label_obs_type_2)
+        self.formLayout.setWidget(3, QFormLayout.ItemRole.LabelRole, self.label_obs_type_2)
 
         self.label_exp_time_2 = QLabel(self.formLayoutWidget)
         self.label_exp_time_2.setObjectName(u"label_exp_time_2")
         self.label_exp_time_2.setFont(font2)
 
-        self.formLayout.setWidget(4, QFormLayout.LabelRole, self.label_exp_time_2)
+        self.formLayout.setWidget(4, QFormLayout.ItemRole.LabelRole, self.label_exp_time_2)
 
         self.lineEdit_exp_time_2 = QLineEdit(self.formLayoutWidget)
         self.lineEdit_exp_time_2.setObjectName(u"lineEdit_exp_time_2")
@@ -930,13 +930,13 @@ class Ui_MainWindow(object):
         self.lineEdit_exp_time_2.setSizePolicy(sizePolicy3)
         self.lineEdit_exp_time_2.setReadOnly(False)
 
-        self.formLayout.setWidget(4, QFormLayout.FieldRole, self.lineEdit_exp_time_2)
+        self.formLayout.setWidget(4, QFormLayout.ItemRole.FieldRole, self.lineEdit_exp_time_2)
 
         self.label_num_exp_2 = QLabel(self.formLayoutWidget)
         self.label_num_exp_2.setObjectName(u"label_num_exp_2")
         self.label_num_exp_2.setFont(font2)
 
-        self.formLayout.setWidget(5, QFormLayout.LabelRole, self.label_num_exp_2)
+        self.formLayout.setWidget(5, QFormLayout.ItemRole.LabelRole, self.label_num_exp_2)
 
         self.lineEdit_n_exp_2 = QLineEdit(self.formLayoutWidget)
         self.lineEdit_n_exp_2.setObjectName(u"lineEdit_n_exp_2")
@@ -944,13 +944,13 @@ class Ui_MainWindow(object):
         self.lineEdit_n_exp_2.setSizePolicy(sizePolicy3)
         self.lineEdit_n_exp_2.setReadOnly(False)
 
-        self.formLayout.setWidget(5, QFormLayout.FieldRole, self.lineEdit_n_exp_2)
+        self.formLayout.setWidget(5, QFormLayout.ItemRole.FieldRole, self.lineEdit_n_exp_2)
 
         self.label_obs_status_2 = QLabel(self.formLayoutWidget)
         self.label_obs_status_2.setObjectName(u"label_obs_status_2")
         self.label_obs_status_2.setFont(font2)
 
-        self.formLayout.setWidget(6, QFormLayout.LabelRole, self.label_obs_status_2)
+        self.formLayout.setWidget(6, QFormLayout.ItemRole.LabelRole, self.label_obs_status_2)
 
         self.obstype_2 = QComboBox(self.formLayoutWidget)
         self.obstype_2.addItem("")
@@ -960,14 +960,14 @@ class Ui_MainWindow(object):
         self.obstype_2.addItem("")
         self.obstype_2.setObjectName(u"obstype_2")
 
-        self.formLayout.setWidget(3, QFormLayout.FieldRole, self.obstype_2)
+        self.formLayout.setWidget(3, QFormLayout.ItemRole.FieldRole, self.obstype_2)
 
         self.progressBar_svc_2 = QProgressBar(self.formLayoutWidget)
         self.progressBar_svc_2.setObjectName(u"progressBar_svc_2")
         self.progressBar_svc_2.setFont(font7)
         self.progressBar_svc_2.setValue(24)
 
-        self.formLayout.setWidget(6, QFormLayout.FieldRole, self.progressBar_svc_2)
+        self.formLayout.setWidget(6, QFormLayout.ItemRole.FieldRole, self.progressBar_svc_2)
 
         self.pushbtn_slew = QPushButton(self.tab_single)
         self.pushbtn_slew.setObjectName(u"pushbtn_slew")
@@ -1016,27 +1016,27 @@ class Ui_MainWindow(object):
         self.label_aligned.setObjectName(u"label_aligned")
         self.label_aligned.setFont(font2)
 
-        self.formLayout_4.setWidget(0, QFormLayout.LabelRole, self.label_aligned)
+        self.formLayout_4.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_aligned)
 
         self.lineEdit_aligned = QLineEdit(self.formLayoutWidget_4)
         self.lineEdit_aligned.setObjectName(u"lineEdit_aligned")
         self.lineEdit_aligned.setFont(font2)
         self.lineEdit_aligned.setReadOnly(True)
 
-        self.formLayout_4.setWidget(0, QFormLayout.FieldRole, self.lineEdit_aligned)
+        self.formLayout_4.setWidget(0, QFormLayout.ItemRole.FieldRole, self.lineEdit_aligned)
 
         self.label_failed = QLabel(self.formLayoutWidget_4)
         self.label_failed.setObjectName(u"label_failed")
         self.label_failed.setFont(font2)
 
-        self.formLayout_4.setWidget(1, QFormLayout.LabelRole, self.label_failed)
+        self.formLayout_4.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_failed)
 
         self.lineEdit_failed = QLineEdit(self.formLayoutWidget_4)
         self.lineEdit_failed.setObjectName(u"lineEdit_failed")
         self.lineEdit_failed.setFont(font2)
         self.lineEdit_failed.setReadOnly(True)
 
-        self.formLayout_4.setWidget(1, QFormLayout.FieldRole, self.lineEdit_failed)
+        self.formLayout_4.setWidget(1, QFormLayout.ItemRole.FieldRole, self.lineEdit_failed)
 
         self.gridLayoutWidget = QWidget(self.group_fiber)
         self.gridLayoutWidget.setObjectName(u"gridLayoutWidget")
@@ -5049,7 +5049,7 @@ class Ui_MainWindow(object):
         self.pushbtn_Arc_2.setFont(font1)
         self.pushbtn_Fiducial_2 = QPushButton(self.group_subsytem_2)
         self.pushbtn_Fiducial_2.setObjectName(u"pushbtn_Fiducial_2")
-        self.pushbtn_Fiducial_2.setEnabled(False)
+        self.pushbtn_Fiducial_2.setEnabled(True)
         self.pushbtn_Fiducial_2.setGeometry(QRect(705, 37, 91, 31))
         self.pushbtn_Fiducial_2.setFont(font1)
         self.pushbtn_illumi_2 = QPushButton(self.group_subsytem_2)

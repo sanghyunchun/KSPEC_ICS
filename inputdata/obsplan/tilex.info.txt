@@ -1,0 +1,6 @@
+tilex_031        115.664062      -38.205920      #verification/flip/bright5_sky9
+tilex_032        115.927734      -38.300922      #verification/flip/bright5_sky9
+tilex_033        116.015625      -38.396050      #verification/flip/bright5_sky9
+tilex_034        115.927734      -38.491303      #verification/flip/bright5_sky9
+tilex_035        115.400391      -38.682187      #verification/flip/bright5_sky9
+

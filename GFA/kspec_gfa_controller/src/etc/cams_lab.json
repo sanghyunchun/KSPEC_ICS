@@ -13,8 +13,8 @@
             "SerialNumber": "40103667",
             "IpAddress": "192.168.88.1",
             "SubnetMask": "255.255.255.0",
-            "PacketSize": "1500",
-            "InterPacketDelay": "64596"
+            "PacketSize": "8192",
+            "InterPacketDelay": "391383"
           },
           "Cam2": {
             "Name": "GFA Camera 2",
@@ -23,8 +23,8 @@
             "SerialNumber": "40103834",
             "IpAddress": "192.168.88.2",
             "SubnetMask": "255.255.255.0",
-            "PacketSize": "1500",
-            "InterPacketDelay": "64596"
+            "PacketSize": "8192",
+            "InterPacketDelay": "367318"
           },
           "Cam3": {
             "Name": "GFA Camera 3",
@@ -33,8 +33,8 @@
             "SerialNumber": "40103651",
             "IpAddress": "192.168.88.3",
             "SubnetMask": "255.255.255.0",
-            "PacketSize": "1500",
-            "InterPacketDelay": "64596"
+            "PacketSize": "8192",
+            "InterPacketDelay": "391383"
           },
           "Cam4": {
             "Name": "GFA Camera 4",
@@ -43,8 +43,8 @@
             "SerialNumber": "40103663",
             "IpAddress": "192.168.88.4",
             "SubnetMask": "255.255.255.0",
-            "PacketSize": "1500",
-            "InterPacketDelay": "5127"
+            "PacketSize": "8192",
+            "InterPacketDelay": "367318"
           },
           "Cam5": {
             "Name": "GFA Camera 5",
@@ -53,8 +53,8 @@
             "SerialNumber": "40103831",
             "IpAddress": "192.168.88.5",
             "SubnetMask": "255.255.255.0",
-            "PacketSize": "1500",
-            "InterPacketDelay": "64596"
+            "PacketSize": "8192",
+            "InterPacketDelay": "367318"
           },
           "Cam6": {
             "Name": "GFA Camera 6",
@@ -63,8 +63,8 @@
             "SerialNumber": "40103833",
             "IpAddress": "192.168.88.6",
             "SubnetMask": "255.255.255.0",
-            "PacketSize": "1500",
-            "InterPacketDelay": "64596"
+            "PacketSize": "8192",
+            "InterPacketDelay": "391383"
           }
         }
       }

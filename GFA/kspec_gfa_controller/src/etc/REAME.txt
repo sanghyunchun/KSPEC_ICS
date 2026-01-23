@@ -1,0 +1,14 @@
+Remember:
+1. PC IP and CAM IP should be different
+Ex. 
+Case 1. -> Fail!
+PC IP 192.168.15.XX
+CAM IP 192.168.15.XX
+
+Case 2. -> Correct!
+PC IP 192.168.15.XX
+CAM IP 192.168.88.XX
+
+2. If you cannot get images from multi-cams:
+You have to change "PacketSize" and "InterPacketDelay".
+Please refer to bandwith manager from pylon viewer.

@@ -76,7 +76,7 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
             await GFA_server.send_message('ICS',rsp)
 
             path_astroimg=kspecinfo['GFA']['final_astrometry_images']
-#            shutil.rmtree(path_astroimg)                                        # Remove the guiding images after guiding stop.
+            shutil.rmtree(path_astroimg)                                        # Remove the guiding images after guiding stop.
             os.makedirs(path_astroimg, exist_ok=True)
 
             try:
@@ -131,18 +131,26 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
         img_list=result['images']
         crval1_list=result['crval1']
         crval2_list=result['crval2']
+        message1 = result['message']
 
-        ra_m1,dec_m1=get_boresight(crval1_list[0],crval2_list[0],crval1_list[1],crval2_list[1])
-        ra_m2,dec_m2=get_boresight(crval1_list[2],crval2_list[2],crval1_list[4],crval2_list[4])
-        ra_m3,dec_m3=get_boresight(crval1_list[3],crval2_list[3],crval1_list[5],crval2_list[5])
+#        ra_m1,dec_m1=get_boresight(crval1_list[0],crval2_list[0],crval1_list[1],crval2_list[1])
+#        ra_m2,dec_m2=get_boresight(crval1_list[2],crval2_list[2],crval1_list[4],crval2_list[4])
+#        ra_m3,dec_m3=get_boresight(crval1_list[3],crval2_list[3],crval1_list[5],crval2_list[5])
 
-        ra = ra_hms_str_to_deg(dict_data['ra'])
-        dec = dec_dms_str_to_deg(dict_data['dec'])
+#        ra = ra_hms_str_to_deg(dict_data['ra'])
+#        dec = dec_sexagesimal_to_deg(dict_data['dec'])
 
-        ra_c = np.mean([ra_m1,ra_m2,ra_m3])
-        dec_c = np.mean([dec_m1, dec_m2, dec_m3])
+#        ra_c = np.mean([ra_m1,ra_m2,ra_m3])
+#        dec_c = np.mean([dec_m1, dec_m2, dec_m3])
 
-        print(f'Telescope Target: RA = {dict_data['ra']} DEC = {dict_data['dec']}')
+
+        ra_c, dec_c = get_boresight(crval1_list, crval2_list)
+
+        ra, dec = radec_str_to_deg(dict_data['ra'], dict_data['dec'])  # covert RA,DEC of Tile center to degree
+        ra_target = dict_data['ra']
+        dec_target = dict_data['dec']
+
+        print(f'Telescope Target: RA = {ra} DEC = {dec}')
         print(f'Current Telescope pointing: RA = {ra_c} DEC= {dec_c}')
 
         sep = get_separation(ra_c,dec_c,ra,dec)
@@ -158,10 +166,12 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
         dec_new = dec_deg_to_dms(dec_deg)
         print(ra_new,dec_new)
 
+        msg =f'{message1} Telescope Target: RA = {ra} DEC = {dec}. \
+                Current Telescope pointing: RA = {ra_c} DEC= {dec_c}.'
 
         reply_data=mkmsg.gfamsg()
         reply_data.update(result)
-        reply_data.update(sepsec=sep,dra=delra,ddec=deldec,new_ra=ra_new,new_dec=dec_new,process='Done',status='success',subinst='POINT')
+        reply_data.update(message=msg,sepsec=sep,dra=delra,ddec=deldec,new_ra=ra_new,new_dec=dec_new,process='Done',status='success',subinst='POINT')
         rsp=json.dumps(reply_data)
         printing(reply_data['message'])
         await GFA_server.send_message('ICS',rsp)

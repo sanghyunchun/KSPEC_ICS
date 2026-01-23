@@ -8,12 +8,12 @@
             "offset_astrometry_images": "img/astroimg/",
             "offset_processed_images": "img/procimg",
             "cutout_directory": "img/cutout",
-            "star_catalog": "img/combined_star.fits"
+            "star_catalog": "img/star_catalog"
         }
     },
     "settings": {
         "cpu": {
-            "limit": 6
+            "limit": 30
         },
         "image_processing": {
             "skycoord": {
@@ -29,8 +29,8 @@
         }
     },
     "astrometry": {
-        "scale_range": ["0.03", "0.16"],
-        "radius": 5
+        "scale_range": ["0.12", "0.22"],
+        "radius": 2
     },
     "detection": {
         "box_size": 40,

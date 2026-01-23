@@ -702,6 +702,7 @@ class MainWindow(QMainWindow):
 
         # command and logging
         command = command_on if state else command_off
+        #if command in ('fiducialon', 'fiducialoff'):
         await handle_lamp(command, self.ICS_client)
         self.logging(f"Sent {label} {'ON' if state else 'OFF'}", level='send')
 
@@ -854,9 +855,10 @@ class MainWindow(QMainWindow):
 
 
     def show_guiding(self):
-        cutimgpath='/media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/kspec_gfa_controller/src/img/cutout/'       # Need change when real observation
-        guidenum=['1','2','3','4']
-        G_canvas=[self.canvas_G1,self.canvas_G2,self.canvas_G3,self.canvas_G4]
+#        cutimgpath='/media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/kspec_gfa_controller/src/img/cutout/'       # Need change when real observation
+        cutimgpath='/home/kspecics/work/DATA/GFADATA/cutout/'       # Need change when real observation
+        guidenum=['1','2','3','4','5','6']
+        G_canvas=[self.canvas_G1,self.canvas_G2,self.canvas_G3,self.canvas_G4,self.canvas_G5,self.canvas_G6]
 
         for i,can in enumerate(G_canvas):
             with fits.open(cutimgpath+'cutout_fluxmax_'+str(i+1)+'.fits') as hdul:

@@ -8,71 +8,35 @@ import asyncio
 import json
 
 
-#def bytes_to_sexagesimal(value: bytes, encoding="ascii") -> str:
-#        """
-#       # b"453467.8"  -> "45:34:67.8"
-#       # b"-453456.7" -> "-45:34:56.7"
-#        """
-#        # bytes → str
-#        s = value.decode(encoding).strip()
+
+def bytes_to_sexagesimal(value: bytes, encoding="ascii") -> str:
+        """
+        b"453467.8"  -> "45:34:67.8"
+        b"-453456.7" -> "-45:34:56.7"
+        """
+        # bytes → str
+        s = value.decode(encoding).strip()
 
         # 부호 처리
-#        sign = "-" if s.startswith("-") else ""
-#        s = s.lstrip("+-")
+        sign = "-" if s.startswith("-") else ""
+        s = s.lstrip("+-")
 
         # 정수부 / 소수부 분리
-#        if "." in s:
-#            integer, frac = s.split(".", 1)
-#            frac = "." + frac
-#        else:
-#            integer = s
-#            frac = ""
+        if "." in s:
+            integer, frac = s.split(".", 1)
+            frac = "." + frac
+        else:
+            integer = s
+            frac = ""
 
-#        if len(integer) < 6:
-#            raise ValueError(f"sexagesimal 변환에 필요한 자릿수 부족: {s}")
+        if len(integer) < 6:
+            raise ValueError(f"sexagesimal 변환에 필요한 자릿수 부족: {s}")
 
-#        h = integer[0:2]
-#        m = integer[2:4]
-#        sec = integer[4:] + frac
-#
-#        return f"{sign}{h}:{m}:{sec}"
+        h = integer[0:2]
+        m = integer[2:4]
+        sec = integer[4:] + frac
 
-def bytes_to_sexagesimal(value: bytes, encoding='ascii') -> str:
-    """
-    바이트 문자열에서 마지막 토큰을 읽어 HH:MM:SS.SS 또는 ±DD:MM:SS.SS 형식으로 변환
-
-    Parameters:
-    - value: bytes 문자열 (e.g., b'... 234342.56\\n\\x00')
-    - encoding: 바이트 인코딩 형식 (기본: 'utf-8')
-
-    Returns:
-    - str: 변환된 시각 또는 각도 문자열 (예: '23:43:42.56' 또는 '-03:45:06.78')
-    """
-    try:
-        # 1. 바이트 → 문자열 디코딩
-        text = value.decode(encoding, errors='ignore').strip().replace('\x00', '')
-        tokens = text.split()
-        if not tokens:
-            return ''
-
-        last = tokens[-1]
-        num = float(last)
-
-        # 2. 부호 분리 (DEC 대비)
-        sign = '-' if num < 0 else ''
-        num = abs(num)
-
-        # 3. 시/도, 분, 초 분해
-        hh = int(num // 10000)
-        mm = int((num % 10000) // 100)
-        ss = num % 100
-
-        # 4. 형식화
-        return f"{sign}{hh:02}:{mm:02}:{ss:05.2f}"
-
-    except Exception as e:
-        print(f"[ERROR] 변환 실패: {e}")
-        return ''
+        return f"{sign}{h}:{m}:{sec}"
 
 def load_config():
     """Loads configuration settings from KSPEC.ini."""
@@ -129,6 +93,13 @@ async def handle_gfa(arg, ICS_client):
         'gfastatus': gfa_status,
         'gfaguidestop' : gfa_guidestop
     }
+
+#    ra_bytes=await send_telcom_command('getra')
+#    dec_bytes=await send_telcom_command('getdec')
+#    print(ra_bytes,dec_bytes)
+
+#    ra=bytes_to_sexagesimal(ra_bytes)
+#    dec=bytes_to_sexagesimal(dec_bytes)
 
     if cmd == 'gfagrab':
         if len(params) != 2:

@@ -257,6 +257,10 @@ class script():
 
     async def handle_autoguide(self, exptime, save, scriptrun, logging):
         try:
+            ra_bytes = await scriptrun.send_telcom_command('getra')
+            dec_bytes = await scriptrun.send_telcom_command('getdec')
+            rahms=bytes_to_sexagesimal(ra_bytes)
+            decdms=bytes_to_sexagesimal(dec_bytes)
             await handle_gfa(f'gfaguide {exptime} {save}',scriptrun.ICSclient)
             while True:
                 try:
@@ -289,11 +293,6 @@ class script():
                 #    logging(f'DEC offset {fdy} finished', level='receive')
 
                 ### Autoguiding using New coordinate ###
-                    ra_bytes = await scriptrun.send_telcom_command('getra')
-                    dec_bytes = await scriptrun.send_telcom_command('getdec')
-
-                    rahms=bytes_to_sexagesimal(ra_bytes)
-                    decdms=bytes_to_sexagesimal(dec_bytes)
                     logging(f'Apply offset (RA,DEC)=({fdx}, {fdy})', level='normal')
                     new_coord=apply_offset(rahms,decdms,fdx,fdy)
                     messagetcs = 'KSPEC>TC ' + 'tmradec ' + new_coord

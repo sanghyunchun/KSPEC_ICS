@@ -7,6 +7,7 @@
 
 import logging
 import os
+import sys
 from datetime import datetime
 from typing import Optional
 
@@ -30,7 +31,7 @@ class GFALogger:
     def __init__(
         self,
         file: str,
-        stream_level: int = logging.DEBUG,
+        stream_level: int = logging.INFO,
         log_dir: Optional[str] = None,
     ) -> None:
         """
@@ -41,7 +42,7 @@ class GFALogger:
         file : str
             The path of the Python file requesting the logger (used to name the logger).
         stream_level : int, optional
-            Logging level for the console output. Default is logging.DEBUG.
+            Logging level for the console output. Default is logging.INFO.
         log_dir : str, optional
             Directory to store log files. If None, defaults to 'log/' under the script path.
         """
@@ -67,7 +68,7 @@ class GFALogger:
         )
 
         # Stream handler (console)
-        stream_handler = logging.StreamHandler()
+        stream_handler = logging.StreamHandler(sys.stdout)
         stream_handler.setFormatter(formatter)
         stream_handler.setLevel(stream_level)
         self.logger.addHandler(stream_handler)

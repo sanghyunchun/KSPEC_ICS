@@ -1,4 +1,7 @@
 import math
+from astropy.coordinates import SkyCoord, CartesianRepresentation
+import astropy.units as u
+import numpy as np
 
 AS_PER_DEG = 3600.0
 
@@ -48,66 +51,215 @@ def ra_hms_str_to_deg(hms_str):
     h, m, s = hms_str.strip().split(':')
     return ra_hms_to_deg(h, m, s)
 
-def dec_dms_to_deg(sign, d, m, s):
-    """
-    DEC 'sign, d, m, s' → degrees
-    sign: '+' or '-'
-    """
-    deg = abs(float(d)) + float(m)/60.0 + float(s)/3600.0
-    return deg if sign == '+' else -deg
+#def dec_dms_to_deg(sign, d, m, s):
+#    """
+#    DEC 'sign, d, m, s' → degrees
+#    sign: '+' or '-'
+#    """
+#    deg = abs(float(d)) + float(m)/60.0 + float(s)/3600.0
+#    return deg if sign == '+' else -deg
 
-def dec_dms_str_to_deg(dms_str):
-    sgn = dms_str.strip()[0]
-    d, m, s = dms_str.strip()[1:].split(':')
-    return dec_dms_to_deg(sgn, d, m, s)
+#def dec_dms_str_to_deg(dms_str):
+#    sgn = dms_str.strip()[0]
+#    d, m, s = dms_str.strip()[1:].split(':')
+#    return dec_dms_to_deg(sgn, d, m, s)
 
+def radec_str_to_deg(ra_str: str, dec_str: str):
+    """
+    Convert RA/Dec strings to degrees.
+    - ra_str: 'hh:mm:ss.s' (or with spaces/extra)
+    - dec_str: '+dd:mm:ss.s' or '-dd:mm:ss.s' or 'dd:mm:ss.s' (assume + if no sign)
+    Returns: (ra_deg, dec_deg) as floats
+    """
+    ra = ra_str.strip()
+    dec = dec_str.strip()
+
+    # Dec sign handling: if no explicit sign, assume '+'
+    if dec and dec[0] not in ['+', '-']:
+        dec = '+' + dec
+
+    # SkyCoord can parse sexagesimal with explicit units
+    c = SkyCoord(ra=ra, dec=dec, unit=(u.hourangle, u.deg), frame='icrs')
+
+    return c.ra.deg, c.dec.deg
+
+
+#def dec_sexagesimal_to_deg(dec_str):
+#    """
+#    DEC sexagesimal string → degree
+#    Accepts:
+#      '+DD:MM:SS.ss'
+#      '-DD:MM:SS.ss'
+#      'DD:MM:SS.ss'  (assumed '+')
+#    """
+#    s = dec_str.strip()
+#    if not s:
+#        raise ValueError("Empty DEC string")
+
+#    if s[0] in '+-':
+#        sign = -1 if s[0] == '-' else 1
+#        body = s[1:]
+#    else:
+#        sign = 1
+#        body = s
+
+#    try:
+#        d, m, sec = body.split(':')
+#    except ValueError:
+#        raise ValueError("DEC must be in format 'DD:MM:SS'")
+
+#    deg = float(d)
+#    arcmin = float(m)
+#    arcsec = float(sec)
+
+#    if not (0 <= arcmin < 60):
+#        raise ValueError("Arcmin out of range [0,60)")
+#    if not (0 <= arcsec < 60):
+#        raise ValueError("Arcsec out of range [0,60)")
+
+#    dec = sign * (deg + arcmin / 60.0 + arcsec / 3600.0)
+
+#    if abs(dec) > 90:
+#        raise ValueError("DEC out of physical range [-90,+90]")
+
+#    return dec
+
+
+
+
+#def get_separation(ra1_deg, dec1_deg, ra2_deg, dec2_deg):
+#    """두 점 사이 대원 separation [arcsec]"""
+#    ra1 = math.radians(ra1_deg); dec1 = math.radians(dec1_deg)
+#    ra2 = math.radians(ra2_deg); dec2 = math.radians(dec2_deg)
+#    d_ra = ra2 - ra1
+#    cos_d = math.sin(dec1)*math.sin(dec2) + math.cos(dec1)*math.cos(dec2)*math.cos(d_ra)
+#    cos_d = max(-1.0, min(1.0, cos_d))
+#    return math.degrees(math.acos(cos_d)) * AS_PER_DEG
 
 def get_separation(ra1_deg, dec1_deg, ra2_deg, dec2_deg):
-    """두 점 사이 대원 separation [arcsec]"""
-    ra1 = math.radians(ra1_deg); dec1 = math.radians(dec1_deg)
-    ra2 = math.radians(ra2_deg); dec2 = math.radians(dec2_deg)
-    d_ra = ra2 - ra1
-    cos_d = math.sin(dec1)*math.sin(dec2) + math.cos(dec1)*math.cos(dec2)*math.cos(d_ra)
-    cos_d = max(-1.0, min(1.0, cos_d))
-    return math.degrees(math.acos(cos_d)) * AS_PER_DEG
+    c1 = SkyCoord(ra1_deg*u.deg, dec1_deg*u.deg, frame='icrs')
+    c2 = SkyCoord(ra2_deg*u.deg, dec2_deg*u.deg, frame='icrs')
+    return c1.separation(c2).arcsec
 
-def get_boresight(ra1_deg, dec1_deg, ra2_deg, dec2_deg):
-    """두 점의 대원 중점(구면삼각법) = 보어사이트"""
-    ra1 = math.radians(ra1_deg); dec1 = math.radians(dec1_deg)
-    ra2 = math.radians(ra2_deg); dec2 = math.radians(dec2_deg)
 
-    d_ra = ra2 - ra1
-    cos_d = math.sin(dec1)*math.sin(dec2) + math.cos(dec1)*math.cos(dec2)*math.cos(d_ra)
-    cos_d = max(-1.0, min(1.0, cos_d))
-    d = math.acos(cos_d)
+#def get_boresight(ra1_deg, dec1_deg, ra2_deg, dec2_deg):
+#    """두 점의 대원 중점(구면삼각법) = 보어사이트"""
+#    ra1 = math.radians(ra1_deg); dec1 = math.radians(dec1_deg)
+#    ra2 = math.radians(ra2_deg); dec2 = math.radians(dec2_deg)
 
-    if d < 1e-15:
-        return wrap_deg360(ra1_deg), dec1_deg
-    if abs(math.pi - d) < 1e-12:
-        raise ValueError("두 점이 거의 antipodal이라 보어사이트가 유일하지 않습니다.")
+#    d_ra = ra2 - ra1
+#    cos_d = math.sin(dec1)*math.sin(dec2) + math.cos(dec1)*math.cos(dec2)*math.cos(d_ra)
+#    cos_d = max(-1.0, min(1.0, cos_d))
+#    d = math.acos(cos_d)
 
-    w = math.sin(0.5*d) / math.sin(d)
+#    if d < 1e-15:
+#        return wrap_deg360(ra1_deg), dec1_deg
+#    if abs(math.pi - d) < 1e-12:
+#        raise ValueError("두 점이 거의 antipodal이라 보어사이트가 유일하지 않습니다.")
 
-    def to_vec(ra, dec):
-        return (
-            math.cos(dec) * math.cos(ra),
-            math.cos(dec) * math.sin(ra),
-            math.sin(dec)
-        )
+#    w = math.sin(0.5*d) / math.sin(d)
 
-    x1, y1, z1 = to_vec(ra1, dec1)
-    x2, y2, z2 = to_vec(ra2, dec2)
+#    def to_vec(ra, dec):
+#        return (
+#            math.cos(dec) * math.cos(ra),
+#            math.cos(dec) * math.sin(ra),
+#            math.sin(dec)
+#        )
 
-    xm = w*x1 + w*x2
-    ym = w*y1 + w*y2
-    zm = w*z1 + w*z2
+#    x1, y1, z1 = to_vec(ra1, dec1)
+#    x2, y2, z2 = to_vec(ra2, dec2)
 
-    n = math.sqrt(xm*xm + ym*ym + zm*zm)
-    xm, ym, zm = xm/n, ym/n, zm/n
+#    xm = w*x1 + w*x2
+#    ym = w*y1 + w*y2
+#    zm = w*z1 + w*z2
 
-    ra0 = wrap_deg360(math.degrees(math.atan2(ym, xm)))
-    dec0 = math.degrees(math.asin(zm))
-    return ra0, dec0
+#    n = math.sqrt(xm*xm + ym*ym + zm*zm)
+#    xm, ym, zm = xm/n, ym/n, zm/n
+
+#    ra0 = wrap_deg360(math.degrees(math.atan2(ym, xm)))
+#    dec0 = math.degrees(math.asin(zm))
+#    return ra0, dec0
+
+#def get_boresight(ra1_deg, dec1_deg, ra2_deg, dec2_deg):
+#    """두 점의 대원 중점 (boresight)"""
+
+#    ra1 = math.radians(ra1_deg); dec1 = math.radians(dec1_deg)
+#    ra2 = math.radians(ra2_deg); dec2 = math.radians(dec2_deg)
+
+#    def to_vec(ra, dec):
+#        return (
+#            math.cos(dec) * math.cos(ra),
+#            math.cos(dec) * math.sin(ra),
+#            math.sin(dec)
+#        )
+
+#    x1, y1, z1 = to_vec(ra1, dec1)
+#    x2, y2, z2 = to_vec(ra2, dec2)
+
+#    xm = x1 + x2
+#    ym = y1 + y2
+#    zm = z1 + z2
+
+#    n = math.sqrt(xm*xm + ym*ym + zm*zm)
+
+#    if n < 1e-15:
+#        raise ValueError("두 점이 거의 antipodal이라 보어사이트가 유일하지 않습니다.")
+
+#    xm, ym, zm = xm/n, ym/n, zm/n
+
+#    ra0  = wrap_deg360(math.degrees(math.atan2(ym, xm)))
+#    dec0 = math.degrees(math.asin(zm))
+
+#    return ra0, dec0
+
+
+def get_boresight(ra_list_deg, dec_list_deg, frame="icrs"):
+    """
+    6개의 가이드 카메라 이미지 중심 좌표(RA, DEC)로부터
+    초점면 중심(boresight)을 계산한다.
+
+    Parameters
+    ----------
+    ra_list_deg : array-like
+        RA values in degrees (length = 6)
+    dec_list_deg : array-like
+        DEC values in degrees (length = 6)
+    frame : str
+        Astropy coordinate frame (default: 'icrs')
+
+    Returns
+    -------
+    ra_bs_deg : float
+        Boresight RA in degrees
+    dec_bs_deg : float
+        Boresight DEC in degrees
+    """
+
+    if len(ra_list_deg) != 6 or len(dec_list_deg) != 6:
+        raise ValueError("Guide camera coordinates must be exactly 6 points.")
+
+    # SkyCoord 생성
+    guides = SkyCoord(
+        ra=ra_list_deg * u.deg,
+        dec=dec_list_deg * u.deg,
+        frame=frame
+    )
+
+    # 단위벡터(cartesian) 평균
+    xyz = guides.cartesian.xyz.value  # shape (3, 6)
+    v_mean = np.mean(xyz, axis=1)
+
+    # 정규화
+    v_mean /= np.linalg.norm(v_mean)
+
+    # 다시 SkyCoord로 변환
+    boresight = SkyCoord(
+        CartesianRepresentation(v_mean[0], v_mean[1], v_mean[2]),
+        frame=frame
+    )
+
+    return boresight.ra.deg, boresight.dec.deg
+
 
 def offsets_arcsec(ra_from, dec_from, ra_to, dec_to):
     """

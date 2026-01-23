@@ -1,40 +1,37 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# NOTE: 아래는 "네가 붙여준 최신 astrometry class"에
+#   1) .corr들을 모아 combined_star.fits를 만드는 로직(star_catalog generation)
+#   2) preproc 후/또는 field 변경 시 갱신하도록 호출
+#   3) solve-field의 --corr 인자 파싱 꼬임 방지(= flag만 사용)
+#   4) 이번 실행에서 생성된 corr만 모아 combined_star.fits 생성(더 안전)
+#   5) star_catalog="img/star_catalog" 디렉토리면 그 안에 combined_star.fits 저장
+# + 이번 요청 반영:
+#   A) solve-field 경로 로그 중복 제거(캐시 + 변경될 때만 1회 로그)
+#   B) "환경/경로" 로그 정리(중복 최소화)
+#   C) astro 재사용 시 세션 검증(A안): astro FITS 헤더에 RA/DEC 기록 + 재사용 전 RA/DEC 일치 검사
+#   D) raw 삭제 로깅 문구 정리(astro는 외부 삭제)
 #
-# @Author: Yongmin Yoon, Mingyeong Yang (yyoon@kasi.re.kr, mmingyeong@kasi.re.kr)
-# @Date: 2024-05-16
-# @Filename: gfa_astrometry.py
-
 import os
 import sys
 import time
 import json
 import glob
-import numpy as np
 import shutil
 import subprocess
 import logging
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Tuple
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+import numpy as np
 from astropy.io import fits
 from astropy.table import Table, vstack
-from astropy.utils.data import get_pkg_data_filename
+from astropy.coordinates import SkyCoord
+import astropy.units as u
 
-
-# -----------------------------------------------------------------------------
-# ✅ FORCE solve-field path (ignore conda PATH/which)
-# -----------------------------------------------------------------------------
 DEFAULT_SOLVE_FIELD = "/home/yyoon/astrometry/bin/solve-field"
 
 
-def _get_solve_field_path(logger: logging.Logger, env: Optional[dict] = None) -> str:
-    """
-    Always use fixed solve-field path by default (DEFAULT_SOLVE_FIELD),
-    regardless of conda PATH.
-    Optionally allow override via env var ASTROMETRY_SOLVE_FIELD.
-    """
+def _get_solve_field_path(env: Optional[dict] = None) -> str:
     p = None
     if env is not None:
         p = env.get("ASTROMETRY_SOLVE_FIELD")
@@ -49,388 +46,387 @@ def _get_solve_field_path(logger: logging.Logger, env: Optional[dict] = None) ->
     if not os.access(str(sp), os.X_OK):
         raise PermissionError(f"solve-field is not executable: {solve_field}")
 
-    logger.debug(f"Using solve-field from (fixed): {solve_field}")
     return str(sp)
 
 
 def _get_default_config_path() -> str:
-    """
-    Returns the default configuration path for astrometry.
-    Raises FileNotFoundError if the file does not exist.
-    """
     script_dir = os.path.dirname(os.path.abspath(__file__))
     default_path = os.path.join(script_dir, "etc", "astrometry_params.json")
     if not os.path.isfile(default_path):
-        raise FileNotFoundError(
-            f"Default config file not found at: {default_path}. "
-            "Please adjust `_get_default_config_path()` or place your config file there."
-        )
+        raise FileNotFoundError(f"Default config file not found at: {default_path}")
     return default_path
 
 
 def _get_default_logger() -> logging.Logger:
-    """
-    Returns a simple default logger if none is provided.
-    """
     logger = logging.getLogger("gfa_astrometry_default")
-    # Only set handler/formatter if not already set
+    # ✅ 중복 핸들러 방지 + propagate 끄기(상위 로거 중복 출력 방지)
     if not logger.handlers:
         logger.setLevel(logging.INFO)
-        console_handler = logging.StreamHandler(sys.stdout)
-        formatter = logging.Formatter(
-            "[%(asctime)s] %(levelname)s - %(name)s: %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
+        logger.propagate = False
+        h = logging.StreamHandler(sys.stdout)
+        fmt = logging.Formatter(
+            "%(asctime)s [%(levelname)s] %(message)s", "%Y-%m-%d %H:%M:%S"
         )
-        console_handler.setFormatter(formatter)
-        logger.addHandler(console_handler)
+        h.setFormatter(fmt)
+        logger.addHandler(h)
     return logger
 
 
 class GFAAstrometry:
-    """
-    A class to perform astrometry operations on GFA images.
-
-    Attributes
-    ----------
-    logger : logging.Logger
-        Logger for logging messages.
-    inpar : dict
-        Dictionary containing parameters loaded from a JSON file.
-    raws : list of str
-        List of raw image filenames.
-    """
-
     def __init__(self, config: str = None, logger: logging.Logger = None):
-        """
-        Initializes the gfa_astrometry class.
-
-        Parameters
-        ----------
-        config : str, optional
-            Path to the configuration JSON file. If None, a default path is used.
-        logger : logging.Logger, optional
-            Logger instance for logging. If None, a default logger is created.
-        """
-        # Use default config if none provided
         if config is None:
             config = _get_default_config_path()
-        # Use default logger if none provided
         if logger is None:
             logger = _get_default_logger()
 
         self.logger = logger
         self.logger.info("Initializing gfa_astrometry class.")
 
-        # Load parameters from JSON config
-        with open(config, "r") as file:
-            self.inpar = json.load(file)
+        with open(config, "r") as f:
+            self.inpar = json.load(f)
 
         base_dir = os.path.abspath(os.path.dirname(__file__))
 
-        # Extract directories from config
-        self.dir_path = os.path.join(
-            base_dir, self.inpar["paths"]["directories"]["raw_images"]
-        )
-        self.processed_dir = os.path.join(
-            base_dir, self.inpar["paths"]["directories"]["processed_images"]
-        )
-        self.temp_dir = os.path.join(
-            base_dir, self.inpar["paths"]["directories"]["temp_files"]
-        )
+        # raw / temp / final(astrometry outputs) only
+        self.dir_path = os.path.join(base_dir, self.inpar["paths"]["directories"]["raw_images"])
+        self.temp_dir = os.path.join(base_dir, self.inpar["paths"]["directories"]["temp_files"])
         self.final_astrometry_dir = os.path.join(
             base_dir, self.inpar["paths"]["directories"]["final_astrometry_images"]
         )
-        self.star_catalog_path = os.path.join(
-            base_dir, self.inpar["paths"]["directories"]["star_catalog"]
-        )
-        self.cutout_path = os.path.join(
-            base_dir,
-            self.inpar["paths"]["directories"].get("cutout_directory", "cutout"),
-        )
 
-        # Create directories if they don't exist
-        for directory in [
-            self.dir_path,
-            self.processed_dir,
-            self.temp_dir,
-            self.final_astrometry_dir,
-            self.cutout_path,
-        ]:
-            os.makedirs(directory, exist_ok=True)
+        # ✅ star_catalog는 "디렉토리" 또는 "파일 경로" 둘 다 가능하게 처리
+        star_catalog_root = os.path.join(base_dir, self.inpar["paths"]["directories"]["star_catalog"])
+        if star_catalog_root.lower().endswith(".fits"):
+            self.combined_star_path = star_catalog_root
+            self.star_catalog_dir = os.path.dirname(star_catalog_root)
+        else:
+            self.star_catalog_dir = star_catalog_root
+            self.combined_star_path = os.path.join(self.star_catalog_dir, "combined_star.fits")
 
-        # ---------------------------------------------------------------------
-        # ✅ Subprocess environment override (solve-field 등 외부 프로세스용)
-        # ---------------------------------------------------------------------
-        self._subprocess_env = None  # type: Optional[dict]
+        os.makedirs(self.dir_path, exist_ok=True)
+        os.makedirs(self.temp_dir, exist_ok=True)
+        os.makedirs(self.final_astrometry_dir, exist_ok=True)
+        os.makedirs(self.star_catalog_dir, exist_ok=True)
 
-    # -------------------------------------------------------------------------
-    # ✅ Public API: set subprocess env
-    # -------------------------------------------------------------------------
+        # ✅ 로그 정리: Paths는 1회만 깔끔히
+        self.logger.info("Paths:")
+        self.logger.info(f"  raw_images        = {self.dir_path}")
+        self.logger.info(f"  temp_files        = {self.temp_dir}")
+        self.logger.info(f"  final_astrometry  = {self.final_astrometry_dir}")
+        self.logger.info(f"  star_catalog_dir  = {self.star_catalog_dir}")
+        self.logger.info(f"  combined_star.fits= {self.combined_star_path}")
+
+        self._subprocess_env: Optional[dict] = None
+
+        # ✅ solve-field path 캐시(바뀔 때만 로그)
+        self._solve_field_path: Optional[str] = None
+        self._solve_field_key: Optional[str] = None
+        self._resolve_solve_field_path(log=True)
+
+        # ✅ 세션 검증 tolerance(arcsec). 필요하면 config로 빼도 됨.
+        self._session_radec_tol_arcsec = 30.0
+
     def set_subprocess_env(self, env: dict) -> None:
-        """
-        Set environment variables for subprocess calls (solve-field, etc.).
-        """
         self._subprocess_env = env
+        # env가 바뀌었을 수 있으니 solve-field도 갱신(바뀌면만 로그)
+        self._resolve_solve_field_path(log=True)
 
     def _get_subprocess_env(self) -> dict:
-        """
-        Return env for subprocess calls. If not set, fallback to current process env.
-        """
-        return (
-            self._subprocess_env
-            if self._subprocess_env is not None
-            else os.environ.copy()
-        )
+        return self._subprocess_env if self._subprocess_env is not None else os.environ.copy()
 
-    def process_file(self, flname: str):
-        """
-        Processes a FITS file: subtracts sky values, crops the image,
-        and saves the processed file.
-
-        Parameters
-        ----------
-        flname : str
-            Name of the FITS file to process.
-
-        Returns
-        -------
-        tuple or None
-            A tuple (ra_in, dec_in, dir_out, newname) if successful,
-            otherwise None if the file was not found or an error occurred.
-        """
-        full_path = next(
-            (p for p in self.input_paths if os.path.basename(p) == flname), None
-        )
-        if full_path is None:
-            self.logger.error(f"Full path for {flname} not found.")
-            return None
-
-        # This might happen for each file, so let's move it to debug.
-        self.logger.debug(f"Processing file: {flname}")
-        data_in_path = full_path
-
-        if not os.path.exists(data_in_path):
-            self.logger.error(f"File not found: {data_in_path}")
-            return None
-
-        with fits.open(data_in_path, mode="update") as hdu_list:
-            ori = hdu_list[0].data
-            header = hdu_list[0].header
-            print(header)
-            ra_in, dec_in = header.get("RA"), header.get("DEC")
-            print("ra_in?????????, dec_in?????????????")
-            print(ra_in, dec_in)
-
-            # Extract sky values safely
-            try:
-                sky1 = ori[
-                    self.inpar["settings"]["image_processing"]["skycoord"][
-                        "pre_skycoord1"
-                    ][0],
-                    self.inpar["settings"]["image_processing"]["skycoord"][
-                        "pre_skycoord1"
-                    ][1],
-                ]
-                sky2 = ori[
-                    self.inpar["settings"]["image_processing"]["skycoord"][
-                        "pre_skycoord2"
-                    ][0],
-                    self.inpar["settings"]["image_processing"]["skycoord"][
-                        "pre_skycoord2"
-                    ][1],
-                ]
-            except IndexError:
-                raise ValueError("Invalid sky coordinate indices in config.")
-
-            # Subtract sky values in specified regions
-            sub1 = tuple(
-                self.inpar["settings"]["image_processing"]["sub_indices"]["sub_ind1"]
-            )
-            sub2 = tuple(
-                self.inpar["settings"]["image_processing"]["sub_indices"]["sub_ind2"]
-            )
-
-            ori[sub1[0] : sub1[1], sub1[2] : sub1[3]] -= sky1
-            ori[sub2[0] : sub2[1], sub2[2] : sub2[3]] -= sky2
-
-            # Crop the image
-            crop = tuple(self.inpar["settings"]["image_processing"]["crop_indices"])
-            orif = ori[crop[0] : crop[1], crop[2] : crop[3]]
-
-            # Define output directory and filename
-            dir_out = self.processed_dir
-            os.makedirs(dir_out, exist_ok=True)
-            newname = f"proc_{flname}"
-            data_file_path = os.path.join(dir_out, newname)
-
-            # Write to a new FITS file
-            fits.writeto(data_file_path, orif, hdu_list[0].header, overwrite=True)
-
-            # Close the original FITS file
-            hdu_list.close()
-
-            return ra_in, dec_in, dir_out, newname
-
-    def astrometry(self, ra_in: float, dec_in: float, dir_out: str, newname: str):
-        """
-        Performs astrometry on the processed FITS file.
-        """
-        self.logger.info(f"Starting astrometry process for {newname}.")
-
-        # ✅ use injected subprocess env (if set)
+    # -------------------------------
+    # ✅ solve-field path resolve + 중복 로그 방지
+    # -------------------------------
+    def _resolve_solve_field_path(self, log: bool = False) -> str:
         env = self._get_subprocess_env()
+        key = str(env.get("ASTROMETRY_SOLVE_FIELD") or os.environ.get("ASTROMETRY_SOLVE_FIELD") or DEFAULT_SOLVE_FIELD).strip()
+        if (self._solve_field_path is None) or (self._solve_field_key != key):
+            p = _get_solve_field_path(env=env)
+            self._solve_field_path = p
+            self._solve_field_key = key
+            if log:
+                self.logger.debug(f"Using solve-field: {p}")
+        return self._solve_field_path
 
-        # ✅ ALWAYS use fixed solve-field path (ignore conda PATH/which)
-        solve_field_path = _get_solve_field_path(self.logger, env=env)
+    # -------------------------------
+    # ✅ RA/DEC raw header 읽기
+    # -------------------------------
+    def _read_radec_from_header(self, fits_path: str) -> Tuple[str, str]:
+        with fits.open(fits_path, mode="readonly", memmap=True) as hdul:
+            hdr = hdul[0].header
+            ra = hdr.get("RA")
+            dec = hdr.get("DEC")
+
+        if ra is None or dec is None:
+            raise KeyError(f"RA/DEC header missing in: {fits_path}")
+        return str(ra), str(dec)
+
+    # -------------------------------
+    # ✅ RA/DEC 파싱(문자열/도 단위 혼합 대응)
+    # -------------------------------
+    def _parse_radec_to_deg(self, ra: Union[str, float], dec: Union[str, float]) -> Tuple[float, float]:
+        # 1) 숫자면 degree로 취급
+        try:
+            ra_f = float(ra)
+            dec_f = float(dec)
+            return ra_f, dec_f
+        except Exception:
+            pass
+
+        ra_s = str(ra).strip()
+        dec_s = str(dec).strip()
+
+        # 2) sexagesimal 가능성: RA는 hourangle 우선, 실패하면 deg로
+        try:
+            c = SkyCoord(ra_s, dec_s, unit=(u.hourangle, u.deg), frame="icrs")
+            return float(c.ra.deg), float(c.dec.deg)
+        except Exception:
+            c = SkyCoord(ra_s, dec_s, unit=(u.deg, u.deg), frame="icrs")
+            return float(c.ra.deg), float(c.dec.deg)
+
+    def _angular_sep_arcsec(self, ra1, dec1, ra2, dec2) -> float:
+        r1, d1 = self._parse_radec_to_deg(ra1, dec1)
+        r2, d2 = self._parse_radec_to_deg(ra2, dec2)
+        c1 = SkyCoord(r1 * u.deg, d1 * u.deg, frame="icrs")
+        c2 = SkyCoord(r2 * u.deg, d2 * u.deg, frame="icrs")
+        return float(c1.separation(c2).arcsec)
+
+    # -------------------------------
+    # ✅ astro 재사용 세션 검증:
+    #   - astro_*.fits 헤더의 RA/DEC vs 현재 raw(또는 input_files) RA/DEC
+    # -------------------------------
+    def _get_reference_radec_from_inputs(
+        self, input_files: Optional[List[Union[str, Path]]] = None
+    ) -> Optional[Tuple[str, str]]:
+        if input_files is None:
+            cand = sorted(glob.glob(os.path.join(self.dir_path, "*.fits")))
+        else:
+            cand = [os.path.abspath(str(f)) for f in input_files]
+        if not cand:
+            return None
+        return self._read_radec_from_header(cand[0])
+
+    def _get_reference_radec_from_astro_outputs(self, astro_files: List[str]) -> Optional[Tuple[str, str]]:
+        if not astro_files:
+            return None
+        fp = astro_files[0]
+        try:
+            with fits.open(fp, mode="readonly", memmap=True) as hdul:
+                hdr = hdul[0].header
+                ra = hdr.get("RA")
+                dec = hdr.get("DEC")
+            if ra is None or dec is None:
+                return None
+            return str(ra), str(dec)
+        except Exception:
+            return None
+
+    def _delete_astro_outputs(self) -> int:
+        # 외부에서 지워지긴 하지만, "세션 mismatch"일 때는 내부에서도 섞임 방지용으로 지워준다.
+        cnt = 0
+        for p in glob.glob(os.path.join(self.final_astrometry_dir, "astro_*.fits")):
+            try:
+                os.remove(p)
+                cnt += 1
+            except Exception:
+                pass
+        return cnt
+
+    # -------------------------------
+    # ✅ .corr -> vstack -> combined_star.fits 생성
+    # -------------------------------
+    def build_combined_star_from_corr(
+        self,
+        corr_files: Optional[List[str]] = None,
+        corr_glob: str = "**/*.corr",
+        min_rows: int = 1,
+        cleanup: bool = False,
+    ) -> str:
+        out_path = self.combined_star_path
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+
+        if corr_files is None:
+            corr_files = sorted(glob.glob(os.path.join(self.temp_dir, corr_glob), recursive=True))
+
+        self.logger.info(f"Building combined star catalog from .corr files: found {len(corr_files)} files.")
+        self.logger.info(f"combined_star.fits output will be: {out_path}")
+
+        if not corr_files:
+            raise FileNotFoundError(
+                f"No .corr files found. temp_dir={self.temp_dir}, pattern={corr_glob}\n"
+                f"→ solve-field가 실제로 .corr을 만들었는지/출력 경로가 맞는지 확인 필요."
+            )
+
+        tables: List[Table] = []
+        bad: List[str] = []
+
+        for fp in corr_files:
+            try:
+                if not os.path.exists(fp):
+                    bad.append(fp)
+                    self.logger.warning(f"corr missing (skip): {fp}")
+                    continue
+
+                with fits.open(fp, memmap=True) as hdul:
+                    if len(hdul) < 2 or hdul[1].data is None:
+                        raise ValueError("No table found in HDU[1].")
+                    tables.append(Table(hdul[1].data))
+            except Exception as e:
+                bad.append(fp)
+                self.logger.warning(f"Failed reading corr={fp}: {e}")
+
+        if not tables:
+            raise RuntimeError(f"All .corr files failed to read. bad(sample)={bad[:10]}")
+
+        combined = vstack(tables, metadata_conflicts="silent")
+        combined.write(out_path, overwrite=True)
+
+        nrows = len(combined)
+        if nrows < int(min_rows):
+            self.logger.warning(f"combined_star.fits created but has very few rows: N={nrows}")
+
+        self.logger.info(f"✅ combined_star.fits created: {out_path} (N={nrows})")
+
+        if cleanup:
+            for fp in corr_files:
+                try:
+                    os.remove(fp)
+                except Exception:
+                    pass
+
+        return out_path
+
+    # -------------------------------
+    # ✅ solve-field 실행 (파일별 독립 작업폴더)
+    # + astro FITS 헤더에 RA/DEC 기록(세션 검증용)
+    # -------------------------------
+    def astrometry_raw(self, raw_fits_path: str) -> Tuple[float, float, str, str]:
+        env = self._get_subprocess_env()
+        solve_field_path = self._resolve_solve_field_path(log=False)
 
         scale_low, scale_high = self.inpar["astrometry"]["scale_range"]
         radius = self.inpar["astrometry"]["radius"]
         cpu_limit = self.inpar["settings"]["cpu"]["limit"]
 
-        input_file_path = os.path.join(dir_out, newname)
-        if not os.path.exists(input_file_path):
-            self.logger.error(
-                f"Input file for solve-field not found: {input_file_path}"
-            )
-            raise FileNotFoundError(
-                f"Input file for solve-field not found: {input_file_path}"
-            )
-        print("ra_in?????????, dec_in?????????????")
-        print(ra_in, dec_in)
-        # This is the actual system command => debug
-        input_command = (
-            f"{solve_field_path} --cpulimit {cpu_limit} --dir {self.temp_dir} --scale-units degwidth "
-            f"--scale-low {scale_low} --scale-high {scale_high} "
-            f"--no-verify --no-plots --crpix-center -O --ra {ra_in} --dec {dec_in} --radius {radius} {input_file_path}"
-        )
+        raw_fits_path = os.path.abspath(raw_fits_path)
+        if not os.path.exists(raw_fits_path):
+            raise FileNotFoundError(f"Raw FITS not found: {raw_fits_path}")
 
-        self.logger.debug(f"Running command: {input_command}")
+        ra_in, dec_in = self._read_radec_from_header(raw_fits_path)
 
-        try:
-            result = subprocess.run(
-                input_command,
-                shell=True,
-                capture_output=True,
-                text=True,
-                check=True,
-                env=env,  # ✅ 핵심
-            )
-        except subprocess.CalledProcessError as e:
-            self.logger.error(f"solve-field execution failed for {newname}")
-            self.logger.error(f"solve-field stderr: {e.stderr}")
-            raise RuntimeError(f"solve-field execution failed for {newname}") from e
+        base = os.path.basename(raw_fits_path)
+        stem = Path(base).stem
 
-        # Checking generated files => debug
-        self.logger.debug(
-            f"Checking generated files in {self.temp_dir} after solve-field execution."
-        )
-        list_files_command = f"ls -lh {self.temp_dir}"
-        list_files = subprocess.run(
-            list_files_command,
-            shell=True,
-            capture_output=True,
-            text=True,
-            env=env,  # ✅ env 통일
-        )
-        self.logger.debug(f"Files in temp directory:\n{list_files.stdout}")
+        work_dir = os.path.join(self.temp_dir, stem)
+        os.makedirs(work_dir, exist_ok=True)
 
-        solved_file_pattern = os.path.join(
-            self.temp_dir, newname.replace(".fits", ".new")
-        )
-        solved_files = glob.glob(solved_file_pattern)
+        outbase = stem
+        corr_path = os.path.join(work_dir, f"{outbase}.corr")
+        new_path = os.path.join(work_dir, f"{outbase}.new")
 
-        if not solved_files:
-            self.logger.error(
-                f"Astrometry output file not found in {self.temp_dir}. "
-                f"Expected pattern: {solved_file_pattern}"
-            )
-            self.logger.error(f"Files in directory: {os.listdir(self.temp_dir)}")
-            raise FileNotFoundError(
-                f"Astrometry output file not found: {solved_file_pattern}"
-            )
+        cmd = [
+            solve_field_path,
+            raw_fits_path,
+            "-D", work_dir,
+            "-o", outbase,
+            "--overwrite",
+            "--corr", corr_path,
+            "--no-plots",
+            "--no-verify",
+            "--crpix-center",
+            "-X", "X",
+            "-Y", "Y",
+            "-s", "FLUX",
+            "--scale-units", "degwidth",
+            "-L", str(scale_low),
+            "-H", str(scale_high),
+            "--ra", str(ra_in),
+            "--dec", str(dec_in),
+            "--radius", str(radius),
+            "-l", "120",
+            "-c", "0.1",
+            "-E", "2",
+            "--cpulimit", str(cpu_limit),
+        ]
 
-        new_fits_file = solved_files[0]
-        converted_fits_file = new_fits_file.replace(".new", ".fits")
+        self.logger.info(f"[{stem}] Running command: {' '.join(cmd)}")
 
-        # Renaming can be debug
-        self.logger.debug(f"Renaming {new_fits_file} to {converted_fits_file}")
-        os.rename(new_fits_file, converted_fits_file)
+        p = subprocess.run(cmd, capture_output=True, text=True, env=env)
 
-        os.makedirs(self.final_astrometry_dir, exist_ok=True)
-        dest_file_name = f"astro_{newname}"
-        dest_path = os.path.join(self.final_astrometry_dir, dest_file_name)
+        self.logger.info(f"[{stem}] solve-field returncode={p.returncode}")
+        if p.stdout:
+            self.logger.debug(f"[{stem}] solve-field stdout:\n{p.stdout}")
+        if p.stderr:
+            self.logger.debug(f"[{stem}] solve-field stderr:\n{p.stderr}")
 
-        os.rename(converted_fits_file, dest_path)
-        self.logger.info(f"Astrometry results moved to {dest_path}.")
-
-        # Read the FITS header and extract CRVAL1, CRVAL2
-        try:
-            image_data_p, header = fits.getdata(dest_path, ext=0, header=True)
-            crval1 = header["CRVAL1"]
-            crval2 = header["CRVAL2"]
-        except Exception as e:
-            self.logger.error(f"Failed to read CRVAL1, CRVAL2 from {dest_path}: {e}")
-            raise RuntimeError(
-                f"Failed to extract astrometry data from {dest_path}"
-            ) from e
-
-        self.logger.info(
-            f"Astrometry completed with CRVAL1: {crval1}, CRVAL2: {crval2}."
-        )
-        return crval1, crval2
-
-    def star_catalog(self):
-        """
-        Combines multiple star catalog files into a single catalog.
-        """
-        self.logger.info("Starting star catalog generation.")
-
-        if not self.temp_dir:
-            self.logger.error("Temp directory is not set.")
-            return
-
-        if not self.star_catalog_path:
-            self.logger.error("Star catalog path is not set.")
-            return
-
-        filepre = glob.glob(os.path.join(self.temp_dir, "*.corr"))
-        # Move to debug so it's not spammy
-        self.logger.debug(f"Found {len(filepre)} .corr files in {self.temp_dir}.")
-
-        if not filepre:
-            self.logger.error("No .corr files found in the temp directory.")
-            return
-
-        star_files_p = [os.path.basename(file) for file in filepre]
-        star_files_p.sort()
-        star_files = [os.path.join(self.temp_dir, file) for file in star_files_p]
-
-        tables = []
-        for file in star_files:
-            # Moved to debug
-            self.logger.debug(f"Processing .corr file: {file}")
+        if not os.path.exists(new_path):
             try:
-                with fits.open(file) as hdul:
-                    table_data = Table(hdul[1].data)
-                    tables.append(table_data)
-            except Exception as e:
-                self.logger.error(f"Error reading {file}: {e}")
+                listing = sorted(os.listdir(work_dir))[:80]
+            except Exception:
+                listing = []
 
-        if tables:
-            combined_table = vstack(tables)
-            combined_table.write(self.star_catalog_path, overwrite=True)
-            self.logger.info(
-                f"Star catalog generated and saved to {self.star_catalog_path}."
+            raise RuntimeError(
+                f"[{stem}] solve-field FAILED: .new file not created.\n"
+                f"  raw_fits={raw_fits_path}\n"
+                f"  work_dir={work_dir}\n"
+                f"  returncode={p.returncode}\n"
+                f"  files(sample)={listing}\n"
+                f"  stderr(tail)=\n{(p.stderr or '')[-2000:]}"
             )
+
+        if p.returncode != 0:
+            self.logger.warning(
+                f"[{stem}] solve-field returncode != 0 but .new exists. "
+                f"Continuing. returncode={p.returncode}"
+            )
+
+        try:
+            listing = sorted(os.listdir(work_dir))
+        except Exception:
+            listing = []
+
+        if os.path.exists(corr_path):
+            self.logger.info(f"[{stem}] ✅ corr produced: {corr_path}")
         else:
             self.logger.warning(
-                "No valid tables found for stacking. Skipping star catalog generation."
+                f"[{stem}] ⚠️ corr NOT found where expected: {corr_path}\n"
+                f"  work_dir listing(sample)={listing[:50]}"
             )
 
+        out_fits_name = f"astro_{stem}.fits"
+        out_fits_path = os.path.join(self.final_astrometry_dir, out_fits_name)
+
+        if os.path.exists(out_fits_path):
+            os.remove(out_fits_path)
+
+        os.rename(new_path, out_fits_path)
+
+        # ✅ astro FITS 헤더에 "이 astrometry가 어떤 입력(RA/DEC)으로 생성됐는지" 기록
+        #    (헤더 키는 요청대로 RA, DEC 사용)
+        try:
+            with fits.open(out_fits_path, mode="update", memmap=False) as hdul:
+                hdr = hdul[0].header
+                hdr["RA"] = (str(ra_in), "Input RA used for astrometry (session key)")
+                hdr["DEC"] = (str(dec_in), "Input DEC used for astrometry (session key)")
+                hdul.flush()
+        except Exception as e:
+            self.logger.warning(f"[{stem}] Failed to write RA/DEC into astro header: {e}")
+
+        try:
+            _, hdr = fits.getdata(out_fits_path, ext=0, header=True)
+            crval1 = float(hdr["CRVAL1"])
+            crval2 = float(hdr["CRVAL2"])
+        except Exception as e:
+            raise RuntimeError(
+                f"[{stem}] .new existed but failed to read CRVAL1/CRVAL2 after rename.\n"
+                f"  out_fits_path={out_fits_path}\n"
+                f"  error={e}"
+            ) from e
+
+        self.logger.info(f"[{stem}] Astrometry done. CRVAL1={crval1}, CRVAL2={crval2}")
+        return crval1, crval2, out_fits_path, corr_path
+
     def rm_tempfiles(self):
-        """
-        Removes temporary files in `temp_dir`.
-        """
         self.logger.info("Removing temporary files.")
         try:
             shutil.rmtree(self.temp_dir)
@@ -439,194 +435,216 @@ class GFAAstrometry:
         except Exception as e:
             self.logger.error(f"Error removing temporary files: {e}")
 
-    def combined_function(self, flname: str):
-        """
-        Combines process_file and astrometry for a single FITS file.
-        """
-        # Large repetitive steps => debug
-        self.logger.debug(f"Starting combined function for file: {flname}.")
+    # -------------------------------------------------------------------------
+    # ✅ procimg 없이 "astrometry inputs" 확보 (astro dir 있으면 사용 / 없으면 생성)
+    # + astro 재사용 시 RA/DEC 세션 검증(A안)
+    # -------------------------------------------------------------------------
+    def ensure_astrometry_ready(
+        self,
+        input_files: Optional[List[Union[str, Path]]] = None,
+        force: bool = False,
+        run_missing_only: bool = True,
+        build_star_catalog: bool = True,
+        star_catalog_force: bool = False,
+        fallback_glob_on_empty_corr_ok: bool = True,
+    ) -> List[str]:
+        os.makedirs(self.final_astrometry_dir, exist_ok=True)
+        os.makedirs(self.star_catalog_dir, exist_ok=True)
 
-        result = self.process_file(flname)
-        if result is None:
-            raise RuntimeError(f"Processing failed for {flname}. Stopping execution.")
+        existing_outputs = sorted(glob.glob(os.path.join(self.final_astrometry_dir, "astro_*.fits")))
 
-        try:
-            ra_in, dec_in, dir_out, newname = result
-        except TypeError as e:
-            raise RuntimeError(
-                f"Unexpected result format from process_file({flname}): {result}. Error: {e}"
-            ) from e
+        # ✅ 재사용 경로: existing astro가 있고 force=False일 때
+        if existing_outputs and not force:
+            # --- 세션 검증 (A안): astro header RA/DEC vs current raw/input RA/DEC ---
+            cur_radec = self._get_reference_radec_from_inputs(input_files=input_files)
+            astro_radec = self._get_reference_radec_from_astro_outputs(existing_outputs)
 
-        astrometry_result = self.astrometry(ra_in, dec_in, dir_out, newname)
-        if astrometry_result is None:
-            raise RuntimeError(f"Astrometry failed for {flname}. Stopping execution.")
-
-        try:
-            crval1, crval2 = astrometry_result
-        except TypeError as e:
-            raise RuntimeError(
-                f"Unexpected result format from astrometry({newname}): {astrometry_result}. Error: {e}"
-            ) from e
-
-        self.logger.info(
-            f"Combined function completed for {flname}. CRVAL1: {crval1}, CRVAL2: {crval2}."
-        )
-        return crval1, crval2
-
-    def delete_all_files_in_dir(self, dir_path: str) -> int:
-        """
-        Delete all files in the specified directory using self.logger.
-
-        Parameters
-        ----------
-        dir_path : str
-            Path to the directory whose contents will be deleted.
-
-        Returns
-        -------
-        int
-            Number of files successfully deleted.
-        """
-        deleted_count = 0
-
-        if not os.path.isdir(dir_path):
-            self.logger.warning(f"Directory not found: {dir_path}")
-            return deleted_count
-
-        for filename in os.listdir(dir_path):
-            file_path = os.path.join(dir_path, filename)
-            try:
-                if os.path.isfile(file_path):
-                    os.remove(file_path)
-                    deleted_count += 1
-                    self.logger.debug(f"Deleted file: {file_path}")
+            if cur_radec is not None and astro_radec is not None:
+                sep_arcsec = self._angular_sep_arcsec(cur_radec[0], cur_radec[1], astro_radec[0], astro_radec[1])
+                if sep_arcsec > float(self._session_radec_tol_arcsec):
+                    self.logger.info(
+                        "Astrometry outputs exist but session RA/DEC mismatch → re-running astrometry.\n"
+                        f"  current RA/DEC = ({cur_radec[0]}, {cur_radec[1]})\n"
+                        f"  astro   RA/DEC = ({astro_radec[0]}, {astro_radec[1]})\n"
+                        f"  separation     = {sep_arcsec:.2f} arcsec (tol={self._session_radec_tol_arcsec:.1f})"
+                    )
+                    # 섞임 방지: 기존 astro 제거 후 강제 재생성
+                    deleted = self._delete_astro_outputs()
+                    self.logger.info(f"Deleted {deleted} old astro outputs before re-run.")
+                    force = True  # 아래 로직으로 내려가서 preproc 수행
                 else:
-                    self.logger.debug(f"Skipped non-file item: {file_path}")
+                    self.logger.info(
+                        f"Astrometry directory has outputs → reusing (session OK, sep={sep_arcsec:.2f} arcsec)."
+                    )
+                    if build_star_catalog and star_catalog_force:
+                        self.logger.info(
+                            "star_catalog_force=True → rebuilding combined_star.fits from existing corr under temp_dir"
+                        )
+                        try:
+                            self.build_combined_star_from_corr(corr_files=None)
+                        except Exception as e:
+                            self.logger.warning(f"Star catalog build skipped/failed: {e}")
+
+                    self.logger.info(f"combined_star expected at: {self.combined_star_path}")
+                    self.logger.info(f"combined_star exists? {os.path.exists(self.combined_star_path)}")
+                    return existing_outputs
+            else:
+                # raw/input이 없거나 astro에 RA/DEC가 없으면 보수적으로 재사용(로그만 남김)
+                why = []
+                if cur_radec is None:
+                    why.append("current RA/DEC unavailable (no input/raw)")
+                if astro_radec is None:
+                    why.append("astro RA/DEC missing in header")
+                self.logger.info(
+                    "Astrometry directory has outputs → reusing (session check skipped: "
+                    + ", ".join(why)
+                    + ")."
+                )
+                if build_star_catalog and star_catalog_force:
+                    self.logger.info(
+                        "star_catalog_force=True → rebuilding combined_star.fits from existing corr under temp_dir"
+                    )
+                    try:
+                        self.build_combined_star_from_corr(corr_files=None)
+                    except Exception as e:
+                        self.logger.warning(f"Star catalog build skipped/failed: {e}")
+
+                self.logger.info(f"combined_star expected at: {self.combined_star_path}")
+                self.logger.info(f"combined_star exists? {os.path.exists(self.combined_star_path)}")
+                return existing_outputs
+
+        # ✅ 여기부터는: outputs 없거나(force=True 포함) → preproc 실행
+        self.logger.info("Astrometry outputs missing or force=True → running astrometry preprocessing...")
+
+        results, corr_ok = self.preproc(
+            input_files=input_files,
+            force=force,
+            run_missing_only=run_missing_only,
+        )
+
+        existing_outputs = sorted(glob.glob(os.path.join(self.final_astrometry_dir, "astro_*.fits")))
+        if not existing_outputs:
+            raise RuntimeError(
+                f"Astrometry expected outputs not found in {self.final_astrometry_dir} (astro_*.fits)"
+            )
+
+        if build_star_catalog:
+            try:
+                if corr_ok:
+                    self.logger.info(f"Building combined_star.fits from this run corr_ok={len(corr_ok)} files")
+                    self.build_combined_star_from_corr(corr_files=corr_ok)
+                else:
+                    msg = "No corr_ok collected from this run."
+                    if fallback_glob_on_empty_corr_ok:
+                        msg += " Falling back to glob temp_dir for any existing corr."
+                    self.logger.warning(msg)
+
+                    if fallback_glob_on_empty_corr_ok:
+                        self.build_combined_star_from_corr(corr_files=None)
             except Exception as e:
-                self.logger.error(f"Failed to delete file {file_path}: {e}")
+                self.logger.warning(f"Star catalog build skipped/failed: {e}")
 
-        self.logger.info(f"Deleted {deleted_count} files in directory: {dir_path}")
-        return deleted_count
+        self.logger.info(f"combined_star expected at: {self.combined_star_path}")
+        self.logger.info(f"combined_star exists? {os.path.exists(self.combined_star_path)}")
 
-    def preproc(self, input_files: Optional[List[Union[str, Path]]] = None):
-        """
-        Preprocess FITS files.
+        return existing_outputs
 
-        Parameters
-        ----------
-        input_files : list of str or Path, optional
-            Full paths to FITS files to process. If not given, defaults to self.dir_path.
-
-        Behavior
-        --------
-        - If astrometry results don't exist, performs astrometric processing via combined_function.
-        - Otherwise, processes raw files via process_file.
-        - Builds star catalog and removes temp files if full astrometry was run.
-        """
-
-        start_time = time.time()
+    def preproc(
+        self,
+        input_files: Optional[List[Union[str, Path]]] = None,
+        force: bool = False,
+        run_missing_only: bool = True,
+    ) -> Tuple[List[Tuple[float, float, str, str]], List[str]]:
+        start = time.time()
 
         if input_files is None:
-            filepre = glob.glob(os.path.join(self.dir_path, "*.fits"))
+            input_paths = sorted(glob.glob(os.path.join(self.dir_path, "*.fits")))
         else:
-            filepre = [str(f) for f in input_files]
-            self.dir_path = os.path.dirname(filepre[0])  # ✅ 여기에 위치해야 안전
+            input_paths = [os.path.abspath(str(f)) for f in input_files]
 
-        self.input_paths = sorted(filepre)  # full path
-        self.raws = [os.path.basename(f) for f in filepre]
-        self.logger.debug(f"Loaded {len(self.raws)} FITS files.")
-
-        if not self.raws:
+        if not input_paths:
             self.logger.warning("No FITS files provided or found.")
-            return
+            return [], []
 
-        self.logger.info(f"Starting preprocessing for {len(self.raws)} files.")
+        os.makedirs(self.final_astrometry_dir, exist_ok=True)
 
-        # CASE 1: No astrometry output exists → run combined_function
-        if not os.path.exists(self.final_astrometry_dir) or not os.listdir(
-            self.final_astrometry_dir
-        ):
-            self.logger.info(
-                "No astrometry results found. Running full astrometric solution."
-            )
+        existing_outputs = sorted(glob.glob(os.path.join(self.final_astrometry_dir, "astro_*.fits")))
+        astro_dir_empty = (len(existing_outputs) == 0)
 
-            crval1_results, crval2_results = [], []
-            failed_files = []
+        to_run: List[str] = []
 
-            with ThreadPoolExecutor(max_workers=8) as executor:
-                futures = {
-                    executor.submit(self.combined_function, flname): flname
-                    for flname in self.raws
-                }
-
-                for future in as_completed(futures):
-                    flname = futures[future]
-                    try:
-                        result = future.result()
-                        if result is not None:
-                            crval1, crval2 = result
-                            crval1_results.append(crval1)
-                            crval2_results.append(crval2)
-                            self.logger.debug(
-                                f"Processed {flname} → CRVAL1: {crval1}, CRVAL2: {crval2}"
-                            )
-                        else:
-                            self.logger.warning(
-                                f"Skipping {flname} due to processing error."
-                            )
-                            failed_files.append(flname)
-                    except Exception as e:
-                        self.logger.error(f"Error processing {flname}: {e}")
-                        failed_files.append(flname)
-
-            if failed_files:
-                self.logger.warning(f"{len(failed_files)} files failed: {failed_files}")
-
-            self.star_catalog()
-            self.rm_tempfiles()
-
-        # CASE 2: astrometry 이미 있음 → process_file만 실행
+        if force:
+            self.logger.info("force=True → running astrometry for ALL files.")
+            to_run = input_paths
         else:
-            self.logger.info(
-                "Astrometry data already exists. Processing raw images separately."
-            )
-            failed_files = []
+            if astro_dir_empty:
+                self.logger.info("No astrometry results found (astro dir empty) → running FULL astrometry.")
+                to_run = input_paths
+            else:
+                if not run_missing_only:
+                    self.logger.info("Astrometry results already exist and run_missing_only=False → skipping astrometry.")
+                    return [], []
 
-            with ThreadPoolExecutor(max_workers=8) as executor:
-                futures = {
-                    executor.submit(self.process_file, flname): flname
-                    for flname in self.raws
-                }
+                existing_set = set(os.path.basename(p) for p in existing_outputs)
 
-                for future in as_completed(futures):
-                    flname = futures[future]
-                    try:
-                        result = future.result()
-                        if result is not None:
-                            self.logger.debug(f"Processed {flname}")
-                        else:
-                            self.logger.warning(f"Skipping {flname} due to error.")
-                            failed_files.append(flname)
-                    except Exception as e:
-                        self.logger.error(f"Error processing {flname}: {e}")
-                        failed_files.append(flname)
+                for raw_path in input_paths:
+                    stem = Path(os.path.basename(raw_path)).stem
+                    expected = f"astro_{stem}.fits"
+                    if expected not in existing_set:
+                        to_run.append(raw_path)
 
-            if failed_files:
-                self.logger.warning(f"{len(failed_files)} files failed: {failed_files}")
+                if to_run:
+                    self.logger.info(f"Astrometry results exist → running ONLY missing outputs: {len(to_run)} files.")
+                else:
+                    self.logger.info("All expected astrometry outputs already exist → nothing to do.")
+                    return [], []
+
+        cpu_limit = int(self.inpar["settings"]["cpu"]["limit"])
+        max_workers = max(1, min(cpu_limit, len(to_run)))
+
+        failed: List[str] = []
+        results: List[Tuple[float, float, str, str]] = []
+        corr_ok: List[str] = []
+
+        with ThreadPoolExecutor(max_workers=max_workers) as ex:
+            futs = {ex.submit(self.astrometry_raw, p): p for p in to_run}
+            for fut in as_completed(futs):
+                path = futs[fut]
+                try:
+                    cr1, cr2, astro_path, corr_path = fut.result()
+                    results.append((cr1, cr2, astro_path, corr_path))
+                    if corr_path and os.path.exists(corr_path):
+                        corr_ok.append(corr_path)
+                except Exception as e:
+                    self.logger.error(f"Error processing {os.path.basename(path)}: {e}")
+                    failed.append(path)
+
+        if failed:
+            self.logger.warning(f"{len(failed)} files failed: {[os.path.basename(x) for x in failed]}")
 
         self.logger.info(
-            f"Preprocessing completed in {time.time() - start_time:.2f} seconds."
+            f"Preprocessing(astrometry) completed in {time.time() - start:.2f} seconds. "
+            f"(ok={len(results)}, failed={len(failed)}, corr_ok={len(corr_ok)})"
         )
+        return results, corr_ok
 
-    def clear_raw_and_processed_files(self) -> None:
-        """
-        Delete all files in self.dir_path and self.processed_dir, and log the results.
-        """
-        self.logger.info("Deleting raw and processed files.")
-
+    # ✅ raw만 삭제(astro는 외부에서 자동 삭제)
+    def clear_raw_files(self) -> None:
+        self.logger.info("Deleting raw files.")
         deleted_raw = self.delete_all_files_in_dir(self.dir_path)
-        deleted_processed = self.delete_all_files_in_dir(self.processed_dir)
+        self.logger.info(f"Deleted {deleted_raw} raw files.")
 
-        self.logger.info(
-            f"Deleted {deleted_raw} raw files and {deleted_processed} processed files."
-        )
+    def delete_all_files_in_dir(self, dir_path: str) -> int:
+        if not os.path.isdir(dir_path):
+            self.logger.warning(f"Directory not found: {dir_path}")
+            return 0
+
+        cnt = 0
+        for p in glob.glob(os.path.join(dir_path, "*")):
+            try:
+                if os.path.isfile(p) or os.path.islink(p):
+                    os.remove(p)
+                    cnt += 1
+            except Exception as e:
+                self.logger.error(f"Failed to delete {p}: {e}")
+        return cnt

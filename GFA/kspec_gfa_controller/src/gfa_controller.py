@@ -246,6 +246,8 @@ class GFAController:
         self.logger.info("=========================")
 
         info_attributes = [
+            ("GainRaw", "GainRaw"),
+            ("Gain", "Gain"),
             ("DeviceModelName", "DeviceModelName"),
             ("DeviceSerialNumber", "DeviceSerialNumber"),
             ("DeviceUserID", "DeviceUserID"),
@@ -307,6 +309,7 @@ class GFAController:
         await loop.run_in_executor(None, cam.PixelFormat.SetValue, "Mono12")
         await loop.run_in_executor(None, cam.BinningHorizontal.SetValue, int(Binning))
         await loop.run_in_executor(None, cam.BinningVertical.SetValue, int(Binning))
+        await loop.run_in_executor(None, cam.Gain.SetValue, 0)
 
         try:
             result = await loop.run_in_executor(None, cam.GrabOne, self.grab_timeout)
@@ -329,19 +332,6 @@ class GFAController:
                 output_directory=output_dir,
                 ra=ra,
                 dec=dec,
-            )
-
-            # ---- PNG save (quick-look) ----
-            png_dir = "./png"
-            Path(png_dir).mkdir(parents=True, exist_ok=True)
-
-            png_filename = filename.replace(".fits", ".png")
-
-            self.img_class.save_png(
-                image_array=img,
-                filename=png_filename,
-                output_directory=png_dir,
-                #bit_depth=16,      # GFA dynamic range 유지
             )
 
             return img
