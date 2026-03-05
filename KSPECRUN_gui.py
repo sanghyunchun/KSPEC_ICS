@@ -60,6 +60,7 @@ class MplCanvas(FigureCanvas):
         self.ax.clear()
         self.ax.imshow(data, **kwargs)
         self.ax.axis('on')
+        self.fig.subplots_adjust(left=0.05,right=1,bottom=0.05, top=1)
         self._initial_xlim = self.ax.get_xlim()
         self._initial_ylim = self.ax.get_ylim()
         self.draw()
@@ -231,8 +232,8 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_offset.clicked.connect(self.offset_button_clicked)
 
 
-        # Finder 
-        self.ui.pushbtn_finder_exp.clicked.connect(self.finder_button_clicked)
+    #    # Finder 
+    #    self.ui.pushbtn_finder_exp.clicked.connect(self.finder_button_clicked)
 
 
         # ADC adjust
@@ -247,11 +248,11 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_adc_zero.clicked.connect(self.adczero_button_clicked)
 
         # Fiber assign
-        self.ui.pushbtn_Fiber_assign.clicked.connect(self.Fiber_assign_button_clicked)
-        self.ui.pushbtn_Fiber_assign_2.clicked.connect(self.Fiber_assign_button_clicked)
+    #    self.ui.pushbtn_Fiber_assign.clicked.connect(self.Fiber_assign_button_clicked)
+    #    self.ui.pushbtn_Fiber_assign_2.clicked.connect(self.Fiber_assign_button_clicked)
 
-        self.ui.pushbtn_FBP_zero.clicked.connect(self.FBP_zero_button_clicked)
-        self.ui.pushbtn_FBP_offset.clicked.connect(self.FBP_offset_button_clicked)
+    #    self.ui.pushbtn_FBP_zero.clicked.connect(self.FBP_zero_button_clicked)
+    #    self.ui.pushbtn_FBP_offset.clicked.connect(self.FBP_offset_button_clicked)
 
 
         # MTL 
@@ -268,11 +269,13 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_set_sequence.clicked.connect(self.load_tile)
 
 
-        # Take Image
+        # Take and show spectro images
         self.ui.pushbtn_run_obs.clicked.connect(self.run_obs_clicked)
         self.ui.pushbtn_run_calib.clicked.connect(self.take_calib)
 
         self.ui.pushbtn_exp_start.clicked.connect(self.exp_start_clicked)
+
+        self.ui.pushbtn_show_spec.clicked.connect(self.show_spec)
 
         # LAMP
         self.ui.pushbtn_Flat.setCheckable(True)
@@ -295,12 +298,12 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_slew.clicked.connect(self.slew_button_clicked)
 
 
-        # Focusing
-        self.ui.pushbtn_dfp5.clicked.connect(self.dfp5_button_clicked)
-        self.ui.pushbtn_dfm5.clicked.connect(self.dfm5_button_clicked)
-        self.ui.pushbtn_dfp005.clicked.connect(self.dfp005_button_clicked)
-        self.ui.pushbtn_dfm005.clicked.connect(self.dfm005_button_clicked)
-        self.ui.pushbtn_fttgoto.clicked.connect(self.fttgoto_button_clicked)
+    #    # Focusing
+    #    self.ui.pushbtn_dfp5.clicked.connect(self.dfp5_button_clicked)
+    #    self.ui.pushbtn_dfm5.clicked.connect(self.dfm5_button_clicked)
+    #    self.ui.pushbtn_dfp005.clicked.connect(self.dfp005_button_clicked)
+    #    self.ui.pushbtn_dfm005.clicked.connect(self.dfm005_button_clicked)
+    #    self.ui.pushbtn_fttgoto.clicked.connect(self.fttgoto_button_clicked)
 
         # CLI command 
         self.ui.pushbtn_send_cmd.clicked.connect(self.user_input)
@@ -325,34 +328,34 @@ class MainWindow(QMainWindow):
         self.R_layout=QVBoxLayout(self.ui.frame_R)
         self.R_layout.addWidget(self.canvas_R)
 
-        self.canvas_F=MplCanvas(self,dpi=100,left=0.00,right=1.,bottom=0.0,top=1.)
-        self.F_layout=QVBoxLayout(self.ui.frame_finder)
-        self.F_layout.addWidget(self.canvas_F)
+    #    self.canvas_F=MplCanvas(self,dpi=100,left=0.00,right=1.,bottom=0.0,top=1.)
+    #    self.F_layout=QVBoxLayout(self.ui.frame_finder)
+    #    self.F_layout.addWidget(self.canvas_F)
 
 
-        self.canvas_G1=MplCanvas(self,dpi=100,left=0.0,right=1.,bottom=0.,top=1.)
-        self.G1_layout=QVBoxLayout(self.ui.Guide1)
-        self.G1_layout.addWidget(self.canvas_G1)
+    #    self.canvas_G1=MplCanvas(self,dpi=100,left=0.0,right=1.,bottom=0.,top=1.)
+    #    self.G1_layout=QVBoxLayout(self.ui.Guide1)
+    #    self.G1_layout.addWidget(self.canvas_G1)
 
-        self.canvas_G2=MplCanvas(self,dpi=100,left=0.0,right=1.,bottom=0.,top=1.)
-        self.G2_layout=QVBoxLayout(self.ui.Guide2)
-        self.G2_layout.addWidget(self.canvas_G2)
+    #    self.canvas_G2=MplCanvas(self,dpi=100,left=0.0,right=1.,bottom=0.,top=1.)
+    #    self.G2_layout=QVBoxLayout(self.ui.Guide2)
+    #    self.G2_layout.addWidget(self.canvas_G2)
 
-        self.canvas_G3=MplCanvas(self,dpi=100,left=0.0,right=1.,bottom=0.,top=1.)
-        self.G3_layout=QVBoxLayout(self.ui.Guide3)
-        self.G3_layout.addWidget(self.canvas_G3)
+    #    self.canvas_G3=MplCanvas(self,dpi=100,left=0.0,right=1.,bottom=0.,top=1.)
+    #    self.G3_layout=QVBoxLayout(self.ui.Guide3)
+    #    self.G3_layout.addWidget(self.canvas_G3)
 
-        self.canvas_G4=MplCanvas(self,dpi=100,left=0.0,right=1.,bottom=0.,top=1.)
-        self.G4_layout=QVBoxLayout(self.ui.Guide4)
-        self.G4_layout.addWidget(self.canvas_G4)
+    #    self.canvas_G4=MplCanvas(self,dpi=100,left=0.0,right=1.,bottom=0.,top=1.)
+    #    self.G4_layout=QVBoxLayout(self.ui.Guide4)
+    #    self.G4_layout.addWidget(self.canvas_G4)
 
-        self.canvas_G5=MplCanvas(self,dpi=100,left=0.0,right=1.,bottom=0.,top=1.)
-        self.G5_layout=QVBoxLayout(self.ui.Guide5)
-        self.G5_layout.addWidget(self.canvas_G5)
+    #    self.canvas_G5=MplCanvas(self,dpi=100,left=0.0,right=1.,bottom=0.,top=1.)
+    #    self.G5_layout=QVBoxLayout(self.ui.Guide5)
+    #    self.G5_layout.addWidget(self.canvas_G5)
 
-        self.canvas_G6=MplCanvas(self,dpi=100,left=0.0,right=1.,bottom=0.,top=1.)
-        self.G6_layout=QVBoxLayout(self.ui.Guide6)
-        self.G6_layout.addWidget(self.canvas_G6)
+    #    self.canvas_G6=MplCanvas(self,dpi=100,left=0.0,right=1.,bottom=0.,top=1.)
+    #    self.G6_layout=QVBoxLayout(self.ui.Guide6)
+    #    self.G6_layout.addWidget(self.canvas_G6)
 
 
     def adjust_window_size_by_screen(self):
@@ -369,6 +372,7 @@ class MainWindow(QMainWindow):
         self.resize(window_width, window_height)
 
 
+### Logging function ###
     def logging(self,message,status: str='success', level: str='send', save: str=True):
         if isinstance(message,dict):
             message=json.dumps(message)
@@ -650,6 +654,19 @@ class MainWindow(QMainWindow):
         await self.send_udp_message(messagetcs)
 
 
+    def sync_queue_mode(self):
+        self.ui.lineEdit_CProj.clear()
+        self.ui.lineEdit_CTile.clear()
+        self.ui.lineEdit_TileID.clear()
+        self.ui.lineEdit_exp_time_1.clear()
+        self.ui.lineEdit_n_exp_1.clear()
+        self.ui.lineEdit_ra_1.setText(self.ra)
+        self.ui.lineEdit_dec_1.setText(self.dec)
+        self.ui.lineEdit_offset.clear()
+        self.ui.lineEdit_raoffset.clear()
+        self.ui.lineEdit_decoffset.clear()
+
+
     # Telescope slew by single button
     @asyncSlot()
     async def slew_button_clicked(self):
@@ -661,10 +678,12 @@ class MainWindow(QMainWindow):
             self.ra = self.ui.lineEdit_ra_2.text()
             self.dec = self.ui.lineEdit_dec_2.text()
 
-            messagetcs = 'KSPEC>TC ' + 'tmradec ' + self.ra +' '+ self.dec
-            self.logging(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.', level='send')
-            print(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.')
-            await self.send_udp_message(messagetcs)
+        self.sync_queue_mode()
+
+        messagetcs = 'KSPEC>TC ' + 'tmradec ' + self.ra +' '+ self.dec
+        self.logging(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.', level='send')
+        print(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.')
+    #    await self.send_udp_message(messagetcs)
 
     # Exposure spectrograph from single mode
     @asyncSlot()
@@ -854,30 +873,36 @@ class MainWindow(QMainWindow):
         self.scriptrun.GFA_set(self.gfaexpt)
 
 
-    def show_guiding(self):
+#    def show_guiding(self):
 #        cutimgpath='/media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/kspec_gfa_controller/src/img/cutout/'       # Need change when real observation
-        cutimgpath='/home/kspecics/work/DATA/GFADATA/cutout/'       # Need change when real observation
-        guidenum=['1','2','3','4','5','6']
-        G_canvas=[self.canvas_G1,self.canvas_G2,self.canvas_G3,self.canvas_G4,self.canvas_G5,self.canvas_G6]
+#        cutimgpath='/home/kspecics/work/DATA/GFADATA/cutout/'       # Need change when real observation
+#        guidenum=['1','2','3','4','5','6']
+#        G_canvas=[self.canvas_G1,self.canvas_G2,self.canvas_G3,self.canvas_G4,self.canvas_G5,self.canvas_G6]
 
-        for i,can in enumerate(G_canvas):
-            with fits.open(cutimgpath+'cutout_fluxmax_'+str(i+1)+'.fits') as hdul:
-                data=hdul[0].data
+#        for i,can in enumerate(G_canvas):
+#            with fits.open(cutimgpath+'cutout_fluxmax_'+str(i+1)+'.fits') as hdul:
+#                data=hdul[0].data
 
-            self.G_zmin, self.G_zmax = zs.zscale(data)
-            can.imshows(data,vmin=self.G_zmin,vmax=self.G_zmax,cmap='gray',origin='lower')
+#            self.G_zmin, self.G_zmax = zs.zscale(data)
+#            can.imshows(data,vmin=self.G_zmin,vmax=self.G_zmax,cmap='gray',origin='lower')
 
 
     def show_spec(self, spec_response):
     #    self.fwhm=response_data['fwhm']
-        spec_canvas = [self.canvas_B, self.canvas_R, self.canvas_F]
+        spec_canvas = [self.canvas_B, self.canvas_R]
 
-        for i,can in enumerate(spec_canvas):
-            with fits.open(spec_response['filename']) as hdul:
-                data=hdul[0].data
+#
+        with fits.open('/media/shyunc/DATA/KSpec/DATA/RAWDATA/20260304/tile052_1.fits') as hdul:
+            data=hdul[0].data
 
-            self.S_zmin, self.S_zmax = zs.zscale(data)
-            can.imshows(data,vmin=self.S_zmin,vmax=self.S_zmax,cmap='gray',origin='lower')
+        self.S_zmin, self.S_zmax = zs.zscale(data)
+        self.canvas_B.imshows(data[0][540:740,:],vmin=self.S_zmin,vmax=self.S_zmax,cmap='gray',origin='lower',aspect='auto')
+
+        with fits.open('/media/shyunc/DATA/KSpec/DATA/RAWDATA/20260304/tile052_2.fits') as hdul:
+            data=hdul[0].data
+
+        self.S_zmin, self.S_zmax = zs.zscale(data)
+        self.canvas_R.imshows(data[0][540:740,:],vmin=self.S_zmin,vmax=self.S_zmax,cmap='gray',origin='lower',aspect='auto')
 
 
     ### Pointing ###
@@ -894,11 +919,13 @@ class MainWindow(QMainWindow):
 
         self.gfaexpt = float(self.ui.lineEdit_GFA_exptime.text())
 
+#        self.ra = ' 12:34:56.7'
+#        self.dec = '-31:23:45.6'
 
         if not self.ra or not self.dec:
            self.logging(f'Please load Tile or slew telescope.',level='error')
            return
-
+       
         await handle_gfa(f'pointing {self.gfaexpt} {self.ra} {self.dec}',self.ICS_client)
 
     def format_decimal(self,x):
@@ -1483,8 +1510,8 @@ class MainWindow(QMainWindow):
                     await queue_map[inst].put(response_data)
                     if inst == 'GFA' and process == 'ING':
                         self.fwhm=round(response_data['fwhm'],2)
-                        self.ui.lineEdit_seeing.setText(f'{self.fwhm}')
-                        self.show_guiding()
+            #            self.ui.lineEdit_seeing.setText(f'{self.fwhm}')
+            #            self.show_guiding()
                     
                 elif inst == 'GFA' and process == 'Done' and subinst == 'POINT':
                     sepsec=round(response_data['sepsec'],2)
