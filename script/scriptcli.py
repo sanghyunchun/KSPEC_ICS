@@ -73,7 +73,6 @@ def bytes_to_sexagesimal(value: bytes, encoding='ascii') -> str:
         print(f"[ERROR] 변환 실패: {e}")
         return ''
 
-
 def apply_offset(ra: str, dec: str, offset_ra: float, offset_dec: float):
     """Applies an offset in arcseconds to the given RA and DEC coordinates."""
     coord = SkyCoord(ra, dec, frame='icrs', unit=(u.hourangle, u.deg)) 
@@ -259,8 +258,8 @@ class script():
         try:
             ra_bytes = await scriptrun.send_telcom_command('getra')
             dec_bytes = await scriptrun.send_telcom_command('getdec')
-            rahms=bytes_to_sexagesimal(ra_bytes)
-            decdms=bytes_to_sexagesimal(dec_bytes)
+            rahms_t=bytes_to_sexagesimal(ra_bytes)                   ## Current Telescope pointing position
+            decdms_t=bytes_to_sexagesimal(dec_bytes)                 ## Current Telescope pointing position
             await handle_gfa(f'gfaguide {exptime} {save}',scriptrun.ICSclient)
             while True:
                 try:
@@ -293,8 +292,14 @@ class script():
                 #    logging(f'DEC offset {fdy} finished', level='receive')
 
                 ### Autoguiding using New coordinate ###
-                    logging(f'Apply offset (RA,DEC)=({fdx}, {fdy})', level='normal')
+                    logging(f'Current Telescope pointing position = (RA,DEC)=({rahms_t,decdms_t})')
+                    logging(f'Calculated Offset (RA,DEC)=({fdx}, {fdy})', level='normal')
+                    ra_bytes = await scriptrun.send_telcom_command('getra')
+                    dec_bytes = await scriptrun.send_telcom_command('getdec')
+                    rahms=bytes_to_sexagesimal(ra_bytes)
+                    decdms=bytes_to_sexagesimal(dec_bytes)
                     new_coord=apply_offset(rahms,decdms,fdx,fdy)
+                    logging(f'Applied Offset. New (RA,DEC) = {new_coord}', level='normal')
                     messagetcs = 'KSPEC>TC ' + 'tmradec ' + new_coord
                     await scriptrun.send_udp_message(messagetcs)
 
@@ -437,6 +442,7 @@ class script():
         printing(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.')
         await scriptrun.send_udp_message(messagetcs)
         print('Telescope is slewing now.', end=' ',flush=True)
+        await asyncio.sleep(2)
 
         while True:
             r=redis.Redis(host='192.168.15.121',port=6379,decode_responses=True)     # Set IP address of KMTNet redis server

@@ -821,129 +821,164 @@ class GFAGuider:
             self.logger.error(f"Gaussian fitting failed: {exc}")
             return float("nan")
 
+# gfa_guider.py (GFAGuider.exe_cal) - 수정본
     def exe_cal(self) -> Tuple[float, float, float]:
-        self.logger.info("========== Starting guide star calibration process ==========")
+        """
+        Soft-fail version:
+        - 내부에서 어떤 문제가 생겨도 예외를 밖으로 raise 하지 않음
+        - 실패 시 (nan, nan, nan) 반환
+        - peak_select 실패는 해당 파일만 skip
+        """
+        try:
+            self.logger.info("========== Starting guide star calibration process ==========")
 
-        astro_dir = self.final_astrometry_dir
-        if not astro_dir:
-            self.logger.error("Astrometry directory path missing.")
-            return math.nan, math.nan, math.nan
+            astro_dir = self.final_astrometry_dir
+            if not astro_dir:
+                self.logger.error("Astrometry directory path missing.")
+                return math.nan, math.nan, math.nan
 
-        astro_files = sorted(glob.glob(os.path.join(astro_dir, "astro_*.fits")))
-        if not astro_files:
-            self.logger.error(f"No astrometry FITS files found in {astro_dir} (astro_*.fits).")
-            return math.nan, math.nan, math.nan
+            astro_files = sorted(glob.glob(os.path.join(astro_dir, "astro_*.fits")))
+            if not astro_files:
+                self.logger.error(f"No astrometry FITS files found in {astro_dir} (astro_*.fits).")
+                return math.nan, math.nan, math.nan
 
-        # ✅ combined_star.fits 존재 체크
-        cat_path = self._resolve_combined_star_path()
-        if not os.path.exists(cat_path):
-            self.logger.error(
-                f"combined_star.fits not found at: {cat_path}\n"
-                f"→ astrometry preproc에서 build_combined_star_from_corr()가 실행되도록 "
-                f"ensure_astrometry_ready(build_star_catalog=True) 사용 필요."
-            )
-            return math.nan, math.nan, math.nan
-
-        self.logger.info(f"Found {len(astro_files)} astrometry files.")
-        self.logger.info(f"Raw dir (centroid source): {self.raw_dir}")
-        self.logger.info(f"Using combined_star.fits: {cat_path}")
-
-        dxpp, dypp, pindpp = [], [], []
-        cutoutn_stack: List[np.ndarray] = []
-        file_counter = 1
-
-        skipped = 0
-
-        for astro_file in astro_files:
-            raw_file = self._astro_to_raw_path(astro_file)
-            if raw_file is None:
-                skipped += 1
-                self.logger.warning(
-                    f"[skip] No matching RAW file for astro={os.path.basename(astro_file)} "
-                    f"in raw_dir={self.raw_dir}"
+            # combined_star.fits 존재 체크
+            cat_path = self._resolve_combined_star_path()
+            if not os.path.exists(cat_path):
+                self.logger.error(
+                    f"combined_star.fits not found at: {cat_path}\n"
+                    f"→ astrometry preproc에서 build_combined_star_from_corr()가 실행되도록 "
+                    f"ensure_astrometry_ready(build_star_catalog=True) 사용 필요."
                 )
-                continue
+                return math.nan, math.nan, math.nan
 
-            try:
-                self.logger.info(f"\n-- Processing pair #{file_counter}:")
-                self.logger.info(f"  astro(WCS): {astro_file}")
-                self.logger.info(f"  raw(img) : {raw_file}")
+            self.logger.info(f"Found {len(astro_files)} astrometry files.")
+            self.logger.info(f"Raw dir (centroid source): {self.raw_dir}")
+            self.logger.info(f"Using combined_star.fits: {cat_path}")
 
-                # 1) WCS는 astro_file에서
-                _, header, wcs_obj = self.load_image_and_wcs(astro_file)
-                crval1, crval2 = header["CRVAL1"], header["CRVAL2"]
-                self.logger.debug(f"  CRVAL1: {crval1:.6f}, CRVAL2: {crval2:.6f}")
+            dxpp, dypp, pindpp = [], [], []
+            cutoutn_stack: List[np.ndarray] = []
+            file_counter = 1
+            skipped = 0
 
-                # 2) centroid는 raw에서 (background 포함)
-                raw_data_p = self.load_only_image(raw_file)
-                image_data, stddev = self.background(raw_data_p)
-                self.logger.debug(f"  Raw background stddev: {stddev:.4f}")
+            for astro_file in astro_files:
+                raw_file = self._astro_to_raw_path(astro_file)
+                if raw_file is None:
+                    skipped += 1
+                    self.logger.warning(
+                        f"[skip] No matching RAW file for astro={os.path.basename(astro_file)} "
+                        f"in raw_dir={self.raw_dir}"
+                    )
+                    continue
 
-                # 3) catalog 로드 + 필드 주변 별 선택
-                ra1_rad, dec1_rad, ra2_rad, dec2_rad, ra_p, dec_p, flux = self.load_star_catalog(crval1, crval2)
+                try:
+                    self.logger.info(f"\n-- Processing pair #{file_counter}:")
+                    self.logger.info(f"  astro(WCS): {astro_file}")
+                    self.logger.info(f"  raw(img) : {raw_file}")
 
-                ra_sel, dec_sel, flux_sel = self.select_stars(
-                    ra1_rad, dec1_rad, ra2_rad, dec2_rad, ra_p, dec_p, flux
-                )
+                    # 1) WCS는 astro_file에서
+                    _, header, wcs_obj = self.load_image_and_wcs(astro_file)
+                    crval1, crval2 = header["CRVAL1"], header["CRVAL2"]
+                    self.logger.debug(f"  CRVAL1: {crval1:.6f}, CRVAL2: {crval2:.6f}")
 
-                if len(ra_sel) == 0:
-                    self.logger.warning("No catalog stars selected for this field (after cuts).")
+                    # 2) centroid는 raw에서 (background 포함)
+                    raw_data_p = self.load_only_image(raw_file)
+                    image_data, stddev = self.background(raw_data_p)
+                    self.logger.debug(f"  Raw background stddev: {stddev:.4f}")
+
+                    # 3) catalog 로드 + 필드 주변 별 선택
+                    ra1_rad, dec1_rad, ra2_rad, dec2_rad, ra_p, dec_p, flux = self.load_star_catalog(
+                        crval1, crval2
+                    )
+
+                    ra_sel, dec_sel, flux_sel = self.select_stars(
+                        ra1_rad, dec1_rad, ra2_rad, dec2_rad, ra_p, dec_p, flux
+                    )
+
+                    if len(ra_sel) == 0:
+                        self.logger.warning("No catalog stars selected for this field (after cuts).")
+                        file_counter += 1
+                        continue
+
+                    # 4) catalog RA/DEC -> pixel 예상 위치 (astro WCS로 투영)
+                    dra, ddec, dra_f, ddec_f = self.radec_to_xy_stars(ra_sel, dec_sel, wcs_obj)
+
+                    # 5) raw 이미지에서 peak/centroid 찾고 arcsec offset 계산
+                    dx_vals, dy_vals, peak_vals, cutoutn_stack = self.cal_centroid_offset(
+                        dra,
+                        ddec,
+                        dra_f,
+                        ddec_f,
+                        stddev,
+                        wcs_obj,
+                        flux_sel,
+                        file_counter,
+                        cutoutn_stack,
+                        image_data,   # raw background-subtracted image
+                    )
+
+                    # 6) peak 조건으로 별 필터링
+                    #    ✅ peak_select에서 예외 발생해도 해당 파일만 skip
+                    try:
+                        dxn, dyn, pindn = self.peak_select(dx_vals, dy_vals, peak_vals)
+                    except Exception as e:
+                        self.logger.warning(
+                            f"[skip] peak_select failed for {os.path.basename(astro_file)}: {e}"
+                        )
+                        file_counter += 1
+                        continue
+
+                    # (혹시 soft-fail 형태로 빈 배열 리턴하는 구현이 섞여 있어도 안전)
+                    if pindn is None or len(pindn) == 0:
+                        self.logger.warning(
+                            f"[skip] peak_select returned no valid peaks for {os.path.basename(astro_file)}"
+                        )
+                        file_counter += 1
+                        continue
+
+                    dxpp.append(dxn)
+                    dypp.append(dyn)
+                    pindpp.append(pindn)
+
+                    file_counter += 1
+
+                except Exception as exc:
+                    self.logger.error(f"Error processing astro={astro_file} raw={raw_file}: {exc}")
+                    try:
+                        self.logger.debug(traceback.format_exc())
+                    except Exception:
+                        pass
+                    # ✅ critical이라도 전체를 죽이지 않고 soft-fail로 처리: 해당 파일만 skip
+                    self.logger.warning(f"[skip] Critical error in this pair; skipping file.")
                     file_counter += 1
                     continue
 
-                # 4) catalog RA/DEC -> pixel 예상 위치 (astro WCS로 투영)
-                dra, ddec, dra_f, ddec_f = self.radec_to_xy_stars(ra_sel, dec_sel, wcs_obj)
+            if skipped:
+                self.logger.warning(f"Skipped {skipped} astro files due to missing raw matches.")
 
-                # 5) raw 이미지에서 peak/centroid 찾고 arcsec offset 계산
-                dx_vals, dy_vals, peak_vals, cutoutn_stack = self.cal_centroid_offset(
-                    dra,
-                    ddec,
-                    dra_f,
-                    ddec_f,
-                    stddev,
-                    wcs_obj,
-                    flux_sel,
-                    file_counter,
-                    cutoutn_stack,
-                    image_data,   # ✅ raw background-subtracted image
-                )
+            if not dxpp or not dypp or not pindpp:
+                self.logger.error("No valid guide star data collected. Calibration failed.")
+                return math.nan, math.nan, math.nan
 
-                # 6) peak 조건으로 별 필터링
-                dxn, dyn, pindn = self.peak_select(dx_vals, dy_vals, peak_vals)
+            dxp = np.concatenate(dxpp) if len(dxpp) else np.array([])
+            dyp = np.concatenate(dypp) if len(dypp) else np.array([])
+            pindp = np.concatenate(pindpp) if len(pindpp) else np.array([])
 
-                dxpp.append(dxn)
-                dypp.append(dyn)
-                pindpp.append(pindn)
+            self.logger.info(f"Total valid guide star offsets: {len(dxp)}")
 
-                file_counter += 1
+            fdx, fdy = self.cal_final_offset(dxp, dyp, pindp)
+            self.logger.info(f"Computed final offset: ΔX = {fdx} arcsec, ΔY = {fdy} arcsec")
 
-            except Exception as exc:
-                self.logger.error(f"Error processing astro={astro_file} raw={raw_file}: {exc}")
-                try:
-                    self.logger.debug(traceback.format_exc())
-                except Exception:
-                    pass
-                raise RuntimeError(f"Critical error in guide star processing for {astro_file}") from exc
+            fwhm = self.cal_seeing(cutoutn_stack)
+            self.logger.info(f"Estimated FWHM from cutouts: {fwhm} arcsec")
 
-        if skipped:
-            self.logger.warning(f"Skipped {skipped} astro files due to missing raw matches.")
+            self.logger.info("========== Guide star calibration completed successfully ==========")
+            return fdx, fdy, fwhm
 
-        if not dxpp or not dypp or not pindpp:
-            self.logger.error("No valid guide star data collected. Calibration failed.")
+        except Exception as e:
+            self.logger.error(f"exe_cal failed: {e}")
+            try:
+                self.logger.debug(traceback.format_exc())
+            except Exception:
+                pass
             return math.nan, math.nan, math.nan
-
-        dxp = np.concatenate(dxpp) if len(dxpp) else np.array([])
-        dyp = np.concatenate(dypp) if len(dypp) else np.array([])
-        pindp = np.concatenate(pindpp) if len(pindpp) else np.array([])
-
-        self.logger.info(f"Total valid guide star offsets: {len(dxp)}")
-
-        fdx, fdy = self.cal_final_offset(dxp, dyp, pindp)
-        self.logger.info(f"Computed final offset: ΔX = {fdx} arcsec, ΔY = {fdy} arcsec")
-
-        fwhm = self.cal_seeing(cutoutn_stack)
-        self.logger.info(f"Estimated FWHM from cutouts: {fwhm} arcsec")
-
-        self.logger.info("========== Guide star calibration completed successfully ==========")
-
-        return fdx, fdy, fwhm

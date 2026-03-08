@@ -473,7 +473,6 @@ class MainWindow(QMainWindow):
             'GFA': self.ui.ok_status_gfa,
             'ADC': self.ui.ok_status_adc,
             'FBP': self.ui.ok_status_fiber,
-            'FINDER': self.ui.ok_status_finder,
             'MTL' : self.ui.ok_status_metrology,
             'SPEC' : self.ui.ok_status_spectrograph
         }   
@@ -482,7 +481,6 @@ class MainWindow(QMainWindow):
             'GFA': self.ui.ok_status_gfa_2,
             'ADC': self.ui.ok_status_adc_2,
             'FBP': self.ui.ok_status_fiber_2,
-            'FINDER': self.ui.ok_status_finder_2,
             'MTL' : self.ui.ok_status_metrology_2,
             'SPEC' : self.ui.ok_status_spectrograph_2
         }   
@@ -491,7 +489,6 @@ class MainWindow(QMainWindow):
             'GFA': self.ui.label_status_gfa,
             'ADC': self.ui.label_status_adc,
             'FBP': self.ui.label_status_fiber,
-            'FINDER': self.ui.label_status_finder,
             'MTL' : self.ui.label_status_metrology,
             'SPEC' : self.ui.label_status_spectrograph
         }
@@ -500,7 +497,6 @@ class MainWindow(QMainWindow):
             'GFA': self.ui.label_status_gfa_2,
             'ADC': self.ui.label_status_adc_2,
             'FBP': self.ui.label_status_fiber_2,
-            'FINDER': self.ui.label_status_finder_2,
             'MTL' : self.ui.label_status_metrology_2,
             'SPEC' : self.ui.label_status_spectrograph_2
         }
@@ -581,7 +577,6 @@ class MainWindow(QMainWindow):
             self.ui.ok_status_gfa,self.ui.ok_status_gfa_2,self.ui.label_status_gfa,self.ui.label_status_gfa_2,
             self.ui.ok_status_adc,self.ui.ok_status_adc_2,self.ui.label_status_adc,self.ui.label_status_adc_2,
             self.ui.ok_status_fiber,self.ui.ok_status_fiber_2,self.ui.label_status_fiber,self.ui.label_status_fiber_2,
-            self.ui.ok_status_finder,self.ui.ok_status_finder_2,self.ui.label_status_finder,self.ui.label_status_finder_2,
             self.ui.ok_status_metrology,self.ui.ok_status_metrology_2,self.ui.label_status_metrology,self.ui.label_status_metrology_2,
             self.ui.ok_status_spectrograph,self.ui.ok_status_spectrograph_2,self.ui.label_status_spectrograph,self.ui.label_status_spectrograph_2,
             ]
@@ -619,41 +614,7 @@ class MainWindow(QMainWindow):
         self.logging(f"Observer comment '{comment}'.",level='comment')
         self.ui.lineEdit_comment_2.clear()
 
-
-##### Main Functions corresponding to the GUI action #####
-
-    # Focusing button
-    @asyncSlot()
-    async def dfp5_button_clicked(self):
-        foffset = 0.5
-        messagetcs = f'KSPEC>TC dfocus {foffset}'
-        await self.send_udp_message(messagetcs)
-
-    @asyncSlot()
-    async def dfm5_button_clicked(self):
-        foffset = -0.5
-        messagetcs = f'KSPEC>TC dfocus {foffset}'
-        await self.send_udp_message(messagetcs)
-
-    @asyncSlot()
-    async def dfp005_button_clicked(self):
-        foffset = 0.005
-        messagetcs = f'KSPEC>TC dfocus {foffset}'
-        await self.send_udp_message(messagetcs)
-
-    @asyncSlot()
-    async def dfm005_button_clicked(self):
-        foffset = -0.005
-        messagetcs = f'KSPEC>TC dfocus {foffset}'
-        await self.send_udp_message(messagetcs)
-
-    @asyncSlot()
-    async def fttgoto_button_clicked(self):
-        ftt_value = self.ui.lineEdit_fttvalue.text()
-        messagetcs = f'KSPEC>TC fttgoto {ftt_value}'
-        await self.send_udp_message(messagetcs)
-
-
+### Clear and Sync queue mode and simple mode ###
     def sync_queue_mode(self):
         self.ui.lineEdit_CProj.clear()
         self.ui.lineEdit_CTile.clear()
@@ -667,36 +628,7 @@ class MainWindow(QMainWindow):
         self.ui.lineEdit_decoffset.clear()
 
 
-    # Telescope slew by single button
-    @asyncSlot()
-    async def slew_button_clicked(self):
-
-        if not self.ui.lineEdit_ra_2.text() or not self.ui.lineEdit_dec_2.text():
-            self.logging('Please insert RA and DEC coordinates in Single Mode tap.', level='error')
-            return
-        else:
-            self.ra = self.ui.lineEdit_ra_2.text()
-            self.dec = self.ui.lineEdit_dec_2.text()
-
-        self.sync_queue_mode()
-
-        messagetcs = 'KSPEC>TC ' + 'tmradec ' + self.ra +' '+ self.dec
-        self.logging(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.', level='send')
-        print(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.')
-    #    await self.send_udp_message(messagetcs)
-
-    # Exposure spectrograph from single mode
-    @asyncSlot()
-    async def exp_start_clicked(self):
-        exp_time = self.ui.lineEdit_exp_time_2.text()
-        exp_num = self.ui.lineEdit_n_exp_2.text()
-        if exp_time.strip() or exp_num.strip():
-            await handle_spec(f'getobj {exp_time} {exp_num}',self.ICS_client)
-        else:
-            self.logging(f"Please insert exposure time and number of exposure", level='error')
-    #    
-
-
+### subsystem function button color setting
     @asyncSlot()
     async def _onoff_button_clicked(self, state_attr, btn1, btn2, command_on, command_off, label):
         if not self.check_connection():
@@ -726,14 +658,86 @@ class MainWindow(QMainWindow):
         self.logging(f"Sent {label} {'ON' if state else 'OFF'}", level='send')
 
 
+
+##### Main Functions corresponding to the GUI action #####
+
+    # Focusing button
+#    @asyncSlot()
+#    async def dfp5_button_clicked(self):
+#        foffset = 0.5
+#        messagetcs = f'KSPEC>TC dfocus {foffset}'
+#        await self.send_udp_message(messagetcs)
+
+#    @asyncSlot()
+#    async def dfm5_button_clicked(self):
+#        foffset = -0.5
+#        messagetcs = f'KSPEC>TC dfocus {foffset}'
+#        await self.send_udp_message(messagetcs)
+
+#    @asyncSlot()
+#    async def dfp005_button_clicked(self):
+#        foffset = 0.005
+#        messagetcs = f'KSPEC>TC dfocus {foffset}'
+#        await self.send_udp_message(messagetcs)
+
+#    @asyncSlot()
+#    async def dfm005_button_clicked(self):
+#        foffset = -0.005
+#        messagetcs = f'KSPEC>TC dfocus {foffset}'
+#        await self.send_udp_message(messagetcs)
+
+#    @asyncSlot()
+#    async def fttgoto_button_clicked(self):
+#        ftt_value = self.ui.lineEdit_fttvalue.text()
+#        messagetcs = f'KSPEC>TC fttgoto {ftt_value}'
+#        await self.send_udp_message(messagetcs)
+
+
+
+
+    # Telescope slew by single button
+    @asyncSlot()
+    async def slew_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.ui.lineEdit_ra_2.text() or not self.ui.lineEdit_dec_2.text():
+            self.logging('Please insert RA and DEC coordinates in Single Mode tap.', level='error')
+            return
+        else:
+            self.ra = self.ui.lineEdit_ra_2.text()
+            self.dec = self.ui.lineEdit_dec_2.text()
+
+        self.sync_queue_mode()
+
+        messagetcs = 'KSPEC>TC ' + 'tmradec ' + self.ra +' '+ self.dec
+        self.logging(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.', level='send')
+        print(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.')
+        await self.send_udp_message(messagetcs)
+
+    # Exposure spectrograph from single mode
+    @asyncSlot()
+    async def exp_start_clicked(self):
+        if not self.check_connection():
+            return
+
+        exp_time = self.ui.lineEdit_exp_time_2.text()
+        exp_num = self.ui.lineEdit_n_exp_2.text()
+        if exp_time.strip() or exp_num.strip():
+            await handle_spec(f'getobj {exp_time} {exp_num}',self.ICS_client)
+        else:
+            self.logging(f"Please insert exposure time and number of exposure", level='error')
+        
+
+
     ## Fiber positionser ##
     @asyncSlot()
     async def Fiber_assign_button_clicked(self):
         if not self.check_connection():
             return
 
-        if not self.check_syscheck():
-            return
+#        if not self.check_syscheck():
+#            return
         
         if self.fbp_state not in (None,"zero"):
             self.logging('Fiber positioners are not in zero position. Click Fiber Zero button.', level='error')
@@ -793,8 +797,8 @@ class MainWindow(QMainWindow):
         if not self.check_connection():
             return
 
-        if not self.check_syscheck():
-            return
+#        if not self.check_syscheck():
+#            return
         if not self.ui.lineEdit_GFA_exptime.text():
             self.ui.lineEdit_GFA_exptime.setText('5')      # Default guiding exposure time : 5 sec
 
@@ -804,8 +808,7 @@ class MainWindow(QMainWindow):
         self.gfaexpt = float(self.ui.lineEdit_GFA_exptime.text())
         self.gfacam = int(self.ui.lineEdit_GFA_cam.text())
 
-
-        gfasave=self.ui.gfa_checkBox.isChecked()
+#        gfasave=self.ui.gfa_checkBox.isChecked()
 
         await handle_gfa(f'gfagrab {self.gfacam} {self.gfaexpt}',self.ICS_client)
         if self.gfacam == 0:
@@ -818,8 +821,8 @@ class MainWindow(QMainWindow):
         if not self.check_connection():
             return
 
-        if not self.check_syscheck():
-            return
+#        if not self.check_syscheck():
+#            return
 
         if not self.ra or not self.dec:
            self.logging(f'Please load Tile or slew telescope.',level='error')
@@ -847,10 +850,9 @@ class MainWindow(QMainWindow):
         gfasave=self.ui.gfa_checkBox.isChecked()
         if self.guiding_state:
             if not gfasave:
-                await handle_script(f'autoguide {self.gfaexpt} False', scriptrun=self.scriptrun,logging=self.logging)
+                await handle_script(f'autoguide {self.gfaexpt} False', scriptrun=self.scriptrun, logging=self.logging)
                 self.logging(f'Sent Autoguiding Start. Exposure time is {self.gfaexpt}.', level='send')
             else:
-            #    print(f'tekjkerjek {gfasave}')
                 await handle_script(f'autoguide {self.gfaexpt} True', scriptrun=self.scriptrun,logging=self.logging)
         else:
             await handle_script('autoguidestop', scriptrun=self.scriptrun,logging=self.logging)
@@ -862,8 +864,8 @@ class MainWindow(QMainWindow):
         if not self.check_connection():
             return
 
-        if not self.check_syscheck():
-            return
+#        if not self.check_syscheck():
+#            return
 
         if not self.ui.lineEdit_GFA_exptime.text():
             self.ui.lineEdit_GFA_exptime.setText('5')
@@ -891,18 +893,19 @@ class MainWindow(QMainWindow):
     #    self.fwhm=response_data['fwhm']
         spec_canvas = [self.canvas_B, self.canvas_R]
 
-#
-        with fits.open('/media/shyunc/DATA/KSpec/DATA/RAWDATA/20260304/tile052_1.fits') as hdul:
+        ### Simulation Start ####
+        with fits.open('/media/shyunc/DATA/KSpec/DATA/RAWDATA/20260304/26030210001.fits') as hdul:
             data=hdul[0].data
 
         self.S_zmin, self.S_zmax = zs.zscale(data)
         self.canvas_B.imshows(data[0][540:740,:],vmin=self.S_zmin,vmax=self.S_zmax,cmap='gray',origin='lower',aspect='auto')
 
-        with fits.open('/media/shyunc/DATA/KSpec/DATA/RAWDATA/20260304/tile052_2.fits') as hdul:
+        with fits.open('/media/shyunc/DATA/KSpec/DATA/RAWDATA/20260304/26030220001.fits') as hdul:
             data=hdul[0].data
 
         self.S_zmin, self.S_zmax = zs.zscale(data)
         self.canvas_R.imshows(data[0][540:740,:],vmin=self.S_zmin,vmax=self.S_zmax,cmap='gray',origin='lower',aspect='auto')
+        ### Simulation END ###
 
 
     ### Pointing ###
@@ -911,8 +914,8 @@ class MainWindow(QMainWindow):
         if not self.check_connection():
             return
 
-        if not self.check_syscheck():
-            return
+#        if not self.check_syscheck():
+#            return
 
         if not self.ui.lineEdit_GFA_exptime.text():
             self.ui.lineEdit_GFA_exptime.setText('5')      # Default guiding exposure time : 5 sec
@@ -961,24 +964,6 @@ class MainWindow(QMainWindow):
         self.logging(f'Slew Telescope to (RA,DEC)=({self.new_ra},{self.new_dec})',level='send')
         messagetcs = 'KSPEC>TC ' + 'tmradec ' + self.new_ra +' '+ self.new_dec
         await self.send_udp_message(messagetcs)
-
-
-
-    ### Finder ###
-    @asyncSlot()
-    async def finder_button_clicked(self):
-        if not self.check_connection():
-            return
-
-        if not self.check_syscheck():
-            return
-
-        if not self.ui.lineEdit_finder_exptime.text():
-            self.ui.lineEdit_finder_exptime.setText('1')
-
-        self.finderexpt = float(self.ui.lineEdit_finder_exptime.text())
-
-        await handle_gfa(f'fdgrab {self.finderexpt}',self.ICS_client)
 
 
     ### ADC ###
@@ -1412,7 +1397,7 @@ class MainWindow(QMainWindow):
 
         await handle_script('obsinitial',scriptrun=self.scriptrun)
 
-        labels = [self.ui.label_status_gfa,self.ui.label_status_adc,self.ui.label_status_finder,self.ui.label_status_fiber,self.ui.label_status_metrology,
+        labels = [self.ui.label_status_gfa,self.ui.label_status_adc,self.ui.label_status_fiber,self.ui.label_status_metrology,
             self.ui.label_status_spectrograph,self.ui.label_status_lamp]
 
         for label in labels:

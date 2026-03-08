@@ -312,7 +312,7 @@ class AdcActions:
                 f"Failed to activate motors for zenith angle {za} with velocity {vel}: {str(e)}",
             )
 
-    async def homing(self, homing_vel=1):
+    async def homing(self, homing_vel=2):
         """
         Perform a homing operation with the motor controller.
         """

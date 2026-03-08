@@ -1,0 +1,6 @@
+2026-03-08 10:06:29,921 [DEBUG] Initializing AdcActions class. (at adc_actions.py)
+2026-03-08 10:06:29,921 [INFO] Lookup table found: /media/shyunc/DATA/KSpec/KSPEC_ICS/ADC/Simul/kspec_adc_controller/src/etc/ADC_lookup.csv (at adc_actions.py)
+2026-03-08 10:06:29,922 [INFO] Interpolation function using pchip method created. (at adc_actions.py)
+2026-03-08 10:53:12,068 [DEBUG] Initializing AdcActions class. (at adc_actions.py)
+2026-03-08 10:53:12,068 [INFO] Lookup table found: /media/shyunc/DATA/KSpec/KSPEC_ICS/ADC/Simul/kspec_adc_controller/src/etc/ADC_lookup.csv (at adc_actions.py)
+2026-03-08 10:53:12,069 [INFO] Interpolation function using pchip method created. (at adc_actions.py)

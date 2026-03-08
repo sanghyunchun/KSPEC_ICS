@@ -121,6 +121,10 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
 
 
     if func == 'pointing':
+        path_astroimg=kspecinfo['GFA']['final_astrometry_images']
+        shutil.rmtree(path_astroimg)                                        # Remove the guiding images after guiding stop.
+        os.makedirs(path_astroimg, exist_ok=True)
+
         reply_data=mkmsg.gfamsg()
         reply_data.update(process='START',message='Pointing starts.',status='success',subinst='POINT')
         rsp=json.dumps(reply_data)
@@ -143,12 +147,11 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
 #        ra_c = np.mean([ra_m1,ra_m2,ra_m3])
 #        dec_c = np.mean([dec_m1, dec_m2, dec_m3])
 
-
-        ra_c, dec_c = get_boresight(crval1_list, crval2_list)
+        ra_c, dec_c = get_boresight(crval1_list, crval2_list)    # Boresight coordinate
 
         ra, dec = radec_str_to_deg(dict_data['ra'], dict_data['dec'])  # covert RA,DEC of Tile center to degree
-        ra_target = dict_data['ra']
-        dec_target = dict_data['dec']
+      #  ra_target = dict_data['ra']
+      #  dec_target = dict_data['dec']
 
         print(f'Telescope Target: RA = {ra} DEC = {dec}')
         print(f'Current Telescope pointing: RA = {ra_c} DEC= {dec_c}')
@@ -157,7 +160,7 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
 
         print(f'Separtation (arcsec.) : {sep}')
 
-        delra,deldec = offsets_arcsec(ra_c,dec_c,ra,dec)
+        delra,deldec = offsets_arcsec(ra_c,dec_c,ra,dec)  # calculate offset to move from ra_c, dec_c to ra, dec
 
         print(f'Offset in (RA, DEC) : ({delra}, {deldec})')
 
@@ -207,7 +210,7 @@ async def handle_guiding(GFA_server, gfa_actions, expt, save, ra: str=None, dec:
             rsp=json.dumps(reply_data)
             await GFA_server.send_message('ICS',rsp)
 
-            await asyncio.sleep(30)
+            await asyncio.sleep(70)
 
     except asyncio.CancelledError:
         printing("handle_guiding task was cancelled.")

@@ -61,7 +61,7 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
         rsp=json.dumps(reply_data)
         await GFA_server.send_message('ICS',rsp)
         save = dict_data['save'] == 'True'
-        guiding_task = asyncio.create_task(handle_guiding(GFA_server, gfa_actions, dict_data['ExpTime'],save,dict_data['ra'],dict_data['dec']))
+        guiding_task = asyncio.create_task(handle_guiding(GFA_server, gfa_actions, dict_data['ExpTime'], save, dict_data['ra'], dict_data['dec']))
 
     elif func == 'gfaguidestop':
         if guiding_task and not guiding_task.done():

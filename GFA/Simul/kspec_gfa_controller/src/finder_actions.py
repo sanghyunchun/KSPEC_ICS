@@ -73,7 +73,7 @@ class FinderGFAActions:
         cam_ipd: int = None,
         cam_ftd_base: int = 0,
         ra: str = None,
-        dec: str = None
+        dec: str = None,
     ) -> Dict[str, Any]:
         """
         Grab a single image from the finder camera and save it.
@@ -105,29 +105,30 @@ class FinderGFAActions:
             self.env.logger.info(
                 f"Grabbing from Cam{self.cam_id} (ExpTime={ExpTime}, Binning={Binning})"
             )
-#            result = await self.env.controller.grabone(
-#                CamNum=self.cam_id,
-#                ExpTime=ExpTime,
-#                Binning=Binning,
-#                output_dir=grab_save_path,
-#                packet_size=packet_size,
-#                ipd=cam_ipd,
-#                ftd_base=cam_ftd_base,
-#                ra=ra,
-#                dec=dec
-#            )
+            result = await self.env.controller.grabone(
+                CamNum=self.cam_id,
+                ExpTime=ExpTime,
+                Binning=Binning,
+                output_dir=grab_save_path,
+                packet_size=packet_size,
+                ipd=cam_ipd,
+                ftd_base=cam_ftd_base,
+                ra=ra,
+                dec=dec,
+            )
 
             msg = f"Image grabbed from Cam{self.cam_id}."
-#            if result:
-#                msg += f" Timeout: {result}"
+            if result:
+                msg += f" Timeout: {result}"
             return self._generate_response("success", msg)
 
         except Exception as e:
             self.env.logger.error(f"Grab failed: {e}")
             return self._generate_response("error", f"Grab failed: {e}")
 
-
-    async def guiding(self, ExpTime: float = 1.0, save: bool = False, ra: str = None, dec: str = None) -> Dict[str, Any]:
+    async def guiding(
+        self, ExpTime: float = 1.0, save: bool = False, ra: str = None, dec: str = None
+    ) -> Dict[str, Any]:
         """
         Acquire an image for focusing. For the finder camera, this replaces guiding.
 
@@ -147,14 +148,16 @@ class FinderGFAActions:
         date_str = datetime.now().strftime("%Y-%m-%d")
 
         raw_save_path = os.path.join(base_dir, "img", "raw")
-        grab_save_path = os.path.join(base_dir, "img", "grab", date_str)
+        grab_save_path = os.path.join(base_dir, "img", "grab_finder", date_str)
 
         try:
             self.env.logger.info("Starting guiding sequence...")
 
             os.makedirs(raw_save_path, exist_ok=True)
             self.env.logger.info("Grabbing raw image...")
-#            self.env.controller.grab(0, ExpTime, 4, output_dir=raw_save_path, ra=ra, dec=dec)
+            self.env.controller.grab(
+                0, ExpTime, 4, output_dir=raw_save_path, ra=ra, dec=dec
+            )
 
             if save:
                 os.makedirs(grab_save_path, exist_ok=True)
@@ -165,16 +168,16 @@ class FinderGFAActions:
                         shutil.copy2(src, dst)
                 self.env.logger.info(f"Images also copied to: {grab_save_path}")
 
-            #self.env.logger.info("Running astrometry preprocessing...")
-            #self.env.astrometry.preproc()
+            # self.env.logger.info("Running astrometry preprocessing...")
+            # self.env.astrometry.preproc()
 
-            #self.env.logger.info("Executing guider offset calculation...")
-            #fdx, fdy, fwhm = self.env.guider.exe_cal()
+            # self.env.logger.info("Executing guider offset calculation...")
+            # fdx, fdy, fwhm = self.env.guider.exe_cal()
 
-            #self.env.logger.info("Clearing temp astrometry data...")
-            #self.env.astrometry.clear_raw_and_processed_files()
+            # self.env.logger.info("Clearing temp astrometry data...")
+            # self.env.astrometry.clear_raw_and_processed_files()
 
-            #msg = f"Offsets: fdx={fdx}, fdy={fdy}, FWHM={fwhm:.5f} arcsec"
+            # msg = f"Offsets: fdx={fdx}, fdy={fdy}, FWHM={fwhm:.5f} arcsec"
             msg = "."
             fdx, fdy, fwhm = 0, 0, 0
             return self._generate_response("success", msg, fdx=fdx, fdy=fdy, fwhm=fwhm)
@@ -194,8 +197,8 @@ class FinderGFAActions:
         """
         try:
             self.env.logger.info("Checking finder camera status...")
-#            status_info = self.env.controller.status()
-#            return self._generate_response("success", status_info)
+            status_info = self.env.controller.status()
+            return self._generate_response("success", status_info)
         except Exception as e:
             self.env.logger.error(f"Status check failed: {e}")
             return self._generate_response("error", f"Status check failed: {e}")
@@ -211,7 +214,7 @@ class FinderGFAActions:
         """
         try:
             self.env.logger.info(f"Pinging Cam{self.cam_id}...")
-#            self.env.controller.ping(self.cam_id)
+            self.env.controller.ping(self.cam_id)
             return self._generate_response("success", f"Pinged Cam{self.cam_id}.")
         except Exception as e:
             self.env.logger.error(f"Ping failed: {e}")
@@ -228,8 +231,8 @@ class FinderGFAActions:
         """
         try:
             self.env.logger.info(f"Retrieving parameters for Cam{self.cam_id}...")
-#            param = self.env.controller.cam_params(self.cam_id)
-#            return self._generate_response("success", f"Cam{self.cam_id}: {param}")
+            param = self.env.controller.cam_params(self.cam_id)
+            return self._generate_response("success", f"Cam{self.cam_id}: {param}")
         except Exception as e:
             self.env.logger.error(f"Parameter retrieval failed: {e}")
             return self._generate_response("error", f"Parameter retrieval failed: {e}")

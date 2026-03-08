@@ -7,6 +7,7 @@
 
 import logging
 import os
+import sys
 from datetime import datetime
 from typing import Optional
 
@@ -30,7 +31,7 @@ class GFALogger:
     def __init__(
         self,
         file: str,
-        stream_level: int = logging.DEBUG,
+        stream_level: int = logging.INFO,
         log_dir: Optional[str] = None,
     ) -> None:
         """
@@ -41,7 +42,7 @@ class GFALogger:
         file : str
             The path of the Python file requesting the logger (used to name the logger).
         stream_level : int, optional
-            Logging level for the console output. Default is logging.DEBUG.
+            Logging level for the console output. Default is logging.INFO.
         log_dir : str, optional
             Directory to store log files. If None, defaults to 'log/' under the script path.
         """
@@ -52,6 +53,7 @@ class GFALogger:
         self.file_name = os.path.basename(file)
         self.logger = logging.getLogger(self.file_name)
 
+        # Prevent duplicate handlers
         if self.file_name in GFALogger._initialized_loggers:
             return
 
@@ -61,62 +63,55 @@ class GFALogger:
         log_filename = f"gfa_{datetime.now().strftime('%Y-%m-%d')}.log"
         log_file_path = os.path.join(log_dir, log_filename)
 
-        formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+        formatter = logging.Formatter(
+            "%(asctime)s [%(levelname)s] %(message)s"
+        )
 
         # Stream handler (console)
-        stream_handler = logging.StreamHandler()
+        stream_handler = logging.StreamHandler(sys.stdout)
         stream_handler.setFormatter(formatter)
         stream_handler.setLevel(stream_level)
         self.logger.addHandler(stream_handler)
 
         # File handler
-        file_handler = logging.FileHandler(log_file_path, mode="a", encoding="utf-8")
+        file_handler = logging.FileHandler(
+            log_file_path, mode="a", encoding="utf-8"
+        )
         file_handler.setFormatter(formatter)
         file_handler.setLevel(logging.DEBUG)
         self.logger.addHandler(file_handler)
 
         GFALogger._initialized_loggers.add(self.file_name)
 
-    def info(self, message: str) -> None:
-        """
-        Log a message at INFO level.
+    # ---- Explicit convenience wrappers ----
 
-        Parameters
-        ----------
-        message : str
-            Message to log.
-        """
+    def info(self, message: str) -> None:
         self.logger.info(message)
 
     def debug(self, message: str) -> None:
-        """
-        Log a message at DEBUG level.
-
-        Parameters
-        ----------
-        message : str
-            Message to log.
-        """
         self.logger.debug(message)
 
     def warning(self, message: str) -> None:
-        """
-        Log a message at WARNING level.
-
-        Parameters
-        ----------
-        message : str
-            Message to log.
-        """
         self.logger.warning(message)
 
     def error(self, message: str) -> None:
-        """
-        Log a message at ERROR level.
-
-        Parameters
-        ----------
-        message : str
-            Message to log.
-        """
         self.logger.error(message)
+
+    def exception(self, message: str) -> None:
+        """
+        Log an exception with traceback.
+        Should be called inside an except block.
+        """
+        self.logger.exception(message)
+
+    def critical(self, message: str) -> None:
+        self.logger.critical(message)
+
+    # ---- Fallback: forward unknown attributes to logging.Logger ----
+
+    def __getattr__(self, name):
+        """
+        Forward any unknown attribute access to the underlying logging.Logger.
+        This allows full compatibility with the standard logging API.
+        """
+        return getattr(self.logger, name)

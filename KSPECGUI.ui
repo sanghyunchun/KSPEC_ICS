@@ -50,7 +50,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideLeft</enum>
@@ -246,25 +246,6 @@
           </layout>
          </widget>
         </widget>
-        <widget class="QLabel" name="label_3">
-         <property name="geometry">
-          <rect>
-           <x>0</x>
-           <y>630</y>
-           <width>941</width>
-           <height>141</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="pixmap">
-          <pixmap>../../../../../home/shyunc/Downloads/fig1.PNG</pixmap>
-         </property>
-         <property name="scaledContents">
-          <bool>true</bool>
-         </property>
-        </widget>
         <widget class="QPushButton" name="pushbtn_show_spec">
          <property name="geometry">
           <rect>
@@ -276,6 +257,25 @@
          </property>
          <property name="text">
           <string>show spec</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_3">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>560</y>
+           <width>941</width>
+           <height>201</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="pixmap">
+          <pixmap>../../../../../home/shyunc/Downloads/baekje_incense_burner_transparent_(1)_(2).PNG</pixmap>
+         </property>
+         <property name="scaledContents">
+          <bool>true</bool>
          </property>
         </widget>
        </widget>
@@ -1551,28 +1551,6 @@
           <string>Fiber</string>
          </property>
         </widget>
-        <widget class="QLabel" name="label_status_finder">
-         <property name="geometry">
-          <rect>
-           <x>292</x>
-           <y>41</y>
-           <width>71</width>
-           <height>29</height>
-          </rect>
-         </property>
-         <property name="font">
-          <font>
-           <family>Arial</family>
-           <pointsize>14</pointsize>
-           <weight>50</weight>
-           <bold>false</bold>
-           <strikeout>false</strikeout>
-          </font>
-         </property>
-         <property name="text">
-          <string>Finder</string>
-         </property>
-        </widget>
         <widget class="QLabel" name="label_status_metrology">
          <property name="geometry">
           <rect>
@@ -1701,38 +1679,6 @@
          <property name="geometry">
           <rect>
            <x>179</x>
-           <y>39</y>
-           <width>29</width>
-           <height>29</height>
-          </rect>
-         </property>
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="font">
-          <font>
-           <family>DejaVu Sans</family>
-           <pointsize>14</pointsize>
-           <weight>50</weight>
-           <italic>false</italic>
-           <bold>false</bold>
-           <strikeout>false</strikeout>
-          </font>
-         </property>
-         <property name="text">
-          <string>●</string>
-         </property>
-         <property name="textFormat">
-          <enum>Qt::PlainText</enum>
-         </property>
-        </widget>
-        <widget class="QLabel" name="ok_status_finder">
-         <property name="geometry">
-          <rect>
-           <x>269</x>
            <y>39</y>
            <width>29</width>
            <height>29</height>
@@ -1955,34 +1901,6 @@
          </property>
          <property name="text">
           <string>Fiber Assign</string>
-         </property>
-        </widget>
-        <widget class="QPushButton" name="pushbtn_Finder_exp">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="geometry">
-          <rect>
-           <x>475</x>
-           <y>37</y>
-           <width>111</width>
-           <height>31</height>
-          </rect>
-         </property>
-         <property name="font">
-          <font>
-           <family>Arial</family>
-           <pointsize>14</pointsize>
-           <weight>75</weight>
-           <bold>true</bold>
-           <strikeout>false</strikeout>
-          </font>
-         </property>
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string>Finder Exp.</string>
          </property>
         </widget>
         <widget class="QPushButton" name="pushbtn_Flat">
@@ -3003,7 +2921,7 @@
            <string/>
           </property>
           <property name="text">
-           <string>GO</string>
+           <string>Take Img</string>
           </property>
          </widget>
          <widget class="QPushButton" name="pushbtn_exp_stop">
@@ -16123,6 +16041,9 @@
          <property name="text">
           <string>save</string>
          </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
         </widget>
         <widget class="QPushButton" name="pushbtn_GFA_set">
          <property name="geometry">
@@ -16335,28 +16256,6 @@
           <string>Fiber</string>
          </property>
         </widget>
-        <widget class="QLabel" name="label_status_finder_2">
-         <property name="geometry">
-          <rect>
-           <x>292</x>
-           <y>41</y>
-           <width>71</width>
-           <height>29</height>
-          </rect>
-         </property>
-         <property name="font">
-          <font>
-           <family>Arial</family>
-           <pointsize>14</pointsize>
-           <weight>50</weight>
-           <bold>false</bold>
-           <strikeout>false</strikeout>
-          </font>
-         </property>
-         <property name="text">
-          <string>Finder</string>
-         </property>
-        </widget>
         <widget class="QLabel" name="label_status_metrology_2">
          <property name="geometry">
           <rect>
@@ -16517,38 +16416,6 @@
          <property name="geometry">
           <rect>
            <x>179</x>
-           <y>39</y>
-           <width>29</width>
-           <height>29</height>
-          </rect>
-         </property>
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="font">
-          <font>
-           <family>DejaVu Sans</family>
-           <pointsize>14</pointsize>
-           <weight>50</weight>
-           <italic>false</italic>
-           <bold>false</bold>
-           <strikeout>false</strikeout>
-          </font>
-         </property>
-         <property name="text">
-          <string>●</string>
-         </property>
-         <property name="textFormat">
-          <enum>Qt::PlainText</enum>
-         </property>
-        </widget>
-        <widget class="QLabel" name="ok_status_finder_2">
-         <property name="geometry">
-          <rect>
-           <x>269</x>
            <y>39</y>
            <width>29</width>
            <height>29</height>
@@ -16771,34 +16638,6 @@
          </property>
          <property name="text">
           <string>Fiber Assign</string>
-         </property>
-        </widget>
-        <widget class="QPushButton" name="pushbtn_Finder_exp_2">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="geometry">
-          <rect>
-           <x>475</x>
-           <y>37</y>
-           <width>111</width>
-           <height>31</height>
-          </rect>
-         </property>
-         <property name="font">
-          <font>
-           <family>Arial</family>
-           <pointsize>14</pointsize>
-           <weight>75</weight>
-           <bold>true</bold>
-           <strikeout>false</strikeout>
-          </font>
-         </property>
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string>Finder Exp.</string>
          </property>
         </widget>
         <widget class="QPushButton" name="pushbtn_Flat_2">

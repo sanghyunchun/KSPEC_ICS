@@ -1,67 +1,93 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#
-# @Author: Mingyeong Yang (mmingyeong@kasi.re.kr)
-# @Date: 2024-05-16
-# @Filename: gfa_actions.py
 
 import os
 import asyncio
 import shutil
 from datetime import datetime
 from typing import Union, List, Dict, Any, Optional
+from pathlib import Path
+import re
+import glob
+from astropy.io import fits
+from pathlib import Path
+from typing import List, Tuple
 
 from .gfa_logger import GFALogger
 from .gfa_environment import create_environment, GFAEnvironment
-from .gfa_getcrval import get_crvals_from_images
+
+# NOTE: pointing에서는 get_crvals_from_images를 쓰고 있으니 유지
+from .gfa_getcrval import get_crvals_from_images, get_crval_from_image  # noqa: F401
 
 logger = GFALogger(__file__)
 
-###############################################################################
-# GFA Actions Class
-###############################################################################
+
+def _make_clean_subprocess_env() -> dict:
+    """
+    외부 프로세스(solve-field 등)가 현재 프로세스의 env를 상속받아 깨지는 문제 방지용.
+    - PYTHONHOME/PYTHONPATH 제거
+    - 현재 실행 중인 파이썬 bin 경로를 PATH 최우선으로 배치 (conda/venv 대응)
+    """
+    env = os.environ.copy()
+    env.pop("PYTHONHOME", None)
+    env.pop("PYTHONPATH", None)
+
+    pybin = os.path.dirname(os.path.realpath(os.sys.executable))
+    env["PATH"] = pybin + os.pathsep + env.get("PATH", "")
+    return env
 
 
 class GFAActions:
     """
-    A class to handle GFA actions such as grabbing images, guiding,
-    and controlling the plate camera array (Cam1–6).
+    GFA actions: grab, guiding, pointing, camera status utilities.
     """
 
     def __init__(self, env: Optional[GFAEnvironment] = None):
-        """
-        Initialize GFAActions with a GFA environment.
-
-        Parameters
-        ----------
-        env : GFAEnvironment, optional
-            The environment object for controlling GFA system.
-        """
         if env is None:
             env = create_environment(role="plate")
         self.env = env
 
     def _generate_response(self, status: str, message: str, **kwargs) -> dict:
-        """
-        Generate a structured response dictionary.
-
-        Parameters
-        ----------
-        status : str
-            Status string, e.g., "success" or "error".
-        message : str
-            Descriptive message.
-        kwargs : dict
-            Additional key-value pairs to include.
-
-        Returns
-        -------
-        dict
-            Response dictionary.
-        """
         response = {"status": status, "message": message}
         response.update(kwargs)
         return response
+
+    def _apply_clean_env_to_astrometry(self) -> None:
+        """
+        Ensure solve-field runs with a clean subprocess env (conda/venv collisions 방지).
+        """
+        clean_env = _make_clean_subprocess_env()
+        if hasattr(self.env, "astrometry") and hasattr(self.env.astrometry, "set_subprocess_env"):
+            self.env.astrometry.set_subprocess_env(clean_env)
+
+    def _ensure_astrometry_outputs_ready(self) -> List[str]:
+        if not hasattr(self.env, "astrometry"):
+            raise RuntimeError("env.astrometry is not configured")
+
+        # 새 클래스 메서드 있으면 그 결과(astro_files) 그대로 리턴
+        if hasattr(self.env.astrometry, "ensure_astrometry_ready"):
+            return self.env.astrometry.ensure_astrometry_ready()
+
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        astro_dir = getattr(self.env.astrometry, "final_astrometry_dir", None) or os.path.join(base_dir, "img", "astroimg")
+        raw_dir = getattr(self.env.astrometry, "dir_path", None) or os.path.join(base_dir, "img", "raw")
+
+        astro_files = sorted(glob.glob(os.path.join(astro_dir, "astro_*.fits")))
+        if astro_files:
+            return astro_files
+
+        if not hasattr(self.env.astrometry, "preproc"):
+            raise RuntimeError("env.astrometry has no preproc()/ensure_astrometry_ready()")
+
+        ok = self.env.astrometry.preproc()
+        if not ok:
+            raise RuntimeError("Astrometry preproc failed")
+
+        astro_files = sorted(glob.glob(os.path.join(astro_dir, "astro_*.fits")))
+        if not astro_files:
+            raise RuntimeError(f"Astrometry expected outputs not found in {astro_dir} (astro_*.fits)")
+
+        return astro_files
 
     async def grab(
         self,
@@ -73,199 +99,211 @@ class GFAActions:
         cam_ipd: int = None,
         cam_ftd_base: int = 0,
         ra: str = None,
-        dec: str = None
+        dec: str = None,
+        path: str = None
     ) -> Dict[str, Any]:
-        """
-        Grab images from one or more plate cameras.
-
-        Parameters
-        ----------
-        CamNum : int or List[int], optional
-            Target camera(s). If 0, grabs from all cameras.
-        ExpTime : float, optional
-            Exposure time in seconds.
-        Binning : int, optional
-            Binning factor.
-        packet_size : int, optional
-            GigE packet size. If None, use cams.json per camera.
-        cam_ipd : int, optional
-            Inter-packet delay. If None, use cams.json per camera.
-        cam_ftd_base : int, optional
-            Frame transmission delay base.
-
-        Returns
-        -------
-        dict
-            Result summary and timeout information.
-        """
         base_dir = os.path.dirname(os.path.abspath(__file__))
         date_str = datetime.now().strftime("%Y-%m-%d")
-        grab_save_path = os.path.join(base_dir, "img", "grab", date_str)
-        self.env.logger.info(f"Image save path: {grab_save_path}")
+        if path:
+            grab_save_path = path
+        else:
+            grab_save_path = os.path.join(base_dir, "img", "grab", date_str)
+        os.makedirs(grab_save_path, exist_ok=True)
 
         timeout_cameras: List[int] = []
 
+        self.env.logger.info("Open all plate cameras...")
+      #  await self.env.controller.open_all_cameras()
 
         try:
             if isinstance(CamNum, int) and CamNum != 0:
-                self.env.logger.info(
-                    f"Grabbing from camera {CamNum} (ExpTime={ExpTime}, Binning={Binning})"
-                )
-#                result = await self.env.controller.grabone(
-#                    CamNum=CamNum,
-#                    ExpTime=ExpTime,
-#                    Binning=Binning,
-#                    output_dir=grab_save_path,
-#                    packet_size=packet_size,
-#                    ipd=cam_ipd,
-#                    ftd_base=cam_ftd_base,
-#                    ra=ra,
-#                    dec=dec
-#                )
-#                timeout_cameras.extend(result)
+       #         res = await self.env.controller.grabone(
+       #             CamNum=CamNum,
+       #             ExpTime=ExpTime,
+       #             Binning=Binning,
+       #             output_dir=grab_save_path,
+       #             packet_size=packet_size,
+       #             ipd=cam_ipd,
+       #             ftd_base=cam_ftd_base,
+       #             ra=ra,
+       #             dec=dec,
+       #         )
+       #         timeout_cameras.extend(res)
+
                 msg = f"Image grabbed from camera {CamNum}."
-#                if timeout_cameras:
-#                    msg += f" Timeout: {timeout_cameras[0]}"
+       #         if timeout_cameras:
+       #             msg += f" Timeout: {timeout_cameras[0]}"
                 return self._generate_response("success", msg)
 
             if isinstance(CamNum, int) and CamNum == 0:
-                self.env.logger.info("Grabbing from all plate cameras...")
-
-                tasks = []
-                for cam_id in self.env.camera_ids:
-                    self.env.logger.info(
-                        f"Grabbing from Cam{cam_id} (ExpTime={ExpTime}, Binning={Binning})"
-                    )
-#                    task = self.env.controller.grabone(
-#                        CamNum=cam_id,
-#                        ExpTime=ExpTime,
-#                        Binning=Binning,
-#                        output_dir=grab_save_path,
-#                        packet_size=packet_size,
-#                        ipd=cam_ipd,
-#                        ftd_base=cam_ftd_base,
-#                        ra=ra,
-#                        dec=dec
-#                    )
-#                    tasks.append(task)
-
-                # Run all camera grabs concurrently
-#                results = await asyncio.gather(*tasks)
-                timeout_cameras = []
-#                for res in results:
-#                    timeout_cameras.extend(res)
+        #        tasks = [
+        #            self.env.controller.grabone(
+        #                CamNum=cam_id,
+        #                ExpTime=ExpTime,
+        #                Binning=Binning,
+        #                output_dir=grab_save_path,
+        #                packet_size=packet_size,
+        #                ipd=cam_ipd,
+        #                ftd_base=cam_ftd_base,
+        #                ra=ra,
+        #                dec=dec,
+        #            )
+        #            for cam_id in self.env.camera_ids
+        #        ]
+        #        results = await asyncio.gather(*tasks)
+        #        for r in results:
+        #            timeout_cameras.extend(r)
 
                 msg = "Images grabbed from all cameras."
-                if timeout_cameras:
-                    msg += f" Timeout: {timeout_cameras}"
+        #        if timeout_cameras:
+        #            msg += f" Timeout: {timeout_cameras}"
                 return self._generate_response("success", msg)
 
             if isinstance(CamNum, list):
-                self.env.logger.info(
-                    f"Grabbing from cameras {CamNum} (ExpTime={ExpTime}, Binning={Binning})"
-                )
-                tasks = []
-                for cam_id in CamNum:
-                    self.env.logger.info(
-                        f"Grabbing from Cam{cam_id} (ExpTime={ExpTime}, Binning={Binning})"
-                    )
-#                    task = self.env.controller.grabone(
-#                        CamNum=cam_id,
-#                        ExpTime=ExpTime,
-#                        Binning=Binning,
-#                        output_dir=grab_save_path,
-#                        packet_size=packet_size,
-#                        ipd=cam_ipd,
-#                        ftd_base=cam_ftd_base,
-#                        ra=ra,
-#                        dec=dec
-#                    )
-#                    tasks.append(task)
-
-                # Run all camera grabs concurrently
-#                results = await asyncio.gather(*tasks)
-                timeout_cameras = []
-#                for res in results:
-#                    timeout_cameras.extend(res)
+        #        tasks = [
+        #            self.env.controller.grabone(
+        #                CamNum=cam_id,
+        #                ExpTime=ExpTime,
+        #                Binning=Binning,
+        #                output_dir=grab_save_path,
+        #                packet_size=packet_size,
+        #                ipd=cam_ipd,
+        #                ftd_base=cam_ftd_base,
+        #                ra=ra,
+        #                dec=dec,
+        #            )
+        #            for cam_id in CamNum
+        #        ]
+        #        results = await asyncio.gather(*tasks)
+        #        for r in results:
+        #            timeout_cameras.extend(r)
 
                 msg = f"Images grabbed from cameras {CamNum}."
-                if timeout_cameras:
-                    msg += f" Timeout: {timeout_cameras}"
+        #        if timeout_cameras:
+        #            msg += f" Timeout: {timeout_cameras}"
                 return self._generate_response("success", msg)
 
             raise ValueError(f"Invalid CamNum: {CamNum}")
 
         except Exception as e:
             self.env.logger.error(f"Grab failed: {e}")
-            return self._generate_response(
-                "error", f"Grab failed: {e} (CamNum={CamNum}, ExpTime={ExpTime})"
-            )
+            return self._generate_response("error", f"Grab failed: {e}")
+
+        finally:
+        #    self.env.logger.info("Close all plate cameras...")
+        #    try:
+        #        await self.env.controller.close_all_cameras()
+        #    except Exception as e:
+        #        self.env.logger.warning(f"close_all_cameras failed: {e}")
+            pass
 
 
-    async def guiding(self, ExpTime: float = 1.0, save: bool = False, ra: str = None, dec: str = None) -> Dict[str, Any]:
-        """
-        Execute guiding procedure using all plate cameras.
-
-        Parameters
-        ----------
-        ExpTime : float, optional
-            Exposure time in seconds.
-        save : bool, optional
-            Whether to also save images to grab directory.
-
-        Returns
-        -------
-        dict
-            Result with measured guider offsets and FWHM.
-        """
+    # gfa_actions.py (GFAActions.guiding) - 수정본
+    # 주의: 이 함수 안에서 math를 쓰므로 import 추가 (파일 상단에 이미 있으면 중복 추가 불필요)
+    async def guiding(
+        self,
+        ExpTime: float = 1.0,
+        save: bool = True,
+        ra: str = None,
+        dec: str = None,
+    ) -> Dict[str, Any]:
+        import math
         base_dir = os.path.dirname(os.path.abspath(__file__))
         date_str = datetime.now().strftime("%Y-%m-%d")
 
         raw_save_path = os.path.join(base_dir, "img", "raw")
-        grab_save_path = os.path.join(base_dir, "img", "grab", date_str)
+        guiding_save_path = os.path.join(base_dir, "img", "guiding_save", date_str)
+        os.makedirs(raw_save_path, exist_ok=True)
+        self.env.logger.info(f"[guiding] save={save}, raw_save_path={raw_save_path}, guiding_save_path={guiding_save_path}")
+
+     #   self.env.astrometry.clear_raw_files()
 
         try:
             self.env.logger.info("Starting guiding sequence...")
 
-            os.makedirs(raw_save_path, exist_ok=True)
-            self.env.logger.info("Grabbing raw image...")
-#            self.env.controller.grab(0, ExpTime, 4, output_dir=raw_save_path, ra=ra, dec=dec)
+     #       await self.env.controller.open_all_cameras()
+     #       try:
+     #           await self.env.controller.grab(
+     #               0, ExpTime, 4,
+     #               output_dir=raw_save_path,
+     #               ra=ra, dec=dec
+     #           )
+     #           pass
+     #       finally:
+     #           try:
+     #               await self.env.controller.close_all_cameras()
+     #           except Exception as e:
+     #               self.env.logger.warning(f"close_all_cameras failed: {e}")
 
-            print(save)
+     #       if save:
+     #           self.env.logger.info(f"Saving pointing images to {guiding_save_path}")
+     #           os.makedirs(guiding_save_path, exist_ok=True)
 
-            if save:
-                os.makedirs(grab_save_path, exist_ok=True)
-                for fname in os.listdir(raw_save_path):
-                    src = os.path.join(raw_save_path, fname)
-                    dst = os.path.join(grab_save_path, fname)
-                    if os.path.isfile(src):
-                        shutil.copy2(src, dst)
-                self.env.logger.info(f"Images also copied to: {grab_save_path}")
+     #           exts = (".fits", ".fit", ".fts")
+     #           pattern = os.path.join(raw_save_path, "**", "*")
+     #           copied = 0
 
-            self.env.logger.info("Running astrometry preprocessing...")
-#            self.env.astrometry.preproc()
+     #           for src in glob.glob(pattern, recursive=True):
+     #               if os.path.isfile(src) and src.lower().endswith(exts):
+     #                   dst = os.path.join(guiding_save_path, os.path.basename(src))
+     #                   self.env.logger.info(f"raw contents: {os.listdir(raw_save_path)}")
+     #                   self.env.logger.info(f"copying {src} to {dst}")
+     #                   shutil.copy2(src, dst)
+     #                   copied += 1
 
-            self.env.logger.info("Executing guider offset calculation...")
-#            fdx, fdy, fwhm = self.env.guider.exe_cal()
+            self.env.logger.info(f"[guiding] saved {copied} fits files to {guiding_save_path}")
 
-            self.env.logger.info("Clearing temp astrometry data...")
-#            self.env.astrometry.clear_raw_and_processed_files()
-            
-#            try:
-#                fwhm_val = float(fwhm)
-#            except ValueError:
-#                fwhm_val = 0.0  # 또는 예외 처리
+            # --- astrometry: clean env 적용 ---
+            self._apply_clean_env_to_astrometry()
 
-            fdx=0.022
-            fdy=-0.045
-            fwhm_val=1.21
+            # --- procimg 없이: astro dir 있으면 사용 / 없으면 생성 ---
+            self.env.logger.info("Ensuring astrometry outputs are ready (no procimg dependency)...")
+            astro_files = self._ensure_astrometry_outputs_ready()
+            self.env.logger.info(f"Astrometry inputs ready: {len(astro_files)} files.")
 
-            msg = f"Offsets: fdx={fdx}, fdy={fdy}, FWHM={fwhm_val} arcsec"
-            return self._generate_response("success", msg, fdx=fdx, fdy=fdy, fwhm=fwhm_val)
+     #       self.env.logger.info("Executing guider offset calculation...")
+     #       fdx, fdy, fwhm = self.env.guider.exe_cal()
+
+     #       self.env.astrometry.clear_raw_files()
+
+     #       def _is_nan(x: Any) -> bool:
+     #           try:
+     #               return x is None or (isinstance(x, float) and math.isnan(x))
+     #           except Exception:
+     #               return True
+
+            # ✅ nan이면 warning으로 반환
+     #       if _is_nan(fdx) or _is_nan(fdy) or _is_nan(fwhm):
+     #           msg = "Guiding completed with WARNING: no reliable guide stars detected."
+     #           return self._generate_response(
+     #               "warning",
+     #               msg,
+     #               fdx=fdx,
+     #               fdy=fdy,
+     #               fwhm=fwhm,
+     #               astrometry_files=[os.path.basename(p) for p in astro_files],
+     #           )
+
+            # 정상 케이스
+     #       try:
+     #           fwhm_val = float(fwhm)
+     #       except Exception:
+     #           fwhm_val = 0.0
+
+     #       msg = f"Offsets: fdx={fdx}, fdy={fdy}, FWHM={fwhm_val} arcsec"
+     #       return self._generate_response(
+     #           "success",
+     #           msg,
+     #           fdx=fdx,
+     #           fdy=fdy,
+     #           fwhm=fwhm_val,
+     #           astrometry_files=[os.path.basename(p) for p in astro_files],
+     #       )
 
         except Exception as e:
             self.env.logger.error(f"Guiding failed: {str(e)}")
             return self._generate_response("error", f"Guiding failed: {str(e)}")
+
 
     async def pointing(
         self,
@@ -274,192 +312,149 @@ class GFAActions:
         ExpTime: float = 1.0,
         Binning: int = 4,
         CamNum: int = 0,
-        max_workers: int = 4,
-        save_by_date: bool = True,
+        save: bool = True,
         clear_dir: bool = True,
     ) -> Dict[str, Any]:
-        """
-        Pointing procedure:
-        1) Grab images (CamNum=0 default) with RA/DEC hint.
-        2) Save to pointing_raw directory.
-        3) Read images in that directory.
-        4) Run get_crvals_from_images(images) to get CRVAL1/CRVAL2 lists.
-
-        Parameters
-        ----------
-        ra, dec : float
-            Requested reference pointing coordinates (passed to grab and written in header).
-        ExpTime : float
-            Exposure time.
-        Binning : int
-            Binning factor.
-        CamNum : int
-            Camera number (0 = all cameras).
-        max_workers : int
-            Parallel workers for solve-field runs.
-        save_by_date : bool
-            If True, save under img/pointing_raw/YYYY-MM-DD/.
-        clear_dir : bool
-            If True, delete existing files in pointing_raw directory before grabbing.
-
-        Returns
-        -------
-        dict
-            {status, message, images, crval1, crval2}
-        """
+        from pathlib import Path
+        from astropy.io import fits
+    
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        date_str = datetime.now().strftime("%Y-%m-%d")
 
-        if save_by_date:
-            pointing_raw_path = os.path.join(base_dir, "img", "pointing_raw", date_str)
-        else:
-            pointing_raw_path = os.path.join(base_dir, "img", "pointing_raw")
+        # ✅ raw는 날짜 폴더 없이 항상 여기만 사용
+        pointing_raw_path = os.path.join(base_dir, "img", "raw")
+        os.makedirs(pointing_raw_path, exist_ok=True)
+
+        # grab 저장(원하면 유지). 날짜 폴더는 grab에만
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        pointing_save_path = os.path.join(base_dir, "img", "pointing_save", date_str)
+        self.env.logger.info(f"[pointing] save={save}, raw_save_path={pointing_raw_path}, pointing_save_path={pointing_save_path}")
+
+        def _get_crvals_from_fits(fits_files: List[Path]) -> Tuple[List[float], List[float]]:
+            cr1_list, cr2_list = [], []
+            for p in fits_files:
+                try:
+                    with fits.open(p) as hdul:
+                        hdr = hdul[0].header
+                        cr1_list.append(float(hdr.get("CRVAL1", float("nan"))))
+                        cr2_list.append(float(hdr.get("CRVAL2", float("nan"))))
+                except Exception:
+                    cr1_list.append(float("nan"))
+                    cr2_list.append(float("nan"))
+            return cr1_list, cr2_list
 
         try:
             self.env.logger.info("Starting pointing sequence...")
             self.env.logger.info(f"Target RA/DEC: {ra}, {dec}")
-            self.env.logger.info(f"Pointing raw save path: {pointing_raw_path}")
 
-            os.makedirs(pointing_raw_path, exist_ok=True)
+            # ✅ raw 루트에서 FITS만 삭제 (다른 파일은 보호)
+   #         self.env.astrometry.clear_raw_files()
 
-            # (선택) 디렉토리 정리: 이전 프레임이 섞이면 결과 해석이 어려워서 권장
-#            if clear_dir:
-#                for fn in os.listdir(pointing_raw_path):
-#                    fp = os.path.join(pointing_raw_path, fn)
-#                    if os.path.isfile(fp):
-#                        os.remove(fp)
+            # --- camera open/grab/close ---
+   #         await self.env.controller.open_all_cameras()
+   #         try:
+                # ✅ 실제 grab을 raw 루트에 저장하려면 주석 해제
+   #             await self.env.controller.grab(
+   #                 CamNum, ExpTime, Binning,
+   #                 output_dir=pointing_raw_path,
+   #                 ra=ra, dec=dec
+   #             )
+   #             pass
+   #         finally:
+   #             try:
+   #                 await self.env.controller.close_all_cameras()
+   #             except Exception as e:
+   #                 self.env.logger.warning(f"close_all_cameras failed: {e}")
 
-            # 1) Grab images -> pointing_raw 저장
-            # guiding()에서처럼 controller.grab을 사용 (동기 함수인 경우가 많음)
-            self.env.logger.info(f"Grabbing pointing images (CamNum={CamNum}, ExpTime={ExpTime}, Binning={Binning})...")
-#            self.env.controller.grab(CamNum, ExpTime, Binning, output_dir=pointing_raw_path, ra=ra, dec=dec)
+            # (옵션) raw -> grab(날짜)로 복사
+   #         if save:
+   #             self.env.logger.info(f"Saving pointing images to {pointing_save_path}")
+   #             os.makedirs(pointing_save_path, exist_ok=True)
 
-            # 2) 디렉토리의 FITS 이미지 목록 읽기
-            images = []
-            for fn in sorted(os.listdir(pointing_raw_path)):
-                if fn.lower().endswith((".fits", ".fit", ".fts")):
-                    images.append(os.path.join(pointing_raw_path, fn))
+   #             exts = (".fits", ".fit", ".fts")
+   #             pattern = os.path.join(pointing_raw_path, "**", "*")
+   #             copied = 0
 
-            if not images:
-                msg = f"No FITS images found in {pointing_raw_path}"
-                self.env.logger.error(msg)
-                return self._generate_response("error", msg, images=[], crval1=[], crval2=[])
+   #             for src in glob.glob(pattern, recursive=True):
+   #                 if os.path.isfile(src) and src.lower().endswith(exts):
+   #                     dst = os.path.join(pointing_save_path, os.path.basename(src))
+   #                     self.env.logger.info(f"raw contents: {os.listdir(pointing_raw_path)}")
+   #                     self.env.logger.info(f"copying {src} to {dst}")
+   #                     shutil.copy2(src, dst)
+   #                     copied += 1
 
-            self.env.logger.info(f"Found {len(images)} images for pointing.")
+   #             self.env.logger.info(f"[guiding] saved {copied} fits files to {pointing_save_path}")
 
-            # 3) CRVAL 계산 (병렬 가능)
-            self.env.logger.info(f"Solving astrometry for CRVALs (max_workers={max_workers})...")
-#            crval1_list, crval2_list = get_crvals_from_images(
-#                images,
-#                max_workers=max_workers,
-#            )
 
-            # (옵션) NaN 제거 후 평균/중앙값 같은 요약이 필요하면 여기서 계산 가능
-            # 지금은 요청대로 리스트 그대로 반환
+            # --- clean env 적용 ---
+   #         self._apply_clean_env_to_astrometry()
 
-#            msg = f"Pointing completed. Computed CRVALs for {len(images)} images."
-#            return self._generate_response(
-#                "success",
-#                msg,
-#                images=images,
-#                crval1=crval1_list,
-#                crval2=crval2_list,
-#            )
+            # --- astrometry outputs 준비 ---
+   #         self.env.logger.info("Ensuring astrometry outputs are ready (no procimg dependency)...")
+   #         astro_files = self._ensure_astrometry_outputs_ready()
+   #         astro_files = list(astro_files) if astro_files else []
 
-            ### Simulation parts ####
-            msg='Pointing completed.'
+   #         self.env.logger.info(f"Astrometry inputs ready: {len(astro_files)} files.")
+
+   #         if not astro_files:
+   #             msg = "Pointing failed: no astrometry FITS outputs found."
+   #             self.env.logger.error(msg)
+   #             return self._generate_response("error", msg, images=[], crval1=[], crval2=[])
+
+            # astro_*.fits 기준으로 헤더에서 CRVAL 읽기
+   #         image_list = [Path(p) for p in astro_files]
+   #         image_names = [p.name for p in image_list]
+
+   #         crval1_list, crval2_list = _get_crvals_from_fits(image_list)
+            #self.env.astrometry.clear_raw_files()
+
+            msg = f"Pointing completed. Computed CRVALs for {len(image_list)} images."
             return self._generate_response(
                 "success",
                 msg,
-                images=images,
-                crval1='None',
-                crval2='None',
+                images=image_names,
+                crval1=crval1_list,
+                crval2=crval2_list,
             )
-            ### Simulation parts end ###
+
         except Exception as e:
             self.env.logger.error(f"Pointing failed: {str(e)}")
             return self._generate_response("error", f"Pointing failed: {str(e)}")
 
 
     def status(self) -> Dict[str, Any]:
-        """
-        Retrieve current status of all plate cameras.
-
-        Returns
-        -------
-        dict
-            Status report from controller.
-        """
         try:
-            self.env.logger.info("Querying camera statuses...")
-#            status_info = self.env.controller.status()
-#            return self._generate_response("success", status_info)
-            return self._generate_response("success", "GFA status below...")
+  #          status_info = self.env.controller.status()
+            status_info = 'GFA Status below'
+            return self._generate_response("success", status_info)
         except Exception as e:
-            self.env.logger.error(f"Status query failed: {e}")
             return self._generate_response("error", f"Status query failed: {e}")
 
     def ping(self, CamNum: int = 0) -> Dict[str, Any]:
-        """
-        Ping specific or all plate cameras.
-
-        Parameters
-        ----------
-        CamNum : int, optional
-            If 0, ping all cameras. Else ping specific CamNum.
-
-        Returns
-        -------
-        dict
-            Ping result message.
-        """
         try:
             if CamNum == 0:
-                self.env.logger.info("Pinging all cameras...")
-#                for cam_id in self.env.camera_ids:
-#                    self.env.controller.ping(cam_id)
+   #             for cam_id in self.env.camera_ids:
+  #                  self.env.controller.ping(cam_id)
                 return self._generate_response("success", "Pinged all cameras.")
             else:
-                self.env.logger.info(f"Pinging Cam{CamNum}...")
-#                self.env.controller.ping(CamNum)
+  #              self.env.controller.ping(CamNum)
                 return self._generate_response("success", f"Pinged Cam{CamNum}.")
         except Exception as e:
-            self.env.logger.error(f"Ping failed: {e}")
             return self._generate_response("error", f"Ping failed: {e}")
 
     def cam_params(self, CamNum: int = 0) -> Dict[str, Any]:
-        """
-        Retrieve camera parameters.
-
-        Parameters
-        ----------
-        CamNum : int, optional
-            If 0, retrieve all cameras. Else only for CamNum.
-
-        Returns
-        -------
-        dict
-            Parameter information.
-        """
         try:
             if CamNum == 0:
-                self.env.logger.info("Fetching parameters for all cameras...")
                 messages = []
-#                for cam_id in self.env.camera_ids:
-#                    param = self.env.controller.cam_params(cam_id)
-#                    messages.append(f"Cam{cam_id}: {param}")
-#                return self._generate_response("success", "\n".join(messages))
+                for cam_id in self.env.camera_ids:
+  #                  param = self.env.controller.cam_params(cam_id)
+                    messages.append(f"Cam{cam_id}: {param}")
+                return self._generate_response("success", "\n".join(messages))
             else:
-                self.env.logger.info(f"Fetching parameters for Cam{CamNum}...")
-#                param = self.env.controller.cam_params(CamNum)
-#                return self._generate_response("success", f"Cam{CamNum}: {param}")
+  #              param = self.env.controller.cam_params(CamNum)
+                return self._generate_response("success", f"Cam{CamNum}: {param}")
         except Exception as e:
-            self.env.logger.error(f"Parameter fetch failed: {e}")
             return self._generate_response("error", f"Parameter fetch failed: {e}")
 
     def shutdown(self) -> None:
-        """
-        Shutdown and release resources.
-        """
         self.env.shutdown()
         self.env.logger.info("GFAActions shutdown complete.")

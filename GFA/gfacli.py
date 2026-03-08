@@ -1,42 +1,11 @@
 import os, sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-# from Lib.MsgMiddleware import *
 from Lib.AMQ import *
 import Lib.mkmessage as mkmsg
 from TCS.tcscli import handle_telcom
 import asyncio
 import json
 
-
-
-#def bytes_to_sexagesimal(value: bytes, encoding="ascii") -> str:
-#        """
-#        b"453467.8"  -> "45:34:67.8"
-#        b"-453456.7" -> "-45:34:56.7"
-#        """
-#        # bytes → str
-#        s = value.decode(encoding).strip()
-
-#        # 부호 처리
-#        sign = "-" if s.startswith("-") else ""
-#        s = s.lstrip("+-")
-
-        # 정수부 / 소수부 분리
-#        if "." in s:
-#            integer, frac = s.split(".", 1)
-#            frac = "." + frac
-#        else:
-#            integer = s
-#            frac = ""
-
-#        if len(integer) < 6:
-#            raise ValueError(f"sexagesimal 변환에 필요한 자릿수 부족: {s}")
-
-#        h = integer[0:2]
-#        m = integer[2:4]
-#        sec = integer[4:] + frac
-
-#        return f"{sign}{h}:{m}:{sec}"
 
 def bytes_to_sexagesimal(value: bytes, encoding="ascii") -> str:
     """
@@ -74,16 +43,12 @@ def bytes_to_sexagesimal(value: bytes, encoding="ascii") -> str:
 
     return f"{sign}{h}:{m}:{sec}"
 
-
-
 def load_config():
     """Loads configuration settings from KSPEC.ini."""
     with open('./Lib/KSPEC.ini', 'r') as f:
         kspecinfo = json.load(f)
 
     return kspecinfo['TCS']['TCSagentIP'], kspecinfo['TCS']['TCSagentPort'], kspecinfo['TCS']['TelcomIP'],kspecinfo['TCS']['TelcomPort']
-
-
 
 def create_gfa_command(func, **kwargs):
     """Helper function to create ADC commands."""
@@ -93,7 +58,7 @@ def create_gfa_command(func, **kwargs):
 
 def gfa_status() : return create_gfa_command('gfastatus', message ='Show GFA status')
 
-def gfa_guiding(expt: float = 1.0, save: bool = False, *, ra: str=None, dec: str=None) : 
+def gfa_guiding(expt: float = 1.0, save: bool = False, *, ra: str=None, dec: str=None) :
     return create_gfa_command('gfaguide', ExpTime=expt,save=save,message ='Autoguiding Start!', ra=ra, dec=dec)
 
 def gfa_guidestop() : return create_gfa_command('gfaguidestop',message='Stop autoguiding')
@@ -119,12 +84,9 @@ async def getradec():
     ra_bytes=await send_telcom_command('getra')
     dec_bytes=await send_telcom_command('getdec')
 
-    print('tttt')
-    print(ra_bytes)    
-
     ra=bytes_to_sexagesimal(ra_bytes)
     dec=bytes_to_sexagesimal(dec_bytes)
-    print(ra)
+
     return ra, dec
 
 
@@ -135,13 +97,6 @@ async def handle_gfa(arg, ICS_client):
         'gfaguidestop' : gfa_guidestop
     }
 
-#    ra_bytes=await send_telcom_command('getra')
-#    dec_bytes=await send_telcom_command('getdec')
-#    print(ra_bytes,dec_bytes)
-
-#    ra=bytes_to_sexagesimal(ra_bytes)
-#    dec=bytes_to_sexagesimal(dec_bytes)
-
     if cmd == 'gfagrab':
         if len(params) != 2:
             print("Error: 'gfagrab' needs two parameters: camera number and exposure time value. ex) gfagrab 1 10 ")
@@ -151,8 +106,9 @@ async def handle_gfa(arg, ICS_client):
         except ValueError:
             print(f"Error: Input parameters of 'gfagrab' should be int and float. input value: {params[0]} {params[1]}")
             return
-        ra,dec= await getradec()
-        command_map[cmd] = lambda: gfa_grab(camNum, ExpT, ra=ra, dec=dec)
+#        ra,dec= await getradec()
+#        command_map[cmd] = lambda: gfa_grab(camNum, ExpT, ra=ra, dec=dec)
+        command_map[cmd] = lambda: gfa_grab(camNum, ExpT)
 
     elif cmd == 'gfaguide':
         ra,dec=await getradec()

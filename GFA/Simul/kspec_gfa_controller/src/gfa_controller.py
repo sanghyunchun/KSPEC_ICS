@@ -17,6 +17,9 @@ from pypylon import genicam
 from datetime import datetime, timezone
 from typing import List
 
+from pathlib import Path
+
+
 
 from .gfa_img import GFAImage
 
@@ -101,29 +104,79 @@ class GFAController:
         self.img_class = GFAImage(logger)
         self.open_cameras = {}
 
+        # Async safety for shared dict updates
+        self._open_cameras_lock = asyncio.Lock()
+
         self.logger.info("GFAController initialization complete.")
 
-    def open_all_cameras(self):
-        """Open all cameras once at startup."""
+    async def open_all_cameras(self):
+        """Open all cameras once at startup (concurrently via asyncio)."""
         self.logger.info("Opening all cameras...")
-        for cam_key, cam_info in self.cameras_info.items():
+
+        async def _open_one(cam_key: str, cam_info: dict):
             ip = cam_info["IpAddress"]
-            dev_info = py.DeviceInfo()
-            dev_info.SetIpAddress(ip)
-            cam = py.InstantCamera(self.tlf.CreateDevice(dev_info))
-            cam.Open()
-            self.open_cameras[cam_key] = cam
+
+            def _blocking_open():
+                dev_info = py.DeviceInfo()
+                dev_info.SetIpAddress(ip)
+                cam = py.InstantCamera(self.tlf.CreateDevice(dev_info))
+                cam.Open()
+                return cam
+
+            cam = await asyncio.to_thread(_blocking_open)
+
+            async with self._open_cameras_lock:
+                self.open_cameras[cam_key] = cam
+
             self.logger.info(f"{cam_key} opened (IP {ip}).")
+
+        tasks = [
+            asyncio.create_task(_open_one(cam_key, cam_info))
+            for cam_key, cam_info in self.cameras_info.items()
+        ]
+
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        failures = []
+        for (cam_key, _), r in zip(self.cameras_info.items(), results):
+            if isinstance(r, Exception):
+                failures.append((cam_key, r))
+                self.logger.exception(f"Failed to open {cam_key}: {r}")
+
+        if failures:
+            raise RuntimeError(
+                "Some cameras failed to open: "
+                + ", ".join([f"{k} ({type(e).__name__})" for k, e in failures])
+            )
+
         self.logger.info("All cameras opened successfully.")
 
-    def close_all_cameras(self):
-        """Close all opened cameras."""
+    async def close_all_cameras(self):
+        """Close all opened cameras (concurrently via asyncio)."""
         self.logger.info("Closing all cameras...")
-        for cam_key, cam in self.open_cameras.items():
-            if cam.IsOpen():
-                cam.Close()
+
+        async with self._open_cameras_lock:
+            items = list(self.open_cameras.items())
+
+        async def _close_one(cam_key: str, cam):
+            def _blocking_close():
+                if cam.IsOpen():
+                    cam.Close()
+
+            try:
+                await asyncio.to_thread(_blocking_close)
                 self.logger.info(f"{cam_key} closed.")
-        self.open_cameras.clear()
+            except Exception as e:
+                self.logger.exception(f"Failed to close {cam_key}: {e}")
+
+        await asyncio.gather(
+            *(asyncio.create_task(_close_one(cam_key, cam)) for cam_key, cam in items),
+            return_exceptions=True,
+        )
+
+        async with self._open_cameras_lock:
+            self.open_cameras.clear()
+
         self.logger.info("All cameras closed.")
 
     def ping(self, CamNum: int = 0):
@@ -193,6 +246,8 @@ class GFAController:
         self.logger.info("=========================")
 
         info_attributes = [
+            ("GainRaw", "GainRaw"),
+            ("Gain", "Gain"),
             ("DeviceModelName", "DeviceModelName"),
             ("DeviceSerialNumber", "DeviceSerialNumber"),
             ("DeviceUserID", "DeviceUserID"),
@@ -218,7 +273,6 @@ class GFAController:
 
         return params
 
-
     async def configure_and_grab(
         self,
         cam,
@@ -232,7 +286,7 @@ class GFAController:
         serial_hint: str = None,
         ftd: int = None,
         ra: str = None,
-        dec: str = None
+        dec: str = None,
     ):
         """Configure camera and grab an image."""
         loop = asyncio.get_running_loop()
@@ -255,6 +309,7 @@ class GFAController:
         await loop.run_in_executor(None, cam.PixelFormat.SetValue, "Mono12")
         await loop.run_in_executor(None, cam.BinningHorizontal.SetValue, int(Binning))
         await loop.run_in_executor(None, cam.BinningVertical.SetValue, int(Binning))
+        await loop.run_in_executor(None, cam.Gain.SetValue, 0)
 
         try:
             result = await loop.run_in_executor(None, cam.GrabOne, self.grab_timeout)
@@ -276,13 +331,14 @@ class GFAController:
                 exptime=ExpTime,
                 output_directory=output_dir,
                 ra=ra,
-                dec=dec
+                dec=dec,
             )
+
             return img
 
         except genicam.TimeoutException:
             self.logger.error(
-                f"Timeout while grabbing image from camera {serial_hint or 'cam'+str(cam_index)}."
+                f"Timeout while grabbing image from camera {serial_hint or 'cam' + str(cam_index)}."
             )
             return None
 
@@ -297,7 +353,7 @@ class GFAController:
         output_dir: str = None,
         ftd: int = None,
         ra: str = None,
-        dec: str = None
+        dec: str = None,
     ) -> list:
         """
         Grab one image from a single camera.
@@ -357,7 +413,7 @@ class GFAController:
                 serial_hint=serial,
                 ftd=ftd,
                 ra=ra,
-                dec=dec
+                dec=dec,
             )
 
             if img is None:
@@ -383,7 +439,7 @@ class GFAController:
         ftd_base: int = 39000,
         output_dir: str = None,
         ra: str = None,
-        dec: str = None
+        dec: str = None,
     ):
         """
         Grab images from one or more cameras.
@@ -431,7 +487,7 @@ class GFAController:
                 ftd_base=ftd_base,
                 output_dir=output_dir,
                 ra=ra,
-                dec=dec
+                dec=dec,
             )
             for cam_num in cam_list
         ]
@@ -448,14 +504,17 @@ class GFAController:
         key = f"Cam{CamNum}"
         value = self.cameras_info.get(key, {}).get(param_name)
         if value is None:
-            self.logger.warning(f"{param_name} for {key} not found in config, using default.")
+            self.logger.warning(
+                f"{param_name} for {key} not found in config, using default."
+            )
             return None
         try:
             return int(value)
         except Exception:
-            self.logger.warning(f"{param_name} value for {key} is not an integer: {value}")
+            self.logger.warning(
+                f"{param_name} value for {key} is not an integer: {value}"
+            )
             return None
-
 
     def open_selected_cameras(self, camera_ids: List[int]):
         for cam_id in camera_ids:
@@ -473,7 +532,7 @@ class GFAController:
     def open_camera(self, CamNum: int):
         """
         Open a single camera by its number (e.g., 1–7).
-        
+
         Parameters
         ----------
         CamNum : int
