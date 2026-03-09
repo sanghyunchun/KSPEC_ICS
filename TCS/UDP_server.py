@@ -18,7 +18,7 @@ class UDPServerProtocol:
 async def main():
     loop = asyncio.get_running_loop()
     listen = loop.create_datagram_endpoint(
-        UDPServerProtocol, local_addr=('127.0.0.1', 12345))
+        UDPServerProtocol, local_addr=('127.0.0.1', 6606))
     transport, protocol = await listen
 
     try:

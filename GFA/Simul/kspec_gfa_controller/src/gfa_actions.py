@@ -37,6 +37,43 @@ def _make_clean_subprocess_env() -> dict:
     return env
 
 
+class Guider:
+    def __init__(self, data_dir="/media/shyunc/DATA/KSpec/GFA_data/KSPEC", raw_dir="/media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/Simul/kspec_gfa_controller/src/img/raw", batch_size=6):
+        self.data_dir = data_dir
+        self.raw_dir = raw_dir
+        self.batch_size = batch_size
+
+        os.makedirs(self.raw_dir, exist_ok=True)
+
+        # FITS 파일 목록 정렬
+        self.files = sorted([f for f in os.listdir(self.data_dir) if f.endswith(".fits")])
+
+        # 현재 복사 위치
+        self.index = 0
+
+    def guiding(self):
+        if self.index >= len(self.files):
+            print("No more files to copy.")
+            return
+
+        # 이번에 복사할 범위
+        end = min(self.index + self.batch_size, len(self.files))
+
+        for i in range(self.index, end):
+            filename = self.files[i]
+
+            src = os.path.join(self.data_dir, filename)
+            dst = os.path.join(self.raw_dir, filename)
+
+            if os.path.isfile(src):
+                shutil.copy2(src, dst)
+                print(f"Copied: {filename}")
+
+        self.index = end
+        print(f"Copied {end - (end - self.batch_size)} files. Next index: {self.index}")
+
+
+
 class GFAActions:
     """
     GFA actions: grab, guiding, pointing, camera status utilities.
@@ -251,15 +288,16 @@ class GFAActions:
      #                   shutil.copy2(src, dst)
      #                   copied += 1
 
-            self.env.logger.info(f"[guiding] saved {copied} fits files to {guiding_save_path}")
+    #        self.env.logger.info(f"[guiding] saved {copied} fits files to {guiding_save_path}")
 
             # --- astrometry: clean env 적용 ---
-            self._apply_clean_env_to_astrometry()
+    #        self._apply_clean_env_to_astrometry()
 
             # --- procimg 없이: astro dir 있으면 사용 / 없으면 생성 ---
             self.env.logger.info("Ensuring astrometry outputs are ready (no procimg dependency)...")
-            astro_files = self._ensure_astrometry_outputs_ready()
-            self.env.logger.info(f"Astrometry inputs ready: {len(astro_files)} files.")
+            
+    #        astro_files = self._ensure_astrometry_outputs_ready()
+    #        self.env.logger.info(f"Astrometry inputs ready: {len(astro_files)} files.")
 
      #       self.env.logger.info("Executing guider offset calculation...")
      #       fdx, fdy, fwhm = self.env.guider.exe_cal()
@@ -299,6 +337,21 @@ class GFAActions:
      #           fwhm=fwhm_val,
      #           astrometry_files=[os.path.basename(p) for p in astro_files],
      #       )
+
+            ##### Simulation Part Starts ###
+            self.env.logger.info("Guiding test......")
+            fdx = 0.04
+            fdy = 0.1
+            fwhm_val = 2.3
+            msg = f"Offsets: fdx={fdx}, fdy={fdy}."
+            return self._generate_response(
+                "success",
+                msg,
+                fdx=fdx,
+                fdy=fdy,
+                fwhm=fwhm_val,
+        #        astrometry_files=[os.path.basename(p) for p in astro_files],
+            )
 
         except Exception as e:
             self.env.logger.error(f"Guiding failed: {str(e)}")

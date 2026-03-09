@@ -1391,9 +1391,7 @@ class MainWindow(QMainWindow):
         if not self.check_connection():
             return
 
-        self.logging('System check start. Initialize dependencies',level='normal')
-        self.scriptrun.initialize_dependencies(self.ICS_client, self.send_udp_message, self.send_telcom_command,
-            self.response_queue, self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue, self.show_status, self.dir_name)
+        self.logging('System check start. Initialize dependencies',level='normal')        
 
         await handle_script('obsinitial',scriptrun=self.scriptrun)
 
@@ -1424,7 +1422,7 @@ class MainWindow(QMainWindow):
                 self.ui.pushbtn_connect.setText('Connected')
                 self.ui.pushbtn_connect.setStyleSheet('color: green;')
 
-                print(f'Observer Name: {self.observer}')
+            #    print(f'Observer Name: {self.observer}')
             # Connect RabbitMQ
                 with open('./Lib/KSPEC.ini', 'r') as f:
                     kspecinfo = json.load(f)
@@ -1449,6 +1447,12 @@ class MainWindow(QMainWindow):
                 self.ui.pushbtn_connect.setText('Connect')
                 self.ui.pushbtn_connect.setStyleSheet('color: black;')
                 await self.ICS_client.disconnect()
+
+        self.scriptrun.initialize_dependencies(self.ICS_client, self.send_udp_message, self.send_telcom_command,
+            self.response_queue, self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue, self.show_status, self.dir_name)
+
+        self.logging('Script dependencies delivered.',level='normal')
+            
 
 
     ### check connection to RabbitMQ Server and system  ###
