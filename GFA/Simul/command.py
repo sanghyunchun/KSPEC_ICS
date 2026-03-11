@@ -66,6 +66,7 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
     elif func == 'gfaguidestop':
         if guiding_task and not guiding_task.done():
             printing("Stopping guiding task...")
+            await gfa_actions.guiding_stop()
             guiding_task.cancel()
             reply_data=mkmsg.gfamsg()
             reply_data.update(process='Done',message='Autoguide Stop',status='success')

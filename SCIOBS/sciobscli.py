@@ -73,28 +73,34 @@ class sciobscli:
 # Load RA/DEC and X/Y of science objects assigned in ???? tile_ID
     def load_target(self):
 #        dirs='../inputdata/obsplan/target_assign/'
-        dtype=[('fiber_id','i'),('xp','f'),('yp','f'),('ra','f'),('dec','f'),('mag','f'),('priority','i')]
-        fiberid,xp,yp,ra,dec,mag,priority=np.loadtxt(self.targetpath+self.tile_id+'.assign.txt',dtype=dtype,unpack=True,usecols=(0,1,2,3,4,5,6))  # For commission
-
-        message='Load Target Objects of Tile'
-        dict_data = { "tile_id":self.tile_id, "inst" : 'SCIOBS', "func" : 'loadobj', "ra":ra.tolist(), "dec":dec.tolist(),"xp":xp.tolist(),
-                "yp":yp.tolist(),'message':message, 'process': 'Done'}
-
-    #    dtype=[('fiber_id','i'),('xp','f'),('yp','f'),('ra','f'),('dec','f'),('class','U8')]
-    #    tid,fiberid,xp,yp,ra,dec,clss=np.loadtxt(self.targetpath+self.project+'_assign.txt',dtype=dtype,skiprows=1,unpack=True,usecols=(0,1,2,3,4,5,6))
-    #    idx = (tid == int(self.tile_id))
-    #    obj_tid=tid[idx]
-    #    obj_fiberid=fiberid[idx]
-    #    obj_xp=xp[idx]
-    #    obj_yp=yp[idx]
-    #    obj_ra=ra[idx]
-    #    obj_dec=dec[idx]
-    #    obj_class=clss[idx]
+    #     For commission Starts #
+    #    dtype=[('fiber_id','i'),('xp','f'),('yp','f'),('ra','f'),('dec','f'),('mag','f'),('priority','i')]
+    #    fiberid,xp,yp,ra,dec,mag,priority=np.loadtxt(self.targetpath+self.tile_id+'.assign.txt',dtype=dtype,unpack=True,usecols=(0,1,2,3,4,5,6))
 
     #    message='Load Target Objects of Tile'
+    #    dict_data = { "tile_id":self.tile_id, "inst" : 'SCIOBS', "func" : 'loadobj', "ra":ra.tolist(), "dec":dec.tolist(),"xp":xp.tolist(),
+    #            "yp":yp.tolist(),'message':message, 'process': 'Done'}
 
-    #    dict_data = { "tile_id":obj_tid[0].tolist(), "inst" : 'SCIOBS', "func" : 'loadobj', "ra":obj_ra.tolist(), "dec":obj_dec.tolist(),"xp":obj_xp.tolist(),
-    #            "yp":obj_yp.tolist(),"class":obj_class.tolist(),'message':message, 'process': 'Done'}
+    #    For commission Ends #
+
+    #   Fore real OBS Starts #
+        dtype=[('tid','i'),('fiber_id','i'),('xp','f'),('yp','f'),('ra','f'),('dec','f'),('class','U8')]
+        tid,fiberid,xp,yp,ra,dec,clss=np.loadtxt(self.targetpath+self.project+'_assign.txt',dtype=dtype,skiprows=1,unpack=True,usecols=(0,1,2,3,4,5,6))
+        idx = (tid == int(self.tile_id))
+        obj_tid=tid[idx]
+        obj_fiberid=fiberid[idx]
+        obj_xp=xp[idx]
+        obj_yp=yp[idx]
+        obj_ra=ra[idx]
+        obj_dec=dec[idx]
+        obj_class=clss[idx]
+
+        message='Load Target Objects of Tile'
+
+        dict_data = { "tile_id":obj_tid[0].tolist(), "inst" : 'SCIOBS', "func" : 'loadobj', "ra":obj_ra.tolist(), "dec":obj_dec.tolist(),"xp":obj_xp.tolist(),
+                "yp":obj_yp.tolist(),"class":obj_class.tolist(),'message':message, 'process': 'Done'}
+
+    #   For real OBS Starts #
 
         objdata=json.dumps(dict_data)
         return objdata
@@ -152,26 +158,26 @@ class sciobscli:
 
     def loadtile(self,tile_id):
         self.tile_id=tile_id
-        print(self.tile_id)
-#        tileinfo = self.load_tilepos()
-#        TCSmsg = tileinfo
+#        print(self.tile_id)
+        tileinfo = self.load_tilepos()
+        TCSmsg = tileinfo
 
-#        guideinfo=self.load_guide()
-#        GFAmsg=guideinfo
+        guideinfo=self.load_guide()
+        GFAmsg=guideinfo
 
         objinfo=self.load_target()
         OBJmsg=objinfo
 
 #        print(OBJmsg)
 
-#        motionmsg1,motionmsg2=self.load_motion()
+        motionmsg1,motionmsg2=self.load_motion()
 
-#        obs_info={'filename': self.filename, 'OBS-date': self.obsdate, 'Tile-ID': self.tile_id, 'Tile-RA': self.ra, 'Tile-DEC': self.dec}
-#        with open(self.obsinfofile, 'w') as f:
-#            json.dump(obs_info,f)
+        obs_info={'filename': self.filename, 'OBS-date': self.obsdate, 'Tile-ID': self.tile_id, 'Tile-RA': self.ra, 'Tile-DEC': self.dec}
+        with open(self.obsinfofile, 'w') as f:
+            json.dump(obs_info,f)
 
-        return OBJmsg
-#        return TCSmsg,GFAmsg,OBJmsg,motionmsg1,motionmsg2
+#        return OBJmsg
+        return TCSmsg,GFAmsg,OBJmsg,motionmsg1,motionmsg2
        
 
 

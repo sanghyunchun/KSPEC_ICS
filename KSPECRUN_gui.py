@@ -1293,9 +1293,11 @@ class MainWindow(QMainWindow):
         if dialog.exec() == QDialog.Accepted and dialog.selected_values:
             self.select_tile=dialog.selected_values[0]
             self.obsnum=dialog.selected_values[3]
-            self.expT=dialog.selected_values[2]
-            self.ra = dialog.selected_values[4]        # For commission
-            self.dec = dialog.selected_values[5]       # For commission
+            self.expT= dialog.selected_values[2]
+#            self.ra = dialog.selected_values[4]        # For commission
+#            self.dec = dialog.selected_values[5]       # For commission
+
+#        print(self.ra)
 
         sciobs=sciobscli()
         filename=os.path.basename(file_path)
@@ -1307,31 +1309,31 @@ class MainWindow(QMainWindow):
         print(self.project)
         print(self.obsdate)
         print(self.select_tile)
-        print(self.ra)
-        print(self.dec)
+#        print(self.ra)
+#        print(self.dec)
 
 
-        self.objmsg=sciobs.loadtile(self.select_tile)   # For commission
-        self.ra, self.dec=self.convert_to_sexagesimal(self.ra,self.dec)    # For commission
-        self.scriptrun.configure_cordinate(self.project, self.obsdate, self.select_tile, self.ra, self.dec, self.obsnum, self.expT)   # For commission
+#        self.objmsg=sciobs.loadtile(self.select_tile)   # For commission
+#        self.ra, self.dec=self.convert_to_sexagesimal(self.ra,self.dec)    # For commission
+#        self.scriptrun.configure_cordinate(self.project, self.obsdate, self.select_tile, self.ra, self.dec, self.obsnum, self.expT)   # For commission
+#        self.ui.lineEdit_TileID.setText(f'{self.select_tile}')
+#        self.ui.lineEdit_ra_1.setText(f'{self.ra}')
+#        self.ui.lineEdit_dec_1.setText(f'{self.dec}')
+#        self.ui.lineEdit_exp_time_1.setText(f'{self.expT}')
+#        self.ui.lineEdit_n_exp_1.setText(f'{self.obsnum}')
+
+
+    ### Real survey Observation ####    
+        self.tilemsg,self.guidemsg,self.objmsg,self.motionmsg1,self.motionmsg2=sciobs.loadtile(self.select_tile)
+        self.ra, self.dec=self.convert_to_sexagesimal(sciobs.ra,sciobs.dec)
+
+        self.scriptrun.configure_cordinate(self.project, self.obsdate, self.select_tile, self.ra, self.dec, self.obsnum, self.expT)
+
         self.ui.lineEdit_TileID.setText(f'{self.select_tile}')
         self.ui.lineEdit_ra_1.setText(f'{self.ra}')
         self.ui.lineEdit_dec_1.setText(f'{self.dec}')
         self.ui.lineEdit_exp_time_1.setText(f'{self.expT}')
         self.ui.lineEdit_n_exp_1.setText(f'{self.obsnum}')
-
-
-    ### Real survey Observation ####    
-    #    self.tilemsg,self.guidemsg,self.objmsg,self.motionmsg1,self.motionmsg2=sciobs.loadtile(self.select_tile)
-    #    self.ra, self.dec=self.convert_to_sexagesimal(sciobs.ra,sciobs.dec)
-
-    #    self.scriptrun.configure_cordinate(self.project, self.obsdate, self.select_tile, self.ra, self.dec, self.obsnum, self.expT)
-
-    #    self.ui.lineEdit_TileID.setText(f'{self.select_tile}')
-    #    self.ui.lineEdit_ra_1.setText(f'{self.ra}')
-    #    self.ui.lineEdit_dec_1.setText(f'{self.dec}')
-    #    self.ui.lineEdit_exp_time_1.setText(f'{self.expT}')
-    #    self.ui.lineEdit_n_exp_1.setText(f'{self.obsnum}')
 
 
     def reload_img(self,filename):

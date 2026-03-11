@@ -71,6 +71,7 @@ class Guider:
 
         self.index = end
         print(f"Copied {end - (end - self.batch_size)} files. Next index: {self.index}")
+        return f"Copied {end - (end - self.batch_size)} files. Next index: {self.index}"
 
 
 
@@ -83,6 +84,7 @@ class GFAActions:
         if env is None:
             env = create_environment(role="plate")
         self.env = env
+        self.guider = Guider()    ### For Simulation ###
 
     def _generate_response(self, status: str, message: str, **kwargs) -> dict:
         response = {"status": status, "message": message}
@@ -265,7 +267,7 @@ class GFAActions:
      #               output_dir=raw_save_path,
      #               ra=ra, dec=dec
      #           )
-     #           pass
+     #           passasync def guiding(
      #       finally:
      #           try:
      #               await self.env.controller.close_all_cameras()
@@ -294,7 +296,7 @@ class GFAActions:
     #        self._apply_clean_env_to_astrometry()
 
             # --- procimg 없이: astro dir 있으면 사용 / 없으면 생성 ---
-            self.env.logger.info("Ensuring astrometry outputs are ready (no procimg dependency)...")
+            self.env.logger.info("Ensuring astrometry outputs are ready (no procimg depeasync def guiding(ndency)...")
             
     #        astro_files = self._ensure_astrometry_outputs_ready()
     #        self.env.logger.info(f"Astrometry inputs ready: {len(astro_files)} files.")
@@ -339,6 +341,8 @@ class GFAActions:
      #       )
 
             ##### Simulation Part Starts ###
+            ttt=self.guider.guiding()
+            print(ttt)
             self.env.logger.info("Guiding test......")
             fdx = 0.04
             fdy = 0.1
@@ -356,6 +360,9 @@ class GFAActions:
         except Exception as e:
             self.env.logger.error(f"Guiding failed: {str(e)}")
             return self._generate_response("error", f"Guiding failed: {str(e)}")
+
+    async def guiding_stop(self):
+        self.guider.index = 0
 
 
     async def pointing(
