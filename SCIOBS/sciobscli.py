@@ -72,7 +72,6 @@ class sciobscli:
 
 # Load RA/DEC and X/Y of science objects assigned in ???? tile_ID
     def load_target(self):
-#        dirs='../inputdata/obsplan/target_assign/'
     #     For commission Starts #
     #    dtype=[('fiber_id','i'),('xp','f'),('yp','f'),('ra','f'),('dec','f'),('mag','f'),('priority','i')]
     #    fiberid,xp,yp,ra,dec,mag,priority=np.loadtxt(self.targetpath+self.tile_id+'.assign.txt',dtype=dtype,unpack=True,usecols=(0,1,2,3,4,5,6))
@@ -108,7 +107,6 @@ class sciobscli:
 
 # Load RA/DEC and X/Y of guide star in specific tile
     def load_guide(self):
-#        dirs='../inputdata/obsplan/target_assign/'
         dtype=[('tid','i'),('chipid','i'),('ra','f'),('dec','f'),('mag','f'),('xp','f'),('yp','f')]
         tid,chipid,ra,dec,mag,xp,yp=np.loadtxt(self.targetpath+self.project+'_GFA.txt',dtype=dtype,skiprows=1,unpack=True)
         idx = (tid == int(self.tile_id))

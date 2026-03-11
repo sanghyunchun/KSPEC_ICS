@@ -155,7 +155,6 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.scriptrun=script()
-#        self.showMaximized()
 
         QTimer.singleShot(0, self.adjust_window_size_by_screen)
 
@@ -196,8 +195,7 @@ class MainWindow(QMainWindow):
         self.fiducial_state = False
     
 
-
-#Make timer (LT & UTC) 
+#       Make timer (LT & UTC) 
         self.datetime = QDateTime.currentDateTime().toString()
         #self.lcd.display(datetime)
         self.timer = QTimer(self)
