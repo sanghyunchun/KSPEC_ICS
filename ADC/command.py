@@ -170,7 +170,8 @@ async def identify_execute(ADC_server, adc_action, cmd):
 
         count = int(dict_data['pcount'])
         lens = dict_data['lens']
-        result = await adc_action.move(lens, count)
+        velocity = int(dict_data['vel'])
+        result = await adc_action.move(lens, count, vel_set=velocity)
         reply_data = mkmsg.adcmsg()
         reply_data.update(result)
         reply_data.update(process='Done')
@@ -184,7 +185,8 @@ async def identify_execute(ADC_server, adc_action, cmd):
         rsp = json.dumps(reply_data)
         await ADC_server.send_message('ICS', rsp)
 
-        result = await adc_action.homing()
+        velocity = int(dict_data['vel'])
+        result = await adc_action.homing(homing_vel=velocity)
         reply_data = mkmsg.adcmsg()
         reply_data.update(result)
         reply_data.update(process='Done')
@@ -198,7 +200,8 @@ async def identify_execute(ADC_server, adc_action, cmd):
         rsp = json.dumps(reply_data)
         await ADC_server.send_message('ICS', rsp)
 
-        result = await adc_action.zeroing()
+        velocity = int(dict_data['vel'])
+        result = await adc_action.zeroing(zeroing_vel=velocity)
         reply_data = mkmsg.adcmsg()
         reply_data.update(result)
         reply_data.update(process='Done')
@@ -294,8 +297,8 @@ def calculate_zenith_distance(ra, dec):
     """
     ra_obj = Angle(ra, unit=u.hourangle).degree
     dec_obj = Angle(dec, unit=u.deg).degree
-    print('dfjhieijiekkkkkkkk')
-    print(ra_obj,dec_obj)
+#    print('dfjhieijiekkkkkkkk')
+#    print(ra_obj,dec_obj)
     location = EarthLocation(lat=-31.27118, lon=149.06256, height=1165*u.m)  # AAO coordinates
     object_coord = SkyCoord(ra=ra_obj, dec=dec_obj, unit=(u.deg,u.deg))
     current_time = Time.now()

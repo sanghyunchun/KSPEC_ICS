@@ -244,6 +244,9 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_adc_park.clicked.connect(self.adcpark_button_clicked)
         self.ui.pushbtn_adc_home.clicked.connect(self.adchome_button_clicked)
         self.ui.pushbtn_adc_zero.clicked.connect(self.adczero_button_clicked)
+        self.ui.pushbtn_adc_connect.clicked.connect(self.adcconnect_button_clicked)
+
+        
 
         # Fiber assign
     #    self.ui.pushbtn_Fiber_assign.clicked.connect(self.Fiber_assign_button_clicked)
@@ -734,8 +737,8 @@ class MainWindow(QMainWindow):
         if not self.check_connection():
             return
 
-#        if not self.check_syscheck():
-#            return
+        if not self.check_syscheck():
+            return
         
         if self.fbp_state not in (None,"zero"):
             self.logging('Fiber positioners are not in zero position. Click Fiber Zero button.', level='error')
@@ -795,8 +798,8 @@ class MainWindow(QMainWindow):
         if not self.check_connection():
             return
 
-#        if not self.check_syscheck():
-#            return
+        if not self.check_syscheck():
+            return
         if not self.ui.lineEdit_GFA_exptime.text():
             self.ui.lineEdit_GFA_exptime.setText('5')      # Default guiding exposure time : 5 sec
 
@@ -819,8 +822,8 @@ class MainWindow(QMainWindow):
         if not self.check_connection():
             return
 
-#        if not self.check_syscheck():
-#            return
+        if not self.check_syscheck():
+            return
 
         if not self.ra or not self.dec:
            self.logging(f'Please load Tile or slew telescope.',level='error')
@@ -862,8 +865,8 @@ class MainWindow(QMainWindow):
         if not self.check_connection():
             return
 
-#        if not self.check_syscheck():
-#            return
+        if not self.check_syscheck():
+            return
 
         if not self.ui.lineEdit_GFA_exptime.text():
             self.ui.lineEdit_GFA_exptime.setText('5')
@@ -912,8 +915,8 @@ class MainWindow(QMainWindow):
         if not self.check_connection():
             return
 
-#        if not self.check_syscheck():
-#            return
+        if not self.check_syscheck():
+            return
 
         if not self.ui.lineEdit_GFA_exptime.text():
             self.ui.lineEdit_GFA_exptime.setText('5')      # Default guiding exposure time : 5 sec
@@ -966,6 +969,13 @@ class MainWindow(QMainWindow):
 
     ### ADC ###
     @asyncSlot()
+    async def adcconnect_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        await handle_adc('adcconnect',self.ICS_client)
+
+    @asyncSlot()
     async def ADCadjust_button_clicked(self):
         if not self.check_connection():
             return
@@ -1001,57 +1011,6 @@ class MainWindow(QMainWindow):
             await handle_adc('adcstop',self.ICS_client)
             self.logging('Sent ADC adjusting Stop', level='send')
 
-    @asyncSlot()
-    async def adcrotate_button_clicked(self):
-        if not self.check_connection():
-            return
-
-        if not self.check_syscheck():
-            return
-        if not self.ui.lineEdit_adc_counts.text():
-            self.ui.lineEdit_adc_counts.setText('0')
-
-        self.adc = int(self.ui.lineEdit_adc_counts.text())
-
-        adccmd=self.rotate_mode()
-        print(adccmd)
-        if adccmd == None:
-            return
-        else:
-            fcmd = adccmd + ' '+ str(self.adc)
-            self.logging(f'Sent ADC {fcmd}', level='send')
-            await handle_adc(fcmd, self.ICS_client)
-
-    @asyncSlot()
-    async def adcpark_button_clicked(self):
-        if not self.check_connection():
-            return
-
-    #    if not self.check_syscheck():
-    #        return
-        self.logging(f'Sent ADC adcpark', level='send')
-        await handle_adc('adcpark', self.ICS_client)
-
-    @asyncSlot()
-    async def adchome_button_clicked(self):
-        if not self.check_connection():
-            return
-
-    #    if not self.check_syscheck():
-    #        return
-        self.logging(f'Sent ADC adchome', level='send')
-        await handle_adc('adchome', self.ICS_client)
-
-    @asyncSlot()
-    async def adczero_button_clicked(self):
-        if not self.check_connection():
-            return
-
-        if not self.check_syscheck():
-            return
-        self.logging(f'Sent ADC adczero', level='send')
-        await handle_adc('adczero', self.ICS_client)
-
 
     def rotate_mode(self):
         chk1=self.ui.adc_checkBox1.isChecked()
@@ -1071,6 +1030,77 @@ class MainWindow(QMainWindow):
             return
 
         return cmd
+
+
+    @asyncSlot()
+    async def adcrotate_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        if not self.ui.lineEdit_adc_counts.text():
+            self.ui.lineEdit_adc_counts.setText('0')
+
+        if not self.ui.lineEdit_adc_velocity.text():
+            self.ui.lineEdit_adc_velocity.setText('1')
+
+        self.adc_count = int(self.ui.lineEdit_adc_counts.text())
+        self.adc_velocity = self.ui.lineEdit_adc_velocity.text()
+
+        adccmd=self.rotate_mode()
+
+        if adccmd == None:
+            return
+        else:
+            fcmd = adccmd + ' ' + str(self.adc_count) + ' ' + str(self.adc_velocity)
+            self.logging(f'Sent ADC {fcmd}', level='send')
+            await handle_adc(fcmd, self.ICS_client)
+
+    @asyncSlot()
+    async def adcpark_button_clicked(self):
+        if not self.check_connection():
+            return
+
+#        if not self.check_syscheck():
+#            return
+
+        self.logging(f'Sent ADC adcpark', level='send')
+        await handle_adc('adcpark', self.ICS_client)
+
+    @asyncSlot()
+    async def adchome_button_clicked(self):
+        if not self.check_connection():
+            return
+
+#        if not self.check_syscheck():
+#            return
+
+        if not self.ui.lineEdit_adc_velocity.text():
+            self.ui.lineEdit_adc_velocity.setText('2')
+
+        self.adc_velocity = self.ui.lineEdit_adc_velocity.text()
+
+        self.logging(f'Sent ADC adchome', level='send')
+        await handle_adc(f'adchome {self.adc_velocity}', self.ICS_client)
+
+    @asyncSlot()
+    async def adczero_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        if not self.ui.lineEdit_adc_velocity.text():
+            self.ui.lineEdit_adc_velocity.setText('2')
+
+        self.adc_velocity = self.ui.lineEdit_adc_velocity.text()
+        
+        self.logging(f'Sent ADC adczero', level='send')
+        await handle_adc(f'adczero {self.adc_velocity}', self.ICS_client)
+
 
 
     ### MTL Button ###
@@ -1133,9 +1163,10 @@ class MainWindow(QMainWindow):
             self.ui.lineEdit_MTL_exptime.setText('5')
 
         self.mtlexp = float(self.ui.lineEdit_MTL_exptime.text())
-    #    self.mtlfile = str(self.ui.lineEdit_MTL_file.text())
+        self.mtlfile = str(self.ui.lineEdit_MTL_file.text())
+        self.mtlnum = float(self.ui.lineEdit_MTL_expnum.text())
         self.logging(f'Set MTL exposure time to {self.mtlexp}', level='send')
-        self.scriptrun.MTL_set(self.mtlexp)
+        self.scriptrun.MTL_set(self.mtlexp, self.mtlnum, self.mtlfile)
         
 
     ### Flat Button ###
@@ -1219,8 +1250,8 @@ class MainWindow(QMainWindow):
         if not self.check_connection():
             return
 
-        if not self.check_syscheck():
-            return
+    #    if not self.check_syscheck():
+    #        return
 
         if not self.ui.lineEdit_ra_1.text() or not self.ui.lineEdit_dec_1.text():
             self.logging('Please load tile information.', level='error')
@@ -1391,7 +1422,13 @@ class MainWindow(QMainWindow):
         if not self.check_connection():
             return
 
-        self.logging('System check start. Initialize dependencies',level='normal')        
+        self.logging('System check start. Initialize dependencies',level='normal')
+
+        self.scriptrun.initialize_dependencies(self.ICS_client, self.send_udp_message, self.send_telcom_command,
+            self.response_queue, self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue, self.show_status, self.dir_name)
+
+        self.dependencies = True
+        self.logging('Script dependencies delivered.',level='normal')        
 
         await handle_script('obsinitial',scriptrun=self.scriptrun)
 
@@ -1403,10 +1440,10 @@ class MainWindow(QMainWindow):
             if "color: red" in style:
                 self.logging('While system checking, unexpected Errors have occurred in some instruments.',level='error')
                 return True
-
+        
         self.logging('System check finished. All systems are OK.',level='normal')
-        self.dependencies = True
-#        self.logging('System check finished. All systems are OK.',level='normal')
+        
+
 
 
 ### Functions related with RabbitMQ ###
@@ -1441,18 +1478,11 @@ class MainWindow(QMainWindow):
 
 
                 await self.ICS_client.define_consumer('ICS',self.on_ics_message)
-#               asyncio.create_task(self.wait_for_response())
 
             else:
                 self.ui.pushbtn_connect.setText('Connect')
                 self.ui.pushbtn_connect.setStyleSheet('color: black;')
                 await self.ICS_client.disconnect()
-
-        self.scriptrun.initialize_dependencies(self.ICS_client, self.send_udp_message, self.send_telcom_command,
-            self.response_queue, self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue, self.show_status, self.dir_name)
-
-        self.logging('Script dependencies delivered.',level='normal')
-            
 
 
     ### check connection to RabbitMQ Server and system  ###

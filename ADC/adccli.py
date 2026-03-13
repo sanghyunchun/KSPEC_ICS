@@ -16,22 +16,28 @@ def create_adc_command(func, **kwargs):
 def adc_init(): return create_adc_command('adcinit', message='Start ADC initializing')
 def adc_connect(): return create_adc_command('adcconnect', message='Connect ADC instrument')
 def adc_disconnect(): return create_adc_command('adcdisconnect', message='Disconnect ADC instrument')
-def adc_home(): return create_adc_command('adchome', message='Homing ADC lens')
-def adc_zero(): return create_adc_command('adczero', message='Rotate ADC lens to zero position')
+#def adc_home(): return create_adc_command('adchome', message='Homing ADC lens')
+#def adc_zero(): return create_adc_command('adczero', message='Rotate ADC lens to zero position')
 def adc_status(): return create_adc_command('adcstatus', message='ADC status')
 def adc_poweroff(): return create_adc_command('adcpoweroff', message='ADC power off')
 def adc_stop(): return create_adc_command('adcstop', message='ADC rotating stop')
 def adc_park(): return create_adc_command('adcpark', message='Rotate ADC to parking position')
 
-def adc_rotate(lens, count, direction):
+def adc_rotate(lens, count, direction, velocity):
     """Rotate ADC lens."""
-    return create_adc_command(direction, lens=lens, pcount=count, message=f'Rotate ADC lens {lens} by {count} counts.')
+    return create_adc_command(direction, lens = lens, pcount = count, vel = velocity, message=f'Rotate ADC lens {lens} by {count} counts.')
 
 def adc_adjust(ra, dec):
     return create_adc_command('adcadjust', RA=ra, DEC=dec, message='ADC adjusting')
 
 def adc_activate(zdist):
     return create_adc_command('adcactivate', zdist=zdist, message='ADC activate')
+
+def adc_home(velocity):
+    return create_adc_command('adchome', vel = velocity, message='Homing ADC lens')
+
+def adc_zero(velocity):
+    return create_adc_command('adczero', vel = velocity, message='Rotate ADC lens to zero position.')
 
 
 async def handle_adc(arg, ICS_client):
@@ -47,16 +53,18 @@ async def handle_adc(arg, ICS_client):
 
     # Command rotating counts 
     if cmd in ['adcrotate1', 'adcrotate2', 'adcctrotate', 'adccorotate']:
-        if len(params) != 1:
-            print(f"Error: '{cmd}' command needs one integer parameter (count). ex) {cmd} 342")
+        if len(params) != 2:
+            print(f"Error: '{cmd}' command needs two integer parameters (count) and (velocity). ex) {cmd} 342 2")
             return
         try:
             count = int(params[0])
+            velocity = int(params[1])
         except ValueError:
             print(f"Error: '{cmd}' command need one integer parameter. input value: {params[0]}")
             return
+
         lens_map = {'adcrotate1': 1, 'adcrotate2': 2, 'adcctrotate': 0, 'adccorotate': -1}
-        command_map[cmd] = lambda: adc_rotate(lens_map[cmd], count, cmd)
+        command_map[cmd] = lambda: adc_rotate(lens_map[cmd], count, cmd, velocity)
 
     # adcadjust command
     elif cmd == 'adcadjust':
@@ -84,6 +92,23 @@ async def handle_adc(arg, ICS_client):
             print(f"Error: Input parameters of 'adcactivate' should be float. input value: {params[0]}")
             return
         command_map[cmd] = lambda: adc_activate(zdist)
+
+    elif cmd == 'adchome':
+        try:
+            velocity = int(params[0])
+        except ValueError:
+            print(f"Error: '{cmd}' command need one integer parameter as velocity. input value: {params[0]}")
+            return
+        command_map[cmd] = lambda: adc_home(velocity)
+
+    elif cmd == 'adczero':
+        try:
+            velocity = int(params[0])
+        except ValueError:
+            print(f"Error: '{cmd}' command need one integer parameter as velocity. input value: {params[0]}")
+            return
+        command_map[cmd] = lambda: adc_zero(velocity)
+        
 
     # Right command
     if cmd in command_map:

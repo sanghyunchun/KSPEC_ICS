@@ -129,6 +129,7 @@ class AdcActions:
                 return self._generate_response(
                     "success",
                     f"Both motors moved to position {pos_count} with velocity {vel_set}. ",
+                    motor_1= 234, motor_2=-100                   
 #                    motor_1=results[0],
 #                    motor_2=results[1],
                 )
@@ -147,6 +148,7 @@ class AdcActions:
                 return self._generate_response(
                     "success",
                     "Both motors activated successfully.",
+                    motor_1= 234, motor_2=-100
 #                    motor_1=results[0],
 #                    motor_2=results[1],
                 )
@@ -195,7 +197,7 @@ class AdcActions:
                 )
             elif motor_id in [1, 2]:
                 self.logger.debug(f"Stopping motor {motor_id}.")
-                result = await asyncio.to_thread(self.controller.stop_motor, motor_id)
+#                result = await asyncio.to_thread(self.controller.stop_motor, motor_id)
                 self.logger.info(f"Motor {motor_id} stopped successfully.")
                 return self._generate_response(
                     "success",

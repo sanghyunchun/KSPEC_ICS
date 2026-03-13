@@ -5,9 +5,10 @@ import Lib.mkmessage as mkmsg
 from astropy.coordinates import EarthLocation, SkyCoord, AltAz
 from astropy.time import Time
 import astropy.units as u
+from astropy.coordinates import Angle
+
 import numpy as np
-#from .kspec_adc_controller.src.adc_calc_angle import ADCCalc
-from .kspec_adc_controller.src.adc_logger import AdcLogger
+from ADC.kspec_adc_controller.src.adc_calc_angle import ADCCalc
 
 """Command module for handling ADC-related functionalities.
 
@@ -116,7 +117,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
         ra = dict_data['RA']
         dec = dict_data['DEC']
         reply_data = mkmsg.adcmsg()
-        reply_data.update(message = 'ADC adjusting starts.', process='START',status='success')
+        reply_data.update(message = 'ADC adjusting starts.', process='ING',status='success')
         rsp = json.dumps(reply_data)
         await ADC_server.send_message('ICS', rsp)
 
@@ -137,7 +138,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
         reply_data = mkmsg.adcmsg()
         result = await adc_action.stop(0)
         reply_data.update(result)
-        reply_data.update(process='Done',status='success')
+        reply_data.update(process='Done')
         rsp = json.dumps(reply_data)
         printing(reply_data['message'])
         await ADC_server.send_message('ICS', rsp)
@@ -148,21 +149,29 @@ async def identify_execute(ADC_server, adc_action, cmd):
             adcadjust_task.cancel()
             try:
                 await adcadjust_task
+                reply_data = mkmsg.adcmsg()
+                reply_data.update(result)
+                reply_data.update(message = 'ADC adjust stopped.', process='Done', status='success')
+                rsp = json.dumps(reply_data)
+                
             except asyncio.CancelledError:
                 printing("adcadjust task stopped.")
         else:
             printing("No adcadjust task is currently running.")
 
+        await ADC_server.send_message('ICS', rsp)
+
     elif func in {'adcrotate1', 'adcrotate2', 'adcctrotate','adccorotate'}:
         reply_data = mkmsg.adcmsg()
-        reply_data.update(process='START',message='ADC rotation starts.', status='success')
+        reply_data.update(process='ING',message='ADC rotation starts.', status='success')
         rsp = json.dumps(reply_data)
         printing(reply_data['message'])
         await ADC_server.send_message('ICS', rsp)
 
         count = int(dict_data['pcount'])
         lens = dict_data['lens']
-        result = await adc_action.move(lens, count)
+        velocity = int(dict_data['vel'])
+        result = await adc_action.move(lens, count, vel_set=velocity)
         reply_data = mkmsg.adcmsg()
         reply_data.update(result)
         reply_data.update(process='Done')
@@ -172,11 +181,12 @@ async def identify_execute(ADC_server, adc_action, cmd):
 
     elif func == 'adchome':
         reply_data = mkmsg.adcmsg()
-        reply_data.update(process='START',message='ADC Homing starts.', status='success')
+        reply_data.update(process='ING',message='ADC Homing starts.', status='success')
         rsp = json.dumps(reply_data)
         await ADC_server.send_message('ICS', rsp)
 
-        result = await adc_action.homing()
+        velocity = int(dict_data['vel'])
+        result = await adc_action.homing(homing_vel=velocity)
         reply_data = mkmsg.adcmsg()
         reply_data.update(result)
         reply_data.update(process='Done')
@@ -186,11 +196,12 @@ async def identify_execute(ADC_server, adc_action, cmd):
 
     elif func == 'adczero':
         reply_data = mkmsg.adcmsg()
-        reply_data.update(process='START',message='ADC Zeroing starts.', status='success')
+        reply_data.update(process='ING',message='ADC Zeroing starts.', status='success')
         rsp = json.dumps(reply_data)
         await ADC_server.send_message('ICS', rsp)
 
-        result = await adc_action.zeroing()
+        velocity = int(dict_data['vel'])
+        result = await adc_action.zeroing(zeroing_vel=velocity)
         reply_data = mkmsg.adcmsg()
         reply_data.update(result)
         reply_data.update(process='Done')
@@ -203,7 +214,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
         reply_data.update(process='ING',message='ADC Parking starts.', status='success')
         rsp = json.dumps(reply_data)
         await ADC_server.send_message('ICS', rsp)
-
+        
         result = await adc_action.parking()
         reply_data = mkmsg.adcmsg()
         reply_data.update(result)
@@ -226,14 +237,10 @@ async def handle_adcadjust(ADC_server, adc_action, ra, dec):
         Exception: For any unexpected errors during adjustment.
     """
     try:
-        ini_zdist = calculate_zenith_distance(ra, dec) 
-        result1=adc_action.calc_from_za(ini_zdist)
-#        print(result1)
-        lensdegree=float(result1['message'])
-        print(f'lends degree: {lensdegree}')
-        result2 = adc_action.degree_to_count(lensdegree)
-        ini_count=int(result2['message'])
-        print(f'initial count: {ini_count}')
+        ini_zdist = calculate_zenith_distance(ra, dec)
+#        logger = AdcLogger(__file__)
+        #calculator = ADCCalc()
+        ini_count = adc_action.calculator.degree_to_count(adc_action.calculator.calc_from_za(ini_zdist))
         delcount = ini_count
         prev_count=ini_count
 
@@ -246,20 +253,20 @@ async def handle_adcadjust(ADC_server, adc_action, ra, dec):
             await ADC_server.send_message('ICS',rsp)
 
             result = await adc_action.move(0,delcount)
+            motor_1, motor_2 = result['motor_1'], result['motor_2']
+            comment1=result['message']  
+            comment=f'{comment1} ADC lens rotated {motor_1}, {motor_2} counts successfully.'
             reply_data=mkmsg.adcmsg()
             reply_data.update(result)
-            reply_data.update(process='ING')
+            reply_data.update(message=comment,process='ING')
+
             rsp=json.dumps(reply_data)
             print('\033[32m'+'[ADC]', comment+'\033[0m')
             await ADC_server.send_message('ICS',rsp)
 
             await asyncio.sleep(60)                       # Wait for exposure time
             zdist = calculate_zenith_distance(ra, dec)
-            result1=adc_action.calc_from_za(zdist)
-            lensdegree=float(result1['message'])
-            result2 = adc_action.degree_to_count(lensdegree)
-            next_count=int(result2['message'])
-#            next_count = calculator.degree_to_count(calculator.calc_from_za(zdist))
+            next_count = adc_action.calculator.degree_to_count(adc_action.calculator.calc_from_za(zdist))
             delcount = next_count - prev_count
             prev_count = next_count
 
@@ -270,14 +277,14 @@ async def handle_adcadjust(ADC_server, adc_action, ra, dec):
         comment=f"Error in handle_adcadjust: {e}"
         printing(comment)
         reply_data=mkmsg.adcmsg()
-        reply_data.update(message=comment,process='Done',status='error')
+        reply_data.update(message=comment,process='Done')
         rsp=json.dumps(reply_data)
         await ADC_server.send_message('ICS',rsp)
     else:
         printing("handle_adcadjust completed successfully.")
 
 
-def calculate_zenith_distance(ra_obj, dec_obj):
+def calculate_zenith_distance(ra, dec):
     """Calculate the zenith distance for a given RA and DEC.
 
     Args:
@@ -287,14 +294,18 @@ def calculate_zenith_distance(ra_obj, dec_obj):
     Returns:
         float: The zenith distance in degrees.
     """
+    ra_obj = Angle(ra, unit=u.hourangle).degree
+    dec_obj = Angle(dec, unit=u.deg).degree
+#    print('dfjhieijiekkkkkkkk')
+#    print(ra_obj,dec_obj)
     location = EarthLocation(lat=-31.27118, lon=149.06256, height=1165*u.m)  # AAO coordinates
-    object_coord = SkyCoord(ra=ra_obj, dec=dec_obj, unit=(u.hourangle,u.deg))
+    object_coord = SkyCoord(ra=ra_obj, dec=dec_obj, unit=(u.deg,u.deg))
     current_time = Time.now()
     times = current_time + np.arange(0, 2) * u.minute
     altaz_frame = AltAz(obstime=times, location=location)
     zenith_distance = 90. - object_coord.transform_to(altaz_frame).alt.degree
     ele=object_coord.transform_to(altaz_frame).alt.degree
     print(f'Current UT time: {current_time}')
-    print(f'Mean Zenith distance for 1 min. : {np.mean(zenith_distance)} degree')
+    print(f'Mean Zenith distance for 1 min. : {zenith_distance} degree')
     return np.mean(zenith_distance)
 

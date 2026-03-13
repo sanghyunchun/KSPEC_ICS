@@ -15446,7 +15446,7 @@
           <x>0</x>
           <y>0</y>
           <width>281</width>
-          <height>141</height>
+          <height>181</height>
          </rect>
         </property>
         <property name="font">
@@ -15464,8 +15464,8 @@
         <widget class="QLineEdit" name="lineEdit_adc_counts">
          <property name="geometry">
           <rect>
-           <x>200</x>
-           <y>62</y>
+           <x>120</x>
+           <y>60</y>
            <width>61</width>
            <height>25</height>
           </rect>
@@ -15473,18 +15473,21 @@
          <property name="font">
           <font>
            <family>Arial</family>
-           <pointsize>14</pointsize>
+           <pointsize>12</pointsize>
            <weight>50</weight>
            <bold>false</bold>
            <strikeout>false</strikeout>
           </font>
          </property>
+         <property name="placeholderText">
+          <string>ex) 240</string>
+         </property>
         </widget>
         <widget class="QPushButton" name="pushbtn_adc_home">
          <property name="geometry">
           <rect>
-           <x>100</x>
-           <y>100</y>
+           <x>110</x>
+           <y>140</y>
            <width>71</width>
            <height>31</height>
           </rect>
@@ -15508,8 +15511,8 @@
         <widget class="QPushButton" name="pushbtn_adc_park">
          <property name="geometry">
           <rect>
-           <x>10</x>
-           <y>100</y>
+           <x>20</x>
+           <y>140</y>
            <width>71</width>
            <height>31</height>
           </rect>
@@ -15533,8 +15536,8 @@
         <widget class="QPushButton" name="pushbtn_adc_zero">
          <property name="geometry">
           <rect>
-           <x>190</x>
-           <y>100</y>
+           <x>200</x>
+           <y>140</y>
            <width>71</width>
            <height>31</height>
           </rect>
@@ -15602,8 +15605,8 @@
         <widget class="QCheckBox" name="adc_checkBox_corotate">
          <property name="geometry">
           <rect>
-           <x>90</x>
-           <y>30</y>
+           <x>10</x>
+           <y>98</y>
            <width>91</width>
            <height>21</height>
           </rect>
@@ -15624,8 +15627,8 @@
         <widget class="QLabel" name="label_2">
          <property name="geometry">
           <rect>
-           <x>197</x>
-           <y>33</y>
+           <x>117</x>
+           <y>31</y>
            <width>71</width>
            <height>16</height>
           </rect>
@@ -15637,8 +15640,8 @@
         <widget class="QPushButton" name="pushbtn_adc_rotate">
          <property name="geometry">
           <rect>
-           <x>100</x>
-           <y>60</y>
+           <x>110</x>
+           <y>100</y>
            <width>71</width>
            <height>31</height>
           </rect>
@@ -15659,6 +15662,66 @@
           <string>Rotate</string>
          </property>
         </widget>
+        <widget class="QLineEdit" name="lineEdit_adc_velocity">
+         <property name="geometry">
+          <rect>
+           <x>200</x>
+           <y>60</y>
+           <width>61</width>
+           <height>25</height>
+          </rect>
+         </property>
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>12</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
+           <strikeout>false</strikeout>
+          </font>
+         </property>
+         <property name="placeholderText">
+          <string>ex) 1</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_5">
+         <property name="geometry">
+          <rect>
+           <x>197</x>
+           <y>31</y>
+           <width>71</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Velocity</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pushbtn_adc_connect">
+         <property name="geometry">
+          <rect>
+           <x>200</x>
+           <y>100</y>
+           <width>71</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>12</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+           <strikeout>false</strikeout>
+          </font>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>Connect</string>
+         </property>
+        </widget>
        </widget>
        <widget class="QGroupBox" name="group_metrology">
         <property name="geometry">
@@ -15666,7 +15729,7 @@
           <x>290</x>
           <y>0</y>
           <width>231</width>
-          <height>141</height>
+          <height>181</height>
          </rect>
         </property>
         <property name="font">
@@ -15878,7 +15941,7 @@
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>144</y>
+          <y>190</y>
           <width>281</width>
           <height>121</height>
          </rect>
@@ -16757,7 +16820,7 @@
         <property name="geometry">
          <rect>
           <x>290</x>
-          <y>144</y>
+          <y>190</y>
           <width>231</width>
           <height>121</height>
          </rect>
@@ -16863,9 +16926,9 @@
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>388</y>
+          <y>318</y>
           <width>521</width>
-          <height>121</height>
+          <height>191</height>
          </rect>
         </property>
         <property name="font">
@@ -16895,6 +16958,9 @@
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="placeholderText">
+         <string>For help, Type '?'</string>
         </property>
        </widget>
        <widget class="QLabel" name="label_cmd_2">

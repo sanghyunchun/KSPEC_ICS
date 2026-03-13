@@ -15,7 +15,6 @@ from FBP.fbpcli import handle_fbp
 from ADC.adccli import handle_adc
 from LAMP.lampcli import handle_lamp
 from SPECTRO.speccli import handle_spec
-from ENDO.ENDOcli import handle_endo
 from SCIOBS.sciobscli import sciobscli
 import Lib.process as processes
 from TCS.tcscli import handle_telcom
@@ -120,6 +119,8 @@ class script():
         self.expT = None
         self.MTLexpT = 5.    # default MTL exposure time
         self.GFAexpT = 5.    # default GFA exposure time
+        self.MTLexpN = 1
+        self.MTLimgname = None
 
     def configure_cordinate(self, project, obsdate, tileid, value1, value2, obsnum, expT):
         self.project = project
@@ -143,8 +144,10 @@ class script():
         self.show_status = show_status
         self.dir_name = dir_name
 
-    def MTL_set(self,exptime):
+    def MTL_set(self,exptime, expnum, mtlfile):
         self.MTLexpT = exptime
+        self.MTLexpN = expnum
+        self.MTLimgnmae = mtlfile
     #    print(f'MTL exposure time is {self.MTLexpT}')
 
 
@@ -160,22 +163,30 @@ class script():
         await clear_queue(scriptrun.SPEC_response_queue)
         await handle_gfa('gfastatus',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
+        await asyncio.sleep(2)
     #    await handle_fbp('fbpstatus',scriptrun.ICSclient)
     #    await scriptrun.response_queue.get()
         await handle_mtl('mtlstatus',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
+        await asyncio.sleep(2)
         await handle_adc('adcconnect',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
-        await handle_adc('adchome',scriptrun.ICSclient)
+        await asyncio.sleep(2)
+        await handle_adc('adchome 1',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
-    #    await handle_adc('adczero',scriptrun.ICSclient)
-    #    await scriptrun.response_queue.get()
+        await asyncio.sleep(2)
+        await handle_adc('adczero 4',scriptrun.ICSclient)
+        await scriptrun.response_queue.get()
+        await asyncio.sleep(2)
         await handle_adc('adcstatus',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
-    #    await handle_spec(f'specinitial {self.dir_name}',scriptrun.ICSclient)
-    #    await scriptrun.response_queue.get()
-    #    await handle_spec('specstatus',scriptrun.ICSclient)
-    #    await scriptrun.response_queue.get()
+        await asyncio.sleep(2)
+        await handle_spec(f'specinitial {self.dir_name}',scriptrun.ICSclient)
+        await scriptrun.response_queue.get()
+        await asyncio.sleep(2)
+        await handle_spec('specstatus',scriptrun.ICSclient)
+        await scriptrun.response_queue.get()
+        await asyncio.sleep(2)
 
     async def run_calib(self,scriptrun,logging):
         """Starts the calibration process asynchronously."""
@@ -410,33 +421,36 @@ class script():
             await asyncio.sleep(2)
 
             ##### In commission, FBP is not ready. #####
-            #await scriptrun.ICSclient.send_message("FBP", objmsg)
-            #await scriptrun.response_queue.get()
-            #await asyncio.sleep(2)
+            await scriptrun.ICSclient.send_message("FBP", objmsg)
+            await scriptrun.response_queue.get()
+            await asyncio.sleep(2)
 
-            #await scriptrun.ICSclient.send_message("FBP", motionmsg1)
-            #await scriptrun.response_queue.get()
-            #await asyncio.sleep(2)
+            await scriptrun.ICSclient.send_message("FBP", motionmsg1)
+            await scriptrun.response_queue.get()
+            await asyncio.sleep(2)
 
-            #await scriptrun.ICSclient.send_message("FBP", motionmsg2)
-            #await scriptrun.response_queue.get()
-            #await asyncio.sleep(2)
+            await scriptrun.ICSclient.send_message("FBP", motionmsg2)
+            await scriptrun.response_queue.get()
+            await asyncio.sleep(2)
 
             printing(f'All accessary files for observation of Tile ID {self.select_tile} are successfully loaded')
             ### End of CLI version ###
         
         await asyncio.sleep(2)
     
-    #    printing(f'ADC Adjust Start')
+        printing(f'ADC Adjust Start')
     #    message=f'adcadjust {self.ra} {self.dec}'
     #    print(message)
-    #    message=f'adcadjust 19:34:56.44 -31:34:55.67'                           # Just for simulation. Remove or comment when real observation
-    #    await handle_adc(message,scriptrun.ICSclient)
-    #    await asyncio.sleep(2)
-        
-    #    printing(f'Fiber positioner Moving Start')
-    #    await handle_fbp('fbpmove',scriptrun.ICSclient)
-    #    await scriptrun.response_queue.get()
+        message=f'adcadjust 06:34:56.44 -31:34:55.67'                           # Just for simulation. Remove or comment when real observation
+        await handle_adc(message,scriptrun.ICSclient)
+        await asyncio.sleep(10)
+
+           
+        printing(f'Fiber positioner Moving Start')
+        await handle_fbp('fbpmove',scriptrun.ICSclient)
+        await scriptrun.response_queue.get()
+
+        """
 
         messagetcs = 'KSPEC>TC ' + 'tmradec ' + self.ra +' '+ self.dec
         printing(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.')
@@ -445,7 +459,8 @@ class script():
         await asyncio.sleep(2)
 
         while True:
-            r=redis.Redis(host='192.168.15.121',port=6379,decode_responses=True)     # Set IP address of KMTNet redis server
+        #    r=redis.Redis(host='192.168.15.121',port=6379,decode_responses=True)     # Set IP address of KMTNet redis server
+            r=redis.Redis(host='127.0.0.1',port=6379,decode_responses=True)     # For simulation. Remove or comment in real observation
 
             value=r.get('dome_error')
             print(value)                                                        # Remove or comment in real observation
@@ -459,77 +474,78 @@ class script():
 
     #    await scriptrun.response_queue.get()                                    # ??? Remove in real observation ???
 
-    #    await asyncio.sleep(5)
-    #    printing(f'Autoguiding Start')
+        await asyncio.sleep(3)
+        printing(f'Autoguiding Start')
     #    logging(f'GFA guiding. Expoture time is {self.GFAexpT}', level='receive')
-    #    await self.run_autoguide(scriptrun,self.GFAexpT)
-    #    await asyncio.sleep(2)
+        await self.run_autoguide(scriptrun,self.GFAexpT)
+        await asyncio.sleep(2)
 
-    #    await handle_spec('illuon',scriptrun.ICSclient)
-    #    await scriptrun.response_queue.get()
-    #    await asyncio.sleep(2)
+        await handle_lamp('fiducialon',scriptrun.ICSclient)
+        await scriptrun.response_queue.get()
+        await asyncio.sleep(2)
 
-    #    await handle_lamp('fiducialon',scriptrun.ICSclient)
-    #    await scriptrun.response_queue.get()
-    #    await asyncio.sleep(2)
+        await handle_mtl(f'mtlexp {self.MTLexpT} 1 "fiducial.fits"',scriptrun.ICSclient)                       # Change exposure time in real observation
+        await scriptrun.response_queue.get()
+        await scriptrun.response_queue.get()
+        await asyncio.sleep(2)
 
-    #    await handle_mtl(f'mtlexp {self.MTLexpT}',scriptrun.ICSclient)                       # Change exposure time in real observation
-    #    await scriptrun.response_queue.get()
-    #    await scriptrun.response_queue.get()
-    #    await asyncio.sleep(2)
+        await handle_spec('illuon',scriptrun.ICSclient)
+        await scriptrun.response_queue.get()
+        await asyncio.sleep(2)
 
-    #    await handle_mtl('mtlcal',scriptrun.ICSclient)
-    #    await scriptrun.response_queue.get()
-    #    await scriptrun.response_queue.get()
-    #    await asyncio.sleep(2)
+        await handle_mtl('mtlcal',scriptrun.ICSclient)
+        await scriptrun.response_queue.get()
+        await scriptrun.response_queue.get()
+        await asyncio.sleep(2)
 
-    #    await handle_fbp('fbpoffset',scriptrun.ICSclient)
-    #    await scriptrun.response_queue.get()
-    #    await scriptrun.response_queue.get()
-    #    await asyncio.sleep(2)
+        await handle_fbp('fbpoffset',scriptrun.ICSclient)
+        await scriptrun.response_queue.get()
+        await scriptrun.response_queue.get()
+        await asyncio.sleep(2)
 
-    #    await handle_spec('illuoff',scriptrun.ICSclient)
-    #    await scriptrun.response_queue.get()
-    #    await asyncio.sleep(2)
+        await handle_spec('illuoff',scriptrun.ICSclient)
+        await scriptrun.response_queue.get()
+        await asyncio.sleep(2)
 
-    #    await handle_lamp('fiducialoff',scriptrun.ICSclient)
+        await handle_lamp('fiducialoff',scriptrun.ICSclient)
     
     #    print(f'FHWM is {self.fwhm:.5f}.')                                     # Remove in real observation
-    #    await scriptrun.response_queue.get()
-    #    await asyncio.sleep(2)
+        await scriptrun.response_queue.get()
+        await asyncio.sleep(2)
 
 
-    #    obs_num=self.obsnum
-    #    printing(f'KSPEC starts {obs_num} exposures with {self.expT} seconds.')
-    #    for i in range(int(obs_num)):
-    #        await clear_queue(scriptrun.SPEC_response_queue)
-    #        await handle_spec(f'getobj {self.expT} 1', scriptrun.ICSclient)
-    #        printing(f'**** {i+1}/{obs_num}: 30 seconds exposure start. ****')
-    #        logging(f'**** {i+1}/{obs_num}: 30 seconds exposure start. ****', level='receive')
-    #        spec_rsp=await scriptrun.response_queue.get()
+        obs_num=self.obsnum
+        printing(f'KSPEC starts {obs_num} exposures with {self.expT} seconds.')
+        for i in range(int(obs_num)):
+            await clear_queue(scriptrun.SPEC_response_queue)
+            await handle_spec(f'getobj {self.expT} 1', scriptrun.ICSclient)
+            printing(f'**** {i+1}/{obs_num}: 30 seconds exposure start. ****')
+            logging(f'**** {i+1}/{obs_num}: 30 seconds exposure start. ****', level='receive')
+            spec_rsp=await scriptrun.response_queue.get()
 #            print(f'jhkjkjk {spec_rsp}')
-    #        fram=f'{i+1}/{obs_num}'
-    #        header_data = {"PROJECT": self.project, "EXPTIME": self.expT, "FRAME": fram, "Tile": self.select_tile, "PRORA": self.ra, "PRODEC": self.dec}
-    #        update_fits(spec_rsp["filename"],header_data)
-    #        logging('Fits header updated', level='receive')
-    #        printing("Fits header updated")
+            fram=f'{i+1}/{obs_num}'
+            header_data = {"PROJECT": self.project, "EXPTIME": self.expT, "FRAME": fram, "Tile": self.select_tile, "PRORA": self.ra, "PRODEC": self.dec}
+            update_fits(spec_rsp["filename"],header_data)
+            logging('Fits header updated', level='receive')
+            printing("Fits header updated")
 
 
-    #    printing('All exposures are completed.')
-    #    logging('All exposures are completed.',level='receive')
+        printing('All exposures are completed.')
+        logging('All exposures are completed.',level='receive')
 
-    #    await handle_adc('adcstop',scriptrun.ICSclient)
-    #    await scriptrun.response_queue.get()
-    #    await self.autoguidestop(scriptrun)
-    #    await scriptrun.response_queue.get()
-    #    await handle_adc('adczero',scriptrun.ICSclient)
-    #    await handle_fbp('fbpzero',scriptrun.ICSclient)
-    #    await scriptrun.response_queue.get()
-    #    await scriptrun.response_queue.get()
-    #    await scriptrun.response_queue.get()
+        await handle_adc('adcstop',scriptrun.ICSclient)
+        await scriptrun.response_queue.get()
+        await self.autoguidestop(scriptrun)
+        await scriptrun.response_queue.get()
+        await handle_adc('adczero 2',scriptrun.ICSclient)
+        await handle_fbp('fbpzero',scriptrun.ICSclient)
+        await scriptrun.response_queue.get()
+        await scriptrun.response_queue.get()
+        await scriptrun.response_queue.get()
 
-    #    printing(f'###### Observation Script for Tile ID {self.select_tile} END!!! ######')
-    #    logging(f'###### Observation Script for Tile ID {self.select_tile} END!!! ######',level='comment')
+        printing(f'###### Observation Script for Tile ID {self.select_tile} END!!! ######')
+        logging(f'###### Observation Script for Tile ID {self.select_tile} END!!! ######',level='comment')
+        """
 
 
 
