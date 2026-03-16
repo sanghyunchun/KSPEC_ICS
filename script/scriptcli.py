@@ -249,7 +249,7 @@ class script():
             logging('Run Calibration Task finished', level='normal')
 
 
-    async def run_autoguide(self,scriptrun, exptime: float = 5.0, save: bool = False, logging = None):
+    async def run_autoguide(self, scriptrun, exptime: float = 5.0, save: bool = False, logging = None):
         """Starts the autoguiding process asynchronously."""
         if self.autoguide_task and not self.autoguide_task.done():
             print("Autoguide task is already running. Ignoring duplicate start.")
@@ -271,6 +271,8 @@ class script():
             dec_bytes = await scriptrun.send_telcom_command('getdec')
             rahms_t=bytes_to_sexagesimal(ra_bytes)                   ## Current Telescope pointing position
             decdms_t=bytes_to_sexagesimal(dec_bytes)                 ## Current Telescope pointing position
+            print(rahms_t)
+            logging(f'Current Telescope pointing position = (RA,DEC)=({rahms_t}, {decdms_t})', level='normal')
             await handle_gfa(f'gfaguide {exptime} {save}',scriptrun.ICSclient)
             while True:
                 try:
@@ -303,7 +305,6 @@ class script():
                 #    logging(f'DEC offset {fdy} finished', level='receive')
 
                 ### Autoguiding using New coordinate ###
-                    logging(f'Current Telescope pointing position = (RA,DEC)=({rahms_t,decdms_t})')
                     logging(f'Calculated Offset (RA,DEC)=({fdx}, {fdy})', level='normal')
                     ra_bytes = await scriptrun.send_telcom_command('getra')
                     dec_bytes = await scriptrun.send_telcom_command('getdec')
@@ -441,7 +442,7 @@ class script():
         printing(f'ADC Adjust Start')
     #    message=f'adcadjust {self.ra} {self.dec}'
     #    print(message)
-        message=f'adcadjust 06:34:56.44 -31:34:55.67'                           # Just for simulation. Remove or comment when real observation
+        message=f'adcadjust 02:34:56.44 -31:34:55.67'                           # Just for simulation. Remove or comment when real observation
         await handle_adc(message,scriptrun.ICSclient)
         await asyncio.sleep(10)
 
@@ -449,8 +450,6 @@ class script():
         printing(f'Fiber positioner Moving Start')
         await handle_fbp('fbpmove',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
-
-        """
 
         messagetcs = 'KSPEC>TC ' + 'tmradec ' + self.ra +' '+ self.dec
         printing(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.')
@@ -477,9 +476,10 @@ class script():
         await asyncio.sleep(3)
         printing(f'Autoguiding Start')
     #    logging(f'GFA guiding. Expoture time is {self.GFAexpT}', level='receive')
-        await self.run_autoguide(scriptrun,self.GFAexpT)
+        await self.run_autoguide(scriptrun,self.GFAexpT,logging=logging)
         await asyncio.sleep(2)
 
+        """
         await handle_lamp('fiducialon',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
         await asyncio.sleep(2)
