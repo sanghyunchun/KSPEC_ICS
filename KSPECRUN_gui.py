@@ -1135,21 +1135,21 @@ class MainWindow(QMainWindow):
         if not self.check_syscheck():
             return
 
-        if not self.ui.lineEdit_MTL_exptime.text():
-            self.ui.lineEdit_MTL_exptime.setText('5')
+    #    if not self.ui.lineEdit_MTL_exptime.text():
+    #        self.ui.lineEdit_MTL_exptime.setText('5')
             
         if not self.ui.lineEdit_MTL_file.text():
             self.ui.lineEdit_MTL_file.setText('test.fits')
             
-        if not self.ui.lineEdit_MTL_expnum.text():
-            self.ui.lineEdit_MTL_expnum.setText('1')
+    #    if not self.ui.lineEdit_MTL_expnum.text():
+    #        self.ui.lineEdit_MTL_expnum.setText('1')
 
-        self.mtlexp = float(self.ui.lineEdit_MTL_exptime.text())
+    #    self.mtlexp = float(self.ui.lineEdit_MTL_exptime.text())
         self.mtlfile = str(self.ui.lineEdit_MTL_file.text())
-        self.nexposure = int(self.ui.lineEdit_MTL_expnum.text())
+    #    self.nexposure = int(self.ui.lineEdit_MTL_expnum.text())
 
         self.logging(f'Sent MTL calculation', level='send')
-        await handle_mtl(f'mtlcal {self.nexposure} {self.mtlfile}', self.ICS_client)
+        await handle_mtl(f'mtlcal {self.mtlfile}', self.ICS_client)
 
     @asyncSlot()
     async def MTL_set_button_clicked(self):
@@ -1321,8 +1321,8 @@ class MainWindow(QMainWindow):
         dialog = SelectTile(header[:4], tile_lines, self)
         if dialog.exec() == QDialog.Accepted and dialog.selected_values:
             self.select_tile=dialog.selected_values[0]
-            self.obsnum=dialog.selected_values[3]
-            self.expT= dialog.selected_values[2]
+            self.obsnum=dialog.selected_values[2]
+            self.expT= dialog.selected_values[3]
 #            self.ra = dialog.selected_values[4]        # For commission
 #            self.dec = dialog.selected_values[5]       # For commission
 

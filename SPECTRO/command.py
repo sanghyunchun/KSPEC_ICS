@@ -154,7 +154,7 @@ def get_next_filename(extension: str = "fits"):
 async def create_fits_image(exptime, shape: tuple = (100, 100), data_type=np.float32):
     data = np.random.random(shape).astype(data_type)
     hdu = fits.PrimaryHDU(data)
-    filepath,filename = get_next_filename()
+    filepath, filename = get_next_filename()
 #    print(filepath+filename)
     hdul = fits.HDUList([hdu])
     hdul.writeto(filepath+filename, overwrite=True)

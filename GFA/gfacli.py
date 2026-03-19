@@ -111,13 +111,12 @@ async def handle_gfa(arg, ICS_client):
         command_map[cmd] = lambda: gfa_grab(camNum, ExpT)
 
     elif cmd == 'gfaguide':
-        ra,dec=await getradec()
-        if not params:
-            command_map[cmd] = lambda: gfa_guiding(ra=ra, dec=dec)
-        else:
-            ExpT = float(params[0])
-            save = params[1]
-            command_map[cmd] = lambda: gfa_guiding(ExpT, save, ra=ra, dec=dec)
+#        ra,dec=await getradec()
+        ExpT = float(params[0])
+        save = params[1]
+        ra = params[2]
+        dec = params[3]
+        command_map[cmd] = lambda: gfa_guiding(ExpT, save, ra=ra, dec=dec)
 
     elif cmd == 'fdgrab':
         if len(params) != 1:

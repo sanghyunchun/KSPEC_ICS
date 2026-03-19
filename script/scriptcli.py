@@ -254,6 +254,7 @@ class script():
         if self.autoguide_task and not self.autoguide_task.done():
             print("Autoguide task is already running. Ignoring duplicate start.")
             return
+
         self.autoguide_task = asyncio.create_task(
                 self.handle_autoguide(exptime, save, scriptrun, logging)
         )
@@ -271,9 +272,9 @@ class script():
             dec_bytes = await scriptrun.send_telcom_command('getdec')
             rahms_t=bytes_to_sexagesimal(ra_bytes)                   ## Current Telescope pointing position
             decdms_t=bytes_to_sexagesimal(dec_bytes)                 ## Current Telescope pointing position
-            print(rahms_t)
+#            print(rahms_t)
             logging(f'Current Telescope pointing position = (RA,DEC)=({rahms_t}, {decdms_t})', level='normal')
-            await handle_gfa(f'gfaguide {exptime} {save}',scriptrun.ICSclient)
+            await handle_gfa(f'gfaguide {exptime} {save} {rahms_t} {decdms_t}',scriptrun.ICSclient)
             while True:
                 try:
                     response_data = await asyncio.wait_for(scriptrun.GFA_response_queue.get(),timeout=300)
@@ -325,6 +326,7 @@ class script():
 
     async def autoguidestop(self,scriptrun,logging):
         """Stops the autoguiding process if it is running."""
+        print("ddfdfd")
         await handle_gfa("gfaguidestop", scriptrun.ICSclient)
         print("Stopping autoguiding task...")
 
@@ -438,15 +440,15 @@ class script():
             ### End of CLI version ###
         
         await asyncio.sleep(2)
+
     
         printing(f'ADC Adjust Start')
     #    message=f'adcadjust {self.ra} {self.dec}'
     #    print(message)
         message=f'adcadjust 02:34:56.44 -31:34:55.67'                           # Just for simulation. Remove or comment when real observation
         await handle_adc(message,scriptrun.ICSclient)
-        await asyncio.sleep(10)
-
-           
+        await asyncio.sleep(2)
+  
         printing(f'Fiber positioner Moving Start')
         await handle_fbp('fbpmove',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
@@ -471,56 +473,57 @@ class script():
             print('.',end=' ', flush=True)
             await asyncio.sleep(5)
 
-    #    await scriptrun.response_queue.get()                                    # ??? Remove in real observation ???
+        await scriptrun.response_queue.get()                                    # Wait for Fiber movement finish
 
         await asyncio.sleep(3)
         printing(f'Autoguiding Start')
-    #    logging(f'GFA guiding. Expoture time is {self.GFAexpT}', level='receive')
+        logging(f'GFA guiding. Expoture time is {self.GFAexpT}', level='receive')
         await self.run_autoguide(scriptrun,self.GFAexpT,logging=logging)
         await asyncio.sleep(2)
 
-        """
         await handle_lamp('fiducialon',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
         await asyncio.sleep(2)
-
+                
         await handle_mtl(f'mtlexp {self.MTLexpT} 1 "fiducial.fits"',scriptrun.ICSclient)                       # Change exposure time in real observation
-        await scriptrun.response_queue.get()
-        await scriptrun.response_queue.get()
+        await scriptrun.response_queue.get()                                     # Start MTL exposure message
+        await scriptrun.response_queue.get()                                     # Wait for MTL exposure finish
         await asyncio.sleep(2)
 
         await handle_spec('illuon',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
         await asyncio.sleep(2)
 
-        await handle_mtl('mtlcal',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
-        await scriptrun.response_queue.get()
+        testfile = 'test.fits'
+        await handle_mtl(f'mtlcal {testfile}',scriptrun.ICSclient)
+        await scriptrun.response_queue.get()                                    # Start MTL calculation message
+        await scriptrun.response_queue.get()                                    # Wait for MTL calculation finish
         await asyncio.sleep(2)
 
         await handle_fbp('fbpoffset',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
-        await scriptrun.response_queue.get()
+        await scriptrun.response_queue.get()                                    # Start offset message
+        await scriptrun.response_queue.get()                                    # Wait for FBP offset finish
         await asyncio.sleep(2)
 
         await handle_spec('illuoff',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
+        await scriptrun.response_queue.get()                                 
         await asyncio.sleep(2)
 
         await handle_lamp('fiducialoff',scriptrun.ICSclient)
-    
-    #    print(f'FHWM is {self.fwhm:.5f}.')                                     # Remove in real observation
         await scriptrun.response_queue.get()
         await asyncio.sleep(2)
 
-
+    
+    #    print(f'FHWM is {self.fwhm:.5f}.')                                     # Remove in real observation
+  
         obs_num=self.obsnum
         printing(f'KSPEC starts {obs_num} exposures with {self.expT} seconds.')
+        
         for i in range(int(obs_num)):
             await clear_queue(scriptrun.SPEC_response_queue)
             await handle_spec(f'getobj {self.expT} 1', scriptrun.ICSclient)
-            printing(f'**** {i+1}/{obs_num}: 30 seconds exposure start. ****')
-            logging(f'**** {i+1}/{obs_num}: 30 seconds exposure start. ****', level='receive')
+            printing(f'**** {i+1}/{obs_num}: {self.expT} seconds exposure start. ****')
+            logging(f'**** {i+1}/{obs_num}: {self.expT} seconds exposure start. ****', level='receive')
             spec_rsp=await scriptrun.response_queue.get()
 #            print(f'jhkjkjk {spec_rsp}')
             fram=f'{i+1}/{obs_num}'
@@ -535,17 +538,23 @@ class script():
 
         await handle_adc('adcstop',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
-        await self.autoguidestop(scriptrun)
+    
+        await self.autoguidestop(scriptrun,logging)
         await scriptrun.response_queue.get()
+
         await handle_adc('adczero 2',scriptrun.ICSclient)
-        await handle_fbp('fbpzero',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
         await scriptrun.response_queue.get()
         await scriptrun.response_queue.get()
 
+        await handle_fbp('fbpzero',scriptrun.ICSclient)
+        await scriptrun.response_queue.get()
+        await scriptrun.response_queue.get()
+        
+
         printing(f'###### Observation Script for Tile ID {self.select_tile} END!!! ######')
         logging(f'###### Observation Script for Tile ID {self.select_tile} END!!! ######',level='comment')
-        """
+        
+        
 
 
 
@@ -554,7 +563,7 @@ class script():
 async def handle_script(arg, scriptrun=None, logging=None):
     """ Handle script with error checking. """
     cmd, *params = arg.split()
-    print(params)
+
     command_map = {
             'obsinitial': scriptrun.obs_initial, 'runcalib': scriptrun.run_calib, 'runobs': scriptrun.run_obs
     }
@@ -564,10 +573,7 @@ async def handle_script(arg, scriptrun=None, logging=None):
 #                scriptrun.response_queue, scriptrun.GFA_response_queue, scriptrun.ADC_response_queue, scriptrun.SPEC_response_queue, scriptrun.logging)
         await command_map[cmd](scriptrun,logging)
     elif cmd == 'autoguide':
-        if not params:
-            await scriptrun.run_autoguide(scriptrun,logging=logging)
-        else:
-            await scriptrun.run_autoguide(scriptrun,float(params[0]),params[1],logging=logging)
+        await scriptrun.run_autoguide(scriptrun, float(params[0]), params[1],logging=logging)
 
     elif cmd == 'autoguidestop':
         await scriptrun.autoguidestop(scriptrun,logging)

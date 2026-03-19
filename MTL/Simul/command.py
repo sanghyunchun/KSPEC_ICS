@@ -61,7 +61,7 @@ async def identify_execute(MTL_server,cmd):
 #        comment='Metrology analysis finished successfully. Offsets were calculated.'
         reply_data=mkmsg.mtlmsg()
         reply_data.update(savedata='True',filename='MTLresult.json',offsetx=offx.tolist(),offsety=offy.tolist(),message=comment)
-        reply_data.update(process='Done')
+        reply_data.update(process='Done', status = status)
         rsp=json.dumps(reply_data)
 
         with open('./Lib/KSPEC.ini','r') as fs:

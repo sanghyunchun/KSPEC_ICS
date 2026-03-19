@@ -50,7 +50,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideLeft</enum>
@@ -249,8 +249,8 @@
         <widget class="QPushButton" name="pushbtn_show_spec">
          <property name="geometry">
           <rect>
-           <x>10</x>
-           <y>530</y>
+           <x>4</x>
+           <y>522</y>
            <width>151</width>
            <height>31</height>
           </rect>
@@ -262,11 +262,14 @@
         <widget class="QLabel" name="label_3">
          <property name="geometry">
           <rect>
-           <x>0</x>
-           <y>560</y>
+           <x>5</x>
+           <y>555</y>
            <width>941</width>
            <height>201</height>
           </rect>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background-color:rgb(240, 240, 240)</string>
          </property>
          <property name="text">
           <string/>
@@ -1877,7 +1880,7 @@
         </widget>
         <widget class="QPushButton" name="pushbtn_Fiber_assign">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="geometry">
           <rect>
@@ -1905,7 +1908,7 @@
         </widget>
         <widget class="QPushButton" name="pushbtn_Flat">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="geometry">
           <rect>
@@ -1933,7 +1936,7 @@
         </widget>
         <widget class="QPushButton" name="pushbtn_Arc">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="geometry">
           <rect>
@@ -1961,7 +1964,7 @@
         </widget>
         <widget class="QPushButton" name="pushbtn_Fiducial">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="geometry">
           <rect>
@@ -1989,7 +1992,7 @@
         </widget>
         <widget class="QPushButton" name="pushbtn_illumi">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="geometry">
           <rect>
