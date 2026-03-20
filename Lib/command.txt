@@ -1,28 +1,105 @@
-"adcstatus", "adcactivate", "adcadjust", "adcinit", "adcconnect", "adcdisconnect", "adchome", "adczero",
-            "adcpoweroff", "adcrotate1", "adcrotate2", "adcstop", "adcpark", "adcrotateop", "adcrotatesame"],
+[ADC]
+adcstatus       : Show ADC status. use) adcstats 
+adcconnect      : Connect ADC instrument.
+adcdisconnect   : Disconnect ADC instrument.
+adcpoweroff     : Power off of ADC instrument.
+adchome         : Rotate ADC lens to Home position.
+adczero         : Rotate ADC lens to Zero position.
+adcpark         : Rotate ADC lens to Parking position.
+adcactivate     : Rotate ADC lens by the correction value corresponding to the given zenith distance.
+adcadjust       : ADC lens adjust for every 1 min by current zenith distance. 
+adcrotate1      : Rotate ADC lens 2 (motor1).
+adcrotate2      : Roate ADC lens 1 (motor2).
+adcstop         : Stop rotating ADC lens.
+adcrotateop     : Rotate ADC lens 1 and 2 with opposite direction.
+adcrotatesame   : Rotate ADC lens 1 and 2 with same direction.
             
-"gfa": ["gfastatus", "gfagrab", "gfaguidestop", "gfaguide", "fdgrab"],
-            
-"fbp": ["fbpstatus", "fbpzero", "fbpmove", "fbpoffset"],
-            
-"mtl": ["mtlstatus", "mtlexp", "mtlcal"],
-            
-"lamp": ["lampstatus", "arcon", "arcoff", "flaton", "flatoff","fiducialon","fiducialoff"],
-            
-"spec": ["specstatus", "specinitial","illuon", "illuoff", "getobj", "getbias", "getflat","getar"],
-            
-"tcs": ["tmradec", "start", "stop", "tcsint", "tcsreset", "tcsclose",
-            "tcsarc", "tcsstatus", "tstat", "traw", "tsync", "tcmd",
-            "treg", "tmradec", "tmr", "tmobject", "tmo", "tmelaz",
-            "tme", "tmoffset", "toff", "tstop", "tstow", "tdi",
-            "cc", "oo", "nstset", "nston", "nstoff", "auxinit",
-            "auxreset", "auxclose", "auxarc", "auxstatus",
-            "astat", "acmd", "fsastat", "fs", "fttstat",
-            "ft", "dfocus", "dtilt", "fttgoto"],
+[GFA] 
+gfastatus       : Show GFA camera status 
+gfagrab         : Exposure specific GFA cameras
+gfaguidestop    : Stop guiding process
+gfaguide        : Start guiding process
+caloffset       : Calculate the offset between Tile center position and Telescope pointing position.
 
+[FBP]
+fbpstatus       : Show Fiber positioner status.
+fbpzero         : Rotate Fiber positioner to zero position.
+fbpmove         : Rotate specific Fiber positioner to specific position.
+fbpoffset       : Rotate specific Fiber positioner by calculated offset.
             
-"telcom": ["getall", "getra", "getdec", "getha", "getel", "getaz", "getsecz", "mvstow", "mvelaz", "mvstop", "mvra", "mvdec", "track"],
+[MTL]
+mtlstatus       : Show Metrology camera status.
+mtlexp          : Exposure Metrology camera.
+mtlcal          : Calcuate the position between Fiber positioner and Target position.
+
+[LAMP]   
+lampstatus      : Show lamps (arc, flat, fiducial, back-illumination) status.
+arcon           : Turn on arc lamps.
+arcoff          : Turn off arc lamps.
+flaton          : Turn on flat lamps.
+flatoff         : Turn off flat lamps.
+fiducialon      : Turn on fiducial lamps.
+fiducialoff     : Turn off fiducial lamps.
+illuon          : Turn on back-illumination lamp.
+illuoff         : Turn off back-illumination lamp.
             
-"utils": ["obsstatus","loadtile","setdir"],
+[SPEC] 
+specstatus      : Show spectrograph status.
+specinitial     : Initialize spectrograph.
+getobj          : Exposure spectrograph for object.
+getbias         : Get bias images.
+getflat         : Get flat images.
+getar           : Get arc images.
             
-"script": ["runcalib", "obsinitial", "autoguide", "autoguidestop", "runobs"]
+[TCS/AUX]
+pointing        : Slew telescope to new sky position calcuated by pointing offset.
+tcsinit         : initialize PC-TCS Telcom link
+tcsreset        : reset/restart PC-TCS Telcom link
+tcsclose        : close PC-TCS Telcom link
+tcsarc          : toggle AutoRecovery mode for TCS link
+tcsstatus       : query TCS status with the telemetry data
+tstat           : query lightweight TCS status without keywords
+traw            : return lastest raw PC-TCS telemetry packet string
+tsync           : synch PC-TCS clock with the system UTC clock
+tcmd            : send a raw PC-TCS command, arg: <tcmd>
+treq            : send a raw PC-TCS request, arg: <treq>
+tmradec  / tmr  : move to J2000 RA/Dec, args: <ra> <dec> (<copt>).  ******
+tmobject / tmo  : move to object, defined in catalog, arg: <obj> 
+tmelaz   / tme  : move to elevation/azimuth, args: <el> <az>
+tmoffset / toff : move to offset RA/Dec, args: <RA_offset> <DEC_offset>
+tguide   / tgui : guiding offset move, args: <ra_offset> <dec_offset>
+tstop    / stop : cancel command and stop telescope for commanded motions
+tstow    / stow : tracking off & move telescope to stow position(zenith):
+tdi             : synch the current position with the commanded position
+cc / oo         : utility for the pointing model measurement observation
+nstset          : set RA/Dec velocity for non-sidereal tracking
+nston           : enable the non-sidereal tracking
+nstoff          : disable the non-sidereal tracking
+dfocus          : adjust the focus position of PFI, arg: <dfoc>
+dtilt           : adjust the tip-tilt angle ofg PFI, args: <dtns> <dtew>
+fttgoto         : goto abs focus & tip-tilt, args: <foc> (<tns> <tew>)
+
+[Telcom] 
+getall          : Request all telemetry stream information.
+getra           : Request Right Ascension of current telescope.
+getdec          : Request Declination of current telescope.
+getha           : Request Hour angle of current telescope.
+getel           : Request Elevation of current telescope.
+getaz           : Request Azimuth angle of current telescope.
+getsecz         : Request Zenith distance of current telescope.
+mvstow          : Slew telescope STOW position.
+mvelaz          : Slew Telescope to elevation/azimuth.
+mvstop          : Stop slewing telescope.
+mvra            : Slew Telescope to specific Right Ascension.
+mvdec           : Slew Telescope to specific Declination.
+track           : Turn on/off tracking system
+            
+[Utils] 
+obsstatus       : Show observation/Project information.
+            
+[script] 
+runcalib        : Start script to obtain calibration images.
+obsinitial      : Initialize the observation.
+autoguide       : Start autoguiding process using gfaguide.
+autoguidestop   : Stop running autoguiding process using gfaguidestop.
+runobs          : Start whole sequence for observing Tile 

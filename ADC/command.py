@@ -45,15 +45,7 @@ async def identify_execute(ADC_server, adc_action, cmd):
 
     printing(f"{func}")
 
-    if func == 'adcinit':
-        comment = 'ADC initialized.'
-        reply_data = mkmsg.adcmsg()
-        reply_data.update(message=comment, process='Done')
-        rsp = json.dumps(reply_data)
-        printing(comment)
-        await ADC_server.send_message('ICS', rsp)
-
-    elif func == 'adcconnect':
+    if func == 'adcconnect':
         reply_data = mkmsg.adcmsg()
         result = adc_action.connect()
         reply_data.update(result)

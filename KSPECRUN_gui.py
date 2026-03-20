@@ -5,7 +5,7 @@ import asyncio
 from PySide6.QtCore import *
 from PySide6.QtWidgets import (
         QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QMessageBox, QSizePolicy, QFileDialog, QListWidget,QListWidgetItem,
-        QDialog
+        QDialog, QTextEdit
         )
 from PySide6.QtGui import QMouseEvent, QGuiApplication, QTextCursor
 from ui_mainwindow import Ui_MainWindow
@@ -155,6 +155,7 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.scriptrun=script()
+        self.ICS_client = None
 
         QTimer.singleShot(0, self.adjust_window_size_by_screen)
 
@@ -226,8 +227,8 @@ class MainWindow(QMainWindow):
 
 
         # Pointing and Astrometry
+        self.ui.pushbtn_caloffset.clicked.connect(self.caloffset_button_clicked)
         self.ui.pushbtn_pointing.clicked.connect(self.pointing_button_clicked)
-        self.ui.pushbtn_offset.clicked.connect(self.offset_button_clicked)
 
 
     #    # Finder 
@@ -426,7 +427,32 @@ class MainWindow(QMainWindow):
             os.makedirs(self.dir_path, exist_ok=True)
             self.logging(f"Create directory '{self.dir_path}'.",level='normal')
 
+    def show_command_popup(self):
+        file_path = "./Lib/command.txt"
 
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+        except Exception as e:
+            content = f"Failed to read file:\n{e}"
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle("K-SPEC Command list")
+        dialog.resize(600, 900)
+
+        layout = QVBoxLayout(dialog)
+
+        text_edit = QTextEdit()
+        text_edit.setReadOnly(True)
+        text_edit.setPlainText(content)
+
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(dialog.close)
+
+        layout.addWidget(text_edit)
+        layout.addWidget(close_button)
+
+        dialog.exec()
 
 #### Calling Status #####
     def QWidgetLabelColor(self, widget, textcolor, bgcolor=None):
@@ -911,7 +937,7 @@ class MainWindow(QMainWindow):
 
     ### Pointing ###
     @asyncSlot()
-    async def pointing_button_clicked(self):
+    async def caloffset_button_clicked(self):
         if not self.check_connection():
             return
 
@@ -930,7 +956,7 @@ class MainWindow(QMainWindow):
            self.logging(f'Please load Tile or slew telescope.',level='error')
            return
        
-        await handle_gfa(f'pointing {self.gfaexpt} {self.ra} {self.dec}',self.ICS_client)
+        await handle_gfa(f'caloffset {self.gfaexpt} {self.ra} {self.dec}',self.ICS_client)
 
     def format_decimal(self,x):
         from decimal import Decimal
@@ -942,7 +968,7 @@ class MainWindow(QMainWindow):
 
     ### Pointing Offset ###
     @asyncSlot()
-    async def offset_button_clicked(self):
+    async def pointing_button_clicked(self):
 
         ### Apply offset value for telescope offset ###
     #    self.delta_ra = 0.34
@@ -1350,7 +1376,7 @@ class MainWindow(QMainWindow):
 #        self.ui.lineEdit_dec_1.setText(f'{self.dec}')
 #        self.ui.lineEdit_exp_time_1.setText(f'{self.expT}')
 #        self.ui.lineEdit_n_exp_1.setText(f'{self.obsnum}')
-
+   
 
     ### Real survey Observation ####    
         self.tilemsg,self.guidemsg,self.objmsg,self.motionmsg1,self.motionmsg2=sciobs.loadtile(self.select_tile)
@@ -1580,6 +1606,11 @@ class MainWindow(QMainWindow):
         self.ui.lineEdit_cmd_2.clear()
         return result
 
+    def handle_utils(self, message):
+        if message == "?":
+            self.show_command_popup()
+
+    @asyncSlot()
     async def send_command(self, category, message):
         """
         Sends a command using the respective handler.
@@ -1587,10 +1618,12 @@ class MainWindow(QMainWindow):
         handler_map = {
             "adc": handle_adc, "gfa": handle_gfa, "fbp": handle_fbp,
             "mtl": handle_mtl, "lamp": handle_lamp,
-            "spec": handle_spec, "script": handle_script
+            "spec": handle_spec, "script": handle_script, "utils": self.handle_utils
         }
-        if category in handler_map:
+        if category in handler_map and category != 'utils':
             await handler_map[category](message, self.ICS_client)
+        elif category in handler_map and category == 'utils':
+            handler_map[category](message)
         else:
             print(f"Unknown command category: {category}",flush=True)
 

@@ -66,10 +66,7 @@ def gfa_guidestop() : return create_gfa_command('gfaguidestop',message='Stop aut
 def gfa_grab(cam,expt, *,ra: str=None, dec: str=None):
     return create_gfa_command('gfagrab',CamNum=cam,ExpTime=expt,message=f'Expose camera {cam} for {expt} seconds.',ra=ra,dec=dec)
 
-def fd_grab(expt):
-    return create_gfa_command('fdgrab',ExpTime=expt,message=f'Expose finder camera for {expt} seconds.')
-
-def gfa_pointing(expt: float=1.0, ra: str=None, dec: str=None):
+def gfa_caloffset(expt: float=1.0, ra: str=None, dec: str=None):
     return create_gfa_command('pointing', ExpTime=expt, ra=ra, dec=dec, message=f'Pointing to RA={ra}, DEC={dec}')      # Using six GFA cameras 
 
 async def send_telcom_command(message):
@@ -118,22 +115,11 @@ async def handle_gfa(arg, ICS_client):
         dec = params[3]
         command_map[cmd] = lambda: gfa_guiding(ExpT, save, ra=ra, dec=dec)
 
-    elif cmd == 'fdgrab':
-        if len(params) != 1:
-            print("Error: 'fdgrab' needs one parameter: Exposure time value. ex) fdgrab 10 ")
-            return
-        try:
-            ExpT = float(params[0])
-        except ValueError:
-            print(f"Error: Input parameters of 'fdgrab' should be float. input value: {params[0]}")
-            return
-        command_map[cmd] = lambda: fd_grab(ExpT)
-
-    elif cmd == 'pointing':
+    elif cmd == 'caloffset':
         ExpT = float(params[0])
         ra = params[1]
         dec = params[2]
-        command_map[cmd] = lambda: gfa_pointing(ExpT,ra,dec)
+        command_map[cmd] = lambda: gfa_caloffset(ExpT,ra,dec)
 
 
     if cmd in command_map:

@@ -297,6 +297,12 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+        <property name="placeholderText">
+         <string>For help, type '?' or 'ADC?'</string>
+        </property>
        </widget>
        <widget class="QGroupBox" name="groupBox">
         <property name="geometry">
@@ -2468,7 +2474,7 @@
           </property>
           <layout class="QFormLayout" name="formLayout_9">
            <item row="0" column="0">
-            <widget class="QPushButton" name="pushbtn_pointing">
+            <widget class="QPushButton" name="pushbtn_caloffset">
              <property name="font">
               <font>
                <family>Arial</family>
@@ -2488,7 +2494,7 @@
             </widget>
            </item>
            <item row="0" column="1">
-            <widget class="QPushButton" name="pushbtn_offset">
+            <widget class="QPushButton" name="pushbtn_pointing">
              <property name="font">
               <font>
                <family>Arial</family>
@@ -16962,8 +16968,11 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
         <property name="placeholderText">
-         <string>For help, Type '?'</string>
+         <string>For help, type '?' or 'ADC?'</string>
         </property>
        </widget>
        <widget class="QLabel" name="label_cmd_2">

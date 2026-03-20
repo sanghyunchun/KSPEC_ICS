@@ -13,7 +13,7 @@ def create_adc_command(func, **kwargs):
     cmd_data.update(func=func, **kwargs)
     return json.dumps(cmd_data)
 
-def adc_init(): return create_adc_command('adcinit', message='Start ADC initializing')
+#def adc_init(): return create_adc_command('adcinit', message='Start ADC initializing')
 def adc_connect(): return create_adc_command('adcconnect', message='Connect ADC instrument')
 def adc_disconnect(): return create_adc_command('adcdisconnect', message='Disconnect ADC instrument')
 #def adc_home(): return create_adc_command('adchome', message='Homing ADC lens')
@@ -46,7 +46,7 @@ async def handle_adc(arg, ICS_client):
 
     # Basic command without parameters
     command_map = {
-        'adcinit': adc_init, 'adcconnect': adc_connect, 'adcdisconnect': adc_disconnect,
+        'adcconnect': adc_connect, 'adcdisconnect': adc_disconnect,
         'adchome': adc_home, 'adczero': adc_zero, 'adcstatus': adc_status,
         'adcpoweroff': adc_poweroff, 'adcstop': adc_stop, 'adcpark': adc_park,
     }
