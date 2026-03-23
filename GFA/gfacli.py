@@ -69,22 +69,22 @@ def gfa_grab(cam,expt, *,ra: str=None, dec: str=None):
 def gfa_caloffset(expt: float=1.0, ra: str=None, dec: str=None):
     return create_gfa_command('pointing', ExpTime=expt, ra=ra, dec=dec, message=f'Pointing to RA={ra}, DEC={dec}')      # Using six GFA cameras 
 
-async def send_telcom_command(message):
-    tcsagentIP, tcsagentPort, telcomIP, telcomPort = load_config()
-    telcom_client = TCPClient(telcomIP,telcomPort)
-    await telcom_client.connect()
-    result = await handle_telcom(message,telcom_client)
-    await telcom_client.close()
-    return result
+#async def send_telcom_command(message):
+#    tcsagentIP, tcsagentPort, telcomIP, telcomPort = load_config()
+#    telcom_client = TCPClient(telcomIP,telcomPort)
+#    await telcom_client.connect()
+#    result = await handle_telcom(message,telcom_client)
+#    await telcom_client.close()
+#    return result
 
-async def getradec():
-    ra_bytes=await send_telcom_command('getra')
-    dec_bytes=await send_telcom_command('getdec')
+#async def getradec():
+#    ra_bytes=await send_telcom_command('getra')
+#    dec_bytes=await send_telcom_command('getdec')
 
-    ra=bytes_to_sexagesimal(ra_bytes)
-    dec=bytes_to_sexagesimal(dec_bytes)
+#    ra=bytes_to_sexagesimal(ra_bytes)
+#    dec=bytes_to_sexagesimal(dec_bytes)
 
-    return ra, dec
+#    return ra, dec
 
 
 async def handle_gfa(arg, ICS_client):

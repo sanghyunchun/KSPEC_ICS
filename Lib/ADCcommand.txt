@@ -1,0 +1,15 @@
+[Command]               [Usages (Type below without {})]
+adcconnect              adcconnect
+adcdisconnect           adcdisconnect
+adcstop                 adcstop
+adcstatus               adcstatus
+adcpoweroff             adcpoweroff
+adchome                 adchome {velocity}
+adczero                 adczero {velocity}
+adcpark                 adcpark
+adcrotate1              adcrotate1 {count} {velocity}
+adcrotate2              adcrotate2 {count} {velocity}
+adcctrotate             adcctrotate {count} {velocity}
+adccorotate             adccorotate {count} {velocity}
+adcadjust               adcadjust {ra} {dec}
+adcactivate             adcactivate {zdist}

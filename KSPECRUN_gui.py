@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
         QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QMessageBox, QSizePolicy, QFileDialog, QListWidget,QListWidgetItem,
         QDialog, QTextEdit
         )
-from PySide6.QtGui import QMouseEvent, QGuiApplication, QTextCursor
+from PySide6.QtGui import QMouseEvent, QGuiApplication, QTextCursor, QFont
 from ui_mainwindow import Ui_MainWindow
 from qasync import QEventLoop, asyncSlot
 from astropy.io import fits
@@ -453,6 +453,46 @@ class MainWindow(QMainWindow):
         layout.addWidget(close_button)
 
         dialog.exec()
+
+    def show_inst_command_popup(self,instrument):
+        if instrument == "ADC?":
+            file_path = "./Lib/ADCcommand.txt"
+        elif instrument == 'GFA?':
+            file_path = "./Lib/GFAcommand.txt"
+        elif instrument == 'LAMP?':
+            file_path = "./Lib/LAMPcommand.txt"
+        elif instrument == 'MTL?':
+            file_path = "./Lib/MTLcommand.txt"
+
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+        except Exception as e:
+            content = f"Failed to read file:\n{e}"
+
+        inst = instrument.rstrip("?")
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"{inst} Command Usages")
+        dialog.resize(600, 900)
+
+        layout = QVBoxLayout(dialog)
+
+        text_edit = QTextEdit()
+        text_edit.setReadOnly(True)
+        text_edit.setPlainText(content)
+
+        font = QFont("Courier New")
+        font.setStyleHint(QFont.Monospace)
+        text_edit.setFont(font)
+
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(dialog.close)
+
+        layout.addWidget(text_edit)
+        layout.addWidget(close_button)
+
+        dialog.exec()
+
 
 #### Calling Status #####
     def QWidgetLabelColor(self, widget, textcolor, bgcolor=None):
@@ -1609,6 +1649,8 @@ class MainWindow(QMainWindow):
     def handle_utils(self, message):
         if message == "?":
             self.show_command_popup()
+        else:
+            self.show_inst_command_popup(message)
 
     @asyncSlot()
     async def send_command(self, category, message):
@@ -1692,7 +1734,7 @@ class MainWindow(QMainWindow):
             "ft", "dfocus", "dtilt", "fttgoto"],
 
             "telcom": ["getall", "getra", "getdec", "getha", "getel", "getaz", "getsecz", "mvstow", "mvelaz", "mvstop", "mvra", "mvdec", "track", "stepra", "stepdec"],
-            "utils": ["?","obsstatus","loadtile","setdir"],
+            "utils": ["?","obsstatus","loadtile","setdir", "ADC?", "GFA?", "LAMP?", "MTL?", "FBP?", "SPEC?"],
             "script": ["runcalib", "obsinitial", "autoguide", "autoguidestop", "runobs"]
             }
 

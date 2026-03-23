@@ -1,0 +1,6 @@
+[Command]             [Usages (Type below without {})]
+gfastatus             gfastatus
+gfaguide              gfaguide {expT} {True/False} {ra} {dec}
+gfaguidestop          gfaguidestop
+gfagrab               gfagrab {cam #} {expT}
+caloffset             pointing {expT} {ra} {dec}
