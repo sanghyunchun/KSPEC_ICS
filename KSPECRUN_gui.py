@@ -701,8 +701,8 @@ class MainWindow(QMainWindow):
         if not self.check_connection():
             return
 
-        if not self.check_syscheck():
-            return
+#        if not self.check_syscheck():
+#            return
         # call state and convert
         state = not getattr(self, state_attr, False)
         setattr(self, state_attr, state)
@@ -1241,8 +1241,8 @@ class MainWindow(QMainWindow):
         if not self.check_connection():
             return
 
-        if not self.check_syscheck():
-            return
+    #    if not self.check_syscheck():
+    #        return
 
         await self._onoff_button_clicked(state_attr="flat_state", btn1=self.ui.pushbtn_Flat, btn2=self.ui.pushbtn_Flat_2,
         command_on="flaton",command_off="flatoff",label="Flat")
@@ -1254,8 +1254,8 @@ class MainWindow(QMainWindow):
         if not self.check_connection():
             return
 
-        if not self.check_syscheck():
-            return
+    #    if not self.check_syscheck():
+    #        return
 
         await self._onoff_button_clicked(state_attr="arc_state", btn1=self.ui.pushbtn_Arc, btn2=self.ui.pushbtn_Arc_2,
         command_on="arcon",command_off="arcoff",label="Arc")
@@ -1266,8 +1266,8 @@ class MainWindow(QMainWindow):
         if not self.check_connection():
             return
 
-        if not self.check_syscheck():
-            return
+    #    if not self.check_syscheck():
+    #        return
 
         await self._onoff_button_clicked(state_attr="fiducial_state", btn1=self.ui.pushbtn_Fiducial, btn2=self.ui.pushbtn_Fiducial_2,
         command_on="fiducialon",command_off="fiducialoff",label="Fiducial")

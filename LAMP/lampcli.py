@@ -5,10 +5,12 @@ from Lib.AMQ import *
 import Lib.mkmessage as mkmsg
 import asyncio
 import json
+import requests
 
-
+"""
 def create_lamp_command(func, **kwargs):
-    """Helper function to create lamps commands."""
+#    Helper function to create lamps commands.
+
     cmd_data = mkmsg.lampmsg()
     cmd_data.update(func=func, **kwargs)
     return json.dumps(cmd_data)
@@ -42,7 +44,41 @@ async def handle_lamp(arg, ICS_client):
     if cmd in command_map:
         lampmsg = command_map[cmd]()
         await ICS_client.send_message("LAMP", lampmsg)
+"""
 
+async def handle_lamp(arg, ICS_client):
+    cmd, *params = arg.split()
+    webrelay_IP = "127.0.0.1:8080"
+    webrelay_user = None
+    webrelay_pass = None
+
+#    command_map = {
+#        'lampstatus': lamp_status, 'arcon': arcon,
+#        'arcoff' : arcoff,
+#        'flaton' : flaton,
+#        'flatoff': flatoff,
+#        'fiducialon': fiducialon,
+#        'fiducialoff': fiducialoff
+#    }
+
+    print(cmd)
+    if cmd == 'flaton':
+        url = f"http://{webrelay_IP}/state.xml?relayState=1"
+    elif cmd == 'flatoff':
+        url = f"http://{webrelay_IP}/state.xml?relayState=0"
+    elif cmd == 'arcon':
+        url = f"http://{webrelay_IP}/state.xml?relayState=1"
+    elif cmd == 'arcoff':
+        url = f"http://{webrelay_IP}/state.xml?relayState=0"
+    elif cmd == 'fiducialon':
+        url = f"http://{webrelay_IP}/state.xml?relayState=1"
+    elif cmd == 'fiducialoff':
+        url = f"http://{webrelay_IP}/state.xml?relayState=0"
+    else:
+        raise ValueError(f"Unknown WebRelay command: {cmd}")
+
+    r = requests.get(url, auth=(webrelay_user, webrelay_pass), timeout=3)
+    r.raise_for_status()
 
 
 
