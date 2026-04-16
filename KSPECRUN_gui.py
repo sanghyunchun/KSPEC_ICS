@@ -452,7 +452,8 @@ class MainWindow(QMainWindow):
         layout.addWidget(text_edit)
         layout.addWidget(close_button)
 
-        dialog.exec()
+        dialog.setModal(True)
+        dialog.open()
 
     def show_inst_command_popup(self,instrument):
         if instrument == "ADC?":
@@ -491,7 +492,8 @@ class MainWindow(QMainWindow):
         layout.addWidget(text_edit)
         layout.addWidget(close_button)
 
-        dialog.exec()
+        dialog.setModal(True)
+        dialog.open()
 
 
 #### Calling Status #####
@@ -1651,12 +1653,14 @@ class MainWindow(QMainWindow):
             self.show_command_popup()
         else:
             self.show_inst_command_popup(message)
+        return
 
-    @asyncSlot()
+#    @asyncSlot()
     async def send_command(self, category, message):
         """
         Sends a command using the respective handler.
         """
+
         handler_map = {
             "adc": handle_adc, "gfa": handle_gfa, "fbp": handle_fbp,
             "mtl": handle_mtl, "lamp": handle_lamp,
@@ -1668,9 +1672,6 @@ class MainWindow(QMainWindow):
             handler_map[category](message)
         else:
             print(f"Unknown command category: {category}",flush=True)
-
-        self.ui.lineEdit_cmd.clear()
-        self.ui.lineEdit_cmd_2.clear()
 
 
     ### User input command like CLI ###
@@ -1708,6 +1709,9 @@ class MainWindow(QMainWindow):
                     await handle_script(message, scriptrun=self.scriptrun)
                 else:
                     await self.send_command(category, message)
+
+                self.ui.lineEdit_cmd.clear()
+                self.ui.lineEdit_cmd_2.clear()
             else:
                 print("Invalid command. Please enter a valid command.\n", flush=True)
         except Exception as e:

@@ -2961,6 +2961,25 @@
            <string>STOP</string>
           </property>
          </widget>
+         <widget class="QLabel" name="label_6">
+          <property name="geometry">
+           <rect>
+            <x>303</x>
+            <y>140</y>
+            <width>181</width>
+            <height>171</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="pixmap">
+           <pixmap>haechi.png</pixmap>
+          </property>
+          <property name="scaledContents">
+           <bool>true</bool>
+          </property>
+         </widget>
         </widget>
        </widget>
        <widget class="QLabel" name="label_cmd">
