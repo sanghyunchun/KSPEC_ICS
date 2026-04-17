@@ -1,3 +1,6 @@
 COMM_*.txt
 *.assign.txt
-*.fits
+GFA/kspec_gfa_controller/src/img/cutout/
+GFA/kspec_gfa_controller/src/img/pointing_raw/
+GFA/kspec_gfa_controller/src/img/raw/
+MTL/data/
