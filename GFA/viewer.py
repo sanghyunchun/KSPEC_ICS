@@ -475,18 +475,21 @@ class FitsLiveViewer:
         self.status_var.set(message)
 
     def _initial_scan(self):
+        # 없으면 자동 생성
         if not os.path.isdir(self.day_dir):
-            messagebox.showerror(
-                "Directory not found",
-                f"Could not find:\n{self.day_dir}\n\n"
-                f"Make sure you run this script at the same level as your folders "
-                f"and the date folder exists."
-            )
             try:
-                self.win.destroy()
-            except Exception:
-                pass
-            return
+                os.makedirs(self.day_dir, exist_ok=True)
+                print(f"[INFO] Created directory: {self.day_dir}")
+            except Exception as e:
+                messagebox.showerror(
+                    "Directory creation failed",
+                    f"Could not create:\n{self.day_dir}\n\n{e}"
+                )
+                try:
+                    self.win.destroy()
+                except Exception:
+                    pass
+                return
 
         _ = self._rescan()
 

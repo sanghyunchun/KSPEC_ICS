@@ -212,20 +212,21 @@ def get_separation(ra1_deg, dec1_deg, ra2_deg, dec2_deg):
 
 #    return ra0, dec0
 
-
-def get_boresight(ra_list_deg, dec_list_deg, frame="icrs"):
+def get_boresight(ra_list_deg, dec_list_deg, frame="icrs", min_guides=5):
     """
-    6개의 가이드 카메라 이미지 중심 좌표(RA, DEC)로부터
+    5개 이상 가이드 카메라 이미지 중심 좌표(RA, DEC)로부터
     초점면 중심(boresight)을 계산한다.
 
     Parameters
     ----------
     ra_list_deg : array-like
-        RA values in degrees (length = 6)
+        RA values in degrees
     dec_list_deg : array-like
-        DEC values in degrees (length = 6)
+        DEC values in degrees
     frame : str
-        Astropy coordinate frame (default: 'icrs')
+        Coordinate frame, default='icrs'
+    min_guides : int
+        최소 사용 가능한 가이드 수, default=4
 
     Returns
     -------
@@ -235,32 +236,39 @@ def get_boresight(ra_list_deg, dec_list_deg, frame="icrs"):
         Boresight DEC in degrees
     """
 
-    if len(ra_list_deg) != 6 or len(dec_list_deg) != 6:
-        raise ValueError("Guide camera coordinates must be exactly 6 points.")
+    ra_list_deg = np.asarray(ra_list_deg, dtype=float)
+    dec_list_deg = np.asarray(dec_list_deg, dtype=float)
 
-    # SkyCoord 생성
+    if len(ra_list_deg) != len(dec_list_deg):
+        raise ValueError("RA and DEC lists must have the same length.")
+
+    if len(ra_list_deg) < min_guides:
+        raise ValueError(f"At least {min_guides} guide coordinates are required.")
+
+    # NaN 제거
+    valid = np.isfinite(ra_list_deg) & np.isfinite(dec_list_deg)
+    ra_list_deg = ra_list_deg[valid]
+    dec_list_deg = dec_list_deg[valid]
+
+    if len(ra_list_deg) < min_guides:
+        raise ValueError(f"At least {min_guides} valid guide coordinates are required.")
+
     guides = SkyCoord(
         ra=ra_list_deg * u.deg,
         dec=dec_list_deg * u.deg,
         frame=frame
     )
 
-    # 단위벡터(cartesian) 평균
-    xyz = guides.cartesian.xyz.value  # shape (3, 6)
-    v_mean = np.mean(xyz, axis=1)
+    # Astropy CartesianRepresentation 평균
+    v_mean = guides.cartesian.mean()
 
     # 정규화
-    v_mean /= np.linalg.norm(v_mean)
+    v_mean = v_mean / v_mean.norm()
 
-    # 다시 SkyCoord로 변환
-    boresight = SkyCoord(
-        CartesianRepresentation(v_mean[0], v_mean[1], v_mean[2]),
-        frame=frame
-    )
+    # CartesianRepresentation을 바로 SkyCoord로 변환
+    boresight = SkyCoord(v_mean, frame=frame)
 
     return boresight.ra.deg, boresight.dec.deg
-
-
 
 def offsets_arcsec(ra_from, dec_from, ra_to, dec_to):
     """

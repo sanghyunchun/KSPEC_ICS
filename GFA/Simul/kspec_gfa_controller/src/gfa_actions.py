@@ -342,7 +342,6 @@ class GFAActions:
 
             ##### Simulation Part Starts ###
             ttt=self.guider.guiding()
-            print(ttt)
             self.env.logger.info("Guiding test......")
             fdx = 0.04
             fdy = 0.1
@@ -407,7 +406,7 @@ class GFAActions:
             self.env.logger.info(f"Target RA/DEC: {ra}, {dec}")
 
             # ✅ raw 루트에서 FITS만 삭제 (다른 파일은 보호)
-   #         self.env.astrometry.clear_raw_files()
+            self.env.astrometry.clear_raw_files()
 
             # --- camera open/grab/close ---
    #         await self.env.controller.open_all_cameras()
@@ -446,25 +445,25 @@ class GFAActions:
 
 
             # --- clean env 적용 ---
-   #         self._apply_clean_env_to_astrometry()
+            self._apply_clean_env_to_astrometry()
 
             # --- astrometry outputs 준비 ---
-   #         self.env.logger.info("Ensuring astrometry outputs are ready (no procimg dependency)...")
-   #         astro_files = self._ensure_astrometry_outputs_ready()
-   #         astro_files = list(astro_files) if astro_files else []
+            self.env.logger.info("Ensuring astrometry outputs are ready (no procimg dependency)...")
+            astro_files = self._ensure_astrometry_outputs_ready()
+            astro_files = list(astro_files) if astro_files else []
 
-   #         self.env.logger.info(f"Astrometry inputs ready: {len(astro_files)} files.")
+            self.env.logger.info(f"Astrometry inputs ready: {len(astro_files)} files.")
 
-   #         if not astro_files:
-   #             msg = "Pointing failed: no astrometry FITS outputs found."
-   #             self.env.logger.error(msg)
-   #             return self._generate_response("error", msg, images=[], crval1=[], crval2=[])
+            if not astro_files:
+                msg = "Pointing failed: no astrometry FITS outputs found."
+                self.env.logger.error(msg)
+                return self._generate_response("error", msg, images=[], crval1=[], crval2=[])
 
             # astro_*.fits 기준으로 헤더에서 CRVAL 읽기
-   #         image_list = [Path(p) for p in astro_files]
-   #         image_names = [p.name for p in image_list]
+            image_list = [Path(p) for p in astro_files]
+            image_names = [p.name for p in image_list]
 
-   #         crval1_list, crval2_list = _get_crvals_from_fits(image_list)
+            crval1_list, crval2_list = _get_crvals_from_fits(image_list)
             #self.env.astrometry.clear_raw_files()
 
             msg = f"Pointing completed. Computed CRVALs for {len(image_list)} images."

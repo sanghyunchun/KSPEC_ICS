@@ -130,12 +130,59 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
         rsp=json.dumps(reply_data)
         await GFA_server.send_message('ICS',rsp)
 
-        result = await gfa_actions.pointing(ra=dict_data['ra'],dec=dict_data['dec'],ExpTime=dict_data['ExpTime'])
+        max_try = 3
+        min_required = 5
 
-        img_list=result['images']
-        crval1_list=result['crval1']
-        crval2_list=result['crval2']
-        message1 = result['message']
+        for attempt in range (1, max_try+1):
+            result = await gfa_actions.pointing(ra=dict_data['ra'],dec=dict_data['dec'],ExpTime=dict_data['ExpTime'])
+
+            img_list=result['images']
+            crval1_list=result['crval1']
+            crval2_list=result['crval2']
+            message1 = result['message']
+
+            valid_crval1 = [x for x in crval1_list if x is not None and not math.isnan(x)]
+            valid_crval2 = [x for x in crval2_list if x is not None and not math.isnan(x)]
+
+            # Success condition
+            if len(valid_crval1) >= min_required:
+                printing(f"Astrometry success with {len(valid_crval1)} valid CRVAL pairs")
+                ra_c, dec_c = get_boresight(valid_crval1, valid_crval2)    # Boresight coordinate
+                ra, dec = radec_str_to_deg(dict_data['ra'], dict_data['dec'])  # covert RA,DEC of Tile center to degree
+                printing(f'Telescope Target: RA = {ra} DEC = {dec}')
+                printing(f'Current Telescope pointing: RA = {ra_c} DEC= {dec_c}')
+
+                sep = get_separation(ra_c,dec_c,ra,dec)
+
+                printing(f'Separtation (arcsec.) : {sep}')
+
+                delra,deldec = offsets_arcsec(ra_c,dec_c,ra,dec)  # calculate offset to move from ra_c, dec_c to ra, dec
+
+                printing(f'Offset in (RA, DEC) : ({delra}, {deldec})')
+
+                ra_deg, dec_deg = apply_offsets(ra,dec,delra,deldec)
+                ra_new = ra_deg_to_hms(ra_deg)
+                dec_new = dec_deg_to_dms(dec_deg)
+        #        print(ra_new,dec_new)
+
+                msg =f'{message1} Telescope Target: RA = {ra} DEC = {dec}. \
+                    Current Telescope pointing: RA = {ra_c} DEC= {dec_c}.'
+
+                reply_data=mkmsg.gfamsg()
+                reply_data.update(result)
+                reply_data.update(message=msg,sepsec=sep,dra=delra,ddec=deldec,new_ra=ra_new,new_dec=dec_new,process='Done',status='success',subinst='POINT')
+                rsp=json.dumps(reply_data)
+                printing(reply_data['message'])
+                await GFA_server.send_message('ICS',rsp)
+                break
+
+            printing(f"Only {len(valid_crval1)} valid CRVAL pairs (try {attempt}/{max_try}) → retrying...")
+
+            if attempt == max_try:
+                printing("Astrometry failed: insufficient valid CRVAL pairs (less than 5). Increase exposure time or Wait for good weather.")
+                raise
+
+            await asyncio.sleep(1)
 
 #        ra_m1,dec_m1=get_boresight(crval1_list[0],crval2_list[0],crval1_list[1],crval2_list[1])
 #        ra_m2,dec_m2=get_boresight(crval1_list[2],crval2_list[2],crval1_list[4],crval2_list[4])
@@ -147,37 +194,10 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
 #        ra_c = np.mean([ra_m1,ra_m2,ra_m3])
 #        dec_c = np.mean([dec_m1, dec_m2, dec_m3])
 
-        ra_c, dec_c = get_boresight(crval1_list, crval2_list)    # Boresight coordinate
 
-        ra, dec = radec_str_to_deg(dict_data['ra'], dict_data['dec'])  # covert RA,DEC of Tile center to degree
       #  ra_target = dict_data['ra']
       #  dec_target = dict_data['dec']
 
-        print(f'Telescope Target: RA = {ra} DEC = {dec}')
-        print(f'Current Telescope pointing: RA = {ra_c} DEC= {dec_c}')
-
-        sep = get_separation(ra_c,dec_c,ra,dec)
-
-        print(f'Separtation (arcsec.) : {sep}')
-
-        delra,deldec = offsets_arcsec(ra_c,dec_c,ra,dec)  # calculate offset to move from ra_c, dec_c to ra, dec
-
-        print(f'Offset in (RA, DEC) : ({delra}, {deldec})')
-
-        ra_deg, dec_deg = apply_offsets(ra,dec,delra,deldec)
-        ra_new = ra_deg_to_hms(ra_deg)
-        dec_new = dec_deg_to_dms(dec_deg)
-        print(ra_new,dec_new)
-
-        msg =f'{message1} Telescope Target: RA = {ra} DEC = {dec}. \
-                Current Telescope pointing: RA = {ra_c} DEC= {dec_c}.'
-
-        reply_data=mkmsg.gfamsg()
-        reply_data.update(result)
-        reply_data.update(message=msg,sepsec=sep,dra=delra,ddec=deldec,new_ra=ra_new,new_dec=dec_new,process='Done',status='success',subinst='POINT')
-        rsp=json.dumps(reply_data)
-        printing(reply_data['message'])
-        await GFA_server.send_message('ICS',rsp)
 
         
 def savedata(ra,dec,xp,yp,mag):

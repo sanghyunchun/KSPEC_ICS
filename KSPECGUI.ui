@@ -50,7 +50,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideLeft</enum>
@@ -15971,7 +15971,7 @@
           <x>0</x>
           <y>190</y>
           <width>281</width>
-          <height>121</height>
+          <height>161</height>
          </rect>
         </property>
         <property name="font">
@@ -15989,7 +15989,7 @@
         <widget class="QLineEdit" name="lineEdit_GFA_exptime">
          <property name="geometry">
           <rect>
-           <x>100</x>
+           <x>110</x>
            <y>30</y>
            <width>71</width>
            <height>25</height>
@@ -16061,7 +16061,7 @@
         <widget class="QLineEdit" name="lineEdit_GFA_cam">
          <property name="geometry">
           <rect>
-           <x>100</x>
+           <x>110</x>
            <y>60</y>
            <width>71</width>
            <height>25</height>
@@ -16115,7 +16115,7 @@
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>90</y>
+           <y>120</y>
            <width>71</width>
            <height>21</height>
           </rect>
@@ -16147,6 +16147,56 @@
          </property>
          <property name="text">
           <string>Set</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_GFA_numexp">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>90</y>
+           <width>97</width>
+           <height>23</height>
+          </rect>
+         </property>
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>14</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
+           <strikeout>false</strikeout>
+          </font>
+         </property>
+         <property name="text">
+          <string># exposure</string>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="lineEdit_GFA_numexp">
+         <property name="geometry">
+          <rect>
+           <x>110</x>
+           <y>90</y>
+           <width>71</width>
+           <height>25</height>
+          </rect>
+         </property>
+         <property name="font">
+          <font>
+           <family>Sans Serif</family>
+           <pointsize>10</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
+           <strikeout>false</strikeout>
+          </font>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="placeholderText">
+          <string>default 1</string>
          </property>
         </widget>
        </widget>
@@ -16850,7 +16900,7 @@
           <x>290</x>
           <y>190</y>
           <width>231</width>
-          <height>121</height>
+          <height>161</height>
          </rect>
         </property>
         <property name="font">
@@ -16954,9 +17004,9 @@
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>318</y>
+          <y>358</y>
           <width>521</width>
-          <height>191</height>
+          <height>151</height>
          </rect>
         </property>
         <property name="font">

@@ -527,7 +527,7 @@ class MainWindow(QMainWindow):
         inst = dict_data.get('inst', 'None')
         process = dict_data.get('process', 'None')
         message =dict_data.get('message','None')
-        status = dict_data.get('status', 'fail')
+        status = dict_data.get('status', 'error')
         subinst = dict_data.get('subinst', 'None')
 
         if process == 'Done':

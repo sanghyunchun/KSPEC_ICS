@@ -6,6 +6,9 @@ import asyncio
 import time
 import random
 import shutil
+import math
+import numpy as np
+from .pointing import *
 
 
 guiding_task = None
@@ -61,31 +64,31 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
         rsp=json.dumps(reply_data)
         await GFA_server.send_message('ICS',rsp)
         save = dict_data['save'] == 'True'
-        guiding_task = asyncio.create_task(handle_guiding(GFA_server, gfa_actions, dict_data['ExpTime'], save, dict_data['ra'], dict_data['dec']))
+        guiding_task = asyncio.create_task(handle_guiding(GFA_server, gfa_actions, dict_data['ExpTime'],save,ra=dict_data['ra'],dec=dict_data['dec']))
 
     elif func == 'gfaguidestop':
         if guiding_task and not guiding_task.done():
             printing("Stopping guiding task...")
-            await gfa_actions.guiding_stop()
             guiding_task.cancel()
             reply_data=mkmsg.gfamsg()
             reply_data.update(process='Done',message='Autoguide Stop',status='success')
             rsp=json.dumps(reply_data)
             await GFA_server.send_message('ICS',rsp)
-            path_astroimg=kspecinfo['GFA']['Simul_astrometry_images']
-            shutil.rmtree(path_astroimg)
+
+            path_astroimg=kspecinfo['GFA']['final_astrometry_images']
+            shutil.rmtree(path_astroimg)                                        # Remove the guiding images after guiding stop.
             os.makedirs(path_astroimg, exist_ok=True)
+
             try:
                 await guiding_task
             except asyncio.CancelledError:
-                printing("Guiding task stopped. Fits files with astrometry are removed")
+                printing("Guiding task stopped.")
         else:
             printing("No Guiding task is currently running.")
             reply_data=mkmsg.gfamsg()
             reply_data.update(process='Done',message='No Guiding task is currently running.',status='normal')
             rsp=json.dumps(reply_data)
             await GFA_server.send_message('ICS',rsp)
-
 
     if func == 'loadguide':
         chipnum=dict_data['chipnum']
@@ -94,17 +97,20 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
         mag=dict_data['mag']
         xp=dict_data['xp']
         yp=dict_data['yp']
-        status, comment=savedata(ra,dec,xp,yp,mag)
-#        dict_data={'inst': 'GFA', 'savedata': 'False','filename': 'None','message': message}
+        status, comment=savedata(ra,dec,xp,yp,mag)    # It would be removed, because guide stars are not necessary in current guiding system. 
         reply_data=mkmsg.gfamsg()
         reply_data.update(message=comment,process='Done',status=status)
-        print(reply_data)
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[GFA]', comment+'\033[0m')
         await GFA_server.send_message('ICS',rsp)
-        
+
 
     if func == 'fdgrab':
+        printing("Finder grab task started.")
+        reply_data=mkmsg.gfamsg()
+        reply_data.update(process='START',message='Finder grab starts.',status='success')
+        rsp=json.dumps(reply_data)
+        await GFA_server.send_message('ICS',rsp)
         result = await finder_actions.grab(dict_data['ExpTime'])
         reply_data=mkmsg.gfamsg()
         reply_data.update(result)
@@ -113,28 +119,92 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
         printing(reply_data['message'])
         await GFA_server.send_message('ICS',rsp)
 
+
     if func == 'pointing':
+        path_astroimg=kspecinfo['GFA']['final_astrometry_images']
+        shutil.rmtree(path_astroimg)                                        # Remove the guiding images after guiding stop.
+        os.makedirs(path_astroimg, exist_ok=True)
+
         reply_data=mkmsg.gfamsg()
-        reply_data.update(process='START',message='Pointing starts.',status='success')
+        reply_data.update(process='START',message='Pointing starts.',status='success',subinst='POINT')
         rsp=json.dumps(reply_data)
         await GFA_server.send_message('ICS',rsp)
 
-        result = await gfa_actions.pointing(ra=dict_data['ra'],dec=dict_data['dec'],ExpTime=dict_data['ExpTime'])
-        reply_data=mkmsg.gfamsg()
-        reply_data.update(result)
-        reply_data.update(process='Done')
-        rsp=json.dumps(reply_data)
-        printing(reply_data['message'])
-        await GFA_server.send_message('ICS',rsp)
+        max_try = 3
+        min_required = 5
+
+        for attempt in range (1, max_try+1):
+            result = await gfa_actions.pointing(ra=dict_data['ra'],dec=dict_data['dec'],ExpTime=dict_data['ExpTime'])
+
+            img_list=result['images']
+            crval1_list=result['crval1']
+            crval2_list=result['crval2']
+            message1 = result['message']
+
+            valid_crval1 = [x for x in crval1_list if x is not None and not math.isnan(x)]
+            valid_crval2 = [x for x in crval2_list if x is not None and not math.isnan(x)]
+
+            # Success condition
+            if len(valid_crval1) >= min_required:
+                printing(f"Astrometry success with {len(valid_crval1)} valid CRVAL pairs")
+                ra_c, dec_c = get_boresight(valid_crval1, valid_crval2)    # Boresight coordinate
+                ra, dec = radec_str_to_deg(dict_data['ra'], dict_data['dec'])  # covert RA,DEC of Tile center to degree
+                printing(f'Telescope Target: RA = {ra} DEC = {dec}')
+                printing(f'Current Telescope pointing: RA = {ra_c} DEC= {dec_c}')
+
+                sep = get_separation(ra_c,dec_c,ra,dec)
+
+                printing(f'Separtation (arcsec.) : {sep}')
+
+                delra,deldec = offsets_arcsec(ra_c,dec_c,ra,dec)  # calculate offset to move from ra_c, dec_c to ra, dec
+
+                printing(f'Offset in (RA, DEC) : ({delra}, {deldec})')
+
+                ra_deg, dec_deg = apply_offsets(ra,dec,delra,deldec)
+                ra_new = ra_deg_to_hms(ra_deg)
+                dec_new = dec_deg_to_dms(dec_deg)
+        #        print(ra_new,dec_new)
+
+                msg =f'{message1} Telescope Target: RA = {ra} DEC = {dec}. \
+                    Current Telescope pointing: RA = {ra_c} DEC= {dec_c}.'
+
+                reply_data=mkmsg.gfamsg()
+                reply_data.update(result)
+                reply_data.update(message=msg,sepsec=sep,dra=delra,ddec=deldec,new_ra=ra_new,new_dec=dec_new,process='Done',status='success',subinst='POINT')
+                rsp=json.dumps(reply_data)
+                printing(reply_data['message'])
+                await GFA_server.send_message('ICS',rsp)
+                break
+
+            printing(f"Only {len(valid_crval1)} valid CRVAL pairs (try {attempt}/{max_try}) → retrying...")
+
+            if attempt == max_try:
+                printing("Astrometry failed: insufficient valid CRVAL pairs (less than 5). Increase exposure time or Wait for good weather.")
+                raise
+
+            await asyncio.sleep(1)
+
+#        ra_m1,dec_m1=get_boresight(crval1_list[0],crval2_list[0],crval1_list[1],crval2_list[1])
+#        ra_m2,dec_m2=get_boresight(crval1_list[2],crval2_list[2],crval1_list[4],crval2_list[4])
+#        ra_m3,dec_m3=get_boresight(crval1_list[3],crval2_list[3],crval1_list[5],crval2_list[5])
+
+#        ra = ra_hms_str_to_deg(dict_data['ra'])
+#        dec = dec_sexagesimal_to_deg(dict_data['dec'])
+
+#        ra_c = np.mean([ra_m1,ra_m2,ra_m3])
+#        dec_c = np.mean([dec_m1, dec_m2, dec_m3])
 
 
+      #  ra_target = dict_data['ra']
+      #  dec_target = dict_data['dec']
 
 
+        
 def savedata(ra,dec,xp,yp,mag):
     with open('./Lib/KSPEC.ini','r') as f:
         inidata=json.load(f)
 
-    gfafilepath=inidata['GFA']['gfafilepath']
+    gfafilepath=inidata['GFA']['gfafilepath']        # guide stars info. is saved in GFA/etc directory. It would not be necessary.
 
     try:
         with open(gfafilepath+'position.radec','w') as savefile:
@@ -149,17 +219,18 @@ def savedata(ra,dec,xp,yp,mag):
     return 'success', msg
 
 
-async def handle_guiding(GFA_server, gfa_actions, expt, save, ra: str, dec: str):
+
+async def handle_guiding(GFA_server, gfa_actions, expt, save, ra: str=None, dec: str=None):
     try:
         while True:
-            result = await gfa_actions.guiding(expt,save,ra=ra, dec=dec)
+            result = await gfa_actions.guiding(expt,save,ra=ra,dec=dec)
             reply_data = mkmsg.gfamsg()
             reply_data.update(result)
             reply_data.update(process='ING')
             rsp=json.dumps(reply_data)
             await GFA_server.send_message('ICS',rsp)
 
-            await asyncio.sleep(30)
+            await asyncio.sleep(70)
 
     except asyncio.CancelledError:
         printing("handle_guiding task was cancelled.")
