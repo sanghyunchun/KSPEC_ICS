@@ -45,6 +45,10 @@ PIX_SIZE = 4 * 2.74e-6  # 4x4 binning (meters)
 FLEN = 5.12             # meters
 PIX_SCALE = np.rad2deg(PIX_SIZE / FLEN) * 3600.0  # arcsec / pixel
 
+# Avoid locking onto saturated or near-saturated stars.
+# Reference-star candidates must have peak counts below this value.
+STAR_PEAK_MAX = 4096.0
+
 
 FNAME_RE = re.compile(
     r"^D(?P<date>\d{8})_T(?P<time>\d{6})_(?P<serial>\d+)_exp(?P<exp>[\d\.]+)s\.fits$"
@@ -142,6 +146,12 @@ def estimate_fwhm_arcsec(data: np.ndarray) -> Optional[Tuple[float, float, float
     Returns:
         (peak_signal, fwhm_arcsec, x, y, fwhm_pix)
     or None if failed.
+
+    Saturation handling:
+    - The initial candidate peak must be < STAR_PEAK_MAX.
+    - The local fitting cutout must also have max < STAR_PEAK_MAX.
+      This prevents locking onto stars whose center/core is saturated
+      even if a nearby non-saturated pixel was selected as the candidate.
     """
     if data.ndim != 2:
         return None
@@ -161,57 +171,78 @@ def estimate_fwhm_arcsec(data: np.ndarray) -> Optional[Tuple[float, float, float
     x0, x1 = int(0.1 * w), int(0.9 * w)
     roi = img[y0:y1, x0:x1]
 
-    sat = float(np.percentile(finite, 99.99))
-    upper = 0.90 * sat
     lower = med + 5.0 * sig
 
     cand = roi.copy()
-    bad = (~np.isfinite(cand)) | (cand >= upper) | (cand <= lower)
+    bad = (~np.isfinite(cand)) | (cand >= STAR_PEAK_MAX) | (cand <= lower)
     cand[bad] = -np.inf
 
     if not np.isfinite(cand).any():
         return None
 
-    iy, ix = np.unravel_index(np.argmax(cand), cand.shape)
-    peak_signal = float(cand[iy, ix])
-    py, px = iy + y0, ix + x0
-
-    half = 12
-    ys = max(py - half, 0)
-    ye = min(py + half + 1, h)
-    xs = max(px - half, 0)
-    xe = min(px + half + 1, w)
-    cut = img[ys:ye, xs:xe]
-
-    border = np.concatenate([
-        cut[0, :], cut[-1, :], cut[:, 0], cut[:, -1]
-    ])
-    finite_border = border[np.isfinite(border)]
-    bkg = float(np.median(finite_border)) if finite_border.size > 0 else med
-
-    wgt = cut - bkg
-    wgt[~np.isfinite(wgt)] = 0.0
-    wgt[wgt < 0] = 0.0
-    s = float(wgt.sum())
-    if s <= 0:
+    # Try bright candidates in descending order. A single saturated star may
+    # contribute adjacent pixels below STAR_PEAK_MAX, so reject the whole local
+    # cutout if it contains any saturated/near-saturated pixels.
+    max_candidates = 80
+    flat = cand.ravel()
+    finite_idx = np.flatnonzero(np.isfinite(flat))
+    if finite_idx.size == 0:
         return None
 
-    yy, xx = np.indices(cut.shape)
-    cx = float((wgt * xx).sum() / s)
-    cy = float((wgt * yy).sum() / s)
+    order = finite_idx[np.argsort(flat[finite_idx])[::-1]]
+    order = order[:max_candidates]
 
-    vx = float((wgt * (xx - cx) ** 2).sum() / s)
-    vy = float((wgt * (yy - cy) ** 2).sum() / s)
-    if vx <= 0 or vy <= 0:
-        return None
+    for flat_idx in order:
+        iy, ix = np.unravel_index(flat_idx, cand.shape)
+        peak_signal = float(cand[iy, ix])
+        py, px = iy + y0, ix + x0
 
-    sigma_pix = float(np.sqrt(0.5 * (vx + vy)))
-    fwhm_pix = 2.355 * sigma_pix
-    fwhm_arcsec = fwhm_pix * PIX_SCALE
+        half = 12
+        ys = max(py - half, 0)
+        ye = min(py + half + 1, h)
+        xs = max(px - half, 0)
+        xe = min(px + half + 1, w)
+        cut = img[ys:ye, xs:xe]
 
-    x_img = xs + cx
-    y_img = ys + cy
-    return peak_signal, fwhm_arcsec, x_img, y_img, fwhm_pix
+        finite_cut = cut[np.isfinite(cut)]
+        if finite_cut.size < 20:
+            continue
+
+        # Reject any candidate whose local star cutout contains saturated pixels.
+        if float(np.max(finite_cut)) >= STAR_PEAK_MAX:
+            continue
+
+        border = np.concatenate([
+            cut[0, :], cut[-1, :], cut[:, 0], cut[:, -1]
+        ])
+        finite_border = border[np.isfinite(border)]
+        bkg = float(np.median(finite_border)) if finite_border.size > 0 else med
+
+        wgt = cut - bkg
+        wgt[~np.isfinite(wgt)] = 0.0
+        wgt[wgt < 0] = 0.0
+        s = float(wgt.sum())
+        if s <= 0:
+            continue
+
+        yy, xx = np.indices(cut.shape)
+        cx = float((wgt * xx).sum() / s)
+        cy = float((wgt * yy).sum() / s)
+
+        vx = float((wgt * (xx - cx) ** 2).sum() / s)
+        vy = float((wgt * (yy - cy) ** 2).sum() / s)
+        if vx <= 0 or vy <= 0:
+            continue
+
+        sigma_pix = float(np.sqrt(0.5 * (vx + vy)))
+        fwhm_pix = 2.355 * sigma_pix
+        fwhm_arcsec = fwhm_pix * PIX_SCALE
+
+        x_img = xs + cx
+        y_img = ys + cy
+        return peak_signal, fwhm_arcsec, x_img, y_img, fwhm_pix
+
+    return None
 
 
 def read_fits_2d(path: str) -> Optional[np.ndarray]:
@@ -379,20 +410,79 @@ class FitsLiveViewer:
 
         ttk.Label(btns, text=f"pixscale = {PIX_SCALE:.3f} arcsec/pix").pack(side=tk.RIGHT)
 
-        self.fig, self.axes = plt.subplots(2, 3, figsize=(12, 7))
-        self.fig.tight_layout(pad=2.0)
+        # Each camera panel is built from:
+        #   main image | contour thumbnail
+        #              | grayscale thumbnail
+        #   info text  | empty spacer
+        # The two star thumbnails are flush to the right of the camera image.
+        self.fig = plt.figure(figsize=(13, 6.8))
+        outer_gs = self.fig.add_gridspec(
+            2, 3,
+            wspace=0.025,
+            hspace=0.12,
+        )
+
+        main_axes = []
+        contour_axes = []
+        thumbnail_axes = []
+        info_axes = []
+        for row in range(2):
+            for col in range(3):
+                panel_gs = outer_gs[row, col].subgridspec(
+                    2, 2,
+                    height_ratios=[1.0, 0.15],
+                    width_ratios=[1.0, 0.18],
+                    wspace=0.0,
+                    hspace=0.012,
+                )
+                thumb_gs = panel_gs[0, 1].subgridspec(
+                    2, 1,
+                    height_ratios=[1.0, 1.0],
+                    hspace=0.0,
+                )
+                main_axes.append(self.fig.add_subplot(panel_gs[0, 0]))
+                contour_axes.append(self.fig.add_subplot(thumb_gs[0, 0]))
+                thumbnail_axes.append(self.fig.add_subplot(thumb_gs[1, 0]))
+                info_axes.append(self.fig.add_subplot(panel_gs[1, :]))
+
+        self.axes = np.array(main_axes).reshape(2, 3)
+        self.contour_axes = np.array(contour_axes).reshape(2, 3)
+        self.thumbnail_axes = np.array(thumbnail_axes).reshape(2, 3)
+        self.info_axes = np.array(info_axes).reshape(2, 3)
+        self.fig.subplots_adjust(
+            left=0.012, right=0.996,
+            bottom=0.035, top=0.935,
+            wspace=0.055, hspace=0.18,
+        )
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.win)
         self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         self.img_artists = [None] * 6
         self.overlay_artists: List = []
-        self.inset_axes: List = []
 
-        for ax, serial in zip(self.axes.flatten(), self.camera_serials):
-            ax.set_title(serial)
+        for ax, cax, tax, iax, serial in zip(
+            self.axes.flatten(),
+            self.contour_axes.flatten(),
+            self.thumbnail_axes.flatten(),
+            self.info_axes.flatten(),
+            self.camera_serials,
+        ):
+            ax.set_title(serial, pad=2)
             ax.set_xticks([])
             ax.set_yticks([])
+            ax.set_anchor("E")
+            for sax in (cax, tax):
+                sax.set_xticks([])
+                sax.set_yticks([])
+#                sax.set_anchor("SW")
+                cax.set_anchor("S")
+                tax.set_anchor("N")
+#                try:
+#                    sax.set_box_aspect(1)
+#                except Exception:
+#                    pass
+            iax.axis("off")
 
     def _reset_reference_state(self):
         self.reference_centers = {}
@@ -466,11 +556,30 @@ class FitsLiveViewer:
 
     def _clear_empty_view(self, message: str):
         self._clear_overlays()
-        for ax, serial in zip(self.axes.flatten(), self.camera_serials):
+        for ax, cax, tax, iax, serial in zip(
+            self.axes.flatten(),
+            self.contour_axes.flatten(),
+            self.thumbnail_axes.flatten(),
+            self.info_axes.flatten(),
+            self.camera_serials,
+        ):
             ax.clear()
+            cax.clear()
+            tax.clear()
+            iax.clear()
             ax.set_title(f"{serial}\n(empty)")
             ax.set_xticks([])
             ax.set_yticks([])
+            for sax in (cax, tax):
+                sax.set_xticks([])
+                sax.set_yticks([])
+                try:
+                    sax.set_box_aspect(1)
+                except Exception:
+                    pass
+            cax.set_anchor("S")
+            tax.set_anchor("N")
+            iax.axis("off")
         self.canvas.draw_idle()
         self.status_var.set(message)
 
@@ -694,12 +803,6 @@ class FitsLiveViewer:
                 pass
         self.overlay_artists = []
 
-        for iax in self.inset_axes:
-            try:
-                iax.remove()
-            except Exception:
-                pass
-        self.inset_axes = []
 
     def _render_current(self):
         if not self.keys:
@@ -711,11 +814,31 @@ class FitsLiveViewer:
 
         self._clear_overlays()
 
-        for i, (ax, serial) in enumerate(zip(self.axes.flatten(), self.camera_serials)):
+        for i, (ax, cax, tax, iax, serial) in enumerate(zip(
+            self.axes.flatten(),
+            self.contour_axes.flatten(),
+            self.thumbnail_axes.flatten(),
+            self.info_axes.flatten(),
+            self.camera_serials,
+        )):
+            cax.clear()
+            tax.clear()
+            iax.clear()
+            for sax in (cax, tax):
+                sax.set_xticks([])
+                sax.set_yticks([])
+                try:
+                    sax.set_box_aspect(1)
+                except Exception:
+                    pass
+            cax.set_anchor("S")
+            tax.set_anchor("N")
+            iax.axis("off")
             path = frame.get(serial)
-            ax.set_title(serial)
+            ax.set_title(serial, pad=2)
             ax.set_xticks([])
             ax.set_yticks([])
+            ax.set_anchor("E")
 
             if path is None or not os.path.isfile(path):
                 ax.clear()
@@ -723,6 +846,9 @@ class FitsLiveViewer:
                 ax.set_xticks([])
                 ax.set_yticks([])
                 self.img_artists[i] = None
+                iax.text(0.5, 0.55, "missing", transform=iax.transAxes, ha="center", va="center", fontsize=8)
+                cax.text(0.5, 0.5, "missing", transform=cax.transAxes, ha="center", va="center", fontsize=7)
+                tax.text(0.5, 0.5, "missing", transform=tax.transAxes, ha="center", va="center", fontsize=7)
                 continue
 
             img = read_fits_2d(path)
@@ -732,6 +858,9 @@ class FitsLiveViewer:
                 ax.set_xticks([])
                 ax.set_yticks([])
                 self.img_artists[i] = None
+                iax.text(0.5, 0.55, "read error", transform=iax.transAxes, ha="center", va="center", fontsize=8)
+                cax.text(0.5, 0.5, "err", transform=cax.transAxes, ha="center", va="center", fontsize=7)
+                tax.text(0.5, 0.5, "err", transform=tax.transAxes, ha="center", va="center", fontsize=7)
                 continue
 
             vmin, vmax = autoscale_limits(img)
@@ -745,9 +874,10 @@ class FitsLiveViewer:
                 interpolation="nearest",
                 cmap="Greys_r",
             )
-            ax.set_title(serial)
+            ax.set_title(serial, pad=2)
             ax.set_xticks([])
             ax.set_yticks([])
+            ax.set_anchor("E")
             self.img_artists[i] = im
 
             ref = self.reference_centers.get(serial)
@@ -814,23 +944,54 @@ class FitsLiveViewer:
                     ax.add_patch(current_circ)
                     self.overlay_artists.append(current_circ)
 
-                txt = ax.text(
-                    0.02, 0.98,
-                    f"dx={dx:+.2f}, dy={dy:+.2f} pix\n"
-                    f"({dx*PIX_SCALE:+.2f}, {dy*PIX_SCALE:+.2f} arcsec)\n"
-                    f"Count={peak_signal:.1f}",
-                    transform=ax.transAxes,
-                    ha="left", va="top",
-                    color="w",
-                    bbox=dict(facecolor="black", alpha=0.45, edgecolor="none", pad=3),
-                )
-                self.overlay_artists.append(txt)
-
-                iax = ax.inset_axes([0.75, 0.75, 0.25, 0.24])
-                self.inset_axes.append(iax)
-
                 cvmin, cvmax = autoscale_limits(cutout)
-                iax.imshow(
+
+                finite_contour = cutout[np.isfinite(cutout)]
+                cax.set_facecolor("black")
+                if finite_contour.size > 10:
+                    try:
+                        bkg = float(np.median(finite_contour))
+                        peak = float(np.max(finite_contour))
+                        levels = bkg + (peak - bkg) * np.array([0.05, 0.20, 0.50, 0.95])
+                        levels = np.unique(levels[np.isfinite(levels)])
+
+                        if levels.size >= 2 and float(levels[-1]) > float(levels[0]):
+                            cax.contour(
+                                cutout,
+                                levels=levels,
+                                origin="lower",
+                                colors="cyan",
+                                linewidths=0.75,
+                            )
+                        else:
+                            cax.imshow(
+                                cutout,
+                                origin="lower",
+                                vmin=cvmin,
+                                vmax=cvmax,
+                                interpolation="nearest",
+                                cmap="Greys_r",
+                            )
+                    except Exception:
+                        cax.imshow(
+                            cutout,
+                            origin="lower",
+                            vmin=cvmin,
+                            vmax=cvmax,
+                            interpolation="nearest",
+                            cmap="Greys_r",
+                        )
+         #       if c is not None and cx_local is not None and cy_local is not None:
+         #           cax.plot(cx_local, cy_local, marker="+", markersize=9, color="lime")
+                cax.set_xlim(-0.5, cutout.shape[1] - 0.5)
+                cax.set_ylim(-0.5, cutout.shape[0] - 0.5)
+                cax.set_xticks([])
+                cax.set_yticks([])
+                for spine in cax.spines.values():
+                    spine.set_edgecolor("cyan")
+                    spine.set_linewidth(0.5)
+
+                tax.imshow(
                     cutout,
                     origin="lower",
                     vmin=cvmin,
@@ -841,28 +1002,54 @@ class FitsLiveViewer:
 
                 x_ref_local = x_ref - xs
                 y_ref_local = y_ref - ys
-                iax.plot(x_ref_local, y_ref_local, marker="+", markersize=10, color="black")
+                tax.plot(x_ref_local, y_ref_local, marker="+", markersize=10, color="black")
 
                 if c is not None and cx_local is not None and cy_local is not None:
-                    iax.plot(cx_local, cy_local, marker="+", markersize=10, color="lime")
+                    tax.plot(cx_local, cy_local, marker="+", markersize=10, color="lime")
 
-                iax.set_xticks([])
-                iax.set_yticks([])
-                iax.set_facecolor("black")
-                for spine in iax.spines.values():
+                # Guiding info is shown below the camera image, not overplotted.
+                # Put it slightly inside from the main-image left edge and allow it
+                # to extend under the thumbnail if needed.
+                iax.text(
+                    0.035, 0.58,
+                    f"dx={dx:+.2f}, dy={dy:+.2f} pix    "
+                    f"offset=({dx*PIX_SCALE:+.2f}, {dy*PIX_SCALE:+.2f}) arcsec\n"
+                    f"Count={peak_signal:.1f}",
+                    transform=iax.transAxes,
+                    ha="left", va="center",
+                    fontsize=8.5,
+                    linespacing=1.08,
+                )
+
+                tax.set_xticks([])
+                tax.set_yticks([])
+                tax.set_facecolor("black")
+                for spine in tax.spines.values():
                     spine.set_edgecolor("cyan")
                     spine.set_linewidth(0.5)
 
             else:
-                txt = ax.text(
-                    0.02, 0.98,
+                iax.text(
+                    0.5, 0.55,
                     "No locked reference",
-                    transform=ax.transAxes,
-                    ha="left", va="top",
-                    color="w",
-                    bbox=dict(facecolor="black", alpha=0.45, edgecolor="none", pad=3),
+                    transform=iax.transAxes,
+                    ha="center", va="center",
+                    fontsize=8,
                 )
-                self.overlay_artists.append(txt)
+                cax.text(
+                    0.5, 0.5,
+                    "No ref",
+                    transform=cax.transAxes,
+                    ha="center", va="center",
+                    fontsize=8,
+                )
+                tax.text(
+                    0.5, 0.5,
+                    "No ref",
+                    transform=tax.transAxes,
+                    ha="center", va="center",
+                    fontsize=8,
+                )
 
             fn = os.path.basename(path)
             small = ax.text(
@@ -875,7 +1062,11 @@ class FitsLiveViewer:
             )
             self.overlay_artists.append(small)
 
-        self.fig.tight_layout(pad=2.0)
+        self.fig.subplots_adjust(
+            left=0.012, right=0.996,
+            bottom=0.035, top=0.935,
+            wspace=0.055, hspace=0.18,
+        )
         self.canvas.draw_idle()
         self._update_status()
 
