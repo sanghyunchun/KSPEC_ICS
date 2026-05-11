@@ -21,7 +21,7 @@ def printing(message):
     """
     print(f"\033[32m[GFA] {message}\033[0m")
 
-async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
+async def identify_execute(GFA_server,gfa_actions,cmd):
     global guiding_task 
     dict_data=json.loads(cmd)
     func=dict_data['func']
@@ -105,19 +105,19 @@ async def identify_execute(GFA_server,gfa_actions,finder_actions,cmd):
         await GFA_server.send_message('ICS',rsp)
 
 
-    if func == 'fdgrab':
-        printing("Finder grab task started.")
-        reply_data=mkmsg.gfamsg()
-        reply_data.update(process='START',message='Finder grab starts.',status='success')
-        rsp=json.dumps(reply_data)
-        await GFA_server.send_message('ICS',rsp)
-        result = await finder_actions.grab(dict_data['ExpTime'])
-        reply_data=mkmsg.gfamsg()
-        reply_data.update(result)
-        reply_data.update(process='Done')
-        rsp=json.dumps(reply_data)
-        printing(reply_data['message'])
-        await GFA_server.send_message('ICS',rsp)
+#    if func == 'fdgrab':
+#        printing("Finder grab task started.")
+#        reply_data=mkmsg.gfamsg()
+#        reply_data.update(process='START',message='Finder grab starts.',status='success')
+#        rsp=json.dumps(reply_data)
+#        await GFA_server.send_message('ICS',rsp)
+#        result = await finder_actions.grab(dict_data['ExpTime'])
+#        reply_data=mkmsg.gfamsg()
+#        reply_data.update(result)
+#        reply_data.update(process='Done')
+#        rsp=json.dumps(reply_data)
+#        printing(reply_data['message'])
+#        await GFA_server.send_message('ICS',rsp)
 
 
     if func == 'pointing':

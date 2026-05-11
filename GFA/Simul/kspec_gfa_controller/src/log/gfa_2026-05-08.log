@@ -1,0 +1,97 @@
+2026-05-08 16:29:45,992 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2026-05-08 16:29:45,992 [INFO] Initializing GFAGuider...
+2026-05-08 16:29:45,993 [INFO] ========== PATH DEBUG [guider] ==========
+2026-05-08 16:29:45,993 [INFO] save_root             = /home/shyunc/work/DATA/GFADATA/img
+2026-05-08 16:29:45,993 [INFO] raw_dir               = /home/shyunc/work/DATA/GFADATA/img/img/raw
+2026-05-08 16:29:45,993 [INFO] final_astrometry_dir  = /home/shyunc/work/DATA/GFADATA/img/img/astroimg
+2026-05-08 16:29:45,993 [INFO] cutout_path           = /home/shyunc/work/DATA/GFADATA/img/img/cutout
+2026-05-08 16:29:45,993 [INFO] star_catalog_root     = /home/shyunc/work/DATA/GFADATA/img/img/combined_star.fits
+2026-05-08 16:29:45,993 [INFO] combined_star_path    = /home/shyunc/work/DATA/GFADATA/img/img/combined_star.fits
+2026-05-08 16:29:45,993 [INFO] =========================================
+2026-05-08 16:29:45,993 [INFO] GFAGuider setup complete.
+2026-05-08 16:30:15,753 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2026-05-08 16:30:15,753 [INFO] Initializing GFAGuider...
+2026-05-08 16:30:15,753 [INFO] ========== PATH DEBUG [guider] ==========
+2026-05-08 16:30:15,753 [INFO] save_root             = /home/shyunc/work/DATA/GFADATA/img
+2026-05-08 16:30:15,753 [INFO] raw_dir               = /home/shyunc/work/DATA/GFADATA/img/img/raw
+2026-05-08 16:30:15,753 [INFO] final_astrometry_dir  = /home/shyunc/work/DATA/GFADATA/img/img/astroimg
+2026-05-08 16:30:15,753 [INFO] cutout_path           = /home/shyunc/work/DATA/GFADATA/img/img/cutout
+2026-05-08 16:30:15,753 [INFO] star_catalog_root     = /home/shyunc/work/DATA/GFADATA/img/img/combined_star.fits
+2026-05-08 16:30:15,753 [INFO] combined_star_path    = /home/shyunc/work/DATA/GFADATA/img/img/combined_star.fits
+2026-05-08 16:30:15,753 [INFO] =========================================
+2026-05-08 16:30:15,753 [INFO] GFAGuider setup complete.
+2026-05-08 17:07:28,375 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2026-05-08 17:07:28,375 [INFO] Initializing GFAGuider...
+2026-05-08 17:07:28,375 [INFO] ========== PATH DEBUG [guider] ==========
+2026-05-08 17:07:28,375 [INFO] save_root             = /home/shyunc/work/DATA/GFADATA/img
+2026-05-08 17:07:28,375 [INFO] raw_dir               = /home/shyunc/work/DATA/GFADATA/img/img/raw
+2026-05-08 17:07:28,375 [INFO] final_astrometry_dir  = /home/shyunc/work/DATA/GFADATA/img/img/astroimg
+2026-05-08 17:07:28,375 [INFO] cutout_path           = /home/shyunc/work/DATA/GFADATA/img/img/cutout
+2026-05-08 17:07:28,375 [INFO] star_catalog_root     = /home/shyunc/work/DATA/GFADATA/img/img/combined_star.fits
+2026-05-08 17:07:28,375 [INFO] combined_star_path    = /home/shyunc/work/DATA/GFADATA/img/img/combined_star.fits
+2026-05-08 17:07:28,376 [INFO] =========================================
+2026-05-08 17:07:28,376 [INFO] GFAGuider setup complete.
+2026-05-08 17:18:21,074 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2026-05-08 17:18:21,074 [INFO] Initializing GFAGuider...
+2026-05-08 17:18:21,074 [INFO] ========== PATH DEBUG [guider] ==========
+2026-05-08 17:18:21,074 [INFO] save_root             = /home/shyunc/work/DATA/GFADATA/img
+2026-05-08 17:18:21,074 [INFO] raw_dir               = /home/shyunc/work/DATA/GFADATA/img/img/raw
+2026-05-08 17:18:21,074 [INFO] final_astrometry_dir  = /home/shyunc/work/DATA/GFADATA/img/img/astroimg
+2026-05-08 17:18:21,074 [INFO] cutout_path           = /home/shyunc/work/DATA/GFADATA/img/img/cutout
+2026-05-08 17:18:21,074 [INFO] star_catalog_root     = /home/shyunc/work/DATA/GFADATA/img/img/combined_star.fits
+2026-05-08 17:18:21,074 [INFO] combined_star_path    = /home/shyunc/work/DATA/GFADATA/img/img/combined_star.fits
+2026-05-08 17:18:21,074 [INFO] =========================================
+2026-05-08 17:18:21,074 [INFO] GFAGuider setup complete.
+2026-05-08 17:41:38,419 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2026-05-08 17:41:38,419 [INFO] Initializing GFAGuider...
+2026-05-08 17:41:38,419 [INFO] ========== PATH DEBUG [guider] ==========
+2026-05-08 17:41:38,419 [INFO] save_root             = /home/shyunc/work/DATA/GFADATA/img
+2026-05-08 17:41:38,419 [INFO] raw_dir               = /home/shyunc/work/DATA/GFADATA/img/img/raw
+2026-05-08 17:41:38,419 [INFO] final_astrometry_dir  = /home/shyunc/work/DATA/GFADATA/img/img/astroimg
+2026-05-08 17:41:38,419 [INFO] cutout_path           = /home/shyunc/work/DATA/GFADATA/img/img/cutout
+2026-05-08 17:41:38,419 [INFO] star_catalog_root     = /home/shyunc/work/DATA/GFADATA/img/img/combined_star.fits
+2026-05-08 17:41:38,419 [INFO] combined_star_path    = /home/shyunc/work/DATA/GFADATA/img/img/combined_star.fits
+2026-05-08 17:41:38,419 [INFO] =========================================
+2026-05-08 17:41:38,419 [INFO] GFAGuider setup complete.
+2026-05-08 17:43:18,890 [INFO] [grab] save_root=/home/shyunc/work/DATA/GFADATA/img
+2026-05-08 17:43:18,891 [INFO] [grab] dirs={}
+2026-05-08 17:43:18,891 [INFO] ========== PATH DEBUG [grab] ==========
+2026-05-08 17:43:18,892 [INFO] save_root = /home/shyunc/work/DATA/GFADATA/img
+2026-05-08 17:43:18,892 [INFO] type(save_root) = <class 'pathlib.PosixPath'>
+2026-05-08 17:43:18,893 [INFO] save_root exists? True
+2026-05-08 17:43:18,893 [INFO] save_root write test ok: /home/shyunc/work/DATA/GFADATA/img/debug_write_test.txt
+2026-05-08 17:43:18,894 [INFO] grab_save_path = /home/shyunc/work/DATA/GFADATA/img/grab/2026-05-08
+2026-05-08 17:43:18,894 [INFO] type(grab_save_path) = <class 'pathlib.PosixPath'>
+2026-05-08 17:43:18,894 [INFO] grab_save_path exists? True
+2026-05-08 17:43:18,895 [INFO] grab_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/grab/2026-05-08/debug_write_test.txt
+2026-05-08 17:43:18,895 [INFO] =========================================
+2026-05-08 17:43:18,895 [INFO] Open all plate cameras...
+2026-05-08 17:43:18,896 [INFO] [grab] exposure 1/1, output_dir=/home/shyunc/work/DATA/GFADATA/img/grab/2026-05-08, SaveCombineRaw=True
+2026-05-08 17:43:18,896 [ERROR] Grab failed: name 'results' is not defined
+2026-05-08 17:43:18,896 [INFO] Close all plate cameras...
+2026-05-08 17:48:45,202 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2026-05-08 17:48:45,202 [INFO] Initializing GFAGuider...
+2026-05-08 17:48:45,202 [INFO] ========== PATH DEBUG [guider] ==========
+2026-05-08 17:48:45,203 [INFO] save_root             = /home/shyunc/work/DATA/GFADATA/img
+2026-05-08 17:48:45,203 [INFO] raw_dir               = /home/shyunc/work/DATA/GFADATA/img/img/raw
+2026-05-08 17:48:45,203 [INFO] final_astrometry_dir  = /home/shyunc/work/DATA/GFADATA/img/img/astroimg
+2026-05-08 17:48:45,203 [INFO] cutout_path           = /home/shyunc/work/DATA/GFADATA/img/img/cutout
+2026-05-08 17:48:45,203 [INFO] star_catalog_root     = /home/shyunc/work/DATA/GFADATA/img/img/combined_star.fits
+2026-05-08 17:48:45,203 [INFO] combined_star_path    = /home/shyunc/work/DATA/GFADATA/img/img/combined_star.fits
+2026-05-08 17:48:45,203 [INFO] =========================================
+2026-05-08 17:48:45,203 [INFO] GFAGuider setup complete.
+2026-05-08 17:49:02,936 [INFO] [grab] save_root=/home/shyunc/work/DATA/GFADATA/img
+2026-05-08 17:49:02,937 [INFO] [grab] dirs={}
+2026-05-08 17:49:02,937 [INFO] ========== PATH DEBUG [grab] ==========
+2026-05-08 17:49:02,937 [INFO] save_root = /home/shyunc/work/DATA/GFADATA/img
+2026-05-08 17:49:02,938 [INFO] type(save_root) = <class 'pathlib.PosixPath'>
+2026-05-08 17:49:02,938 [INFO] save_root exists? True
+2026-05-08 17:49:02,938 [INFO] save_root write test ok: /home/shyunc/work/DATA/GFADATA/img/debug_write_test.txt
+2026-05-08 17:49:02,939 [INFO] grab_save_path = /home/shyunc/work/DATA/GFADATA/img/grab/2026-05-08
+2026-05-08 17:49:02,939 [INFO] type(grab_save_path) = <class 'pathlib.PosixPath'>
+2026-05-08 17:49:02,940 [INFO] grab_save_path exists? True
+2026-05-08 17:49:02,940 [INFO] grab_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/grab/2026-05-08/debug_write_test.txt
+2026-05-08 17:49:02,940 [INFO] =========================================
+2026-05-08 17:49:02,941 [INFO] Open all plate cameras...
+2026-05-08 17:49:02,941 [INFO] [grab] exposure 1/1, output_dir=/home/shyunc/work/DATA/GFADATA/img/grab/2026-05-08, SaveCombineRaw=True
+2026-05-08 17:49:02,941 [INFO] Close all plate cameras...

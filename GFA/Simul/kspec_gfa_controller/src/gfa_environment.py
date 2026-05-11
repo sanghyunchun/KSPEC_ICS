@@ -8,6 +8,7 @@
 import os
 import json
 from typing import List, Optional, Literal
+from pathlib import Path
 
 #from .gfa_controller import GFAController
 from .gfa_logger import GFALogger
@@ -18,6 +19,8 @@ logger = GFALogger(__file__)
 
 # Type hint for role selection
 CameraRole = Literal["plate", "finder"]
+
+DEFAULT_SAVE_ROOT = Path.home() / "work/DATA/GFADATA/img"
 
 
 def get_config_path(relative_path: str) -> str:
@@ -64,11 +67,16 @@ class GFAEnvironment:
         gfa_config_path: str,
         ast_config_path: Optional[str],
         role: CameraRole = "plate",
+        save_root: Optional[str] = None,
     ):
         self.logger = logger
         self.gfa_config_path = gfa_config_path
         self.ast_config_path = ast_config_path
         self.role = role
+
+        self.save_root = Path(save_root or DEFAULT_SAVE_ROOT).expanduser().resolve()
+
+        self.save_root.mkdir(parents=True, exist_ok=True)
 
         self.camera_ids = get_camera_ids(self.gfa_config_path, role)
         self.logger.info(
@@ -76,26 +84,43 @@ class GFAEnvironment:
         )
 
         if role == "plate":
-#            self.controller = GFAController(self.gfa_config_path, self.logger)
-#            self.astrometry = GFAAstrometry(self.ast_config_path, self.logger)
-            self.guider = GFAGuider(self.ast_config_path, self.logger)
+ #           self.controller = GFAController(self.gfa_config_path, self.logger)
+ #           self.astrometry = GFAAstrometry(
+ #               self.ast_config_path,
+ #               self.logger,
+ #               save_root=self.save_root,
+ #           )
+
+            self.guider = GFAGuider(
+                self.ast_config_path,
+                self.logger,
+                save_root=self.save_root,
+            )
         elif role == "finder":
-#            self.controller = GFAController(self.gfa_config_path, self.logger)
+ #           self.controller = GFAController(self.gfa_config_path, self.logger)
             self.astrometry = None
             self.guider = None
 
     def shutdown(self):
         self.logger.info(f"Shutting down environment ({self.role})")
-#        if self.role == "finder":
-#            self.controller.close_camera(7)
-#        else:
-#            for cam_id in self.camera_ids:
-#                self.controller.close_camera(cam_id)
+ #       if self.role == "finder":
+ #           self.controller.close_camera(7)
+ #       else:
+ #           for cam_id in self.camera_ids:
+ #               self.controller.close_camera(cam_id)
 
 
-def create_environment(role: CameraRole = "plate") -> GFAEnvironment:
+def create_environment(
+    role: CameraRole = "plate",
+    save_root: Optional[str] = None,
+) -> GFAEnvironment:
     gfa_config_path = get_config_path("etc/cams.json")
     ast_config_path = (
         get_config_path("etc/astrometry_params.json") if role == "plate" else None
     )
-    return GFAEnvironment(gfa_config_path, ast_config_path, role=role)
+    return GFAEnvironment(
+        gfa_config_path,
+        ast_config_path,
+        role=role,
+        save_root=save_root,
+    )

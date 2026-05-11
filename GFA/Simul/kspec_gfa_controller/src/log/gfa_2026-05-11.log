@@ -1,0 +1,11 @@
+2026-05-11 11:21:28,764 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2026-05-11 11:21:28,764 [INFO] Initializing GFAGuider...
+2026-05-11 11:21:28,764 [INFO] ========== PATH DEBUG [guider] ==========
+2026-05-11 11:21:28,764 [INFO] save_root             = /home/shyunc/work/DATA/GFADATA/img
+2026-05-11 11:21:28,765 [INFO] raw_dir               = /home/shyunc/work/DATA/GFADATA/img/img/raw
+2026-05-11 11:21:28,765 [INFO] final_astrometry_dir  = /home/shyunc/work/DATA/GFADATA/img/img/astroimg
+2026-05-11 11:21:28,765 [INFO] cutout_path           = /home/shyunc/work/DATA/GFADATA/img/img/cutout
+2026-05-11 11:21:28,765 [INFO] star_catalog_root     = /home/shyunc/work/DATA/GFADATA/img/img/combined_star.fits
+2026-05-11 11:21:28,765 [INFO] combined_star_path    = /home/shyunc/work/DATA/GFADATA/img/img/combined_star.fits
+2026-05-11 11:21:28,765 [INFO] =========================================
+2026-05-11 11:21:28,765 [INFO] GFAGuider setup complete.
