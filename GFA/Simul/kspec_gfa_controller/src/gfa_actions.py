@@ -67,7 +67,7 @@ class GFAActions:
         2. self.env.astrometry.inpar["paths"]["save_root"]
         3. ~/work/DATA/GFADATA/img
         """
-        default_save_root = Path.home() / "work/DATA/GFADATA/img"
+        default_save_root = Path.home() / "work/DATA/GFADATA/"
 
         dirs = {}
         save_root = getattr(self.env, "save_root", None)
@@ -543,8 +543,8 @@ class GFAActions:
             self.env.logger.info("Starting pointing sequence...")
             self.env.logger.info(f"Target RA/DEC: {ra}, {dec}")
 
-            if clear_dir:
-                self.env.astrometry.clear_raw_files()
+     #       if clear_dir:
+     #           self.env.astrometry.clear_raw_files()
 
      #       grab_result = await self.grab(
      #           CamNum=CamNum,

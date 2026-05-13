@@ -1,14 +1,14 @@
 {
     "paths": {
         "directories": {
-            "raw_images": "img/raw",
-            "processed_images": "img/procimg",
-            "temp_files": "img/tempfiles",
-            "final_astrometry_images": "img/astroimg/",
-            "offset_astrometry_images": "img/astroimg/",
-            "offset_processed_images": "img/procimg",
-            "cutout_directory": "img/cutout",
-            "star_catalog": "img/combined_star.fits"
+            "raw_images": "raw",
+            "processed_images": "procimg",
+            "temp_files": "tempfiles",
+            "final_astrometry_images": "astroimg/",
+            "offset_astrometry_images": "astroimg/",
+            "offset_processed_images": "procimg",
+            "cutout_directory": "cutout",
+            "star_catalog": "combined_star.fits"
         }
     },
     "settings": {

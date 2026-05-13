@@ -28,7 +28,7 @@ from astropy.table import Table, vstack
 from astropy.coordinates import SkyCoord
 import astropy.units as u
 
-DEFAULT_SOLVE_FIELD = "/home/yyoon/astrometry/bin/solve-field"
+DEFAULT_SOLVE_FIELD = "solve-field"
 
 
 def _get_solve_field_path(env: Optional[dict] = None) -> str:

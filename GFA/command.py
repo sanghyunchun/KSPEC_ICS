@@ -179,8 +179,13 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
             printing(f"Only {len(valid_crval1)} valid CRVAL pairs (try {attempt}/{max_try}) → retrying...")
 
             if attempt == max_try:
-                printing("Astrometry failed: insufficient valid CRVAL pairs (less than 5). Increase exposure time or Wait for good weather.")
-                raise
+                msg = "Astrometry failed: insufficient valid CRVAL pairs (less than 5). Increase exposure time or Wait for good weather."
+                reply_data=mkmsg.gfamsg()
+                reply_data.update(message=msg, process='Done', status='fail', subinst='POINT')
+                rsp=json.dumps(reply_data)
+                printing(reply_data['message'])
+                await GFA_server.send_message('ICS',rsp)            
+                return
 
             await asyncio.sleep(1)
 

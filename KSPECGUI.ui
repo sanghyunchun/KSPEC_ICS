@@ -50,7 +50,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideLeft</enum>
@@ -3068,7 +3068,7 @@
          <property name="geometry">
           <rect>
            <x>340</x>
-           <y>680</y>
+           <y>690</y>
            <width>101</width>
            <height>51</height>
           </rect>
@@ -3093,7 +3093,7 @@
          <property name="geometry">
           <rect>
            <x>7</x>
-           <y>670</y>
+           <y>680</y>
            <width>321</width>
            <height>70</height>
           </rect>
@@ -16040,7 +16040,7 @@
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>60</y>
+           <y>65</y>
            <width>97</width>
            <height>23</height>
           </rect>
@@ -16062,7 +16062,7 @@
          <property name="geometry">
           <rect>
            <x>110</x>
-           <y>60</y>
+           <y>65</y>
            <width>71</width>
            <height>25</height>
           </rect>
@@ -16089,7 +16089,7 @@
         <widget class="QPushButton" name="pushbtn_GFArun">
          <property name="geometry">
           <rect>
-           <x>190</x>
+           <x>200</x>
            <y>80</y>
            <width>71</width>
            <height>31</height>
@@ -16115,7 +16115,7 @@
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>120</y>
+           <y>130</y>
            <width>71</width>
            <height>21</height>
           </rect>
@@ -16139,7 +16139,7 @@
         <widget class="QPushButton" name="pushbtn_GFA_set">
          <property name="geometry">
           <rect>
-           <x>190</x>
+           <x>200</x>
            <y>30</y>
            <width>71</width>
            <height>31</height>
@@ -16153,7 +16153,7 @@
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>90</y>
+           <y>100</y>
            <width>97</width>
            <height>23</height>
           </rect>
@@ -16175,7 +16175,7 @@
          <property name="geometry">
           <rect>
            <x>110</x>
-           <y>90</y>
+           <y>100</y>
            <width>71</width>
            <height>25</height>
           </rect>

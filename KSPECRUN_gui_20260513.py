@@ -380,7 +380,7 @@ class MainWindow(QMainWindow):
             message=json.dumps(message)
 
         color_map={
-                "send": "green", "receive": "blue", "error": "red", "warning": "orange",
+            "send": "green", "receive": "blue", "error": "red"
         }
 
         if status == "error":
@@ -1568,166 +1568,60 @@ class MainWindow(QMainWindow):
 
 
     ### Waiting for response through RabbitMQ ###
-    def _log_received_message(self, inst, msg, status):
-        if isinstance(msg, dict):
-            log_msg = json.dumps(msg, indent=2)
-        else:
-            log_msg = str(msg)
-
-        print(
-            f"\033[94m[ICS] received from {inst}: {log_msg}\033[0m\n",
-            flush=True,
-        )
-
-        if status == "error":
-            log_level = "error"
-
-        elif status == "fail":
-            log_level = "warning"
-
-        else:
-            log_level = "receive"
-
-        self.logging(log_msg, status, level=log_level)
-
-    async def _handle_in_progress_response(self, response_data, inst, process):
-        queue_map = {
-            "GFA": self.GFA_response_queue,
-            "ADC": self.ADC_response_queue,
-            "SPEC": self.SPEC_response_queue,
-        }
-
-        if inst not in queue_map or process not in ("ING", "START"):
-            return False
-
-        await queue_map[inst].put(response_data)
-
-        if inst == "GFA" and process == "ING":
-            fwhm = response_data.get("fwhm")
-            if fwhm is not None:
-                self.fwhm = round(fwhm, 2)
-                # self.ui.lineEdit_seeing.setText(f"{self.fwhm}")
-                # self.show_guiding()
-
-        return True
-
-    async def _handle_gfa_point_response(self, response_data, status):
-        msg = response_data.get("message", "Unknown message")
-
-        # 1. success: offset 값이 있어야 함
-        if status == "success":
-            required_keys = ("sepsec", "dra", "ddec", "new_ra", "new_dec")
-            missing = [key for key in required_keys if key not in response_data]
-
-            if missing:
-                self.logging(
-                    f"GFA POINT success response missing keys: {missing}",
-                    status="error",
-                    level="error",
-                )
-                await self.response_queue.put(response_data)
-                return
-
-            sepsec = round(response_data["sepsec"], 2)
-            self.delta_ra = round(response_data["dra"], 2)
-            self.delta_dec = round(response_data["ddec"], 2)
-
-            self.ui.lineEdit_offset.setText(f"{sepsec}")
-            self.ui.lineEdit_raoffset.setText(f"{self.delta_ra}")
-            self.ui.lineEdit_decoffset.setText(f"{self.delta_dec}")
-
-            self.new_ra = response_data["new_ra"]
-            self.new_dec = response_data["new_dec"]
-
-            await self.response_queue.put(response_data)
-            return
-
-        # 2. fail: 작업은 끝났지만 조건 미달
-        if status == "fail":
-
-            # 이전에 남아 있던 offset 값이 사용되지 않도록 초기화 권장
-            self.delta_ra = None
-            self.delta_dec = None
-            self.new_ra = None
-            self.new_dec = None
-
-            self.ui.lineEdit_offset.clear()
-            self.ui.lineEdit_raoffset.clear()
-            self.ui.lineEdit_decoffset.clear()
-
-            await self.response_queue.put(response_data)
-            return
-
-        # 3. error: 실제 오류
-        if status == "error":
-            self.logging(
-                f"GFA POINT error: {msg}",
-                status="error",
-                level="error",
-            )
-
-            self.delta_ra = None
-            self.delta_dec = None
-            self.new_ra = None
-            self.new_dec = None
-
-            self.ui.lineEdit_offset.clear()
-            self.ui.lineEdit_raoffset.clear()
-            self.ui.lineEdit_decoffset.clear()
-
-            await self.response_queue.put(response_data)
-            return
-
-        # 4. 알 수 없는 status
-        self.logging(
-            f"GFA POINT returned unknown status '{status}': {msg}",
-            status="fail",
-            level="warning",
-        )
-        await self.response_queue.put(response_data)
-
-
     async def on_ics_message(self, message: IncomingMessage):
         async with message.process():
             try:
                 response_data = json.loads(message.body)
-
-                inst = response_data.get("inst", "None")
-                process = response_data.get("process", "None")
-                status = response_data.get("status", "fail")
-                subinst = response_data.get("subinst", "None")
-                msg = response_data.get("message", "None")
-
                 print(response_data)
-
-                # 1. 상태 업데이트
+                inst = response_data.get('inst', 'None')
+                process = response_data.get('process', 'None')
+                message = response_data.get('message','None')
+                status = response_data.get('status', 'fail')
+                subinst = response_data.get('subinst', 'None')
                 self.set_inst_pos_state(response_data)
                 self.show_status(response_data)
+                
+                if isinstance(message,dict):
+                    message = json.dumps(message, indent=2)
+                    print(f'\033[94m[ICS] received from {inst}: {message}\033[0m\n', flush=True)
+                  #  self.logging(f'received from {inst}: {message}',level='receive')
+                    self.logging(message, status, level='receive')
+                else:
+                    print(f'\033[94m[ICS] received from {inst}: {response_data["message"]}\033[0m\n', flush=True)
+                  #  self.logging(f'received from {inst}: {response_data["message"]}',level='receive')
+                    self.logging(message, status, level='receive')
 
-                # 2. 수신 로그 출력
-                self._log_received_message(inst, msg, status)
+                queue_map = {"GFA": self.GFA_response_queue, "ADC": self.ADC_response_queue, "SPEC": self.SPEC_response_queue}
+                if inst in queue_map and process in ('ING', 'START'):
+            #    if inst in queue_map and process in ('ING'):
+                    await queue_map[inst].put(response_data)
+                    if inst == 'GFA' and process == 'ING':
+                        self.fwhm=round(response_data['fwhm'],2)
+            #            self.ui.lineEdit_seeing.setText(f'{self.fwhm}')
+            #            self.show_guiding()
+                    
+                elif (inst == 'GFA' and process == 'Done' and status == 'success' and subinst == 'POINT'):
+                    sepsec=round(response_data['sepsec'],2)
+                    self.delta_ra=round(response_data['dra'],2)
+                    self.delta_dec=round(response_data['ddec'],2)
+                    self.ui.lineEdit_offset.setText(f'{sepsec}')
+                    self.ui.lineEdit_raoffset.setText(f'{self.delta_ra}')
+                    self.ui.lineEdit_decoffset.setText(f'{self.delta_dec}')
+                    self.new_ra = response_data['new_ra']
+                    self.new_dec = response_data['new_dec']
 
-                # 3. 진행 중 메시지는 각 장비별 queue로 전달
-                if await self._handle_in_progress_response(response_data, inst, process):
-                    return
+                elif (inst == 'GFA' and process == 'Done' and status == 'fail' and subinst == 'POINT'):
+                    await self.response_queue.put(response_data)
 
-                # 4. GFA POINT 완료 처리
-                if inst == "GFA" and process == "Done" and subinst == "POINT":
-                    await self._handle_gfa_point_response(response_data, status)
-                    return
-
-                # 5. SPEC image 처리
-                if inst == "SPEC" and response_data.get("filename") != "None":
+                elif inst == 'SPEC' and response_data['filename'] != 'None':
                     self.show_spec(response_data)
                     await self.response_queue.put(response_data)
-                    return
-
-                # 6. 그 외 일반 응답
-                await self.response_queue.put(response_data)
-
+                else:
+                    print('put response_data to response_queue')      # To comment this out in real observation
+                    await self.response_queue.put(response_data)
             except Exception as e:
-                print(f"Error in on_ics_message: {e}", flush=True)
-                self.logging(f"Error in on_ics_message: {e}", "fail", level="error")
+                print(f"Error in wait_for_response: {e}", flush=True)
+                self.logging(f"Error in wait_for_response: {e}", 'fail', level='error')
 
 
     ### Sending command to udp, telcom and rabbitmq ###

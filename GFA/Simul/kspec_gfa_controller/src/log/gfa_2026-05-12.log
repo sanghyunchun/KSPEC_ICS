@@ -1,0 +1,38 @@
+2026-05-12 16:44:12,607 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2026-05-12 16:44:12,608 [INFO] Initializing gfa_astrometry class.
+2026-05-12 16:44:12,608 [INFO] Paths:
+2026-05-12 16:44:12,608 [INFO]   save_root         = /home/shyunc/work/DATA/GFADATA/img
+2026-05-12 16:44:12,608 [INFO]   raw_images        = /home/shyunc/work/DATA/GFADATA/img/img/raw
+2026-05-12 16:44:12,608 [INFO]   temp_files        = /home/shyunc/work/DATA/GFADATA/img/img/tempfiles
+2026-05-12 16:44:12,608 [INFO]   final_astrometry  = /home/shyunc/work/DATA/GFADATA/img/img/astroimg
+2026-05-12 16:44:12,608 [INFO]   star_catalog_dir  = /home/shyunc/work/DATA/GFADATA/img/img
+2026-05-12 16:44:12,608 [INFO]   combined_star.fits= /home/shyunc/work/DATA/GFADATA/img/img/combined_star.fits
+2026-05-12 16:44:56,850 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2026-05-12 16:44:56,850 [INFO] Initializing gfa_astrometry class.
+2026-05-12 16:44:56,851 [INFO] Paths:
+2026-05-12 16:44:56,851 [INFO]   save_root         = /home/shyunc/work/DATA/GFADATA/img
+2026-05-12 16:44:56,851 [INFO]   raw_images        = /home/shyunc/work/DATA/GFADATA/img/img/raw
+2026-05-12 16:44:56,851 [INFO]   temp_files        = /home/shyunc/work/DATA/GFADATA/img/img/tempfiles
+2026-05-12 16:44:56,851 [INFO]   final_astrometry  = /home/shyunc/work/DATA/GFADATA/img/img/astroimg
+2026-05-12 16:44:56,851 [INFO]   star_catalog_dir  = /home/shyunc/work/DATA/GFADATA/img/img
+2026-05-12 16:44:56,851 [INFO]   combined_star.fits= /home/shyunc/work/DATA/GFADATA/img/img/combined_star.fits
+2026-05-12 16:45:58,043 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2026-05-12 16:45:58,043 [INFO] Initializing gfa_astrometry class.
+2026-05-12 16:45:58,043 [INFO] Paths:
+2026-05-12 16:45:58,043 [INFO]   save_root         = /home/shyunc/work/DATA/GFADATA/img
+2026-05-12 16:45:58,044 [INFO]   raw_images        = /home/shyunc/work/DATA/GFADATA/img/img/raw
+2026-05-12 16:45:58,044 [INFO]   temp_files        = /home/shyunc/work/DATA/GFADATA/img/img/tempfiles
+2026-05-12 16:45:58,044 [INFO]   final_astrometry  = /home/shyunc/work/DATA/GFADATA/img/img/astroimg
+2026-05-12 16:45:58,044 [INFO]   star_catalog_dir  = /home/shyunc/work/DATA/GFADATA/img/img
+2026-05-12 16:45:58,044 [INFO]   combined_star.fits= /home/shyunc/work/DATA/GFADATA/img/img/combined_star.fits
+2026-05-12 16:45:58,044 [DEBUG] Using solve-field: /usr/local/astrometry/bin/solve-field
+2026-05-12 16:45:58,044 [INFO] Initializing GFAGuider...
+2026-05-12 16:45:58,044 [INFO] ========== PATH DEBUG [guider] ==========
+2026-05-12 16:45:58,044 [INFO] save_root             = /home/shyunc/work/DATA/GFADATA/img
+2026-05-12 16:45:58,044 [INFO] raw_dir               = /home/shyunc/work/DATA/GFADATA/img/img/raw
+2026-05-12 16:45:58,044 [INFO] final_astrometry_dir  = /home/shyunc/work/DATA/GFADATA/img/img/astroimg
+2026-05-12 16:45:58,044 [INFO] cutout_path           = /home/shyunc/work/DATA/GFADATA/img/img/cutout
+2026-05-12 16:45:58,044 [INFO] star_catalog_root     = /home/shyunc/work/DATA/GFADATA/img/img/combined_star.fits
+2026-05-12 16:45:58,044 [INFO] combined_star_path    = /home/shyunc/work/DATA/GFADATA/img/img/combined_star.fits
+2026-05-12 16:45:58,044 [INFO] =========================================
+2026-05-12 16:45:58,045 [INFO] GFAGuider setup complete.
