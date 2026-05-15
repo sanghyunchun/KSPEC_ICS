@@ -2668,3 +2668,344 @@ fit-wcs.c:118:fit_sip_wcs: Too few correspondences for the SIP order specified (
 2026-05-13 16:13:57,194 [INFO] combined_star expected at: /home/shyunc/work/DATA/GFADATA/img/combined_star.fits
 2026-05-13 16:13:57,194 [INFO] combined_star exists? True
 2026-05-13 16:13:57,194 [INFO] Astrometry inputs ready: 3 files.
+2026-05-13 16:42:47,806 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2026-05-13 16:42:47,806 [INFO] Initializing gfa_astrometry class.
+2026-05-13 16:42:47,807 [INFO] Paths:
+2026-05-13 16:42:47,807 [INFO]   save_root         = /home/shyunc/work/DATA/GFADATA/img
+2026-05-13 16:42:47,807 [INFO]   raw_images        = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-05-13 16:42:47,807 [INFO]   temp_files        = /home/shyunc/work/DATA/GFADATA/img/tempfiles
+2026-05-13 16:42:47,807 [INFO]   final_astrometry  = /home/shyunc/work/DATA/GFADATA/img/astroimg
+2026-05-13 16:42:47,807 [INFO]   star_catalog_dir  = /home/shyunc/work/DATA/GFADATA/img
+2026-05-13 16:42:47,807 [INFO]   combined_star.fits= /home/shyunc/work/DATA/GFADATA/img/combined_star.fits
+2026-05-13 16:42:47,807 [DEBUG] Using solve-field: /usr/local/astrometry/bin/solve-field
+2026-05-13 16:42:47,807 [INFO] Initializing GFAGuider...
+2026-05-13 16:42:47,807 [INFO] ========== PATH DEBUG [guider] ==========
+2026-05-13 16:42:47,807 [INFO] save_root             = /home/shyunc/work/DATA/GFADATA/img
+2026-05-13 16:42:47,807 [INFO] raw_dir               = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-05-13 16:42:47,807 [INFO] final_astrometry_dir  = /home/shyunc/work/DATA/GFADATA/img/astroimg
+2026-05-13 16:42:47,808 [INFO] cutout_path           = /home/shyunc/work/DATA/GFADATA/img/cutout
+2026-05-13 16:42:47,808 [INFO] star_catalog_root     = /home/shyunc/work/DATA/GFADATA/img/combined_star.fits
+2026-05-13 16:42:47,808 [INFO] combined_star_path    = /home/shyunc/work/DATA/GFADATA/img/combined_star.fits
+2026-05-13 16:42:47,808 [INFO] =========================================
+2026-05-13 16:42:47,808 [INFO] GFAGuider setup complete.
+2026-05-13 16:43:42,238 [INFO] [pointing] save_root=/home/shyunc/work/DATA/GFADATA/img
+2026-05-13 16:43:42,238 [INFO] [pointing] dirs={'raw_images': 'raw', 'processed_images': 'procimg', 'temp_files': 'tempfiles', 'final_astrometry_images': 'astroimg/', 'offset_astrometry_images': 'astroimg/', 'offset_processed_images': 'procimg', 'cutout_directory': 'cutout', 'star_catalog': 'combined_star.fits'}
+2026-05-13 16:43:42,238 [INFO] [pointing] SaveGrabRaw=True, SaveCombineRaw=True, raw_save_path=/home/shyunc/work/DATA/GFADATA/img/raw, pointing_save_path=/home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13
+2026-05-13 16:43:42,238 [INFO] ========== PATH DEBUG [pointing] ==========
+2026-05-13 16:43:42,238 [INFO] save_root = /home/shyunc/work/DATA/GFADATA/img
+2026-05-13 16:43:42,238 [INFO] type(save_root) = <class 'pathlib.PosixPath'>
+2026-05-13 16:43:42,239 [INFO] save_root exists? True
+2026-05-13 16:43:42,239 [INFO] save_root write test ok: /home/shyunc/work/DATA/GFADATA/img/debug_write_test.txt
+2026-05-13 16:43:42,239 [INFO] pointing_raw_path = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-05-13 16:43:42,239 [INFO] type(pointing_raw_path) = <class 'pathlib.PosixPath'>
+2026-05-13 16:43:42,239 [INFO] pointing_raw_path exists? True
+2026-05-13 16:43:42,239 [INFO] pointing_raw_path write test ok: /home/shyunc/work/DATA/GFADATA/img/raw/debug_write_test.txt
+2026-05-13 16:43:42,240 [INFO] pointing_save_path = /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13
+2026-05-13 16:43:42,240 [INFO] type(pointing_save_path) = <class 'pathlib.PosixPath'>
+2026-05-13 16:43:42,240 [INFO] pointing_save_path exists? True
+2026-05-13 16:43:42,240 [INFO] pointing_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13/debug_write_test.txt
+2026-05-13 16:43:42,240 [INFO] =========================================
+2026-05-13 16:43:42,240 [INFO] Starting pointing sequence...
+2026-05-13 16:43:42,240 [INFO] Target RA/DEC: 12:16:12.53, -15:29:08.7
+2026-05-13 16:43:42,240 [INFO] Saving pointing images to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13
+2026-05-13 16:43:42,240 [INFO] raw contents: ['D20260127_T163607_40103667_exp5s.fits', 'D20260127_T163607_40103651_exp5s.fits', 'debug_write_test.txt', 'D20260127_T163608_40103663_exp5s.fits', 'D20260127_T163608_40103833_exp5s.fits', 'D20260127_T163608_40103831_exp5s.fits', 'D20260127_T163608_40103834_exp5s.fits']
+2026-05-13 16:43:42,240 [INFO] copying /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163607_40103667_exp5s.fits to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13/D20260127_T163607_40103667_exp5s.fits
+2026-05-13 16:43:42,248 [INFO] copying /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163607_40103651_exp5s.fits to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13/D20260127_T163607_40103651_exp5s.fits
+2026-05-13 16:43:42,253 [INFO] copying /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103663_exp5s.fits to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13/D20260127_T163608_40103663_exp5s.fits
+2026-05-13 16:43:42,259 [INFO] copying /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103833_exp5s.fits to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13/D20260127_T163608_40103833_exp5s.fits
+2026-05-13 16:43:42,266 [INFO] copying /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103831_exp5s.fits to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13/D20260127_T163608_40103831_exp5s.fits
+2026-05-13 16:43:42,273 [INFO] copying /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103834_exp5s.fits to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13/D20260127_T163608_40103834_exp5s.fits
+2026-05-13 16:43:42,278 [INFO] [pointing] saved 6 fits files to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13
+2026-05-13 16:43:42,278 [INFO] Ensuring astrometry outputs are ready (no procimg dependency)...
+2026-05-13 16:43:42,278 [INFO] Astrometry outputs missing or force=True → running astrometry preprocessing...
+2026-05-13 16:43:42,278 [INFO] No astrometry results found (astro dir empty) → running FULL astrometry.
+2026-05-13 16:43:42,280 [INFO] [D20260127_T163607_40103667_exp5s] Running command: /usr/local/astrometry/bin/solve-field /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163607_40103667_exp5s.fits -D /home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163607_40103667_exp5s -o D20260127_T163607_40103667_exp5s --overwrite --corr /home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163607_40103667_exp5s/D20260127_T163607_40103667_exp5s.corr --no-plots --no-verify --crpix-center -X X -Y Y -s FLUX --scale-units degwidth -L 0.03 -H 0.16 --ra 12:16:12.53 --dec -15:29:08.7 --radius 5 -l 120 -c 0.1 -E 2 --cpulimit 6
+2026-05-13 16:43:42,281 [INFO] [D20260127_T163607_40103651_exp5s] Running command: /usr/local/astrometry/bin/solve-field /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163607_40103651_exp5s.fits -D /home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163607_40103651_exp5s -o D20260127_T163607_40103651_exp5s --overwrite --corr /home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163607_40103651_exp5s/D20260127_T163607_40103651_exp5s.corr --no-plots --no-verify --crpix-center -X X -Y Y -s FLUX --scale-units degwidth -L 0.03 -H 0.16 --ra 12:16:12.53 --dec -15:29:08.7 --radius 5 -l 120 -c 0.1 -E 2 --cpulimit 6
+2026-05-13 16:43:42,282 [INFO] [D20260127_T163608_40103663_exp5s] Running command: /usr/local/astrometry/bin/solve-field /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103663_exp5s.fits -D /home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163608_40103663_exp5s -o D20260127_T163608_40103663_exp5s --overwrite --corr /home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163608_40103663_exp5s/D20260127_T163608_40103663_exp5s.corr --no-plots --no-verify --crpix-center -X X -Y Y -s FLUX --scale-units degwidth -L 0.03 -H 0.16 --ra 12:16:12.53 --dec -15:29:08.7 --radius 5 -l 120 -c 0.1 -E 2 --cpulimit 6
+2026-05-13 16:43:42,282 [INFO] [D20260127_T163608_40103833_exp5s] Running command: /usr/local/astrometry/bin/solve-field /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103833_exp5s.fits -D /home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163608_40103833_exp5s -o D20260127_T163608_40103833_exp5s --overwrite --corr /home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163608_40103833_exp5s/D20260127_T163608_40103833_exp5s.corr --no-plots --no-verify --crpix-center -X X -Y Y -s FLUX --scale-units degwidth -L 0.03 -H 0.16 --ra 12:16:12.53 --dec -15:29:08.7 --radius 5 -l 120 -c 0.1 -E 2 --cpulimit 6
+2026-05-13 16:43:42,283 [INFO] [D20260127_T163608_40103834_exp5s] Running command: /usr/local/astrometry/bin/solve-field /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103834_exp5s.fits -D /home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163608_40103834_exp5s -o D20260127_T163608_40103834_exp5s --overwrite --corr /home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163608_40103834_exp5s/D20260127_T163608_40103834_exp5s.corr --no-plots --no-verify --crpix-center -X X -Y Y -s FLUX --scale-units degwidth -L 0.03 -H 0.16 --ra 12:16:12.53 --dec -15:29:08.7 --radius 5 -l 120 -c 0.1 -E 2 --cpulimit 6
+2026-05-13 16:43:42,283 [INFO] [D20260127_T163608_40103831_exp5s] Running command: /usr/local/astrometry/bin/solve-field /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103831_exp5s.fits -D /home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163608_40103831_exp5s -o D20260127_T163608_40103831_exp5s --overwrite --corr /home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163608_40103831_exp5s/D20260127_T163608_40103831_exp5s.corr --no-plots --no-verify --crpix-center -X X -Y Y -s FLUX --scale-units degwidth -L 0.03 -H 0.16 --ra 12:16:12.53 --dec -15:29:08.7 --radius 5 -l 120 -c 0.1 -E 2 --cpulimit 6
+2026-05-13 16:43:48,133 [INFO] [D20260127_T163607_40103667_exp5s] solve-field returncode=0
+2026-05-13 16:43:48,133 [DEBUG] [D20260127_T163607_40103667_exp5s] solve-field stdout:
+Reading input file 1 of 1: "/home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163607_40103667_exp5s.fits"...
+Running command: /usr/local/astrometry/bin/image2pnm --infile /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163607_40103667_exp5s.fits --uncompressed-outfile /tmp/tmp.uncompressed.GcUxTO --outfile /tmp/tmp.ppm.nXZc1P --ppm --mydir /usr/local/astrometry/bin/solve-field
+Extracting sources...
+simplexy: found 185 sources.
+Reading sort column "FLUX"
+Sorting sort column
+mmapping input file
+Copying table header.
+Writing row 0
+Done
+Solving...
+Reading file "/home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163607_40103667_exp5s/D20260127_T163607_40103667_exp5s.axy"...
+Only searching for solutions within 5 degrees of RA,Dec (184.052,-15.4857)
+Field 1 did not solve (index index-52m1-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5205-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5204-24.fits, field objects 1-10).
+  log-odds ratio 27.4756 (8.56031e+11), 11 match, 0 conflict, 17 distractors, 24 index.
+  RA,Dec = (185.375,-16.2085), pixel scale 0.42002 arcsec/pix.
+  Hit/miss:   Hit/miss: +-----+--++++--+--+++------+(best)-------------+---+------------------------------------------------------
+Field 1: solved with index index-5203-24.fits.
+Field 1 solved: writing to file /home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163607_40103667_exp5s/D20260127_T163607_40103667_exp5s.solved to indicate this.
+Field: /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163607_40103667_exp5s.fits
+Field center: (RA,Dec) = (185.374465, -16.208889) deg.
+Field center: (RA H:M:S, Dec D:M:S) = (12:21:29.872, -16:12:32.002).
+Field size: 9.50065 x 7.85719 arcminutes
+Field rotation angle: up is -60.3592 degrees E of N
+Field parity: pos
+Creating new FITS file "/home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163607_40103667_exp5s/D20260127_T163607_40103667_exp5s.new"...
+
+
+2026-05-13 16:43:48,133 [INFO] [D20260127_T163607_40103667_exp5s] ✅ corr produced: /home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163607_40103667_exp5s/D20260127_T163607_40103667_exp5s.corr
+2026-05-13 16:43:48,139 [INFO] [D20260127_T163607_40103667_exp5s] Astrometry done. CRVAL1=185.374465331, CRVAL2=-16.2088894909
+2026-05-13 16:43:48,639 [INFO] [D20260127_T163608_40103663_exp5s] solve-field returncode=0
+2026-05-13 16:43:48,639 [DEBUG] [D20260127_T163608_40103663_exp5s] solve-field stdout:
+Reading input file 1 of 1: "/home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103663_exp5s.fits"...
+Running command: /usr/local/astrometry/bin/image2pnm --infile /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103663_exp5s.fits --uncompressed-outfile /tmp/tmp.uncompressed.nSol64 --outfile /tmp/tmp.ppm.sJLa6X --ppm --mydir /usr/local/astrometry/bin/solve-field
+Extracting sources...
+simplexy: found 231 sources.
+Reading sort column "FLUX"
+Sorting sort column
+mmapping input file
+Copying table header.
+Writing row 0
+Done
+Solving...
+Reading file "/home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163608_40103663_exp5s/D20260127_T163608_40103663_exp5s.axy"...
+Only searching for solutions within 5 degrees of RA,Dec (184.052,-15.4857)
+Field 1 did not solve (index index-52m1-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5205-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5204-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5203-24.fits, field objects 1-10).
+  log-odds ratio 21.2677 (1.72366e+09), 15 match, 0 conflict, 26 distractors, 50 index.
+  RA,Dec = (184.038,-14.009), pixel scale 0.419895 arcsec/pix.
+  Hit/miss:   Hit/miss: ---+-+-++--+-+--++---+--+--+-----+--++--+(best)----------------------+-----------------------------c------
+Field 1: solved with index index-5202-24.fits.
+Field 1 solved: writing to file /home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163608_40103663_exp5s/D20260127_T163608_40103663_exp5s.solved to indicate this.
+Field: /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103663_exp5s.fits
+Field center: (RA,Dec) = (184.037119, -14.007932) deg.
+Field center: (RA H:M:S, Dec D:M:S) = (12:16:08.909, -14:00:28.557).
+Field size: 9.51126 x 7.84839 arcminutes
+Field rotation angle: up is -179.017 degrees E of N
+Field parity: pos
+Creating new FITS file "/home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163608_40103663_exp5s/D20260127_T163608_40103663_exp5s.new"...
+
+
+2026-05-13 16:43:48,640 [INFO] [D20260127_T163608_40103663_exp5s] ✅ corr produced: /home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163608_40103663_exp5s/D20260127_T163608_40103663_exp5s.corr
+2026-05-13 16:43:48,644 [INFO] [D20260127_T163608_40103663_exp5s] Astrometry done. CRVAL1=184.037119038, CRVAL2=-14.0079323846
+2026-05-13 16:43:51,255 [INFO] [D20260127_T163608_40103834_exp5s] solve-field returncode=0
+2026-05-13 16:43:51,255 [DEBUG] [D20260127_T163608_40103834_exp5s] solve-field stdout:
+Reading input file 1 of 1: "/home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103834_exp5s.fits"...
+Running command: /usr/local/astrometry/bin/image2pnm --infile /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103834_exp5s.fits --uncompressed-outfile /tmp/tmp.uncompressed.k77pyX --outfile /tmp/tmp.ppm.yH8axh --ppm --mydir /usr/local/astrometry/bin/solve-field
+Extracting sources...
+simplexy: found 162 sources.
+Reading sort column "FLUX"
+Sorting sort column
+mmapping input file
+Copying table header.
+Writing row 0
+Done
+Solving...
+Reading file "/home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163608_40103834_exp5s/D20260127_T163608_40103834_exp5s.axy"...
+Only searching for solutions within 5 degrees of RA,Dec (184.052,-15.4857)
+Field 1 did not solve (index index-52m1-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5205-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5204-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5203-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5202-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5201-24.fits, field objects 1-10).
+Total CPU time limit reached!
+Field 1 did not solve (index index-5200-24.fits, field objects 1-10).
+Field: /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103834_exp5s.fits
+Did not solve (or no WCS file was written).
+
+
+2026-05-13 16:43:51,256 [ERROR] Error processing D20260127_T163608_40103834_exp5s.fits: [D20260127_T163608_40103834_exp5s] solve-field FAILED: .new file not created.
+  raw_fits=/home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103834_exp5s.fits
+  work_dir=/home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163608_40103834_exp5s
+  returncode=0
+  files(sample)=['D20260127_T163608_40103834_exp5s.axy']
+  stderr(tail)=
+
+2026-05-13 16:43:53,952 [INFO] [D20260127_T163607_40103651_exp5s] solve-field returncode=0
+2026-05-13 16:43:53,952 [DEBUG] [D20260127_T163607_40103651_exp5s] solve-field stdout:
+Reading input file 1 of 1: "/home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163607_40103651_exp5s.fits"...
+Running command: /usr/local/astrometry/bin/image2pnm --infile /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163607_40103651_exp5s.fits --uncompressed-outfile /tmp/tmp.uncompressed.3fdWjd --outfile /tmp/tmp.ppm.5ontOA --ppm --mydir /usr/local/astrometry/bin/solve-field
+Extracting sources...
+simplexy: found 322 sources.
+Reading sort column "FLUX"
+Sorting sort column
+mmapping input file
+Copying table header.
+Writing row 0
+Done
+Solving...
+Reading file "/home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163607_40103651_exp5s/D20260127_T163607_40103651_exp5s.axy"...
+Only searching for solutions within 5 degrees of RA,Dec (184.052,-15.4857)
+Field 1 did not solve (index index-52m1-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5205-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5204-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5203-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5202-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5201-24.fits, field objects 1-10).
+Total CPU time limit reached!
+Field 1 did not solve (index index-5200-24.fits, field objects 1-10).
+Field: /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163607_40103651_exp5s.fits
+Did not solve (or no WCS file was written).
+
+
+2026-05-13 16:43:53,952 [ERROR] Error processing D20260127_T163607_40103651_exp5s.fits: [D20260127_T163607_40103651_exp5s] solve-field FAILED: .new file not created.
+  raw_fits=/home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163607_40103651_exp5s.fits
+  work_dir=/home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163607_40103651_exp5s
+  returncode=0
+  files(sample)=['D20260127_T163607_40103651_exp5s.axy']
+  stderr(tail)=
+
+2026-05-13 16:43:56,644 [INFO] [D20260127_T163608_40103831_exp5s] solve-field returncode=0
+2026-05-13 16:43:56,645 [DEBUG] [D20260127_T163608_40103831_exp5s] solve-field stdout:
+Reading input file 1 of 1: "/home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103831_exp5s.fits"...
+Running command: /usr/local/astrometry/bin/image2pnm --infile /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103831_exp5s.fits --uncompressed-outfile /tmp/tmp.uncompressed.OCqLLF --outfile /tmp/tmp.ppm.KK9EM7 --ppm --mydir /usr/local/astrometry/bin/solve-field
+Extracting sources...
+simplexy: found 101 sources.
+Reading sort column "FLUX"
+Sorting sort column
+mmapping input file
+Copying table header.
+Writing row 0
+Done
+Solving...
+Reading file "/home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163608_40103831_exp5s/D20260127_T163608_40103831_exp5s.axy"...
+Only searching for solutions within 5 degrees of RA,Dec (184.052,-15.4857)
+Field 1 did not solve (index index-52m1-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5205-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5204-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5203-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5202-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5201-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5200-24.fits, field objects 1-10).
+Total CPU time limit reached!
+CPU time limit reached!
+Field 1 did not solve (index index-52m1-24.fits, field objects 11-20).
+Field: /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103831_exp5s.fits
+Did not solve (or no WCS file was written).
+
+
+2026-05-13 16:43:56,645 [ERROR] Error processing D20260127_T163608_40103831_exp5s.fits: [D20260127_T163608_40103831_exp5s] solve-field FAILED: .new file not created.
+  raw_fits=/home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103831_exp5s.fits
+  work_dir=/home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163608_40103831_exp5s
+  returncode=0
+  files(sample)=['D20260127_T163608_40103831_exp5s.axy']
+  stderr(tail)=
+
+2026-05-13 16:44:01,622 [INFO] [D20260127_T163608_40103833_exp5s] solve-field returncode=0
+2026-05-13 16:44:01,622 [DEBUG] [D20260127_T163608_40103833_exp5s] solve-field stdout:
+Reading input file 1 of 1: "/home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103833_exp5s.fits"...
+Running command: /usr/local/astrometry/bin/image2pnm --infile /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103833_exp5s.fits --uncompressed-outfile /tmp/tmp.uncompressed.iWdoh7 --outfile /tmp/tmp.ppm.DMpiYP --ppm --mydir /usr/local/astrometry/bin/solve-field
+Extracting sources...
+simplexy: found 181 sources.
+Reading sort column "FLUX"
+Sorting sort column
+mmapping input file
+Copying table header.
+Writing row 0
+Done
+Solving...
+Reading file "/home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163608_40103833_exp5s/D20260127_T163608_40103833_exp5s.axy"...
+Only searching for solutions within 5 degrees of RA,Dec (184.052,-15.4857)
+Field 1 did not solve (index index-52m1-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5205-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5204-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5203-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5202-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5201-24.fits, field objects 1-10).
+Field 1 did not solve (index index-5200-24.fits, field objects 1-10).
+Total CPU time limit reached!
+CPU time limit reached!
+Field 1 did not solve (index index-52m1-24.fits, field objects 11-20).
+Field: /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103833_exp5s.fits
+Did not solve (or no WCS file was written).
+
+
+2026-05-13 16:44:01,622 [ERROR] Error processing D20260127_T163608_40103833_exp5s.fits: [D20260127_T163608_40103833_exp5s] solve-field FAILED: .new file not created.
+  raw_fits=/home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103833_exp5s.fits
+  work_dir=/home/shyunc/work/DATA/GFADATA/img/tempfiles/D20260127_T163608_40103833_exp5s
+  returncode=0
+  files(sample)=['D20260127_T163608_40103833_exp5s.axy']
+  stderr(tail)=
+
+2026-05-13 16:44:01,623 [WARNING] 4 files failed: ['D20260127_T163608_40103834_exp5s.fits', 'D20260127_T163607_40103651_exp5s.fits', 'D20260127_T163608_40103831_exp5s.fits', 'D20260127_T163608_40103833_exp5s.fits']
+2026-05-13 16:44:01,623 [INFO] Preprocessing(astrometry) completed in 19.34 seconds. (ok=2, failed=4, corr_ok=2)
+2026-05-13 16:44:01,623 [INFO] Building combined_star.fits from this run corr_ok=2 files
+2026-05-13 16:44:01,623 [INFO] Building combined star catalog from .corr files: found 2 files.
+2026-05-13 16:44:01,623 [INFO] combined_star.fits output will be: /home/shyunc/work/DATA/GFADATA/img/combined_star.fits
+2026-05-13 16:44:01,637 [INFO] ✅ combined_star.fits created: /home/shyunc/work/DATA/GFADATA/img/combined_star.fits (N=68)
+2026-05-13 16:44:01,637 [INFO] combined_star expected at: /home/shyunc/work/DATA/GFADATA/img/combined_star.fits
+2026-05-13 16:44:01,637 [INFO] combined_star exists? True
+2026-05-13 16:44:01,637 [INFO] Astrometry inputs ready: 2 files.
+2026-05-13 16:44:02,641 [INFO] [pointing] save_root=/home/shyunc/work/DATA/GFADATA/img
+2026-05-13 16:44:02,642 [INFO] [pointing] dirs={'raw_images': 'raw', 'processed_images': 'procimg', 'temp_files': 'tempfiles', 'final_astrometry_images': 'astroimg/', 'offset_astrometry_images': 'astroimg/', 'offset_processed_images': 'procimg', 'cutout_directory': 'cutout', 'star_catalog': 'combined_star.fits'}
+2026-05-13 16:44:02,642 [INFO] [pointing] SaveGrabRaw=True, SaveCombineRaw=True, raw_save_path=/home/shyunc/work/DATA/GFADATA/img/raw, pointing_save_path=/home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13
+2026-05-13 16:44:02,642 [INFO] ========== PATH DEBUG [pointing] ==========
+2026-05-13 16:44:02,643 [INFO] save_root = /home/shyunc/work/DATA/GFADATA/img
+2026-05-13 16:44:02,644 [INFO] type(save_root) = <class 'pathlib.PosixPath'>
+2026-05-13 16:44:02,645 [INFO] save_root exists? True
+2026-05-13 16:44:02,646 [INFO] save_root write test ok: /home/shyunc/work/DATA/GFADATA/img/debug_write_test.txt
+2026-05-13 16:44:02,646 [INFO] pointing_raw_path = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-05-13 16:44:02,647 [INFO] type(pointing_raw_path) = <class 'pathlib.PosixPath'>
+2026-05-13 16:44:02,647 [INFO] pointing_raw_path exists? True
+2026-05-13 16:44:02,648 [INFO] pointing_raw_path write test ok: /home/shyunc/work/DATA/GFADATA/img/raw/debug_write_test.txt
+2026-05-13 16:44:02,648 [INFO] pointing_save_path = /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13
+2026-05-13 16:44:02,649 [INFO] type(pointing_save_path) = <class 'pathlib.PosixPath'>
+2026-05-13 16:44:02,649 [INFO] pointing_save_path exists? True
+2026-05-13 16:44:02,650 [INFO] pointing_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13/debug_write_test.txt
+2026-05-13 16:44:02,650 [INFO] =========================================
+2026-05-13 16:44:02,650 [INFO] Starting pointing sequence...
+2026-05-13 16:44:02,650 [INFO] Target RA/DEC: 12:16:12.53, -15:29:08.7
+2026-05-13 16:44:02,651 [INFO] Saving pointing images to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13
+2026-05-13 16:44:02,651 [INFO] raw contents: ['D20260127_T163607_40103667_exp5s.fits', 'D20260127_T163607_40103651_exp5s.fits', 'debug_write_test.txt', 'D20260127_T163608_40103663_exp5s.fits', 'D20260127_T163608_40103833_exp5s.fits', 'D20260127_T163608_40103831_exp5s.fits', 'D20260127_T163608_40103834_exp5s.fits']
+2026-05-13 16:44:02,652 [INFO] copying /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163607_40103667_exp5s.fits to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13/D20260127_T163607_40103667_exp5s.fits
+2026-05-13 16:44:02,655 [INFO] copying /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163607_40103651_exp5s.fits to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13/D20260127_T163607_40103651_exp5s.fits
+2026-05-13 16:44:02,659 [INFO] copying /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103663_exp5s.fits to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13/D20260127_T163608_40103663_exp5s.fits
+2026-05-13 16:44:02,663 [INFO] copying /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103833_exp5s.fits to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13/D20260127_T163608_40103833_exp5s.fits
+2026-05-13 16:44:02,667 [INFO] copying /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103831_exp5s.fits to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13/D20260127_T163608_40103831_exp5s.fits
+2026-05-13 16:44:02,671 [INFO] copying /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103834_exp5s.fits to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13/D20260127_T163608_40103834_exp5s.fits
+2026-05-13 16:44:02,676 [INFO] [pointing] saved 6 fits files to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13
+2026-05-13 16:44:02,677 [INFO] Ensuring astrometry outputs are ready (no procimg dependency)...
+2026-05-13 16:44:02,685 [INFO] Astrometry directory has outputs → reusing (session OK, sep=0.00 arcsec).
+2026-05-13 16:44:02,685 [INFO] combined_star expected at: /home/shyunc/work/DATA/GFADATA/img/combined_star.fits
+2026-05-13 16:44:02,685 [INFO] combined_star exists? True
+2026-05-13 16:44:02,685 [INFO] Astrometry inputs ready: 2 files.
+2026-05-13 16:44:03,688 [INFO] [pointing] save_root=/home/shyunc/work/DATA/GFADATA/img
+2026-05-13 16:44:03,689 [INFO] [pointing] dirs={'raw_images': 'raw', 'processed_images': 'procimg', 'temp_files': 'tempfiles', 'final_astrometry_images': 'astroimg/', 'offset_astrometry_images': 'astroimg/', 'offset_processed_images': 'procimg', 'cutout_directory': 'cutout', 'star_catalog': 'combined_star.fits'}
+2026-05-13 16:44:03,690 [INFO] [pointing] SaveGrabRaw=True, SaveCombineRaw=True, raw_save_path=/home/shyunc/work/DATA/GFADATA/img/raw, pointing_save_path=/home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13
+2026-05-13 16:44:03,690 [INFO] ========== PATH DEBUG [pointing] ==========
+2026-05-13 16:44:03,691 [INFO] save_root = /home/shyunc/work/DATA/GFADATA/img
+2026-05-13 16:44:03,692 [INFO] type(save_root) = <class 'pathlib.PosixPath'>
+2026-05-13 16:44:03,692 [INFO] save_root exists? True
+2026-05-13 16:44:03,693 [INFO] save_root write test ok: /home/shyunc/work/DATA/GFADATA/img/debug_write_test.txt
+2026-05-13 16:44:03,693 [INFO] pointing_raw_path = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-05-13 16:44:03,694 [INFO] type(pointing_raw_path) = <class 'pathlib.PosixPath'>
+2026-05-13 16:44:03,694 [INFO] pointing_raw_path exists? True
+2026-05-13 16:44:03,695 [INFO] pointing_raw_path write test ok: /home/shyunc/work/DATA/GFADATA/img/raw/debug_write_test.txt
+2026-05-13 16:44:03,695 [INFO] pointing_save_path = /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13
+2026-05-13 16:44:03,696 [INFO] type(pointing_save_path) = <class 'pathlib.PosixPath'>
+2026-05-13 16:44:03,696 [INFO] pointing_save_path exists? True
+2026-05-13 16:44:03,697 [INFO] pointing_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13/debug_write_test.txt
+2026-05-13 16:44:03,697 [INFO] =========================================
+2026-05-13 16:44:03,697 [INFO] Starting pointing sequence...
+2026-05-13 16:44:03,698 [INFO] Target RA/DEC: 12:16:12.53, -15:29:08.7
+2026-05-13 16:44:03,698 [INFO] Saving pointing images to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13
+2026-05-13 16:44:03,699 [INFO] raw contents: ['D20260127_T163607_40103667_exp5s.fits', 'D20260127_T163607_40103651_exp5s.fits', 'debug_write_test.txt', 'D20260127_T163608_40103663_exp5s.fits', 'D20260127_T163608_40103833_exp5s.fits', 'D20260127_T163608_40103831_exp5s.fits', 'D20260127_T163608_40103834_exp5s.fits']
+2026-05-13 16:44:03,700 [INFO] copying /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163607_40103667_exp5s.fits to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13/D20260127_T163607_40103667_exp5s.fits
+2026-05-13 16:44:03,711 [INFO] copying /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163607_40103651_exp5s.fits to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13/D20260127_T163607_40103651_exp5s.fits
+2026-05-13 16:44:03,717 [INFO] copying /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103663_exp5s.fits to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13/D20260127_T163608_40103663_exp5s.fits
+2026-05-13 16:44:03,721 [INFO] copying /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103833_exp5s.fits to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13/D20260127_T163608_40103833_exp5s.fits
+2026-05-13 16:44:03,725 [INFO] copying /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103831_exp5s.fits to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13/D20260127_T163608_40103831_exp5s.fits
+2026-05-13 16:44:03,728 [INFO] copying /home/shyunc/work/DATA/GFADATA/img/raw/D20260127_T163608_40103834_exp5s.fits to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13/D20260127_T163608_40103834_exp5s.fits
+2026-05-13 16:44:03,731 [INFO] [pointing] saved 6 fits files to /home/shyunc/work/DATA/GFADATA/img/pointing_save/2026-05-13
+2026-05-13 16:44:03,731 [INFO] Ensuring astrometry outputs are ready (no procimg dependency)...
+2026-05-13 16:44:03,734 [INFO] Astrometry directory has outputs → reusing (session OK, sep=0.00 arcsec).
+2026-05-13 16:44:03,734 [INFO] combined_star expected at: /home/shyunc/work/DATA/GFADATA/img/combined_star.fits
+2026-05-13 16:44:03,734 [INFO] combined_star exists? True
+2026-05-13 16:44:03,734 [INFO] Astrometry inputs ready: 2 files.

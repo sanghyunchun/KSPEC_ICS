@@ -531,9 +531,9 @@ class MainWindow(QMainWindow):
         subinst = dict_data.get('subinst', 'None')
 
         if process == 'Done':
-            color_map = {'success': 'black','error': 'red'}
+            color_map = {'success': 'black','error': 'red', 'fail': 'black'}
         elif process in  ('ING', 'START'):
-            color_map = {'success': 'green','error': 'red'}
+            color_map = {'success': 'green','error': 'red', 'fail': 'black'}
         else:
             color_map = {}
 
