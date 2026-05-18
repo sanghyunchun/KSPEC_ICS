@@ -20,9 +20,9 @@ class AsyncTCPServer:
                 cmd=message.split(" ")
 
                 if cmd[4] == 'RA':
-                    answer='KMTNET TCS 123 052313.45\n\x00'
+                    answer='KMTNET TCS 123 121612.54\n\x00'
                 elif cmd[4] == 'DEC':
-                    answer='KMTNET TCS 123 -313456.43\n\x00'
+                    answer='KMTNET TCS 123 -152908.70\n\x00'
                 elif cmd[4]  == 'STEPRA':
                     answer = 'KMTNET TCS 123 OK'
                 elif cmd[4]  == 'STEPDEC':

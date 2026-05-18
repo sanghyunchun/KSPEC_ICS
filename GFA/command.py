@@ -126,7 +126,7 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
         os.makedirs(path_astroimg, exist_ok=True)
 
         reply_data=mkmsg.gfamsg()
-        reply_data.update(process='START',message='Pointing starts.',status='success',subinst='POINT')
+        reply_data.update(process='START',message='Calculate Telescope pointing offset.',status='success',subinst='POINT')
         rsp=json.dumps(reply_data)
         await GFA_server.send_message('ICS',rsp)
 
@@ -136,10 +136,27 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
         for attempt in range (1, max_try+1):
             result = await gfa_actions.pointing(ra=dict_data['ra'],dec=dict_data['dec'],ExpTime=dict_data['ExpTime'])
 
+            message1 = result.get('message', 'Unknown error')
+            status = result.get('status','error')
+
+            if status == 'error':
+                reply_data = mkmsg.gfamsg()
+                msg =f'{message1}. Increase exposure time or Wait for good weather.'
+                reply_data.update(
+                    message=msg,
+                    process='Done',
+                    status='fail',
+                    subinst='POINT'
+                )
+
+                rsp = json.dumps(reply_data)
+                printing(reply_data['message'])
+                await GFA_server.send_message('ICS', rsp)
+                return
+
             img_list=result['images']
             crval1_list=result['crval1']
             crval2_list=result['crval2']
-            message1 = result['message']
 
             valid_crval1 = [x for x in crval1_list if x is not None and not math.isnan(x)]
             valid_crval2 = [x for x in crval2_list if x is not None and not math.isnan(x)]
@@ -163,7 +180,6 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
                 ra_deg, dec_deg = apply_offsets(ra,dec,delra,deldec)
                 ra_new = ra_deg_to_hms(ra_deg)
                 dec_new = dec_deg_to_dms(dec_deg)
-        #        print(ra_new,dec_new)
 
                 msg =f'{message1} Telescope Target: RA = {ra} DEC = {dec}. \
                     Current Telescope pointing: RA = {ra_c} DEC= {dec_c}.'
@@ -184,24 +200,10 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
                 reply_data.update(message=msg, process='Done', status='fail', subinst='POINT')
                 rsp=json.dumps(reply_data)
                 printing(reply_data['message'])
-                await GFA_server.send_message('ICS',rsp)            
+                await GFA_server.send_message('ICS',rsp)
                 return
 
             await asyncio.sleep(1)
-
-#        ra_m1,dec_m1=get_boresight(crval1_list[0],crval2_list[0],crval1_list[1],crval2_list[1])
-#        ra_m2,dec_m2=get_boresight(crval1_list[2],crval2_list[2],crval1_list[4],crval2_list[4])
-#        ra_m3,dec_m3=get_boresight(crval1_list[3],crval2_list[3],crval1_list[5],crval2_list[5])
-
-#        ra = ra_hms_str_to_deg(dict_data['ra'])
-#        dec = dec_sexagesimal_to_deg(dict_data['dec'])
-
-#        ra_c = np.mean([ra_m1,ra_m2,ra_m3])
-#        dec_c = np.mean([dec_m1, dec_m2, dec_m3])
-
-
-      #  ra_target = dict_data['ra']
-      #  dec_target = dict_data['dec']
 
 
         

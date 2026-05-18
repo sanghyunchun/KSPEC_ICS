@@ -459,7 +459,7 @@ class GFAActions:
 
 
             ##### Simulation Part Starts ###
-            ttt=self.guider.guiding()
+    #        ttt=self.guider.guiding()
             self.env.logger.info("Guiding test......")
             fdx = 0.04
             fdy = 0.1

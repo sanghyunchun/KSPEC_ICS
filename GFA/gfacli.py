@@ -67,7 +67,7 @@ def gfa_grab(cam,expt, *,ra: str=None, dec: str=None):
     return create_gfa_command('gfagrab',CamNum=cam,ExpTime=expt,message=f'Expose camera {cam} for {expt} seconds.',ra=ra,dec=dec)
 
 def gfa_caloffset(expt: float=1.0, ra: str=None, dec: str=None):
-    return create_gfa_command('pointing', ExpTime=expt, ra=ra, dec=dec, message=f'Pointing to RA={ra}, DEC={dec}')      # Using six GFA cameras 
+    return create_gfa_command('pointing', ExpTime=expt, ra=ra, dec=dec, message=f'Calculate Pointing offset.')      # Using six GFA cameras 
 
 #async def send_telcom_command(message):
 #    tcsagentIP, tcsagentPort, telcomIP, telcomPort = load_config()
