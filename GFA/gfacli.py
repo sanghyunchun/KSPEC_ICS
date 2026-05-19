@@ -58,16 +58,16 @@ def create_gfa_command(func, **kwargs):
 
 def gfa_status() : return create_gfa_command('gfastatus', message ='Show GFA status')
 
-def gfa_guiding(expt: float = 1.0, save: bool = False, *, ra: str=None, dec: str=None) :
-    return create_gfa_command('gfaguide', ExpTime=expt,save=save,message ='Autoguiding Start!', ra=ra, dec=dec)
+def gfa_guiding(expt: float = 1.0, expnum: int = 1, save: bool = False, *, ra: str=None, dec: str=None) :
+    return create_gfa_command('gfaguide', ExpTime=expt, ExpNum=expnum, save=save,message ='Autoguiding Start!', ra=ra, dec=dec)
 
 def gfa_guidestop() : return create_gfa_command('gfaguidestop',message='Stop autoguiding')
 
-def gfa_grab(cam,expt, *,ra: str=None, dec: str=None):
-    return create_gfa_command('gfagrab',CamNum=cam,ExpTime=expt,message=f'Expose camera {cam} for {expt} seconds.',ra=ra,dec=dec)
+def gfa_grab(cam, expt, expnum, *,ra: str=None, dec: str=None):
+    return create_gfa_command('gfagrab',CamNum=cam,ExpTime=expt,ExpNum=expnum,message=f'Expose camera {cam} for {expt} seconds.',ra=ra,dec=dec)
 
-def gfa_caloffset(expt: float=1.0, ra: str=None, dec: str=None):
-    return create_gfa_command('pointing', ExpTime=expt, ra=ra, dec=dec, message=f'Calculate Pointing offset.')      # Using six GFA cameras 
+def gfa_caloffset(expt: float=1.0, expnum: int=1, ra: str=None, dec: str=None):
+    return create_gfa_command('pointing', ExpTime=expt, ExpNum=expnum, ra=ra, dec=dec, message=f'Calculate Pointing offset.')      # Using six GFA cameras 
 
 #async def send_telcom_command(message):
 #    tcsagentIP, tcsagentPort, telcomIP, telcomPort = load_config()
@@ -95,31 +95,33 @@ async def handle_gfa(arg, ICS_client):
     }
 
     if cmd == 'gfagrab':
-        if len(params) != 2:
-            print("Error: 'gfagrab' needs two parameters: camera number and exposure time value. ex) gfagrab 1 10 ")
+        if len(params) != 3:
+            print("Error: 'gfagrab' needs three parameters: camera number and exposure time value. ex) gfagrab 1 10 1")
             return
         try:
-            camNum, ExpT = int(params[0]), float(params[1])
+            camNum, ExpT, ExpNum = int(params[0]), float(params[1]), int(params[2])
         except ValueError:
             print(f"Error: Input parameters of 'gfagrab' should be int and float. input value: {params[0]} {params[1]}")
             return
 #        ra,dec= await getradec()
 #        command_map[cmd] = lambda: gfa_grab(camNum, ExpT, ra=ra, dec=dec)
-        command_map[cmd] = lambda: gfa_grab(camNum, ExpT)
+        command_map[cmd] = lambda: gfa_grab(camNum, ExpT, ExpNum)
 
     elif cmd == 'gfaguide':
 #        ra,dec=await getradec()
         ExpT = float(params[0])
-        save = params[1]
-        ra = params[2]
-        dec = params[3]
-        command_map[cmd] = lambda: gfa_guiding(ExpT, save, ra=ra, dec=dec)
+        ExpNum = int(parmas[1])
+        save = params[2]
+        ra = params[3]
+        dec = params[4]
+        command_map[cmd] = lambda: gfa_guiding(ExpT, ExpNum, save, ra=ra, dec=dec)
 
     elif cmd == 'caloffset':
         ExpT = float(params[0])
-        ra = params[1]
-        dec = params[2]
-        command_map[cmd] = lambda: gfa_caloffset(ExpT,ra,dec)
+        ExpNum = int(parmas[1])
+        ra = params[2]
+        dec = params[3]
+        command_map[cmd] = lambda: gfa_caloffset(ExpT, ExpNum, ra, dec)
 
 
     if cmd in command_map:

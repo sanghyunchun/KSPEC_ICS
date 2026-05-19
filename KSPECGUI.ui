@@ -50,7 +50,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideLeft</enum>
@@ -16149,7 +16149,7 @@
           <string>Set</string>
          </property>
         </widget>
-        <widget class="QLabel" name="label_GFA_numexp">
+        <widget class="QLabel" name="label_GFA_expnum">
          <property name="geometry">
           <rect>
            <x>10</x>
@@ -16171,7 +16171,7 @@
           <string># exposure</string>
          </property>
         </widget>
-        <widget class="QLineEdit" name="lineEdit_GFA_numexp">
+        <widget class="QLineEdit" name="lineEdit_GFA_expnum">
          <property name="geometry">
           <rect>
            <x>110</x>

@@ -249,14 +249,14 @@ class script():
             logging('Run Calibration Task finished', level='normal')
 
 
-    async def run_autoguide(self, scriptrun, exptime: float = 5.0, save: bool = False, logging = None):
+    async def run_autoguide(self, scriptrun, exptime: float = 5.0, expnum: int = 1, save: bool = False, logging = None):
         """Starts the autoguiding process asynchronously."""
         if self.autoguide_task and not self.autoguide_task.done():
             print("Autoguide task is already running. Ignoring duplicate start.")
             return
 
         self.autoguide_task = asyncio.create_task(
-                self.handle_autoguide(exptime, save, scriptrun, logging)
+                self.handle_autoguide(exptime, expnum, save, scriptrun, logging)
         )
 
     def format_decimal(self,x):
@@ -266,7 +266,7 @@ class script():
         value = abs(x)
         return f"{sign}{int(value * 100):04d}"
 
-    async def handle_autoguide(self, exptime, save, scriptrun, logging):
+    async def handle_autoguide(self, exptime, expnum, save, scriptrun, logging):
         try:
             ra_bytes = await scriptrun.send_telcom_command('getra')
             dec_bytes = await scriptrun.send_telcom_command('getdec')
@@ -274,7 +274,7 @@ class script():
             decdms_t=bytes_to_sexagesimal(dec_bytes)                 ## Current Telescope pointing position
 #            print(rahms_t)
             logging(f'Current Telescope pointing position = (RA,DEC)=({rahms_t}, {decdms_t})', level='normal')
-            await handle_gfa(f'gfaguide {exptime} {save} {rahms_t} {decdms_t}',scriptrun.ICSclient)
+            await handle_gfa(f'gfaguide {exptime} {expnum} {save} {rahms_t} {decdms_t}',scriptrun.ICSclient)
             while True:
                 try:
                     response_data = await asyncio.wait_for(scriptrun.GFA_response_queue.get(),timeout=300)
@@ -573,7 +573,7 @@ async def handle_script(arg, scriptrun=None, logging=None):
 #                scriptrun.response_queue, scriptrun.GFA_response_queue, scriptrun.ADC_response_queue, scriptrun.SPEC_response_queue, scriptrun.logging)
         await command_map[cmd](scriptrun,logging)
     elif cmd == 'autoguide':
-        await scriptrun.run_autoguide(scriptrun, float(params[0]), params[1],logging=logging)
+        await scriptrun.run_autoguide(scriptrun, float(params[0]), int(params[1]), params[2],logging=logging)
 
     elif cmd == 'autoguidestop':
         await scriptrun.autoguidestop(scriptrun,logging)

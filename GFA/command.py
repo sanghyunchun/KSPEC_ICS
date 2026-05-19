@@ -39,7 +39,7 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
         await GFA_server.send_message('ICS',rsp)
 
     elif func == 'gfagrab':
-        result = await gfa_actions.grab(dict_data['CamNum'],dict_data['ExpTime'],ra=dict_data['ra'],dec=dict_data['dec'])
+        result = await gfa_actions.grab(dict_data['CamNum'],dict_data['ExpTime'],dict_data['ExpNum'],ra=dict_data['ra'],dec=dict_data['dec'])
         reply_data=mkmsg.gfamsg()
         reply_data.update(result)
         reply_data.update(process='Done')

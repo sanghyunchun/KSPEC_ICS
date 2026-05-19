@@ -874,12 +874,16 @@ class MainWindow(QMainWindow):
         if not self.ui.lineEdit_GFA_cam.text():
             self.ui.lineEdit_GFA_cam.setText('0')
 
+        if not self.ui.lineEdit_GFA_expnum.text():
+            self.ui.lineEdit_GFA_expnum.setText('1')
+
         self.gfaexpt = float(self.ui.lineEdit_GFA_exptime.text())
         self.gfacam = int(self.ui.lineEdit_GFA_cam.text())
+        self.gfaexpnum = int(self.ui.lineEdit_GFA_expnum.text())
 
 #        gfasave=self.ui.gfa_checkBox.isChecked()
 
-        await handle_gfa(f'gfagrab {self.gfacam} {self.gfaexpt}',self.ICS_client)
+        await handle_gfa(f'gfagrab {self.gfacam} {self.gfaexpt} {self.gfaexpnum}',self.ICS_client)
         if self.gfacam == 0:
             self.logging(f'Sent Expose all GFA cameras for {self.gfaexpt} seconds.', level='send')
         else:
@@ -900,7 +904,11 @@ class MainWindow(QMainWindow):
         if not self.ui.lineEdit_GFA_exptime.text():
             self.ui.lineEdit_GFA_exptime.setText('5')      # Default guiding exposure time : 5 sec
 
+        if not self.ui.lineEdit_GFA_expnum.text():
+            self.ui.lineEdit_GFA_expnum.setText('1')
+
         self.gfaexpt = float(self.ui.lineEdit_GFA_exptime.text())
+        self.gfaexpnum = int(self.ui.lineEdit_GFA_expnum.text())
 
         self.guiding_state = not getattr(self,"guiding_state",False)
 
@@ -919,10 +927,10 @@ class MainWindow(QMainWindow):
         gfasave=self.ui.gfa_checkBox.isChecked()
         if self.guiding_state:
             if not gfasave:
-                await handle_script(f'autoguide {self.gfaexpt} False', scriptrun=self.scriptrun, logging=self.logging)
+                await handle_script(f'autoguide {self.gfaexpt} {self.gfaexpnum} False', scriptrun=self.scriptrun, logging=self.logging)
                 self.logging(f'Sent Autoguiding Start. Exposure time is {self.gfaexpt}.', level='send')
             else:
-                await handle_script(f'autoguide {self.gfaexpt} True', scriptrun=self.scriptrun,logging=self.logging)
+                await handle_script(f'autoguide {self.gfaexpt} {self.gfaexpnum} True', scriptrun=self.scriptrun,logging=self.logging)
         else:
             await handle_script('autoguidestop', scriptrun=self.scriptrun,logging=self.logging)
             self.logging('Sent Autoguiding Stop', level='send')
@@ -989,7 +997,11 @@ class MainWindow(QMainWindow):
         if not self.ui.lineEdit_GFA_exptime.text():
             self.ui.lineEdit_GFA_exptime.setText('5')      # Default guiding exposure time : 5 sec
 
+        if not self.ui.lineEdit_GFA_expnum.text():
+            self.ui.lineEdit_GFA_expnum.setText('1')
+
         self.gfaexpt = float(self.ui.lineEdit_GFA_exptime.text())
+        self.gfaexpnum = int(self.ui.lineEdit_GFA_expnum.text())
 
 #        self.ra = ' 12:34:56.7'
 #        self.dec = '-31:23:45.6'
@@ -998,7 +1010,7 @@ class MainWindow(QMainWindow):
            self.logging(f'Please load Tile or slew telescope.',level='error')
            return
        
-        await handle_gfa(f'caloffset {self.gfaexpt} {self.ra} {self.dec}',self.ICS_client)
+        await handle_gfa(f'caloffset {self.gfaexpt} {self.gfaexpnum} {self.ra} {self.dec}',self.ICS_client)
 
     def format_decimal(self,x):
         from decimal import Decimal
