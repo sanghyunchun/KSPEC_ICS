@@ -13,11 +13,8 @@ def create_adc_command(func, **kwargs):
     cmd_data.update(func=func, **kwargs)
     return json.dumps(cmd_data)
 
-#def adc_init(): return create_adc_command('adcinit', message='Start ADC initializing')
 def adc_connect(): return create_adc_command('adcconnect', message='Connect ADC instrument')
 def adc_disconnect(): return create_adc_command('adcdisconnect', message='Disconnect ADC instrument')
-#def adc_home(): return create_adc_command('adchome', message='Homing ADC lens')
-#def adc_zero(): return create_adc_command('adczero', message='Rotate ADC lens to zero position')
 def adc_status(): return create_adc_command('adcstatus', message='ADC status')
 def adc_poweroff(): return create_adc_command('adcpoweroff', message='ADC power off')
 def adc_stop(): return create_adc_command('adcstop', message='ADC rotating stop')
@@ -93,21 +90,21 @@ async def handle_adc(arg, ICS_client):
             return
         command_map[cmd] = lambda: adc_activate(zdist)
 
-    elif cmd == 'adchome':
-        try:
-            velocity = int(params[0])
-        except ValueError:
-            print(f"Error: '{cmd}' command need one integer parameter as velocity. input value: {params[0]}")
+    elif cmd in ('adchome', 'adczero'):
+        if len(params) != 1:
+            print(f"Error: '{cmd}' command needs one integer parameter as velocity. ex) {cmd} 2")
             return
-        command_map[cmd] = lambda: adc_home(velocity)
 
-    elif cmd == 'adczero':
         try:
             velocity = int(params[0])
         except ValueError:
-            print(f"Error: '{cmd}' command need one integer parameter as velocity. input value: {params[0]}")
+            print(f"Error: '{cmd}' command needs one integer parameter as velocity. input value: {params[0]}")
             return
-        command_map[cmd] = lambda: adc_zero(velocity)
+
+        if cmd == 'adchome':
+            command_map[cmd] = lambda: adc_home(velocity)
+        else:
+            command_map[cmd] = lambda: adc_zero(velocity)
         
 
     # Right command
@@ -116,4 +113,3 @@ async def handle_adc(arg, ICS_client):
         await ICS_client.send_message("ADC", adcmsg)
     else:
         print(f"Error: '{cmd}' is not right command for ADC")
-

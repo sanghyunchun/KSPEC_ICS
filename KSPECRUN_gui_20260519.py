@@ -1536,73 +1536,39 @@ class MainWindow(QMainWindow):
             return
         else:
             if self.ui.pushbtn_connect.isChecked():
-                self.ui.pushbtn_connect.setText('Connecting')
-                self.ui.pushbtn_connect.setStyleSheet('color: orange;')
+                self.ui.pushbtn_connect.setText('Connected')
+                self.ui.pushbtn_connect.setStyleSheet('color: green;')
 
-                client = None
-                try:
-                    #    print(f'Observer Name: {self.observer}')
-                    # Connect RabbitMQ
-                    with open('./Lib/KSPEC.ini', 'r') as f:
-                        kspecinfo = json.load(f)
+            #    print(f'Observer Name: {self.observer}')
+            # Connect RabbitMQ
+                with open('./Lib/KSPEC.ini', 'r') as f:
+                    kspecinfo = json.load(f)
 
-                    client = AMQclass(
-                        kspecinfo['RabbitMQ']['ip_addr'],
-                        kspecinfo['RabbitMQ']['idname'],
-                        kspecinfo['RabbitMQ']['pwd'],
-                        'ICS', 'ics.ex'
-                    )
+                self.ICS_client = AMQclass(
+                    kspecinfo['RabbitMQ']['ip_addr'],
+                    kspecinfo['RabbitMQ']['idname'],
+                    kspecinfo['RabbitMQ']['pwd'],
+                    'ICS', 'ics.ex'
+                )
 
-                    react = await client.connect()
-                    self.logging(react,level='AMQ')
-                    react = await client.define_producer()
-                    self.logging(react,level='AMQ')
+                react = await self.ICS_client.connect()
+                self.logging(react,level='AMQ')
+                react = await self.ICS_client.define_producer()
+                self.logging(react,level='AMQ')
 
-                    await client.define_consumer('ICS',self.on_ics_message)
-                    self.ICS_client = client
-                    self.ui.pushbtn_connect.setText('Connected')
-                    self.ui.pushbtn_connect.setStyleSheet('color: green;')
 
-                except Exception as e:
-                    self.logging(f"RabbitMQ connection failed: {e}", level='error')
-                    self.ui.pushbtn_connect.setChecked(False)
-                    self.ui.pushbtn_connect.setText('Connect')
-                    self.ui.pushbtn_connect.setStyleSheet('color: black;')
-                    self.ICS_client = None
-
-                    if client is not None:
-                        try:
-                            await client.disconnect()
-                        except Exception as close_error:
-                            self.logging(f"RabbitMQ cleanup failed: {close_error}", level='warning')
+                await self.ICS_client.define_consumer('ICS',self.on_ics_message)
 
             else:
-                try:
-                    if self.ICS_client is not None:
-                        await self.ICS_client.disconnect()
-                except Exception as e:
-                    self.logging(f"RabbitMQ disconnect failed: {e}", level='error')
-                finally:
-                    self.ui.pushbtn_connect.setText('Connect')
-                    self.ui.pushbtn_connect.setStyleSheet('color: black;')
-                    self.ui.pushbtn_connect.setChecked(False)
-                    self.ICS_client = None
+                self.ui.pushbtn_connect.setText('Connect')
+                self.ui.pushbtn_connect.setStyleSheet('color: black;')
+                await self.ICS_client.disconnect()
 
 
     ### check connection to RabbitMQ Server and system  ###
     def check_connection(self):
-        client = getattr(self,'ICS_client',None)
-        connection = getattr(client,'connection',None) if client else None
-        channel = getattr(client,'channel',None) if client else None
-        connection_closed = getattr(connection,'is_closed',True)
-        channel_closed = getattr(channel,'is_closed',True)
-
-        if not client or connection is None or channel is None or connection_closed or channel_closed:
+        if not getattr(self,'ICS_client',False):
             self.logging("ICS_client is not connected to RabbitMQ server. Please click 'connect' button.", level='error')
-            self.ui.pushbtn_connect.setText('Connect')
-            self.ui.pushbtn_connect.setStyleSheet('color: black;')
-            self.ui.pushbtn_connect.setChecked(False)
-            self.ICS_client = None
             return False
         return True
 
@@ -1835,6 +1801,9 @@ class MainWindow(QMainWindow):
         """
         Handles user input asynchronously, allowing immediate command sending.
         """
+        if not self.check_connection():
+            return
+            
         try:
             sys.stdout.flush()
 #                message = await asyncio.get_running_loop().run_in_executor(None, input, "Input command: ")

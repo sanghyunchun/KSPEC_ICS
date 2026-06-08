@@ -1892,7 +1892,7 @@
           <rect>
            <x>330</x>
            <y>37</y>
-           <width>131</width>
+           <width>171</width>
            <height>31</height>
           </rect>
          </property>
@@ -1909,7 +1909,7 @@
           <string/>
          </property>
          <property name="text">
-          <string>Fiber Assign</string>
+          <string>FBP Assign/Stop</string>
          </property>
         </widget>
         <widget class="QPushButton" name="pushbtn_Flat">
@@ -1918,7 +1918,7 @@
          </property>
          <property name="geometry">
           <rect>
-           <x>685</x>
+           <x>725</x>
            <y>37</y>
            <width>61</width>
            <height>31</height>
@@ -1946,7 +1946,7 @@
          </property>
          <property name="geometry">
           <rect>
-           <x>760</x>
+           <x>800</x>
            <y>37</y>
            <width>61</width>
            <height>31</height>
@@ -1974,7 +1974,7 @@
          </property>
          <property name="geometry">
           <rect>
-           <x>580</x>
+           <x>620</x>
            <y>37</y>
            <width>91</width>
            <height>31</height>
@@ -2002,7 +2002,7 @@
          </property>
          <property name="geometry">
           <rect>
-           <x>475</x>
+           <x>515</x>
            <y>37</y>
            <width>91</width>
            <height>31</height>
@@ -15539,8 +15539,8 @@
         <widget class="QPushButton" name="pushbtn_adc_park">
          <property name="geometry">
           <rect>
-           <x>20</x>
-           <y>140</y>
+           <x>200</x>
+           <y>100</y>
            <width>71</width>
            <height>31</height>
           </rect>
@@ -15728,8 +15728,8 @@
         <widget class="QPushButton" name="pushbtn_adc_connect">
          <property name="geometry">
           <rect>
-           <x>200</x>
-           <y>100</y>
+           <x>20</x>
+           <y>140</y>
            <width>71</width>
            <height>31</height>
           </rect>
@@ -16755,13 +16755,13 @@
         </widget>
         <widget class="QPushButton" name="pushbtn_Fiber_assign_2">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="geometry">
           <rect>
            <x>330</x>
            <y>37</y>
-           <width>131</width>
+           <width>171</width>
            <height>31</height>
           </rect>
          </property>
@@ -16778,16 +16778,16 @@
           <string/>
          </property>
          <property name="text">
-          <string>Fiber Assign</string>
+          <string>FBP Assign/Stop</string>
          </property>
         </widget>
         <widget class="QPushButton" name="pushbtn_Flat_2">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="geometry">
           <rect>
-           <x>685</x>
+           <x>725</x>
            <y>37</y>
            <width>61</width>
            <height>31</height>
@@ -16811,11 +16811,11 @@
         </widget>
         <widget class="QPushButton" name="pushbtn_Arc_2">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="geometry">
           <rect>
-           <x>760</x>
+           <x>800</x>
            <y>37</y>
            <width>61</width>
            <height>31</height>
@@ -16839,11 +16839,11 @@
         </widget>
         <widget class="QPushButton" name="pushbtn_Fiducial_2">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="geometry">
           <rect>
-           <x>580</x>
+           <x>620</x>
            <y>37</y>
            <width>91</width>
            <height>31</height>
@@ -16867,11 +16867,11 @@
         </widget>
         <widget class="QPushButton" name="pushbtn_illumi_2">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="geometry">
           <rect>
-           <x>475</x>
+           <x>515</x>
            <y>37</y>
            <width>91</width>
            <height>31</height>
@@ -16917,7 +16917,7 @@
         </property>
         <widget class="QPushButton" name="pushbtn_FBP_offset">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="geometry">
           <rect>
@@ -16945,7 +16945,7 @@
         </widget>
         <widget class="QPushButton" name="pushbtn_FBP_zero">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="geometry">
           <rect>
@@ -16973,7 +16973,7 @@
         </widget>
         <widget class="QPushButton" name="pushbtn_FBP_park">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="geometry">
           <rect>
@@ -16997,6 +16997,56 @@
          </property>
          <property name="text">
           <string>Park</string>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="lineEdit_FBP_lock">
+         <property name="geometry">
+          <rect>
+           <x>110</x>
+           <y>32</y>
+           <width>111</width>
+           <height>25</height>
+          </rect>
+         </property>
+         <property name="font">
+          <font>
+           <family>Sans Serif</family>
+           <pointsize>10</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
+           <strikeout>false</strikeout>
+          </font>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="placeholderText">
+          <string>ex) A1, B1...</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_FBP_lock">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>32</y>
+           <width>97</width>
+           <height>23</height>
+          </rect>
+         </property>
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>14</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
+           <strikeout>false</strikeout>
+          </font>
+         </property>
+         <property name="text">
+          <string>Fiber Lock</string>
          </property>
         </widget>
        </widget>

@@ -34,7 +34,7 @@ class KSPECRunner:
         
     def load_command_list(self):
         return {
-            "adc": ["adcstatus", "adcactivate", "adcadjust", "adcinit", "adcconnect", "adcdisconnect", "adchome", "adczero",
+            "adc": ["adcstatus", "adcactivate", "adcadjust", "adcconnect", "adcdisconnect", "adchome", "adczero",
             "adcpoweroff", "adcrotate1", "adcrotate2", "adcstop", "adcpark", "adcctrotate", "adccorotate"],
             "gfa": ["gfastatus", "gfagrab", "gfaguidestop", "gfaguide","fdgrab"],
             "fbp": ["fbpstatus", "fbpzero", "fbpmove", "fbpoffset"],
