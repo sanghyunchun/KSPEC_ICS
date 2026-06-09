@@ -1,0 +1,456 @@
+2026-06-09 10:22:55,721 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2026-06-09 10:22:55,721 [INFO] Initializing gfa_astrometry class.
+2026-06-09 10:22:55,722 [INFO] Paths:
+2026-06-09 10:22:55,722 [INFO]   save_root         = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 10:22:55,722 [INFO]   raw_images        = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-06-09 10:22:55,722 [INFO]   temp_files        = /home/shyunc/work/DATA/GFADATA/img/tempfiles
+2026-06-09 10:22:55,722 [INFO]   final_astrometry  = /home/shyunc/work/DATA/GFADATA/img/astroimg
+2026-06-09 10:22:55,722 [INFO]   star_catalog_dir  = /home/shyunc/work/DATA/GFADATA/img/star_catalog
+2026-06-09 10:22:55,722 [INFO]   combined_star.fits= /home/shyunc/work/DATA/GFADATA/img/star_catalog/combined_star.fits
+2026-06-09 13:17:42,918 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2026-06-09 13:17:42,918 [INFO] Initializing gfa_astrometry class.
+2026-06-09 13:17:42,919 [INFO] Paths:
+2026-06-09 13:17:42,919 [INFO]   save_root         = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 13:17:42,919 [INFO]   raw_images        = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-06-09 13:17:42,919 [INFO]   temp_files        = /home/shyunc/work/DATA/GFADATA/img/tempfiles
+2026-06-09 13:17:42,919 [INFO]   final_astrometry  = /home/shyunc/work/DATA/GFADATA/img/astroimg
+2026-06-09 13:17:42,919 [INFO]   star_catalog_dir  = /home/shyunc/work/DATA/GFADATA/img/star_catalog
+2026-06-09 13:17:42,919 [INFO]   combined_star.fits= /home/shyunc/work/DATA/GFADATA/img/star_catalog/combined_star.fits
+2026-06-09 13:17:42,919 [DEBUG] Using solve-field: /usr/local/astrometry/bin/solve-field
+2026-06-09 13:17:42,919 [INFO] Initializing GFAGuider...
+2026-06-09 13:17:42,919 [INFO] ========== PATH DEBUG [guider] ==========
+2026-06-09 13:17:42,919 [INFO] save_root             = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 13:17:42,919 [INFO] raw_dir               = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-06-09 13:17:42,920 [INFO] final_astrometry_dir  = /home/shyunc/work/DATA/GFADATA/img/astroimg
+2026-06-09 13:17:42,920 [INFO] cutout_path           = /home/shyunc/work/DATA/GFADATA/img/cutout
+2026-06-09 13:17:42,920 [INFO] star_catalog_root     = /home/shyunc/work/DATA/GFADATA/img/star_catalog
+2026-06-09 13:17:42,920 [INFO] combined_star_path    = /home/shyunc/work/DATA/GFADATA/img/star_catalog/combined_star.fits
+2026-06-09 13:17:42,920 [INFO] =========================================
+2026-06-09 13:17:42,920 [INFO] GFAGuider setup complete.
+2026-06-09 13:18:39,483 [INFO] [grab] save_root=/home/shyunc/work/DATA/GFADATA/img
+2026-06-09 13:18:39,484 [INFO] [grab] dirs={'raw_images': 'raw', 'processed_images': 'procimg', 'temp_files': 'tempfiles', 'final_astrometry_images': 'astroimg', 'offset_astrometry_images': 'astroimg', 'offset_processed_images': 'procimg', 'cutout_directory': 'cutout', 'star_catalog': 'star_catalog', 'grab_images': 'grab', 'guiding_save': 'guiding_save', 'pointing_save': 'pointing_save'}
+2026-06-09 13:18:39,484 [INFO] ========== PATH DEBUG [grab] ==========
+2026-06-09 13:18:39,484 [INFO] save_root = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 13:18:39,484 [INFO] type(save_root) = <class 'pathlib.PosixPath'>
+2026-06-09 13:18:39,484 [INFO] save_root exists? True
+2026-06-09 13:18:39,484 [INFO] save_root write test ok: /home/shyunc/work/DATA/GFADATA/img/debug_write_test.txt
+2026-06-09 13:18:39,484 [INFO] grab_save_path = /home/shyunc/work/DATA/GFADATA/img/grab/2026-06-09
+2026-06-09 13:18:39,484 [INFO] type(grab_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 13:18:39,485 [INFO] grab_save_path exists? True
+2026-06-09 13:18:39,485 [INFO] grab_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/grab/2026-06-09/debug_write_test.txt
+2026-06-09 13:18:39,485 [INFO] =========================================
+2026-06-09 13:18:39,485 [INFO] Open all plate cameras...
+2026-06-09 13:18:39,485 [INFO] [grab] exposure 1/1, output_dir=/home/shyunc/work/DATA/GFADATA/img/grab/2026-06-09
+2026-06-09 13:18:39,485 [INFO] Close all plate cameras...
+2026-06-09 13:19:02,157 [INFO] [grab] save_root=/home/shyunc/work/DATA/GFADATA/img
+2026-06-09 13:19:02,158 [INFO] [grab] dirs={'raw_images': 'raw', 'processed_images': 'procimg', 'temp_files': 'tempfiles', 'final_astrometry_images': 'astroimg', 'offset_astrometry_images': 'astroimg', 'offset_processed_images': 'procimg', 'cutout_directory': 'cutout', 'star_catalog': 'star_catalog', 'grab_images': 'grab', 'guiding_save': 'guiding_save', 'pointing_save': 'pointing_save'}
+2026-06-09 13:19:02,158 [INFO] ========== PATH DEBUG [grab] ==========
+2026-06-09 13:19:02,159 [INFO] save_root = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 13:19:02,159 [INFO] type(save_root) = <class 'pathlib.PosixPath'>
+2026-06-09 13:19:02,159 [INFO] save_root exists? True
+2026-06-09 13:19:02,159 [INFO] save_root write test ok: /home/shyunc/work/DATA/GFADATA/img/debug_write_test.txt
+2026-06-09 13:19:02,159 [INFO] grab_save_path = /home/shyunc/work/DATA/GFADATA/img/grab/2026-06-09
+2026-06-09 13:19:02,160 [INFO] type(grab_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 13:19:02,160 [INFO] grab_save_path exists? True
+2026-06-09 13:19:02,160 [INFO] grab_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/grab/2026-06-09/debug_write_test.txt
+2026-06-09 13:19:02,160 [INFO] =========================================
+2026-06-09 13:19:02,160 [INFO] Open all plate cameras...
+2026-06-09 13:19:02,160 [INFO] [grab] exposure 1/3, output_dir=/home/shyunc/work/DATA/GFADATA/img/grab/2026-06-09
+2026-06-09 13:19:02,160 [INFO] [grab] exposure 2/3, output_dir=/home/shyunc/work/DATA/GFADATA/img/grab/2026-06-09
+2026-06-09 13:19:02,160 [INFO] [grab] exposure 3/3, output_dir=/home/shyunc/work/DATA/GFADATA/img/grab/2026-06-09
+2026-06-09 13:19:02,160 [INFO] Close all plate cameras...
+2026-06-09 13:35:12,886 [INFO] [guiding] save_root=/home/shyunc/work/DATA/GFADATA/img
+2026-06-09 13:35:12,886 [INFO] [guiding] dirs={'raw_images': 'raw', 'processed_images': 'procimg', 'temp_files': 'tempfiles', 'final_astrometry_images': 'astroimg', 'offset_astrometry_images': 'astroimg', 'offset_processed_images': 'procimg', 'cutout_directory': 'cutout', 'star_catalog': 'star_catalog', 'grab_images': 'grab', 'guiding_save': 'guiding_save', 'pointing_save': 'pointing_save'}
+2026-06-09 13:35:12,886 [INFO] [guiding] SaveGrabRaw=True, raw_save_path=/home/shyunc/work/DATA/GFADATA/img/raw, guiding_save_path=/home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 13:35:12,886 [INFO] ========== PATH DEBUG [guiding] ==========
+2026-06-09 13:35:12,886 [INFO] save_root = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 13:35:12,886 [INFO] type(save_root) = <class 'pathlib.PosixPath'>
+2026-06-09 13:35:12,886 [INFO] save_root exists? True
+2026-06-09 13:35:12,886 [INFO] save_root write test ok: /home/shyunc/work/DATA/GFADATA/img/debug_write_test.txt
+2026-06-09 13:35:12,886 [INFO] raw_save_path = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-06-09 13:35:12,886 [INFO] type(raw_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 13:35:12,886 [INFO] raw_save_path exists? True
+2026-06-09 13:35:12,886 [INFO] raw_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/raw/debug_write_test.txt
+2026-06-09 13:35:12,887 [INFO] guiding_save_path = /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 13:35:12,887 [INFO] type(guiding_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 13:35:12,887 [INFO] guiding_save_path exists? True
+2026-06-09 13:35:12,887 [INFO] guiding_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09/debug_write_test.txt
+2026-06-09 13:35:12,887 [INFO] =========================================
+2026-06-09 13:35:12,887 [INFO] Deleting raw files.
+2026-06-09 13:35:12,890 [INFO] Deleted 7 raw files.
+2026-06-09 13:35:12,890 [INFO] Starting guiding sequence...
+2026-06-09 13:35:12,890 [INFO] Ensuring astrometry outputs are ready (no procimg dependency)...
+2026-06-09 13:35:12,890 [INFO] Guiding test......
+2026-06-09 13:36:22,894 [INFO] [guiding] save_root=/home/shyunc/work/DATA/GFADATA/img
+2026-06-09 13:36:22,894 [INFO] [guiding] dirs={'raw_images': 'raw', 'processed_images': 'procimg', 'temp_files': 'tempfiles', 'final_astrometry_images': 'astroimg', 'offset_astrometry_images': 'astroimg', 'offset_processed_images': 'procimg', 'cutout_directory': 'cutout', 'star_catalog': 'star_catalog', 'grab_images': 'grab', 'guiding_save': 'guiding_save', 'pointing_save': 'pointing_save'}
+2026-06-09 13:36:22,895 [INFO] [guiding] SaveGrabRaw=True, raw_save_path=/home/shyunc/work/DATA/GFADATA/img/raw, guiding_save_path=/home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 13:36:22,896 [INFO] ========== PATH DEBUG [guiding] ==========
+2026-06-09 13:36:22,896 [INFO] save_root = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 13:36:22,897 [INFO] type(save_root) = <class 'pathlib.PosixPath'>
+2026-06-09 13:36:22,897 [INFO] save_root exists? True
+2026-06-09 13:36:22,898 [INFO] save_root write test ok: /home/shyunc/work/DATA/GFADATA/img/debug_write_test.txt
+2026-06-09 13:36:22,898 [INFO] raw_save_path = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-06-09 13:36:22,898 [INFO] type(raw_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 13:36:22,899 [INFO] raw_save_path exists? True
+2026-06-09 13:36:22,899 [INFO] raw_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/raw/debug_write_test.txt
+2026-06-09 13:36:22,900 [INFO] guiding_save_path = /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 13:36:22,900 [INFO] type(guiding_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 13:36:22,900 [INFO] guiding_save_path exists? True
+2026-06-09 13:36:22,900 [INFO] guiding_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09/debug_write_test.txt
+2026-06-09 13:36:22,901 [INFO] =========================================
+2026-06-09 13:36:22,901 [INFO] Deleting raw files.
+2026-06-09 13:36:22,902 [INFO] Deleted 1 raw files.
+2026-06-09 13:36:22,902 [INFO] Starting guiding sequence...
+2026-06-09 13:36:22,902 [INFO] Ensuring astrometry outputs are ready (no procimg dependency)...
+2026-06-09 13:36:22,902 [INFO] Guiding test......
+2026-06-09 13:37:32,904 [INFO] [guiding] save_root=/home/shyunc/work/DATA/GFADATA/img
+2026-06-09 13:37:32,904 [INFO] [guiding] dirs={'raw_images': 'raw', 'processed_images': 'procimg', 'temp_files': 'tempfiles', 'final_astrometry_images': 'astroimg', 'offset_astrometry_images': 'astroimg', 'offset_processed_images': 'procimg', 'cutout_directory': 'cutout', 'star_catalog': 'star_catalog', 'grab_images': 'grab', 'guiding_save': 'guiding_save', 'pointing_save': 'pointing_save'}
+2026-06-09 13:37:32,904 [INFO] [guiding] SaveGrabRaw=True, raw_save_path=/home/shyunc/work/DATA/GFADATA/img/raw, guiding_save_path=/home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 13:37:32,904 [INFO] ========== PATH DEBUG [guiding] ==========
+2026-06-09 13:37:32,905 [INFO] save_root = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 13:37:32,905 [INFO] type(save_root) = <class 'pathlib.PosixPath'>
+2026-06-09 13:37:32,905 [INFO] save_root exists? True
+2026-06-09 13:37:32,905 [INFO] save_root write test ok: /home/shyunc/work/DATA/GFADATA/img/debug_write_test.txt
+2026-06-09 13:37:32,905 [INFO] raw_save_path = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-06-09 13:37:32,905 [INFO] type(raw_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 13:37:32,905 [INFO] raw_save_path exists? True
+2026-06-09 13:37:32,905 [INFO] raw_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/raw/debug_write_test.txt
+2026-06-09 13:37:32,905 [INFO] guiding_save_path = /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 13:37:32,905 [INFO] type(guiding_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 13:37:32,905 [INFO] guiding_save_path exists? True
+2026-06-09 13:37:32,905 [INFO] guiding_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09/debug_write_test.txt
+2026-06-09 13:37:32,905 [INFO] =========================================
+2026-06-09 13:37:32,905 [INFO] Deleting raw files.
+2026-06-09 13:37:32,906 [INFO] Deleted 1 raw files.
+2026-06-09 13:37:32,906 [INFO] Starting guiding sequence...
+2026-06-09 13:37:32,906 [INFO] Ensuring astrometry outputs are ready (no procimg dependency)...
+2026-06-09 13:37:32,906 [INFO] Guiding test......
+2026-06-09 13:38:42,908 [INFO] [guiding] save_root=/home/shyunc/work/DATA/GFADATA/img
+2026-06-09 13:38:42,909 [INFO] [guiding] dirs={'raw_images': 'raw', 'processed_images': 'procimg', 'temp_files': 'tempfiles', 'final_astrometry_images': 'astroimg', 'offset_astrometry_images': 'astroimg', 'offset_processed_images': 'procimg', 'cutout_directory': 'cutout', 'star_catalog': 'star_catalog', 'grab_images': 'grab', 'guiding_save': 'guiding_save', 'pointing_save': 'pointing_save'}
+2026-06-09 13:38:42,909 [INFO] [guiding] SaveGrabRaw=True, raw_save_path=/home/shyunc/work/DATA/GFADATA/img/raw, guiding_save_path=/home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 13:38:42,910 [INFO] ========== PATH DEBUG [guiding] ==========
+2026-06-09 13:38:42,911 [INFO] save_root = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 13:38:42,911 [INFO] type(save_root) = <class 'pathlib.PosixPath'>
+2026-06-09 13:38:42,912 [INFO] save_root exists? True
+2026-06-09 13:38:42,913 [INFO] save_root write test ok: /home/shyunc/work/DATA/GFADATA/img/debug_write_test.txt
+2026-06-09 13:38:42,914 [INFO] raw_save_path = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-06-09 13:38:42,914 [INFO] type(raw_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 13:38:42,914 [INFO] raw_save_path exists? True
+2026-06-09 13:38:42,915 [INFO] raw_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/raw/debug_write_test.txt
+2026-06-09 13:38:42,916 [INFO] guiding_save_path = /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 13:38:42,917 [INFO] type(guiding_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 13:38:42,917 [INFO] guiding_save_path exists? True
+2026-06-09 13:38:42,918 [INFO] guiding_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09/debug_write_test.txt
+2026-06-09 13:38:42,918 [INFO] =========================================
+2026-06-09 13:38:42,919 [INFO] Deleting raw files.
+2026-06-09 13:38:42,919 [INFO] Deleted 1 raw files.
+2026-06-09 13:38:42,919 [INFO] Starting guiding sequence...
+2026-06-09 13:38:42,920 [INFO] Ensuring astrometry outputs are ready (no procimg dependency)...
+2026-06-09 13:38:42,920 [INFO] Guiding test......
+2026-06-09 13:39:52,923 [INFO] [guiding] save_root=/home/shyunc/work/DATA/GFADATA/img
+2026-06-09 13:39:52,923 [INFO] [guiding] dirs={'raw_images': 'raw', 'processed_images': 'procimg', 'temp_files': 'tempfiles', 'final_astrometry_images': 'astroimg', 'offset_astrometry_images': 'astroimg', 'offset_processed_images': 'procimg', 'cutout_directory': 'cutout', 'star_catalog': 'star_catalog', 'grab_images': 'grab', 'guiding_save': 'guiding_save', 'pointing_save': 'pointing_save'}
+2026-06-09 13:39:52,923 [INFO] [guiding] SaveGrabRaw=True, raw_save_path=/home/shyunc/work/DATA/GFADATA/img/raw, guiding_save_path=/home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 13:39:52,924 [INFO] ========== PATH DEBUG [guiding] ==========
+2026-06-09 13:39:52,924 [INFO] save_root = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 13:39:52,925 [INFO] type(save_root) = <class 'pathlib.PosixPath'>
+2026-06-09 13:39:52,925 [INFO] save_root exists? True
+2026-06-09 13:39:52,926 [INFO] save_root write test ok: /home/shyunc/work/DATA/GFADATA/img/debug_write_test.txt
+2026-06-09 13:39:52,926 [INFO] raw_save_path = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-06-09 13:39:52,926 [INFO] type(raw_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 13:39:52,926 [INFO] raw_save_path exists? True
+2026-06-09 13:39:52,927 [INFO] raw_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/raw/debug_write_test.txt
+2026-06-09 13:39:52,927 [INFO] guiding_save_path = /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 13:39:52,927 [INFO] type(guiding_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 13:39:52,927 [INFO] guiding_save_path exists? True
+2026-06-09 13:39:52,927 [INFO] guiding_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09/debug_write_test.txt
+2026-06-09 13:39:52,927 [INFO] =========================================
+2026-06-09 13:39:52,927 [INFO] Deleting raw files.
+2026-06-09 13:39:52,927 [INFO] Deleted 1 raw files.
+2026-06-09 13:39:52,927 [INFO] Starting guiding sequence...
+2026-06-09 13:39:52,928 [INFO] Ensuring astrometry outputs are ready (no procimg dependency)...
+2026-06-09 13:39:52,928 [INFO] Guiding test......
+2026-06-09 13:41:02,931 [INFO] [guiding] save_root=/home/shyunc/work/DATA/GFADATA/img
+2026-06-09 13:41:02,932 [INFO] [guiding] dirs={'raw_images': 'raw', 'processed_images': 'procimg', 'temp_files': 'tempfiles', 'final_astrometry_images': 'astroimg', 'offset_astrometry_images': 'astroimg', 'offset_processed_images': 'procimg', 'cutout_directory': 'cutout', 'star_catalog': 'star_catalog', 'grab_images': 'grab', 'guiding_save': 'guiding_save', 'pointing_save': 'pointing_save'}
+2026-06-09 13:41:02,933 [INFO] [guiding] SaveGrabRaw=True, raw_save_path=/home/shyunc/work/DATA/GFADATA/img/raw, guiding_save_path=/home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 13:41:02,934 [INFO] ========== PATH DEBUG [guiding] ==========
+2026-06-09 13:41:02,934 [INFO] save_root = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 13:41:02,935 [INFO] type(save_root) = <class 'pathlib.PosixPath'>
+2026-06-09 13:41:02,935 [INFO] save_root exists? True
+2026-06-09 13:41:02,936 [INFO] save_root write test ok: /home/shyunc/work/DATA/GFADATA/img/debug_write_test.txt
+2026-06-09 13:41:02,936 [INFO] raw_save_path = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-06-09 13:41:02,937 [INFO] type(raw_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 13:41:02,937 [INFO] raw_save_path exists? True
+2026-06-09 13:41:02,938 [INFO] raw_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/raw/debug_write_test.txt
+2026-06-09 13:41:02,938 [INFO] guiding_save_path = /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 13:41:02,938 [INFO] type(guiding_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 13:41:02,939 [INFO] guiding_save_path exists? True
+2026-06-09 13:41:02,939 [INFO] guiding_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09/debug_write_test.txt
+2026-06-09 13:41:02,939 [INFO] =========================================
+2026-06-09 13:41:02,940 [INFO] Deleting raw files.
+2026-06-09 13:41:02,940 [INFO] Deleted 1 raw files.
+2026-06-09 13:41:02,940 [INFO] Starting guiding sequence...
+2026-06-09 13:41:02,941 [INFO] Ensuring astrometry outputs are ready (no procimg dependency)...
+2026-06-09 13:41:02,941 [INFO] Guiding test......
+2026-06-09 15:41:57,169 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2026-06-09 15:41:57,169 [INFO] Initializing gfa_astrometry class.
+2026-06-09 15:41:57,169 [INFO] Paths:
+2026-06-09 15:41:57,169 [INFO]   save_root         = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 15:41:57,169 [INFO]   raw_images        = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-06-09 15:41:57,169 [INFO]   temp_files        = /home/shyunc/work/DATA/GFADATA/img/tempfiles
+2026-06-09 15:41:57,169 [INFO]   final_astrometry  = /home/shyunc/work/DATA/GFADATA/img/astroimg
+2026-06-09 15:41:57,169 [INFO]   star_catalog_dir  = /home/shyunc/work/DATA/GFADATA/img/star_catalog
+2026-06-09 15:41:57,169 [INFO]   combined_star.fits= /home/shyunc/work/DATA/GFADATA/img/star_catalog/combined_star.fits
+2026-06-09 15:41:57,169 [DEBUG] Using solve-field: /usr/local/astrometry/bin/solve-field
+2026-06-09 15:41:57,169 [INFO] Initializing GFAGuider...
+2026-06-09 15:41:57,170 [INFO] ========== PATH DEBUG [guider] ==========
+2026-06-09 15:41:57,170 [INFO] save_root             = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 15:41:57,170 [INFO] raw_dir               = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-06-09 15:41:57,170 [INFO] final_astrometry_dir  = /home/shyunc/work/DATA/GFADATA/img/astroimg
+2026-06-09 15:41:57,170 [INFO] cutout_path           = /home/shyunc/work/DATA/GFADATA/img/cutout
+2026-06-09 15:41:57,170 [INFO] star_catalog_root     = /home/shyunc/work/DATA/GFADATA/img/star_catalog
+2026-06-09 15:41:57,170 [INFO] combined_star_path    = /home/shyunc/work/DATA/GFADATA/img/star_catalog/combined_star.fits
+2026-06-09 15:41:57,170 [INFO] =========================================
+2026-06-09 15:41:57,170 [INFO] GFAGuider setup complete.
+2026-06-09 15:42:48,399 [INFO] [guiding] save_root=/home/shyunc/work/DATA/GFADATA/img
+2026-06-09 15:42:48,399 [INFO] [guiding] dirs={'raw_images': 'raw', 'processed_images': 'procimg', 'temp_files': 'tempfiles', 'final_astrometry_images': 'astroimg', 'offset_astrometry_images': 'astroimg', 'offset_processed_images': 'procimg', 'cutout_directory': 'cutout', 'star_catalog': 'star_catalog', 'grab_images': 'grab', 'guiding_save': 'guiding_save', 'pointing_save': 'pointing_save'}
+2026-06-09 15:42:48,399 [INFO] [guiding] SaveGrabRaw=True, raw_save_path=/home/shyunc/work/DATA/GFADATA/img/raw, guiding_save_path=/home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 15:42:48,399 [INFO] ========== PATH DEBUG [guiding] ==========
+2026-06-09 15:42:48,399 [INFO] save_root = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 15:42:48,399 [INFO] type(save_root) = <class 'pathlib.PosixPath'>
+2026-06-09 15:42:48,399 [INFO] save_root exists? True
+2026-06-09 15:42:48,399 [INFO] save_root write test ok: /home/shyunc/work/DATA/GFADATA/img/debug_write_test.txt
+2026-06-09 15:42:48,400 [INFO] raw_save_path = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-06-09 15:42:48,400 [INFO] type(raw_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 15:42:48,400 [INFO] raw_save_path exists? True
+2026-06-09 15:42:48,400 [INFO] raw_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/raw/debug_write_test.txt
+2026-06-09 15:42:48,400 [INFO] guiding_save_path = /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 15:42:48,400 [INFO] type(guiding_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 15:42:48,400 [INFO] guiding_save_path exists? True
+2026-06-09 15:42:48,400 [INFO] guiding_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09/debug_write_test.txt
+2026-06-09 15:42:48,400 [INFO] =========================================
+2026-06-09 15:42:48,400 [INFO] Deleting raw files.
+2026-06-09 15:42:48,400 [INFO] Deleted 1 raw files.
+2026-06-09 15:42:48,400 [INFO] Starting guiding sequence...
+2026-06-09 15:42:48,400 [INFO] Ensuring astrometry outputs are ready (no procimg dependency)...
+2026-06-09 15:42:48,400 [INFO] Guiding test......
+2026-06-09 15:43:58,403 [INFO] [guiding] save_root=/home/shyunc/work/DATA/GFADATA/img
+2026-06-09 15:43:58,404 [INFO] [guiding] dirs={'raw_images': 'raw', 'processed_images': 'procimg', 'temp_files': 'tempfiles', 'final_astrometry_images': 'astroimg', 'offset_astrometry_images': 'astroimg', 'offset_processed_images': 'procimg', 'cutout_directory': 'cutout', 'star_catalog': 'star_catalog', 'grab_images': 'grab', 'guiding_save': 'guiding_save', 'pointing_save': 'pointing_save'}
+2026-06-09 15:43:58,404 [INFO] [guiding] SaveGrabRaw=True, raw_save_path=/home/shyunc/work/DATA/GFADATA/img/raw, guiding_save_path=/home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 15:43:58,404 [INFO] ========== PATH DEBUG [guiding] ==========
+2026-06-09 15:43:58,404 [INFO] save_root = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 15:43:58,404 [INFO] type(save_root) = <class 'pathlib.PosixPath'>
+2026-06-09 15:43:58,404 [INFO] save_root exists? True
+2026-06-09 15:43:58,404 [INFO] save_root write test ok: /home/shyunc/work/DATA/GFADATA/img/debug_write_test.txt
+2026-06-09 15:43:58,404 [INFO] raw_save_path = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-06-09 15:43:58,404 [INFO] type(raw_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 15:43:58,405 [INFO] raw_save_path exists? True
+2026-06-09 15:43:58,405 [INFO] raw_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/raw/debug_write_test.txt
+2026-06-09 15:43:58,405 [INFO] guiding_save_path = /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 15:43:58,405 [INFO] type(guiding_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 15:43:58,405 [INFO] guiding_save_path exists? True
+2026-06-09 15:43:58,405 [INFO] guiding_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09/debug_write_test.txt
+2026-06-09 15:43:58,405 [INFO] =========================================
+2026-06-09 15:43:58,405 [INFO] Deleting raw files.
+2026-06-09 15:43:58,406 [INFO] Deleted 1 raw files.
+2026-06-09 15:43:58,406 [INFO] Starting guiding sequence...
+2026-06-09 15:43:58,406 [INFO] Ensuring astrometry outputs are ready (no procimg dependency)...
+2026-06-09 15:43:58,406 [INFO] Guiding test......
+2026-06-09 15:45:08,408 [INFO] [guiding] save_root=/home/shyunc/work/DATA/GFADATA/img
+2026-06-09 15:45:08,409 [INFO] [guiding] dirs={'raw_images': 'raw', 'processed_images': 'procimg', 'temp_files': 'tempfiles', 'final_astrometry_images': 'astroimg', 'offset_astrometry_images': 'astroimg', 'offset_processed_images': 'procimg', 'cutout_directory': 'cutout', 'star_catalog': 'star_catalog', 'grab_images': 'grab', 'guiding_save': 'guiding_save', 'pointing_save': 'pointing_save'}
+2026-06-09 15:45:08,409 [INFO] [guiding] SaveGrabRaw=True, raw_save_path=/home/shyunc/work/DATA/GFADATA/img/raw, guiding_save_path=/home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 15:45:08,409 [INFO] ========== PATH DEBUG [guiding] ==========
+2026-06-09 15:45:08,410 [INFO] save_root = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 15:45:08,410 [INFO] type(save_root) = <class 'pathlib.PosixPath'>
+2026-06-09 15:45:08,410 [INFO] save_root exists? True
+2026-06-09 15:45:08,411 [INFO] save_root write test ok: /home/shyunc/work/DATA/GFADATA/img/debug_write_test.txt
+2026-06-09 15:45:08,412 [INFO] raw_save_path = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-06-09 15:45:08,412 [INFO] type(raw_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 15:45:08,412 [INFO] raw_save_path exists? True
+2026-06-09 15:45:08,413 [INFO] raw_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/raw/debug_write_test.txt
+2026-06-09 15:45:08,414 [INFO] guiding_save_path = /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 15:45:08,414 [INFO] type(guiding_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 15:45:08,414 [INFO] guiding_save_path exists? True
+2026-06-09 15:45:08,415 [INFO] guiding_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09/debug_write_test.txt
+2026-06-09 15:45:08,415 [INFO] =========================================
+2026-06-09 15:45:08,416 [INFO] Deleting raw files.
+2026-06-09 15:45:08,416 [INFO] Deleted 1 raw files.
+2026-06-09 15:45:08,416 [INFO] Starting guiding sequence...
+2026-06-09 15:45:08,417 [INFO] Ensuring astrometry outputs are ready (no procimg dependency)...
+2026-06-09 15:45:08,417 [INFO] Guiding test......
+2026-06-09 15:46:18,422 [INFO] [guiding] save_root=/home/shyunc/work/DATA/GFADATA/img
+2026-06-09 15:46:18,422 [INFO] [guiding] dirs={'raw_images': 'raw', 'processed_images': 'procimg', 'temp_files': 'tempfiles', 'final_astrometry_images': 'astroimg', 'offset_astrometry_images': 'astroimg', 'offset_processed_images': 'procimg', 'cutout_directory': 'cutout', 'star_catalog': 'star_catalog', 'grab_images': 'grab', 'guiding_save': 'guiding_save', 'pointing_save': 'pointing_save'}
+2026-06-09 15:46:18,423 [INFO] [guiding] SaveGrabRaw=True, raw_save_path=/home/shyunc/work/DATA/GFADATA/img/raw, guiding_save_path=/home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 15:46:18,423 [INFO] ========== PATH DEBUG [guiding] ==========
+2026-06-09 15:46:18,424 [INFO] save_root = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 15:46:18,424 [INFO] type(save_root) = <class 'pathlib.PosixPath'>
+2026-06-09 15:46:18,425 [INFO] save_root exists? True
+2026-06-09 15:46:18,425 [INFO] save_root write test ok: /home/shyunc/work/DATA/GFADATA/img/debug_write_test.txt
+2026-06-09 15:46:18,426 [INFO] raw_save_path = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-06-09 15:46:18,426 [INFO] type(raw_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 15:46:18,426 [INFO] raw_save_path exists? True
+2026-06-09 15:46:18,427 [INFO] raw_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/raw/debug_write_test.txt
+2026-06-09 15:46:18,427 [INFO] guiding_save_path = /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 15:46:18,428 [INFO] type(guiding_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 15:46:18,428 [INFO] guiding_save_path exists? True
+2026-06-09 15:46:18,428 [INFO] guiding_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09/debug_write_test.txt
+2026-06-09 15:46:18,428 [INFO] =========================================
+2026-06-09 15:46:18,428 [INFO] Deleting raw files.
+2026-06-09 15:46:18,429 [INFO] Deleted 1 raw files.
+2026-06-09 15:46:18,429 [INFO] Starting guiding sequence...
+2026-06-09 15:46:18,429 [INFO] Ensuring astrometry outputs are ready (no procimg dependency)...
+2026-06-09 15:46:18,429 [INFO] Guiding test......
+2026-06-09 15:47:28,431 [INFO] [guiding] save_root=/home/shyunc/work/DATA/GFADATA/img
+2026-06-09 15:47:28,432 [INFO] [guiding] dirs={'raw_images': 'raw', 'processed_images': 'procimg', 'temp_files': 'tempfiles', 'final_astrometry_images': 'astroimg', 'offset_astrometry_images': 'astroimg', 'offset_processed_images': 'procimg', 'cutout_directory': 'cutout', 'star_catalog': 'star_catalog', 'grab_images': 'grab', 'guiding_save': 'guiding_save', 'pointing_save': 'pointing_save'}
+2026-06-09 15:47:28,433 [INFO] [guiding] SaveGrabRaw=True, raw_save_path=/home/shyunc/work/DATA/GFADATA/img/raw, guiding_save_path=/home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 15:47:28,433 [INFO] ========== PATH DEBUG [guiding] ==========
+2026-06-09 15:47:28,434 [INFO] save_root = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 15:47:28,435 [INFO] type(save_root) = <class 'pathlib.PosixPath'>
+2026-06-09 15:47:28,435 [INFO] save_root exists? True
+2026-06-09 15:47:28,436 [INFO] save_root write test ok: /home/shyunc/work/DATA/GFADATA/img/debug_write_test.txt
+2026-06-09 15:47:28,437 [INFO] raw_save_path = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-06-09 15:47:28,437 [INFO] type(raw_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 15:47:28,437 [INFO] raw_save_path exists? True
+2026-06-09 15:47:28,438 [INFO] raw_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/raw/debug_write_test.txt
+2026-06-09 15:47:28,438 [INFO] guiding_save_path = /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 15:47:28,439 [INFO] type(guiding_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 15:47:28,439 [INFO] guiding_save_path exists? True
+2026-06-09 15:47:28,439 [INFO] guiding_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09/debug_write_test.txt
+2026-06-09 15:47:28,439 [INFO] =========================================
+2026-06-09 15:47:28,439 [INFO] Deleting raw files.
+2026-06-09 15:47:28,439 [INFO] Deleted 1 raw files.
+2026-06-09 15:47:28,439 [INFO] Starting guiding sequence...
+2026-06-09 15:47:28,439 [INFO] Ensuring astrometry outputs are ready (no procimg dependency)...
+2026-06-09 15:47:28,439 [INFO] Guiding test......
+2026-06-09 15:48:38,442 [INFO] [guiding] save_root=/home/shyunc/work/DATA/GFADATA/img
+2026-06-09 15:48:38,443 [INFO] [guiding] dirs={'raw_images': 'raw', 'processed_images': 'procimg', 'temp_files': 'tempfiles', 'final_astrometry_images': 'astroimg', 'offset_astrometry_images': 'astroimg', 'offset_processed_images': 'procimg', 'cutout_directory': 'cutout', 'star_catalog': 'star_catalog', 'grab_images': 'grab', 'guiding_save': 'guiding_save', 'pointing_save': 'pointing_save'}
+2026-06-09 15:48:38,444 [INFO] [guiding] SaveGrabRaw=True, raw_save_path=/home/shyunc/work/DATA/GFADATA/img/raw, guiding_save_path=/home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 15:48:38,444 [INFO] ========== PATH DEBUG [guiding] ==========
+2026-06-09 15:48:38,444 [INFO] save_root = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 15:48:38,445 [INFO] type(save_root) = <class 'pathlib.PosixPath'>
+2026-06-09 15:48:38,445 [INFO] save_root exists? True
+2026-06-09 15:48:38,446 [INFO] save_root write test ok: /home/shyunc/work/DATA/GFADATA/img/debug_write_test.txt
+2026-06-09 15:48:38,446 [INFO] raw_save_path = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-06-09 15:48:38,447 [INFO] type(raw_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 15:48:38,447 [INFO] raw_save_path exists? True
+2026-06-09 15:48:38,447 [INFO] raw_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/raw/debug_write_test.txt
+2026-06-09 15:48:38,448 [INFO] guiding_save_path = /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 15:48:38,448 [INFO] type(guiding_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 15:48:38,448 [INFO] guiding_save_path exists? True
+2026-06-09 15:48:38,449 [INFO] guiding_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09/debug_write_test.txt
+2026-06-09 15:48:38,449 [INFO] =========================================
+2026-06-09 15:48:38,449 [INFO] Deleting raw files.
+2026-06-09 15:48:38,449 [INFO] Deleted 1 raw files.
+2026-06-09 15:48:38,449 [INFO] Starting guiding sequence...
+2026-06-09 15:48:38,449 [INFO] Ensuring astrometry outputs are ready (no procimg dependency)...
+2026-06-09 15:48:38,449 [INFO] Guiding test......
+2026-06-09 16:16:04,880 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2026-06-09 16:16:04,880 [INFO] Initializing gfa_astrometry class.
+2026-06-09 16:16:04,881 [INFO] Paths:
+2026-06-09 16:16:04,881 [INFO]   save_root         = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 16:16:04,881 [INFO]   raw_images        = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-06-09 16:16:04,881 [INFO]   temp_files        = /home/shyunc/work/DATA/GFADATA/img/tempfiles
+2026-06-09 16:16:04,881 [INFO]   final_astrometry  = /home/shyunc/work/DATA/GFADATA/img/astroimg
+2026-06-09 16:16:04,881 [INFO]   star_catalog_dir  = /home/shyunc/work/DATA/GFADATA/img/star_catalog
+2026-06-09 16:16:04,881 [INFO]   combined_star.fits= /home/shyunc/work/DATA/GFADATA/img/star_catalog/combined_star.fits
+2026-06-09 16:16:04,881 [DEBUG] Using solve-field: /usr/local/astrometry/bin/solve-field
+2026-06-09 16:16:04,881 [INFO] Initializing GFAGuider...
+2026-06-09 16:16:04,881 [INFO] ========== PATH DEBUG [guider] ==========
+2026-06-09 16:16:04,881 [INFO] save_root             = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 16:16:04,881 [INFO] raw_dir               = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-06-09 16:16:04,881 [INFO] final_astrometry_dir  = /home/shyunc/work/DATA/GFADATA/img/astroimg
+2026-06-09 16:16:04,881 [INFO] cutout_path           = /home/shyunc/work/DATA/GFADATA/img/cutout
+2026-06-09 16:16:04,881 [INFO] star_catalog_root     = /home/shyunc/work/DATA/GFADATA/img/star_catalog
+2026-06-09 16:16:04,882 [INFO] combined_star_path    = /home/shyunc/work/DATA/GFADATA/img/star_catalog/combined_star.fits
+2026-06-09 16:16:04,882 [INFO] =========================================
+2026-06-09 16:16:04,882 [INFO] GFAGuider setup complete.
+2026-06-09 17:46:16,963 [INFO] Initialized GFAEnvironment with role 'plate' and cameras [1, 2, 3, 4, 5, 6]
+2026-06-09 17:46:16,963 [INFO] Initializing gfa_astrometry class.
+2026-06-09 17:46:16,963 [INFO] Paths:
+2026-06-09 17:46:16,963 [INFO]   save_root         = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 17:46:16,963 [INFO]   raw_images        = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-06-09 17:46:16,963 [INFO]   temp_files        = /home/shyunc/work/DATA/GFADATA/img/tempfiles
+2026-06-09 17:46:16,963 [INFO]   final_astrometry  = /home/shyunc/work/DATA/GFADATA/img/astroimg
+2026-06-09 17:46:16,963 [INFO]   star_catalog_dir  = /home/shyunc/work/DATA/GFADATA/img/star_catalog
+2026-06-09 17:46:16,963 [INFO]   combined_star.fits= /home/shyunc/work/DATA/GFADATA/img/star_catalog/combined_star.fits
+2026-06-09 17:46:16,963 [DEBUG] Using solve-field: /usr/local/astrometry/bin/solve-field
+2026-06-09 17:46:16,963 [INFO] Initializing GFAGuider...
+2026-06-09 17:46:16,964 [INFO] ========== PATH DEBUG [guider] ==========
+2026-06-09 17:46:16,964 [INFO] save_root             = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 17:46:16,964 [INFO] raw_dir               = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-06-09 17:46:16,964 [INFO] final_astrometry_dir  = /home/shyunc/work/DATA/GFADATA/img/astroimg
+2026-06-09 17:46:16,964 [INFO] cutout_path           = /home/shyunc/work/DATA/GFADATA/img/cutout
+2026-06-09 17:46:16,964 [INFO] star_catalog_root     = /home/shyunc/work/DATA/GFADATA/img/star_catalog
+2026-06-09 17:46:16,964 [INFO] combined_star_path    = /home/shyunc/work/DATA/GFADATA/img/star_catalog/combined_star.fits
+2026-06-09 17:46:16,964 [INFO] =========================================
+2026-06-09 17:46:16,964 [INFO] GFAGuider setup complete.
+2026-06-09 17:46:42,569 [INFO] [grab] save_root=/home/shyunc/work/DATA/GFADATA/img
+2026-06-09 17:46:42,570 [INFO] [grab] dirs={'raw_images': 'raw', 'processed_images': 'procimg', 'temp_files': 'tempfiles', 'final_astrometry_images': 'astroimg', 'offset_astrometry_images': 'astroimg', 'offset_processed_images': 'procimg', 'cutout_directory': 'cutout', 'star_catalog': 'star_catalog', 'grab_images': 'grab', 'guiding_save': 'guiding_save', 'pointing_save': 'pointing_save'}
+2026-06-09 17:46:42,571 [INFO] ========== PATH DEBUG [grab] ==========
+2026-06-09 17:46:42,571 [INFO] save_root = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 17:46:42,572 [INFO] type(save_root) = <class 'pathlib.PosixPath'>
+2026-06-09 17:46:42,572 [INFO] save_root exists? True
+2026-06-09 17:46:42,573 [INFO] save_root write test ok: /home/shyunc/work/DATA/GFADATA/img/debug_write_test.txt
+2026-06-09 17:46:42,573 [INFO] grab_save_path = /home/shyunc/work/DATA/GFADATA/img/grab/2026-06-09
+2026-06-09 17:46:42,573 [INFO] type(grab_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 17:46:42,573 [INFO] grab_save_path exists? True
+2026-06-09 17:46:42,573 [INFO] grab_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/grab/2026-06-09/debug_write_test.txt
+2026-06-09 17:46:42,573 [INFO] =========================================
+2026-06-09 17:46:42,573 [INFO] Open all plate cameras...
+2026-06-09 17:46:42,573 [INFO] [grab] exposure 1/1, output_dir=/home/shyunc/work/DATA/GFADATA/img/grab/2026-06-09
+2026-06-09 17:46:42,573 [INFO] Close all plate cameras...
+2026-06-09 17:46:52,994 [INFO] [grab] save_root=/home/shyunc/work/DATA/GFADATA/img
+2026-06-09 17:46:52,994 [INFO] [grab] dirs={'raw_images': 'raw', 'processed_images': 'procimg', 'temp_files': 'tempfiles', 'final_astrometry_images': 'astroimg', 'offset_astrometry_images': 'astroimg', 'offset_processed_images': 'procimg', 'cutout_directory': 'cutout', 'star_catalog': 'star_catalog', 'grab_images': 'grab', 'guiding_save': 'guiding_save', 'pointing_save': 'pointing_save'}
+2026-06-09 17:46:52,994 [INFO] ========== PATH DEBUG [grab] ==========
+2026-06-09 17:46:52,994 [INFO] save_root = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 17:46:52,994 [INFO] type(save_root) = <class 'pathlib.PosixPath'>
+2026-06-09 17:46:52,994 [INFO] save_root exists? True
+2026-06-09 17:46:52,995 [INFO] save_root write test ok: /home/shyunc/work/DATA/GFADATA/img/debug_write_test.txt
+2026-06-09 17:46:52,995 [INFO] grab_save_path = /home/shyunc/work/DATA/GFADATA/img/grab/2026-06-09
+2026-06-09 17:46:52,995 [INFO] type(grab_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 17:46:52,995 [INFO] grab_save_path exists? True
+2026-06-09 17:46:52,995 [INFO] grab_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/grab/2026-06-09/debug_write_test.txt
+2026-06-09 17:46:52,996 [INFO] =========================================
+2026-06-09 17:46:52,996 [INFO] Open all plate cameras...
+2026-06-09 17:46:52,996 [INFO] [grab] exposure 1/1, output_dir=/home/shyunc/work/DATA/GFADATA/img/grab/2026-06-09
+2026-06-09 17:46:52,996 [INFO] Close all plate cameras...
+2026-06-09 17:47:02,760 [INFO] [grab] save_root=/home/shyunc/work/DATA/GFADATA/img
+2026-06-09 17:47:02,761 [INFO] [grab] dirs={'raw_images': 'raw', 'processed_images': 'procimg', 'temp_files': 'tempfiles', 'final_astrometry_images': 'astroimg', 'offset_astrometry_images': 'astroimg', 'offset_processed_images': 'procimg', 'cutout_directory': 'cutout', 'star_catalog': 'star_catalog', 'grab_images': 'grab', 'guiding_save': 'guiding_save', 'pointing_save': 'pointing_save'}
+2026-06-09 17:47:02,761 [INFO] ========== PATH DEBUG [grab] ==========
+2026-06-09 17:47:02,762 [INFO] save_root = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 17:47:02,762 [INFO] type(save_root) = <class 'pathlib.PosixPath'>
+2026-06-09 17:47:02,762 [INFO] save_root exists? True
+2026-06-09 17:47:02,762 [INFO] save_root write test ok: /home/shyunc/work/DATA/GFADATA/img/debug_write_test.txt
+2026-06-09 17:47:02,762 [INFO] grab_save_path = /home/shyunc/work/DATA/GFADATA/img/grab/2026-06-09
+2026-06-09 17:47:02,762 [INFO] type(grab_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 17:47:02,762 [INFO] grab_save_path exists? True
+2026-06-09 17:47:02,763 [INFO] grab_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/grab/2026-06-09/debug_write_test.txt
+2026-06-09 17:47:02,763 [INFO] =========================================
+2026-06-09 17:47:02,763 [INFO] Open all plate cameras...
+2026-06-09 17:47:02,763 [INFO] [grab] exposure 1/5, output_dir=/home/shyunc/work/DATA/GFADATA/img/grab/2026-06-09
+2026-06-09 17:47:02,763 [INFO] [grab] exposure 2/5, output_dir=/home/shyunc/work/DATA/GFADATA/img/grab/2026-06-09
+2026-06-09 17:47:02,763 [INFO] [grab] exposure 3/5, output_dir=/home/shyunc/work/DATA/GFADATA/img/grab/2026-06-09
+2026-06-09 17:47:02,763 [INFO] [grab] exposure 4/5, output_dir=/home/shyunc/work/DATA/GFADATA/img/grab/2026-06-09
+2026-06-09 17:47:02,763 [INFO] [grab] exposure 5/5, output_dir=/home/shyunc/work/DATA/GFADATA/img/grab/2026-06-09
+2026-06-09 17:47:02,763 [INFO] Close all plate cameras...
+2026-06-09 17:49:15,844 [INFO] [guiding] save_root=/home/shyunc/work/DATA/GFADATA/img
+2026-06-09 17:49:15,844 [INFO] [guiding] dirs={'raw_images': 'raw', 'processed_images': 'procimg', 'temp_files': 'tempfiles', 'final_astrometry_images': 'astroimg', 'offset_astrometry_images': 'astroimg', 'offset_processed_images': 'procimg', 'cutout_directory': 'cutout', 'star_catalog': 'star_catalog', 'grab_images': 'grab', 'guiding_save': 'guiding_save', 'pointing_save': 'pointing_save'}
+2026-06-09 17:49:15,844 [INFO] [guiding] SaveGrabRaw=True, raw_save_path=/home/shyunc/work/DATA/GFADATA/img/raw, guiding_save_path=/home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 17:49:15,844 [INFO] ========== PATH DEBUG [guiding] ==========
+2026-06-09 17:49:15,844 [INFO] save_root = /home/shyunc/work/DATA/GFADATA/img
+2026-06-09 17:49:15,844 [INFO] type(save_root) = <class 'pathlib.PosixPath'>
+2026-06-09 17:49:15,844 [INFO] save_root exists? True
+2026-06-09 17:49:15,844 [INFO] save_root write test ok: /home/shyunc/work/DATA/GFADATA/img/debug_write_test.txt
+2026-06-09 17:49:15,844 [INFO] raw_save_path = /home/shyunc/work/DATA/GFADATA/img/raw
+2026-06-09 17:49:15,844 [INFO] type(raw_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 17:49:15,844 [INFO] raw_save_path exists? True
+2026-06-09 17:49:15,844 [INFO] raw_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/raw/debug_write_test.txt
+2026-06-09 17:49:15,844 [INFO] guiding_save_path = /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09
+2026-06-09 17:49:15,844 [INFO] type(guiding_save_path) = <class 'pathlib.PosixPath'>
+2026-06-09 17:49:15,845 [INFO] guiding_save_path exists? True
+2026-06-09 17:49:15,845 [INFO] guiding_save_path write test ok: /home/shyunc/work/DATA/GFADATA/img/guiding_save/2026-06-09/debug_write_test.txt
+2026-06-09 17:49:15,845 [INFO] =========================================
+2026-06-09 17:49:15,845 [INFO] Deleting raw files.
+2026-06-09 17:49:15,845 [INFO] Deleted 1 raw files.
+2026-06-09 17:49:15,845 [INFO] Starting guiding sequence...
+2026-06-09 17:49:15,845 [INFO] Ensuring astrometry outputs are ready (no procimg dependency)...
+2026-06-09 17:49:15,845 [INFO] Guiding test......

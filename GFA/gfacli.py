@@ -56,6 +56,18 @@ def create_gfa_command(func, **kwargs):
     cmd_data.update(func=func, **kwargs)
     return json.dumps(cmd_data)
 
+def parse_bool(value):
+    if isinstance(value, bool):
+        return value
+
+    value = value.strip().lower()
+    if value in ("true", "1", "yes", "y"):
+        return True
+    if value in ("false", "0", "no", "n"):
+        return False
+
+    raise ValueError(f"Invalid boolean value: {value}")
+
 def gfa_status() : return create_gfa_command('gfastatus', message ='Show GFA status')
 
 def gfa_guiding(expt: float = 1.0, expnum: int = 1, save: bool = False, *, ra: str=None, dec: str=None) :
@@ -108,17 +120,31 @@ async def handle_gfa(arg, ICS_client):
         command_map[cmd] = lambda: gfa_grab(camNum, ExpT, ExpNum)
 
     elif cmd == 'gfaguide':
+        if len(params) != 5:
+            print("Error: 'gfaguide' needs five parameters: exposure time, exposure number, save, RA, DEC. ex) gfaguide 1 1 true 12:00:00 +30:00:00")
+            return
 #        ra,dec=await getradec()
-        ExpT = float(params[0])
-        ExpNum = int(parmas[1])
-        save = params[2]
+        try:
+            ExpT = float(params[0])
+            ExpNum = int(params[1])
+            save = parse_bool(params[2])
+        except ValueError as e:
+            print(f"Error: invalid 'gfaguide' parameter: {e}")
+            return
         ra = params[3]
         dec = params[4]
         command_map[cmd] = lambda: gfa_guiding(ExpT, ExpNum, save, ra=ra, dec=dec)
 
     elif cmd == 'caloffset':
-        ExpT = float(params[0])
-        ExpNum = int(parmas[1])
+        if len(params) != 4:
+            print("Error: 'caloffset' needs four parameters: exposure time, exposure number, RA, DEC. ex) caloffset 1 1 12:00:00 +30:00:00")
+            return
+        try:
+            ExpT = float(params[0])
+            ExpNum = int(params[1])
+        except ValueError as e:
+            print(f"Error: invalid 'caloffset' parameter: {e}")
+            return
         ra = params[2]
         dec = params[3]
         command_map[cmd] = lambda: gfa_caloffset(ExpT, ExpNum, ra, dec)
@@ -129,4 +155,3 @@ async def handle_gfa(arg, ICS_client):
         await ICS_client.send_message("GFA", gfamsg)
     else:
         print(f"Error: '{cmd}' is not right command for GFA.")
-

@@ -1,0 +1,10 @@
+pytest
+pytest-cov
+pytest-asyncio
+numpy
+pyyaml
+astropy
+scipy
+photutils
+pypylon
+pillow

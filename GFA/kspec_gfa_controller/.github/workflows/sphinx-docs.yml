@@ -1,0 +1,42 @@
+name: Sphinx Documentation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/sphinx/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'docs/sphinx/**'
+
+jobs:
+  build:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'  # 원하는 Python 버전을 설정하세요.
+
+      - name: Install dependencies
+        run: |
+          pip install -r docs/sphinx/requirements.txt
+
+      - name: Build Sphinx documentation
+        run: |
+          cd docs/sphinx
+          make html
+
+      - name: Upload documentation artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: documentation
+          path: docs/sphinx/build/html

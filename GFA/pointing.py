@@ -51,19 +51,6 @@ def ra_hms_str_to_deg(hms_str):
     h, m, s = hms_str.strip().split(':')
     return ra_hms_to_deg(h, m, s)
 
-#def dec_dms_to_deg(sign, d, m, s):
-#    """
-#    DEC 'sign, d, m, s' → degrees
-#    sign: '+' or '-'
-#    """
-#    deg = abs(float(d)) + float(m)/60.0 + float(s)/3600.0
-#    return deg if sign == '+' else -deg
-
-#def dec_dms_str_to_deg(dms_str):
-#    sgn = dms_str.strip()[0]
-#    d, m, s = dms_str.strip()[1:].split(':')
-#    return dec_dms_to_deg(sgn, d, m, s)
-
 def radec_str_to_deg(ra_str: str, dec_str: str):
     """
     Convert RA/Dec strings to degrees.
@@ -84,133 +71,12 @@ def radec_str_to_deg(ra_str: str, dec_str: str):
     return c.ra.deg, c.dec.deg
 
 
-#def dec_sexagesimal_to_deg(dec_str):
-#    """
-#    DEC sexagesimal string → degree
-#    Accepts:
-#      '+DD:MM:SS.ss'
-#      '-DD:MM:SS.ss'
-#      'DD:MM:SS.ss'  (assumed '+')
-#    """
-#    s = dec_str.strip()
-#    if not s:
-#        raise ValueError("Empty DEC string")
-
-#    if s[0] in '+-':
-#        sign = -1 if s[0] == '-' else 1
-#        body = s[1:]
-#    else:
-#        sign = 1
-#        body = s
-
-#    try:
-#        d, m, sec = body.split(':')
-#    except ValueError:
-#        raise ValueError("DEC must be in format 'DD:MM:SS'")
-
-#    deg = float(d)
-#    arcmin = float(m)
-#    arcsec = float(sec)
-
-#    if not (0 <= arcmin < 60):
-#        raise ValueError("Arcmin out of range [0,60)")
-#    if not (0 <= arcsec < 60):
-#        raise ValueError("Arcsec out of range [0,60)")
-
-#    dec = sign * (deg + arcmin / 60.0 + arcsec / 3600.0)
-
-#    if abs(dec) > 90:
-#        raise ValueError("DEC out of physical range [-90,+90]")
-
-#    return dec
-
-
-
-
-#def get_separation(ra1_deg, dec1_deg, ra2_deg, dec2_deg):
-#    """두 점 사이 대원 separation [arcsec]"""
-#    ra1 = math.radians(ra1_deg); dec1 = math.radians(dec1_deg)
-#    ra2 = math.radians(ra2_deg); dec2 = math.radians(dec2_deg)
-#    d_ra = ra2 - ra1
-#    cos_d = math.sin(dec1)*math.sin(dec2) + math.cos(dec1)*math.cos(dec2)*math.cos(d_ra)
-#    cos_d = max(-1.0, min(1.0, cos_d))
-#    return math.degrees(math.acos(cos_d)) * AS_PER_DEG
 
 def get_separation(ra1_deg, dec1_deg, ra2_deg, dec2_deg):
     c1 = SkyCoord(ra1_deg*u.deg, dec1_deg*u.deg, frame='icrs')
     c2 = SkyCoord(ra2_deg*u.deg, dec2_deg*u.deg, frame='icrs')
     return c1.separation(c2).arcsec
 
-
-#def get_boresight(ra1_deg, dec1_deg, ra2_deg, dec2_deg):
-#    """두 점의 대원 중점(구면삼각법) = 보어사이트"""
-#    ra1 = math.radians(ra1_deg); dec1 = math.radians(dec1_deg)
-#    ra2 = math.radians(ra2_deg); dec2 = math.radians(dec2_deg)
-
-#    d_ra = ra2 - ra1
-#    cos_d = math.sin(dec1)*math.sin(dec2) + math.cos(dec1)*math.cos(dec2)*math.cos(d_ra)
-#    cos_d = max(-1.0, min(1.0, cos_d))
-#    d = math.acos(cos_d)
-
-#    if d < 1e-15:
-#        return wrap_deg360(ra1_deg), dec1_deg
-#    if abs(math.pi - d) < 1e-12:
-#        raise ValueError("두 점이 거의 antipodal이라 보어사이트가 유일하지 않습니다.")
-
-#    w = math.sin(0.5*d) / math.sin(d)
-
-#    def to_vec(ra, dec):
-#        return (
-#            math.cos(dec) * math.cos(ra),
-#            math.cos(dec) * math.sin(ra),
-#            math.sin(dec)
-#        )
-
-#    x1, y1, z1 = to_vec(ra1, dec1)
-#    x2, y2, z2 = to_vec(ra2, dec2)
-
-#    xm = w*x1 + w*x2
-#    ym = w*y1 + w*y2
-#    zm = w*z1 + w*z2
-
-#    n = math.sqrt(xm*xm + ym*ym + zm*zm)
-#    xm, ym, zm = xm/n, ym/n, zm/n
-
-#    ra0 = wrap_deg360(math.degrees(math.atan2(ym, xm)))
-#    dec0 = math.degrees(math.asin(zm))
-#    return ra0, dec0
-
-#def get_boresight(ra1_deg, dec1_deg, ra2_deg, dec2_deg):
-#    """두 점의 대원 중점 (boresight)"""
-
-#    ra1 = math.radians(ra1_deg); dec1 = math.radians(dec1_deg)
-#    ra2 = math.radians(ra2_deg); dec2 = math.radians(dec2_deg)
-
-#    def to_vec(ra, dec):
-#        return (
-#            math.cos(dec) * math.cos(ra),
-#            math.cos(dec) * math.sin(ra),
-#            math.sin(dec)
-#        )
-
-#    x1, y1, z1 = to_vec(ra1, dec1)
-#    x2, y2, z2 = to_vec(ra2, dec2)
-
-#    xm = x1 + x2
-#    ym = y1 + y2
-#    zm = z1 + z2
-
-#    n = math.sqrt(xm*xm + ym*ym + zm*zm)
-
-#    if n < 1e-15:
-#        raise ValueError("두 점이 거의 antipodal이라 보어사이트가 유일하지 않습니다.")
-
-#    xm, ym, zm = xm/n, ym/n, zm/n
-
-#    ra0  = wrap_deg360(math.degrees(math.atan2(ym, xm)))
-#    dec0 = math.degrees(math.asin(zm))
-
-#    return ra0, dec0
 
 def get_boresight(ra_list_deg, dec_list_deg, frame="icrs", min_guides=5):
     """
@@ -297,41 +163,41 @@ def apply_offsets(ra_deg, dec_deg, dRA_arcsec_east, dDEC_arcsec_north):
     ra2 = wrap_deg360(ra_deg + dRA_deg)
     return ra2, dec2
 
-def refine_command_coordinate(
-    ra1, dec1, ra2, dec2,          # guide centers
-    ra_cmd_old, dec_cmd_old,        # 내가 이미 입력했던 좌표(보통 RA_target,DEC_target)
-    ra_target, dec_target           # 원하는 최종 목표
-):
-    """
-    이미 ra_cmd_old/dec_cmd_old로 보냈는데 실제 보어사이트가 빗나간 상황에서,
-    새로 입력할 보정 좌표를 계산.
+#def refine_command_coordinate(
+#    ra1, dec1, ra2, dec2,          # guide centers
+#    ra_cmd_old, dec_cmd_old,        # 내가 이미 입력했던 좌표(보통 RA_target,DEC_target)
+#    ra_target, dec_target           # 원하는 최종 목표
+#):
+#    """
+#    이미 ra_cmd_old/dec_cmd_old로 보냈는데 실제 보어사이트가 빗나간 상황에서,
+#    새로 입력할 보정 좌표를 계산.
 
-    반환:
-      - solved boresight
-      - target-boresight separation
-      - needed move (ΔRA,ΔDEC) arcsec (+East,+North)
-      - new command RA/DEC (deg)  (망원경에 직접 입력)
-    """
-    ra_bs, dec_bs = boresight_from_two_guides_spherical(ra1, dec1, ra2, dec2)
+#    반환:
+#      - solved boresight
+#      - target-boresight separation
+#      - needed move (ΔRA,ΔDEC) arcsec (+East,+North)
+#      - new command RA/DEC (deg)  (망원경에 직접 입력)
+#    """
+#    ra_bs, dec_bs = boresight_from_two_guides_spherical(ra1, dec1, ra2, dec2)
 
     # 타겟-보어사이트 separation
-    sep_arcsec = great_circle_sep_arcsec(ra_bs, dec_bs, ra_target, dec_target)
+#    sep_arcsec = great_circle_sep_arcsec(ra_bs, dec_bs, ra_target, dec_target)
 
     # 실제 보어사이트 -> 목표로 가야 하는 오프셋
-    dRA_as, dDEC_as = offsets_arcsec_east_north(ra_bs, dec_bs, ra_target, dec_target)
+#    dRA_as, dDEC_as = offsets_arcsec_east_north(ra_bs, dec_bs, ra_target, dec_target)
 
     # 그 오프셋을 "이전 명령 좌표"에 더해 새 명령 좌표 생성
-    ra_cmd_new, dec_cmd_new = apply_offsets_to_radec(ra_cmd_old, dec_cmd_old, dRA_as, dDEC_as)
+#    ra_cmd_new, dec_cmd_new = apply_offsets_to_radec(ra_cmd_old, dec_cmd_old, dRA_as, dDEC_as)
 
-    return {
-        "boresight_ra_deg": ra_bs,
-        "boresight_dec_deg": dec_bs,
-        "target_boresight_sep_arcsec": sep_arcsec,
-        "needed_dRA_arcsec_EastPlus": dRA_as,
-        "needed_dDEC_arcsec_NorthPlus": dDEC_as,
-        "new_command_ra_deg": ra_cmd_new,
-        "new_command_dec_deg": dec_cmd_new,
-    }
+#    return {
+#        "boresight_ra_deg": ra_bs,
+#        "boresight_dec_deg": dec_bs,
+#        "target_boresight_sep_arcsec": sep_arcsec,
+#        "needed_dRA_arcsec_EastPlus": dRA_as,
+#        "needed_dDEC_arcsec_NorthPlus": dDEC_as,
+#        "new_command_ra_deg": ra_cmd_new,
+#        "new_command_dec_deg": dec_cmd_new,
+#    }
 
 
 # ---------------- 사용 예시 ----------------
@@ -343,18 +209,18 @@ if __name__ == "__main__":
     # 내가 망원경에 이미 입력한 좌표 (= 목표)
     RA_TARGET, DEC_TARGET = 65.00000000, -46.55000000
 
-    res = refine_command_coordinate(
-        RA1, DEC1, RA2, DEC2,
-        ra_cmd_old=RA_TARGET, dec_cmd_old=DEC_TARGET,
-        ra_target=RA_TARGET, dec_target=DEC_TARGET
-    )
+#    res = refine_command_coordinate(
+#        RA1, DEC1, RA2, DEC2,
+#        ra_cmd_old=RA_TARGET, dec_cmd_old=DEC_TARGET,
+#        ra_target=RA_TARGET, dec_target=DEC_TARGET
+#    )
 
-    print("Solved boresight (deg):", res["boresight_ra_deg"], res["boresight_dec_deg"])
-    print("Target-boresight separation:", res["target_boresight_sep_arcsec"], "arcsec")
-    print("Needed move:")
-    print("  ΔRA  =", res["needed_dRA_arcsec_EastPlus"],  "arcsec  (+East)")
-    print("  ΔDEC =", res["needed_dDEC_arcsec_NorthPlus"], "arcsec  (+North)")
-    print("Enter NEW command RA/DEC:")
-    print("  RA  =", res["new_command_ra_deg"], "deg")
-    print("  DEC =", res["new_command_dec_deg"], "deg")
+#    print("Solved boresight (deg):", res["boresight_ra_deg"], res["boresight_dec_deg"])
+#    print("Target-boresight separation:", res["target_boresight_sep_arcsec"], "arcsec")
+#    print("Needed move:")
+#    print("  ΔRA  =", res["needed_dRA_arcsec_EastPlus"],  "arcsec  (+East)")
+#    print("  ΔDEC =", res["needed_dDEC_arcsec_NorthPlus"], "arcsec  (+North)")
+#    print("Enter NEW command RA/DEC:")
+#    print("  RA  =", res["new_command_ra_deg"], "deg")
+#    print("  DEC =", res["new_command_dec_deg"], "deg")
 
