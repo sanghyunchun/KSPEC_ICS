@@ -1003,14 +1003,13 @@ class MainWindow(QMainWindow):
         self.gfaexpt = float(self.ui.lineEdit_GFA_exptime.text())
         self.gfaexpnum = int(self.ui.lineEdit_GFA_expnum.text())
 
-#        self.ra = ' 12:34:56.7'
-#        self.dec = '-31:23:45.6'
 
         if not self.ra or not self.dec:
            self.logging(f'Please load Tile or slew telescope.',level='error')
            return
        
-        await handle_gfa(f'caloffset {self.gfaexpt} {self.gfaexpnum} {self.ra} {self.dec}',self.ICS_client)
+        gfasave = self.ui.gfa_checkBox.isChecked()
+        await handle_gfa(f'caloffset {self.gfaexpt} {self.gfaexpnum} {gfasave} {self.ra} {self.dec}',self.ICS_client)
 
     def format_decimal(self,x):
         from decimal import Decimal

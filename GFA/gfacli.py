@@ -78,8 +78,8 @@ def gfa_guidestop() : return create_gfa_command('gfaguidestop',message='Stop aut
 def gfa_grab(cam, expt, expnum, *,ra: str=None, dec: str=None):
     return create_gfa_command('gfagrab',CamNum=cam,ExpTime=expt,ExpNum=expnum,message=f'Expose camera {cam} for {expt} seconds.',ra=ra,dec=dec)
 
-def gfa_caloffset(expt: float=1.0, expnum: int=1, ra: str=None, dec: str=None):
-    return create_gfa_command('pointing', ExpTime=expt, ExpNum=expnum, ra=ra, dec=dec, message=f'Calculate Pointing offset.')      # Using six GFA cameras 
+def gfa_caloffset(expt: float=1.0, expnum: int=1, save: bool=True, ra: str=None, dec: str=None):
+    return create_gfa_command('pointing', ExpTime=expt, ExpNum=expnum, SaveGrabRaw=save, ra=ra, dec=dec, message=f'Calculate Pointing offset.')      # Using six GFA cameras
 
 #async def send_telcom_command(message):
 #    tcsagentIP, tcsagentPort, telcomIP, telcomPort = load_config()
@@ -136,18 +136,24 @@ async def handle_gfa(arg, ICS_client):
         command_map[cmd] = lambda: gfa_guiding(ExpT, ExpNum, save, ra=ra, dec=dec)
 
     elif cmd == 'caloffset':
-        if len(params) != 4:
-            print("Error: 'caloffset' needs four parameters: exposure time, exposure number, RA, DEC. ex) caloffset 1 1 12:00:00 +30:00:00")
+        if len(params) not in (4, 5):
+            print("Error: 'caloffset' needs four or five parameters: exposure time, exposure number, optional save, RA, DEC. ex) caloffset 1 1 true 12:00:00 +30:00:00")
             return
         try:
             ExpT = float(params[0])
             ExpNum = int(params[1])
+            if len(params) == 5:
+                save = parse_bool(params[2])
+                ra = params[3]
+                dec = params[4]
+            else:
+                save = True
+                ra = params[2]
+                dec = params[3]
         except ValueError as e:
             print(f"Error: invalid 'caloffset' parameter: {e}")
             return
-        ra = params[2]
-        dec = params[3]
-        command_map[cmd] = lambda: gfa_caloffset(ExpT, ExpNum, ra, dec)
+        command_map[cmd] = lambda: gfa_caloffset(ExpT, ExpNum, save, ra, dec)
 
 
     if cmd in command_map:

@@ -101,6 +101,9 @@ GFA_COMMAND_SPECS = {
             ('ra', str),
             ('dec', str),
         ),
+        'optional_args': (
+            ('SaveGrabRaw', parse_bool, True),
+        ),
         'validators': (
             ('ExpTime', lambda value: value > 0, 'Exposure time should be greater than 0.'),
             ('ExpNum', lambda value: value >= 1, 'Exposure number should be greater than or equal to 1.'),
@@ -347,6 +350,7 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
                 dec=parsed_args['dec'],
                 ExpTime=parsed_args['ExpTime'],
                 ExpNum=parsed_args['ExpNum'],
+                SaveGrabRaw=parsed_args['SaveGrabRaw'],
             )
 
             message1 = result.get('message', 'Unknown error')
