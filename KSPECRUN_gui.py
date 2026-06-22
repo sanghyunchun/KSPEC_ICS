@@ -1815,18 +1815,28 @@ class MainWindow(QMainWindow):
         """
         Sends a command using the respective handler.
         """
+        category = category.lower()
 
-        handler_map = {
+        general_handlers = {
             "adc": handle_adc, "gfa": handle_gfa, "fbp": handle_fbp,
             "mtl": handle_mtl, "lamp": handle_lamp,
-            "spec": handle_spec, "script": handle_script, "utils": self.handle_utils
+            "spec": handle_spec,
         }
-        if category in handler_map and category != 'utils':
-            await handler_map[category](message, self.ICS_client)
-        elif category in handler_map and category == 'utils':
-            handler_map[category](message)
-        else:
-            print(f"Unknown command category: {category}",flush=True)
+
+        if category == "utils":
+            self.handle_utils(message)
+            return
+
+        if category == "script":
+            await handle_script(message, scriptrun=self.scriptrun, logging=self.logging)
+            return
+
+        handler = general_handlers.get(category)
+        if handler is None:
+            print(f"Unknown command category: {category}", flush=True)
+            return
+
+        await handler(message, self.ICS_client)
 
 
     ### User input command like CLI ###
@@ -1837,11 +1847,6 @@ class MainWindow(QMainWindow):
         """
         try:
             sys.stdout.flush()
-#                message = await asyncio.get_running_loop().run_in_executor(None, input, "Input command: ")
-#                if message.lower() == "quit":
-#                    print("Exiting user input mode.", flush=True)
-#                    self.running = False
-#                    break
 
             message = self.ui.lineEdit_cmd.text().strip() or self.ui.lineEdit_cmd_2.text().strip()
                 
@@ -1859,9 +1864,6 @@ class MainWindow(QMainWindow):
                     telcom_result = await self.send_telcom_command(message)
                     print('\033[94m' + '[ICS] received: ', telcom_result.decode() + '\033[0m', flush=True)
                     self.logging(telcom_result.decode(), level='receive')
-                #    self.logging(f'<span style="color:green;">[ICS] received from Telcom: {telcom_result.decode()} </span>',level='receive')
-                elif category.lower() == "script":
-                    await handle_script(message, scriptrun=self.scriptrun)
                 else:
                     await self.send_command(category, message)
 
@@ -1879,7 +1881,6 @@ class MainWindow(QMainWindow):
             "adcpoweroff", "adcrotate1", "adcrotate2", "adcstop", "adcpark", "adcctrotate", "adccorotate"],
             "gfa": ["gfastatus", "gfagrab", "fdgrab"],
             "fbp": ["fbpstatus", "fbpzero", "fbpmove", "fbpoffset"],
-#            "endo": ["endoguide", "endotest", "endofocus", "endostop","endoexpset","endoclear","endostatus"],
             "mtl": ["mtlstatus", "mtlexp", "mtlcal"],
             "lamp": ["lampstatus", "arcon", "arcoff", "flaton", "flatoff","fiducialon","fiducialoff"],
             "spec": ["specstatus", "specinitial","illuon", "illuoff", "getobj", "getbias", "getflat","getar"],
