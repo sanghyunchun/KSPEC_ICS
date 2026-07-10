@@ -250,11 +250,18 @@ class MainWindow(QMainWindow):
         
 
         # Fiber assign
-    #    self.ui.pushbtn_Fiber_assign.clicked.connect(self.Fiber_assign_button_clicked)
-    #    self.ui.pushbtn_Fiber_assign_2.clicked.connect(self.Fiber_assign_button_clicked)
-
-    #    self.ui.pushbtn_FBP_zero.clicked.connect(self.FBP_zero_button_clicked)
+        self.ui.pushbtn_FBP_zero.clicked.connect(self.FBP_zero_button_clicked)
     #    self.ui.pushbtn_FBP_offset.clicked.connect(self.FBP_offset_button_clicked)
+        self.ui.pushbtn_FBP_status.clicked.connect(self.FBP_Status_button_clicked)
+        self.ui.pushbtn_FBP_rotate.clicked.connect(self.FBP_rotate_button_clicked)
+
+        self.ui.pushbtn_FBP_assign.setCheckable(True)
+        self.ui.pushbtn_FBP_assign.clicked.connect(self.FBP_assign_button_clicked)
+        self.ui.pushbtn_FBP_assign_2.setCheckable(True)
+        self.ui.pushbtn_FBP_assign_2.clicked.connect(self.FBP_assign_button_clicked)
+
+        self.ui.pushbtn_FBP_initial.clicked.connect(self.FBP_initial_button_clicked)
+
 
 
         # MTL 
@@ -586,11 +593,11 @@ class MainWindow(QMainWindow):
             return
 
         if process in ('ING', 'Done') and self.fbp_state == 'assign':
-            self._set_button_state(self.ui.pushbtn_Fiber_assign, 'FBP Assigned', 'green', True)
-            self._set_button_state(self.ui.pushbtn_Fiber_assign_2, 'FBP Assigned', 'green', True)
+            self._set_button_state(self.ui.pushbtn_FBP_assign, 'FBP Assigned', 'green', True)
+            self._set_button_state(self.ui.pushbtn_FBP_assign_2, 'FBP Assigned', 'green', True)
         elif process == 'Done' and self.fbp_state == 'zero':
-            self._set_button_state(self.ui.pushbtn_Fiber_assign, 'FBP Assign', 'black', False)
-            self._set_button_state(self.ui.pushbtn_Fiber_assign_2, 'FBP Assign', 'black', False)
+            self._set_button_state(self.ui.pushbtn_FBP_assign, 'FBP Assign', 'black', False)
+            self._set_button_state(self.ui.pushbtn_FBP_assign_2, 'FBP Assign', 'black', False)
 
     def _handle_gfa_state(self, inst, subinst, process):
         if inst != 'GFA':
@@ -801,34 +808,80 @@ class MainWindow(QMainWindow):
 
     ## Fiber positionser ##
     @asyncSlot()
-    async def Fiber_assign_button_clicked(self):
+    async def FBP_rotate_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        if not self.ui.lineEdit_FBP_number.text() or not self.ui.lineEdit_FBP_angle.text():
+            self.logging('Insert positioner label you wnat to rotate and the desired angle.', level = 'error')
+            return
+        
+        motor_alpha = self.ui.alpha_checkBox.isChecked()
+        motor_beta = self.ui.beta_checkBox.isChecked()
+
+        if not motor_alpha and not motor_beta:
+            self.logging('Please check one motor you want to rotate.', level='error')
+            return
+
+        positioner_label = self.ui.lineEdit_FBP_number.text()
+        angle = self.ui.lineEdit_FBP_angle.text()
+
+        if motor_alpha:
+            await handle_fbp(f'fbpmoveone {positioner_label} alpha {angle}', self.ICS_client)
+            self.logging(f'Sent Rotate Positioner {positioner_label} alpha motor by {angle}.', level='send')
+        else:
+            await handle_fbp(f'fbpmoveone {positioner_label} beta {angle}', self.ICS_client)
+            self.logging(f'Sent Rotate Positioner {positioner_label} beta motor by {angle}.',level='send')
+
+
+    @asyncSlot()
+    async def FBP_assign_button_clicked(self):
         if not self.check_connection():
             return
 
         if not self.check_syscheck():
             return
         
-        if self.fbp_state not in (None,"zero"):
-            self.logging('Fiber positioners are not in zero position. Click Fiber Zero button.', level='error')
+        if self.fbp_state not in ('zero','initial'):
+            self.logging('Fiber positioners are not in zero or initial position.', level='error')
+            return
+        else:
+            print(f'fbp_state is {self.fbp_state}')
+            self.assign_state = not getattr(self,"assign_state",False)
+            print(f'wweef {self.assign_state}')
+            #self.fbp_state = not getattr(self, "guiding_state", False)
+        
+            # sync two button
+            self.ui.pushbtn_FBP_assign.setChecked(self.assign_state)
+            self.ui.pushbtn_FBP_assign_2.setChecked(self.assign_state)
+
+            # Set colors
+            style_on = "color: green; font-weight:900;"
+            style_off = "color: black;"
+            style = style_on if self.assign_state else style_off
+            self.ui.pushbtn_FBP_assign.setStyleSheet(style)
+            self.ui.pushbtn_FBP_assign_2.setStyleSheet(style)
+
+            if self.assign_state:
+                await handle_fbp('fbpmoveall',self.ICS_client)
+                self.logging('Sent Positioner assignment Starts.', level='send')
+
+
+    @asyncSlot()
+    async def FBP_initial_button_clicked(self):
+        if not self.check_connection():
             return
 
-        self.assign_state = True 
-        #not getattr(self,"assign_state",False)
+        if not self.check_syscheck():
+            return
 
-        # sync two button
-        self.ui.pushbtn_Fiber_assign.setChecked(self.assign_state)
-        self.ui.pushbtn_Fiber_assign_2.setChecked(self.assign_state)
+        await handle_fbp('fbpinitial', self.ICS_client)
+        self.fbp_state = 'initial'
 
-        # Set colors
-        style_on = "color: green; font-weight:900;"
-        style_off = "color: black;"
-        style = style_on if self.assign_state else style_off
-        self.ui.pushbtn_Fiber_assign.setStyleSheet(style)
-        self.ui.pushbtn_Fiber_assign_2.setStyleSheet(style)
 
-        if self.assign_state:
-            await handle_fbp('fbpmove',self.ICS_client)
-            self.logging('Sent Fiber assignment Starts.', level='send')
 
     @asyncSlot()
     async def FBP_zero_button_clicked(self):
@@ -838,12 +891,14 @@ class MainWindow(QMainWindow):
         if not self.check_syscheck():
             return
 
-        if self.fbp_state not in (None,"assign"):
-            self.logging('Fiber positioners are already in zero position', level='error')
+        if self.fbp_state != 'initial':
+            self.logging('Positioners are not in initial position. ', level='error')
             return
+        else:
+            await handle_fbp('fbpzero', self.ICS_client)
+            self.logging('Sent Fiber moves to zero position.', level='send')
+            self.fbp_state = 'zero'
 
-        await handle_fbp('fbpzero',self.ICS_client)
-        self.logging('Sent Fiber moves to zero position.', level='send')
 
     @asyncSlot()
     async def FBP_offset_button_clicked(self):
@@ -859,6 +914,24 @@ class MainWindow(QMainWindow):
 
         await handle_fbp('fbpoffset',self.ICS_client)
         self.logging('Sent Fiber offset starts.', level='send')
+
+    @asyncSlot()
+    async def FBP_Status_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        
+        if not self.ui.lineEdit_FBP_number.text():
+            self.logging('Insert Positioner Label to know status')
+            return
+        else:
+            positioner_num = self.ui.lineEdit_FBP_number.text()
+            await handle_fbp(f'fbpstatus {positioner_num}', self.ICS_client)
+            self.logging(f'Sent Show positioner {positioner_num} status')
+
 
     ## GFA ##
     @asyncSlot()

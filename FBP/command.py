@@ -5,6 +5,7 @@ import json
 import asyncio
 import numpy as np
 import time
+import FBP.kspec_positioner_controller.position_action as FBP_action
 
 
 def load_config(config_path='./Lib/KSPEC.ini'):
@@ -21,6 +22,28 @@ def load_config(config_path='./Lib/KSPEC.ini'):
 
     return config
 
+def printing(message):
+    """Utility function for consistent printingging.
+
+    Args:
+        message (str): The message to be printingged.
+    """
+    print(f"\033[32m[FBP] {message}\033[0m")
+
+async def send_fbp_response(FBP_server, result=None, *, log=True, **updates):
+    reply_data = mkmsg.fbpmsg()
+
+    if result is not None:
+        reply_data.update(result)
+
+    reply_data.update(updates)
+
+    rsp = json.dumps(reply_data)
+    if log and reply_data.get('message'):
+        printing(reply_data['message'])
+
+    await FBP_server.send_message('ICS', rsp)
+    return reply_data
 
 async def identify_execute(FBP_server,cmd):
     dict_data=json.loads(cmd)
@@ -48,19 +71,44 @@ async def identify_execute(FBP_server,cmd):
         print('\033[32m'+'[FBP]', comment+'\033[0m')
         await FBP_server.send_message('ICS',rsp)
 
-    if func == 'fbpmove':
-        reply_data=mkmsg.fbpmsg()
-        comment = 'Fiber positioners start to targets.'
-        reply_data.update(message=comment,process='START',status='success')
-        rsp=json.dumps(reply_data)
-        await FBP_server.send_message('ICS',rsp)
+    if func == 'fbpstatus':
+        positioner = dict_data['positioner']
+        result = FBP_action.show_status(axis=positioner)
 
-        status, comment=fbp_move()     ### Position of fiber postioner movement function
-        reply_data=mkmsg.fbpmsg()
-        reply_data.update(message=comment,process='Done',status=status, pos_state='assign')
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[FBP]', comment+'\033[0m')
-        await FBP_server.send_message('ICS',rsp)
+        await send_fbp_response(
+                 FBP_server, result,
+                 process='Done',
+        )
+
+    if func == 'fbpmoveone':
+        positioner = dict_data['positioner']
+        motor = dict_data['motor']
+        angle = dict_data['angle']
+        result = FBP_action.rotate_one(positioner=positioner, motor=motor, angle=angle)
+
+        await send_fbp_response(
+                 FBP_server, result,
+                 process='Done',
+        )
+
+
+    if func == 'fbpmoveall':
+        print('Hahahah')
+
+        result = FBP_action.rotate_all()
+
+        # reply_data=mkmsg.fbpmsg()
+        # comment = 'Fiber positioners start to targets.'
+        # reply_data.update(message=comment,process='START',status='success')
+        # rsp=json.dumps(reply_data)
+        # await FBP_server.send_message('ICS',rsp)
+
+        # status, comment=fbp_move()     ### Position of fiber postioner movement function
+        # reply_data=mkmsg.fbpmsg()
+        # reply_data.update(message=comment,process='Done',status=status, pos_state='assign')
+        # rsp=json.dumps(reply_data)
+        # print('\033[32m'+'[FBP]', comment+'\033[0m')
+        # await FBP_server.send_message('ICS',rsp)
 
     if func == 'fbpoffset':
         reply_data=mkmsg.fbpmsg()
@@ -72,14 +120,6 @@ async def identify_execute(FBP_server,cmd):
         status, comment = fbp_offset()   ### Position of fiber offset movement function
         reply_data=mkmsg.fbpmsg()
         reply_data.update(message=comment,process='Done', status=status, pos_state='assign')
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[FBP]', comment+'\033[0m')
-        await FBP_server.send_message('ICS',rsp)
-
-    if func == 'fbpstatus':
-        status,comment = fbp_status()
-        reply_data=mkmsg.fbpmsg()
-        reply_data.update(message=comment,process='Done', status=status)
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[FBP]', comment+'\033[0m')
         await FBP_server.send_message('ICS',rsp)
@@ -98,6 +138,9 @@ async def identify_execute(FBP_server,cmd):
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[FBP]', comment+'\033[0m')
         await FBP_server.send_message('ICS',rsp)
+
+    if func == 'fbpinitial':
+        print('ggggg')
 
 # Below functions are for simulation. When connect the Fiber positioner, please annotate
 def fbp_zero():
