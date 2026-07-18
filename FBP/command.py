@@ -107,14 +107,14 @@ async def identify_execute(FBP_server,cmd):
         print('\033[32m'+'[FBP]', comment+'\033[0m')
         await FBP_server.send_message('ICS',rsp)
 
-        result = FBP_action.rotate_all()
+        result = await asyncio.to_thread(FBP_action.rotate_all)
 
         await send_fbp_response(
                 FBP_server, result,
                 process='Done', fbp_state = 'assign'
         )
 
-        await asyncio.sleep(5)
+    #    await asyncio.sleep(5)
 
         #reply_data = mkmsg.fbpmsg()
         #comment = 'Positioners successfully moved to their target positions.'
