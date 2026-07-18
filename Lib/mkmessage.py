@@ -24,7 +24,7 @@ def adcmsg():
 
 def fbpmsg():
     dict_data=common()
-    update_data={'pos_state': 'None'}
+    update_data={'fbp_state': 'None'}
     dict_data.update(update_data)
     dict_data.update(inst='FBP')
     return dict_data

@@ -77,7 +77,7 @@ async def identify_execute(FBP_server,cmd):
 
         await send_fbp_response(
                  FBP_server, result,
-                 process='Done',
+                 process='Done', fbp_state = 'None'
         )
 
     if func == 'fbpmoveone':
@@ -86,16 +86,43 @@ async def identify_execute(FBP_server,cmd):
         angle = dict_data['angle']
         result = FBP_action.rotate_one(positioner=positioner, motor=motor, angle=angle)
 
-        await send_fbp_response(
-                 FBP_server, result,
-                 process='Done',
-        )
+        if result['status'] == 'success' and result['target_angle'] != 0.0:
+            await send_fbp_response(
+                    FBP_server, result,
+                    process='Done', fbp_state='manual'
+            )
+        else:
+            await send_fbp_response(
+                    FBP_server, result,
+                    process='Done', fbp_state='zero'
+            )
+        #항상 마지막에 zero position에 있는지 확인하여, zero에 있으면 fbp_state를 zero로 만들기 추가
 
 
     if func == 'fbpmoveall':
-        print('Hahahah')
+        reply_data = mkmsg.fbpmsg()
+        comment = 'Positioners start to move to target positions.'
+        reply_data.update(message=comment,process='START',status='success',fbp_state = 'ING')
+        rsp=json.dumps(reply_data)
+        print('\033[32m'+'[FBP]', comment+'\033[0m')
+        await FBP_server.send_message('ICS',rsp)
 
         result = FBP_action.rotate_all()
+
+        await send_fbp_response(
+                FBP_server, result,
+                process='Done', fbp_state = 'assign'
+        )
+
+        await asyncio.sleep(5)
+
+        #reply_data = mkmsg.fbpmsg()
+        #comment = 'Positioners successfully moved to their target positions.'
+        #reply_data.update(result)
+        #reply_data.update(process='Done',fbp_state = 'assign')
+        ##rsp=json.dumps(reply_data)
+        #print('\033[32m'+'[FBP]', comment+'\033[0m')
+        #await FBP_server.send_message('ICS',rsp)
 
         # reply_data=mkmsg.fbpmsg()
         # comment = 'Fiber positioners start to targets.'
@@ -112,35 +139,72 @@ async def identify_execute(FBP_server,cmd):
 
     if func == 'fbpoffset':
         reply_data=mkmsg.fbpmsg()
-        comment = 'Fiber positioners start to offset.'
-        reply_data.update(message=comment,process='START',status='success',pos_state='assign')
+        comment = 'Positioners start to offset.'
+        reply_data.update(message=comment,process='START',status='success',fbp_state='ING')
         rsp=json.dumps(reply_data)
         await FBP_server.send_message('ICS',rsp)
 
         status, comment = fbp_offset()   ### Position of fiber offset movement function
         reply_data=mkmsg.fbpmsg()
-        reply_data.update(message=comment,process='Done', status=status, pos_state='assign')
+        reply_data.update(message=comment,process='Done', status=status, fbp_state='assign')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[FBP]', comment+'\033[0m')
         await FBP_server.send_message('ICS',rsp)
 
     if func == 'fbpzero':
         reply_data=mkmsg.fbpmsg()
-        comment = 'Fiber positioners start to move to zero positions'
-        reply_data.update(message=comment,process='START',status='success')
+        comment = 'Positioners start to move to zero positions.'
+        reply_data.update(message=comment,process='START',status='success', fbp_state = 'ING')
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[FBP]', comment+'\033[0m')
         await FBP_server.send_message('ICS',rsp)
 
-        status, comment=fbp_zero()     ### Position of fiber postioner movement function
-        reply_data=mkmsg.fbpmsg()
-        reply_data.update(message=comment,process='Done',status=status,pos_state='zero')
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[FBP]', comment+'\033[0m')
-        await FBP_server.send_message('ICS',rsp)
+        await asyncio.sleep(5)
+
+        result = {
+            "status": "success",
+            "message": f"All Positioners successfully moved to zero positions.",
+        }
+
+        await send_fbp_response(
+                FBP_server, result,
+                process='Done', fbp_state = 'zero'
+        )
+
+        #status, comment=fbp_zero()     ### Position of fiber postioner movement function
+        #reply_data=mkmsg.fbpmsg()
+        #reply_data.update(message=comment,process='Done',status=status,fbp_state='zero')
+        #rsp=json.dumps(reply_data)
+        #print('\033[32m'+'[FBP]', comment+'\033[0m')
+        #await FBP_server.send_message('ICS',rsp)
 
     if func == 'fbpinitial':
-        print('ggggg')
+        reply_data = mkmsg.fbpmsg()
+        comment = 'Positioners start to move to initial positions.'
+        reply_data.update(message=comment,process='START',status='success',fbp_state='ING')
+        rsp=json.dumps(reply_data)
+        print('\033[32m'+'[FBP]', comment+'\033[0m')
+        await FBP_server.send_message('ICS',rsp)
+
+        await asyncio.sleep(5)
+
+        result = {
+            "status": "success",
+            "message": f"All Positioners successfully moved to their initial positions.",
+        }
+
+        await send_fbp_response(
+                FBP_server, result,
+                process='Done', fbp_state = 'initial'
+        )
+
+        #status = 'success'
+        #comment = 'Positioners successfully moved to their initial positions.'
+        #reply_data=mkmsg.fbpmsg()
+        #reply_data.update(message=comment,process='Done',status=status,fbp_state='initial')
+        #rsp=json.dumps(reply_data)
+        #print('\033[32m'+'[FBP]', comment+'\033[0m')
+        #await FBP_server.send_message('ICS',rsp)
 
 # Below functions are for simulation. When connect the Fiber positioner, please annotate
 def fbp_zero():

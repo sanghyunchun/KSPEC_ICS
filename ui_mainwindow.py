@@ -6636,7 +6636,7 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(tooltip)
         self.pushbtn_FBP_assign_2.setToolTip("")
 #endif // QT_CONFIG(tooltip)
-        self.pushbtn_FBP_assign_2.setText(QCoreApplication.translate("MainWindow", u"FBP Assign/Stop", None))
+        self.pushbtn_FBP_assign_2.setText(QCoreApplication.translate("MainWindow", u"FBP Assign", None))
 #if QT_CONFIG(tooltip)
         self.pushbtn_Flat_2.setToolTip("")
 #endif // QT_CONFIG(tooltip)

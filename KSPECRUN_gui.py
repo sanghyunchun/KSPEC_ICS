@@ -35,6 +35,7 @@ from script.scriptcli import script
 from SCIOBS.sciobscli import sciobscli
 
 
+### Canvas Setting ###
 class MplCanvas(FigureCanvas):
     def __init__(self, parent=None,dpi=100,left=0.00,right=1.,bottom=0.0,top=1.):
         self.fig = Figure(dpi=dpi)
@@ -119,6 +120,7 @@ class MplCanvas(FigureCanvas):
             self._is_dragging = False
 
 
+
 class SelectTile(QDialog):
     def __init__(self, headers, data_lines, parent=None):
         super().__init__(parent)
@@ -148,6 +150,8 @@ class SelectTile(QDialog):
 
 
 class MainWindow(QMainWindow):
+
+### Initial Class Setting ###
     def __init__(self):
 
         super(MainWindow, self).__init__()
@@ -194,6 +198,7 @@ class MainWindow(QMainWindow):
         self.arc_state = False
         self.flat_state = False
         self.fiducial_state = False
+#        self.fbp_restore = False
     
 
 #       Make timer (LT & UTC) 
@@ -255,9 +260,9 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_FBP_status.clicked.connect(self.FBP_Status_button_clicked)
         self.ui.pushbtn_FBP_rotate.clicked.connect(self.FBP_rotate_button_clicked)
 
-        self.ui.pushbtn_FBP_assign.setCheckable(True)
+    #    self.ui.pushbtn_FBP_assign.setCheckable(True)
         self.ui.pushbtn_FBP_assign.clicked.connect(self.FBP_assign_button_clicked)
-        self.ui.pushbtn_FBP_assign_2.setCheckable(True)
+    #    self.ui.pushbtn_FBP_assign_2.setCheckable(True)
         self.ui.pushbtn_FBP_assign_2.clicked.connect(self.FBP_assign_button_clicked)
 
         self.ui.pushbtn_FBP_initial.clicked.connect(self.FBP_initial_button_clicked)
@@ -533,9 +538,10 @@ class MainWindow(QMainWindow):
     def show_status(self,dict_data):
         inst = dict_data.get('inst', 'None')
         process = dict_data.get('process', 'None')
-        message =dict_data.get('message','None')
+        #message =dict_data.get('message','None')
         status = dict_data.get('status', 'error')
         subinst = dict_data.get('subinst', 'None')
+        
 
         if process == 'Done':
             color_map = {'success': 'black','error': 'red', 'fail': 'black'}
@@ -583,19 +589,30 @@ class MainWindow(QMainWindow):
             self.QWidgetLabelStyle(inst_map1[inst], color_map[status])
             self.QWidgetLabelStyle(inst_map2[inst], color_map[status])
 
-        self._handle_fbp_state(inst, process)
+        self._handle_fbp_state(dict_data)
         self._handle_gfa_state(inst, subinst, process)
         self._handle_adc_state(inst, process)
         self._handle_lamp_state(inst, subinst, process)
 
-    def _handle_fbp_state(self,inst,process):
-        if inst != 'FBP':
+    def _handle_fbp_state(self,dict_data) :
+        if dict_data['inst'] != 'FBP':
             return
 
-        if process in ('ING', 'Done') and self.fbp_state == 'assign':
+        self.fbp_state = dict_data.get('fbp_state', 'None')
+        process = dict_data.get('process','None')
+        #self.fbp_restore = dict_data.get('fbp_restore',False)
+
+        #if fbp_state == 'previous':
+        #    print(f'state is {self.fbp_state}')    
+        #    self.fbp_state = self.fbp_state
+        #else:
+        #    self.fbp_state = fbp_state
+        #print(f'state is {self.fbp_state}')
+
+        if process in ('ING', 'Done') and self.fbp_state in ('assign', 'manual'):
             self._set_button_state(self.ui.pushbtn_FBP_assign, 'FBP Assigned', 'green', True)
             self._set_button_state(self.ui.pushbtn_FBP_assign_2, 'FBP Assigned', 'green', True)
-        elif process == 'Done' and self.fbp_state == 'zero':
+        elif process == 'Done' and self.fbp_state in ('zero', 'initial'):
             self._set_button_state(self.ui.pushbtn_FBP_assign, 'FBP Assign', 'black', False)
             self._set_button_state(self.ui.pushbtn_FBP_assign_2, 'FBP Assign', 'black', False)
 
@@ -668,7 +685,7 @@ class MainWindow(QMainWindow):
 
         state_map = {
             'ADC': ('adc_state', 'pos_state'),
-            'FBP': ('fbp_state', 'pos_state'),
+    #        'FBP': ('fbp_state', 'pos_state'),
             'MTL': ('mtl_state', 'process'),
             'FIND': ('FIND_state', 'process'),
             'GFA': ('GFA_state', 'process'),
@@ -770,8 +787,7 @@ class MainWindow(QMainWindow):
 
 
 
-
-    # Telescope slew by single button
+    # region Telescope Slew by single button
     @asyncSlot()
     async def slew_button_clicked(self):
         if not self.check_connection():
@@ -790,8 +806,10 @@ class MainWindow(QMainWindow):
         self.logging(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.', level='send')
         print(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.')
         await self.send_udp_message(messagetcs)
+    # endregion
 
-    # Exposure spectrograph from single mode
+
+    # region Exposure spectrograph from single mode
     @asyncSlot()
     async def exp_start_clicked(self):
         if not self.check_connection():
@@ -803,10 +821,12 @@ class MainWindow(QMainWindow):
             await handle_spec(f'getobj {exp_time} {exp_num}',self.ICS_client)
         else:
             self.logging(f"Please insert exposure time and number of exposure", level='error')
+    #endregion
         
 
 
     ## Fiber positionser ##
+    # region
     @asyncSlot()
     async def FBP_rotate_button_clicked(self):
         if not self.check_connection():
@@ -826,15 +846,20 @@ class MainWindow(QMainWindow):
             self.logging('Please check one motor you want to rotate.', level='error')
             return
 
-        positioner_label = self.ui.lineEdit_FBP_number.text()
-        angle = self.ui.lineEdit_FBP_angle.text()
+        if self.fbp_state in ('zero', 'manual'):
+            positioner_label = self.ui.lineEdit_FBP_number.text()
+            angle = self.ui.lineEdit_FBP_angle.text()
 
-        if motor_alpha:
-            await handle_fbp(f'fbpmoveone {positioner_label} alpha {angle}', self.ICS_client)
-            self.logging(f'Sent Rotate Positioner {positioner_label} alpha motor by {angle}.', level='send')
+            if motor_alpha:
+                await handle_fbp(f'fbpmoveone {positioner_label} alpha {angle}', self.ICS_client)
+                self.logging(f'Sent Rotate Positioner {positioner_label} alpha motor by {angle}.', level='send')
+                self.ui.lineEdit_FBP_number.clear()
+                self.ui.lineEdit_FBP_angle.clear()
+            else:
+                await handle_fbp(f'fbpmoveone {positioner_label} beta {angle}', self.ICS_client)
+                self.logging(f'Sent Rotate Positioner {positioner_label} beta motor by {angle}.',level='send')
         else:
-            await handle_fbp(f'fbpmoveone {positioner_label} beta {angle}', self.ICS_client)
-            self.logging(f'Sent Rotate Positioner {positioner_label} beta motor by {angle}.',level='send')
+            self.logging('Manual rotation of positioners is possible in zero positions. Please move positioners to zero position first.', level='error')
 
 
     @asyncSlot()
@@ -845,29 +870,31 @@ class MainWindow(QMainWindow):
         if not self.check_syscheck():
             return
         
-        if self.fbp_state not in ('zero','initial'):
-            self.logging('Fiber positioners are not in zero or initial position.', level='error')
-            return
-        else:
-            print(f'fbp_state is {self.fbp_state}')
+        if self.fbp_state in ('zero','initial'):
             self.assign_state = not getattr(self,"assign_state",False)
-            print(f'wweef {self.assign_state}')
-            #self.fbp_state = not getattr(self, "guiding_state", False)
-        
             # sync two button
             self.ui.pushbtn_FBP_assign.setChecked(self.assign_state)
             self.ui.pushbtn_FBP_assign_2.setChecked(self.assign_state)
+            await handle_fbp('fbpmoveall',self.ICS_client)
+            self.logging('Sent Positioner assignment Starts.', level='send')
+        else:
+            self.logging('Some positioners are manually rotated. Plase re-rotate positioners to zero positions manually.', level='error')
 
+        #    print(f'wweef {self.assign_state}')
+            #self.fbp_state = not getattr(self, "guiding_state", False)
+        
+        
             # Set colors
-            style_on = "color: green; font-weight:900;"
-            style_off = "color: black;"
-            style = style_on if self.assign_state else style_off
-            self.ui.pushbtn_FBP_assign.setStyleSheet(style)
-            self.ui.pushbtn_FBP_assign_2.setStyleSheet(style)
+        #    style_on = "color: green; font-weight:900;"
+        #    style_off = "color: black;"
+        #    style = style_on if self.assign_state else style_off
+        #    self.ui.pushbtn_FBP_assign.setStyleSheet(style)
+        #    self.ui.pushbtn_FBP_assign_2.setStyleSheet(style)
 
-            if self.assign_state:
-                await handle_fbp('fbpmoveall',self.ICS_client)
-                self.logging('Sent Positioner assignment Starts.', level='send')
+     #       if self.assign_state:
+            
+    #        else:
+    #            self.logging('All positioners stop', level='send')
 
 
     @asyncSlot()
@@ -878,9 +905,11 @@ class MainWindow(QMainWindow):
         if not self.check_syscheck():
             return
 
-        await handle_fbp('fbpinitial', self.ICS_client)
-        self.fbp_state = 'initial'
-
+        if self.fbp_state in ('zero', 'assign'):
+            await handle_fbp('fbpinitial', self.ICS_client)
+            self.logging('Sent Move positioners to intial positions.', level='send')
+        else:
+            self.logging('Some positioners are manually rotated. Plase re-rotate positioners to zero positions manually.', level='error')
 
 
     @asyncSlot()
@@ -891,13 +920,17 @@ class MainWindow(QMainWindow):
         if not self.check_syscheck():
             return
 
-        if self.fbp_state != 'initial':
-            self.logging('Positioners are not in initial position. ', level='error')
-            return
-        else:
+        if self.fbp_state == 'initial':
             await handle_fbp('fbpzero', self.ICS_client)
             self.logging('Sent Fiber moves to zero position.', level='send')
-            self.fbp_state = 'zero'
+        elif self.fbp_state == 'manual':
+            self.logging('Some positioners are manually rotated. Please re-rotate positioners to zero positions manually.', level='error')
+            return
+        elif self.fbp_state == 'zero':
+            self.logging('Positioners are already zero postions.', level='error')
+            return
+        else:
+            self.logging('Positioners are already assign postions. Please move positioners to initial positions first.', level='error')
 
 
     @asyncSlot()
@@ -931,9 +964,11 @@ class MainWindow(QMainWindow):
             positioner_num = self.ui.lineEdit_FBP_number.text()
             await handle_fbp(f'fbpstatus {positioner_num}', self.ICS_client)
             self.logging(f'Sent Show positioner {positioner_num} status')
+    #endregion
 
 
-    ## GFA ##
+    ## GFA Part##
+    # region
     @asyncSlot()
     async def GFArun_button_clicked(self):
         if not self.check_connection():
@@ -1038,7 +1073,11 @@ class MainWindow(QMainWindow):
 #            self.G_zmin, self.G_zmax = zs.zscale(data)
 #            can.imshows(data,vmin=self.G_zmin,vmax=self.G_zmax,cmap='gray',origin='lower')
 
+    # endregion
 
+
+    # Show obtained spectra Part ##
+    # region
     def show_spec(self, spec_response):
     #    self.fwhm=response_data['fwhm']
         spec_canvas = [self.canvas_B, self.canvas_R]
@@ -1056,9 +1095,11 @@ class MainWindow(QMainWindow):
         self.S_zmin, self.S_zmax = zs.zscale(data)
         self.canvas_R.imshows(data[0][540:740,:],vmin=self.S_zmin,vmax=self.S_zmax,cmap='gray',origin='lower',aspect='auto')
         ### Simulation END ###
+    # endregion
 
 
-    ### Pointing ###
+    ### Pointing Part###
+    # region
     @asyncSlot()
     async def caloffset_button_clicked(self):
         if not self.check_connection():
@@ -1117,9 +1158,12 @@ class MainWindow(QMainWindow):
         self.logging(f'Slew Telescope to (RA,DEC)=({self.new_ra},{self.new_dec})',level='send')
         messagetcs = 'KSPEC>TC ' + 'tmradec ' + self.new_ra +' '+ self.new_dec
         await self.send_udp_message(messagetcs)
+    
+    # endregion
 
 
-    ### ADC ###
+    ### ADC  Part###
+    # region
     @asyncSlot()
     async def adcconnect_button_clicked(self):
         if not self.check_connection():
@@ -1253,9 +1297,12 @@ class MainWindow(QMainWindow):
         self.logging(f'Sent ADC adczero', level='send')
         await handle_adc(f'adczero {self.adc_velocity}', self.ICS_client)
 
+    # endregion
 
 
-    ### MTL Button ###
+
+    ### MTL Part ###
+    # region
     @asyncSlot()
     async def MTL_exp_button_clicked(self):
         if not self.check_connection():
@@ -1319,9 +1366,13 @@ class MainWindow(QMainWindow):
         self.mtlnum = float(self.ui.lineEdit_MTL_expnum.text())
         self.logging(f'Set MTL exposure time to {self.mtlexp}', level='send')
         self.scriptrun.MTL_set(self.mtlexp, self.mtlnum, self.mtlfile)
+    
+    # endregion
         
 
-    ### Flat Button ###
+    ### Flat, Arc, Fiducial Part ###
+    # region
+    ### Flat Part ###
     @asyncSlot()
     async def flat_button_clicked(self):
         if not self.check_connection():
@@ -1357,8 +1408,12 @@ class MainWindow(QMainWindow):
 
         await self._onoff_button_clicked(state_attr="fiducial_state", btn1=self.ui.pushbtn_Fiducial, btn2=self.ui.pushbtn_Fiducial_2,
         command_on="fiducialon",command_off="fiducialoff",label="Fiducial")
+    
+    # endregion
 
 
+    ### Load tile Part###
+    # region
     @asyncSlot()
     async def load_tile(self):
         self.ui.lineEdit_CProj.setText(f'{self.project}')
@@ -1393,6 +1448,8 @@ class MainWindow(QMainWindow):
 #        self.show_status('GFA','success')
 #        self.show_status('MTL','success')
 #        self.show_status('FBP','success')
+
+    # endregion
 
 
 
@@ -1569,6 +1626,7 @@ class MainWindow(QMainWindow):
 
 
 ###  Check instrument connection and initializing
+    # region
     @asyncSlot()
     async def syscheck(self):
         if not self.check_connection():
@@ -1593,7 +1651,10 @@ class MainWindow(QMainWindow):
                 self.logging('While system checking, unexpected Errors have occurred in some instruments.',level='error')
                 return True
         
+        self.fbp_state = 'zero'
         self.logging('System check finished. All systems are OK.',level='normal')
+
+    #endregion
         
 
 

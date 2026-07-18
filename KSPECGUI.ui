@@ -50,7 +50,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideLeft</enum>
@@ -1909,7 +1909,7 @@
           <string/>
          </property>
          <property name="text">
-          <string>FBP Assign/Stop</string>
+          <string>FBP Assign</string>
          </property>
         </widget>
         <widget class="QPushButton" name="pushbtn_Flat">
@@ -16555,7 +16555,7 @@
          <property name="geometry">
           <rect>
            <x>520</x>
-           <y>728</y>
+           <y>729</y>
            <width>71</width>
            <height>31</height>
           </rect>
@@ -18141,7 +18141,7 @@
           <string/>
          </property>
          <property name="text">
-          <string>FBP Assign/Stop</string>
+          <string>FBP Assign</string>
          </property>
         </widget>
         <widget class="QPushButton" name="pushbtn_Flat_2">

@@ -112,7 +112,7 @@ def rotate_one(
 ):
     return {
             "status": "success",
-            "message": f"Rotate Positioner {positioner} {motor} by {angle} successfully.",
+            "message": f"Rotate Positioner {positioner} {motor} by {angle} successfully.", "target_angle": angle
         }
     # try:
     #     target_axis = get_axis_number(positioner, motor)
