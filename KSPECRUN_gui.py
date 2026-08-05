@@ -266,6 +266,7 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_FBP_assign_2.clicked.connect(self.FBP_assign_button_clicked)
 
         self.ui.pushbtn_FBP_initial.clicked.connect(self.FBP_initial_button_clicked)
+        self.ui.pushbtn_FBP_stop.clicked.connect(self.FBP_stop_button_clicked)
 
 
 
@@ -334,6 +335,7 @@ class MainWindow(QMainWindow):
 
 
     ######### Canvas setting #####
+    # region
         self.canvas_B=MplCanvas(self,dpi=100,left=0.00,right=1.,bottom=0.0,top=1.)
         self.B_layout=QVBoxLayout(self.ui.frame_B)
         self.B_layout.addWidget(self.canvas_B)
@@ -385,7 +387,11 @@ class MainWindow(QMainWindow):
 
         self.resize(window_width, window_height)
 
+    # endregion
 
+
+### Utils Part ###
+# region
 ### Logging function ###
     def logging(self,message,status: str='success', level: str='send', save: str=True):
         if isinstance(message,dict):
@@ -507,8 +513,12 @@ class MainWindow(QMainWindow):
         dialog.setModal(True)
         dialog.open()
 
+# endregion
+
 
 #### Calling Status #####
+# 
+# region
     def QWidgetLabelColor(self, widget, textcolor, bgcolor=None):
         if bgcolor == None:
             label = "QLabel {color:%s}" % textcolor
@@ -535,6 +545,102 @@ class MainWindow(QMainWindow):
 
         widget.setStyleSheet(style)
 
+
+    def FPLabelStyle(self, widget, textcolor, bgcolor=None, fontsize=20, bold=True):
+        style = f"QLabel {{ color: {textcolor};"
+        if bgcolor is not None:
+            style += f" background: {bgcolor};"
+
+        if textcolor == 'black':
+            style += f" font-size: 20pt;"
+            style += " font-weight: normal;"
+        else:
+            style += f" font-size: {fontsize}pt;"
+            style += " font-weight: bold;" if bold else "font-weight: normal;"
+
+        style += " }"
+
+        widget.setStyleSheet(style)
+
+
+    def update_fbp_error_labels(
+        self,
+        positions=None,
+        *,
+        normal_color='green',
+        missing_color=None,
+        error_axis=None
+    ):
+        if missing_color is None:
+            missing_color = normal_color
+
+        if positions in (None, 'None'):
+            positions = {}
+
+        if isinstance(positions, str):
+            try:
+                positions = json.loads(positions)
+            except json.JSONDecodeError:
+                self.logging('FBP position data has invalid format.', level='error')
+                return
+
+        if not isinstance(positions, dict):
+            self.logging('FBP position data is not a dictionary.', level='error')
+            return
+
+        positions = dict(positions)
+
+        if error_axis is not None:
+            axis_key = str(error_axis)
+            axis_data = positions.get(axis_key)
+            if not isinstance(axis_data, dict):
+                axis_data = {}
+            axis_data['error'] = True
+            positions[axis_key] = axis_data
+
+        def is_error(value):
+            if isinstance(value, str):
+                return value.strip().lower() in ('true', '1', 'yes', 'error')
+            return bool(value)
+
+        positioner_axis_map = {
+            'A1': ('1', '2'),
+            'A2': ('3', '4'),
+            'A3': ('5', '6'),
+            'A4': ('7', '8'),
+            'A5': ('9', '10'),
+        }
+
+        for positioner, axes in positioner_axis_map.items():
+            label = getattr(self.ui, f'label_{positioner}', None)
+            if label is None:
+                continue
+
+            axis_entries = [
+                positions.get(axis)
+                for axis in axes
+                if isinstance(positions.get(axis), dict)
+            ]
+
+            has_error = any(
+                is_error(axis_data.get('error', False))
+                for axis_data in axis_entries
+            )
+
+            if has_error:
+                self.FPLabelStyle(label, 'red')
+            elif axis_entries and normal_color is not None:
+                self.FPLabelStyle(label, normal_color)
+            elif not axis_entries and missing_color is not None:
+                self.FPLabelStyle(label, missing_color)
+
+
+    def reset_fbp_error_labels(self):
+        for label_name in ('A1', 'A2', 'A3', 'A4', 'A5'):
+            label = getattr(self.ui, f'label_{label_name}', None)
+            if label is not None:
+                self.FPLabelStyle(label, 'black')
+
     def show_status(self,dict_data):
         inst = dict_data.get('inst', 'None')
         process = dict_data.get('process', 'None')
@@ -546,7 +652,7 @@ class MainWindow(QMainWindow):
         if process == 'Done':
             color_map = {'success': 'black','error': 'red', 'fail': 'black'}
         elif process in  ('ING', 'START'):
-            color_map = {'success': 'green','error': 'red', 'fail': 'black'}
+            color_map = {'success': 'orange','error': 'red', 'fail': 'black'}
         else:
             color_map = {}
 
@@ -589,32 +695,103 @@ class MainWindow(QMainWindow):
             self.QWidgetLabelStyle(inst_map1[inst], color_map[status])
             self.QWidgetLabelStyle(inst_map2[inst], color_map[status])
 
-        self._handle_fbp_state(dict_data)
-        self._handle_gfa_state(inst, subinst, process)
-        self._handle_adc_state(inst, process)
-        self._handle_lamp_state(inst, subinst, process)
+        if dict_data['inst'] == 'FBP':
+            self._handle_fbp_state(dict_data)
+        elif dict_data['inst'] == 'GFA':
+            self._handle_gfa_state(inst, subinst, process)
+        elif dict_data['inst'] == 'ADC':
+            self._handle_adc_state(inst, process)
+        elif dict_data['inst'] == 'LAMP':
+            self._handle_lamp_state(inst, subinst, process)
 
-    def _handle_fbp_state(self,dict_data) :
-        if dict_data['inst'] != 'FBP':
+    def _handle_fbp_state(self, dict_data):
+        if dict_data.get('inst') != 'FBP':
             return
 
-        self.fbp_state = dict_data.get('fbp_state', 'None')
-        process = dict_data.get('process','None')
-        #self.fbp_restore = dict_data.get('fbp_restore',False)
+        fbp_data = dict_data.get('data')
+        if not isinstance(fbp_data, dict):
+            fbp_data = {}
 
-        #if fbp_state == 'previous':
-        #    print(f'state is {self.fbp_state}')    
-        #    self.fbp_state = self.fbp_state
-        #else:
-        #    self.fbp_state = fbp_state
-        #print(f'state is {self.fbp_state}')
+        func = dict_data.get('func', 'None')
+        process = dict_data.get('process', 'None')
+        status = dict_data.get('status', 'None')
+        next_state = dict_data.get('fbp_state', 'None')
 
-        if process in ('ING', 'Done') and self.fbp_state in ('assign', 'manual'):
+        if status == 'stopped':
+            self.fbp_state = 'stop'
+        elif next_state not in (None, 'None'):
+            self.fbp_state = next_state
+
+        if process in ('ING', 'START', 'Done') and self.fbp_state in ('assign', 'manual', 'stop'):
             self._set_button_state(self.ui.pushbtn_FBP_assign, 'FBP Assigned', 'green', True)
             self._set_button_state(self.ui.pushbtn_FBP_assign_2, 'FBP Assigned', 'green', True)
         elif process == 'Done' and self.fbp_state in ('zero', 'initial'):
             self._set_button_state(self.ui.pushbtn_FBP_assign, 'FBP Assign', 'black', False)
             self._set_button_state(self.ui.pushbtn_FBP_assign_2, 'FBP Assign', 'black', False)
+
+        if process != 'Done':
+            return
+
+        positions = (
+            fbp_data.get('final_positions')
+            or fbp_data.get('stopped_positions')
+        )
+
+        if status in ('error', 'fail') and fbp_data.get('error_axis') is not None:
+            self.update_fbp_error_labels(
+                positions,
+                normal_color=None,
+                missing_color=None,
+                error_axis=fbp_data.get('error_axis')
+            )
+            return
+
+        if status in ('success', 'stopped') and (
+            status == 'stopped' or func == 'fbpstop' or self.fbp_state == 'stop'
+        ):
+            self.update_fbp_error_labels(
+                positions,
+                normal_color='green',
+                missing_color='green'
+            )
+            return
+
+        if func == 'fbpmoveone' and status == 'success':
+            positioner = fbp_data.get('positioner')
+            if positioner:
+                label = getattr(self.ui, f'label_{positioner}', None)
+                if label is not None:
+                    color = 'black' if self.fbp_state in ('zero', 'initial') else 'green'
+                    self.FPLabelStyle(label, color)
+            return
+
+        if status == 'success' and self.fbp_state in ('zero', 'initial'):
+            if positions:
+                self.update_fbp_error_labels(
+                    positions,
+                    normal_color='black',
+                    missing_color='black'
+                )
+            else:
+                self.reset_fbp_error_labels()
+            return
+
+        if status == 'success' and self.fbp_state == 'assign':
+            self.update_fbp_error_labels(
+                positions,
+                normal_color='green',
+                missing_color='green'
+            )
+            return
+
+        if positions:
+            default_color = 'black' if self.fbp_state in ('zero', 'initial') else 'green'
+            self.update_fbp_error_labels(
+                positions,
+                normal_color=default_color,
+                missing_color=default_color
+            )
+
 
     def _handle_gfa_state(self, inst, subinst, process):
         if inst != 'GFA':
@@ -675,9 +852,10 @@ class MainWindow(QMainWindow):
             ]
         for label in labels:
             label.setStyleSheet(f"color: black")
+        self.reset_fbp_error_labels()
 
 
-#### Calling Instrument position state #####
+    #### Calling Instrument position state #####
     def set_inst_pos_state(self,dict_data):
         inst = dict_data.get('inst')
         if not inst:
@@ -694,6 +872,8 @@ class MainWindow(QMainWindow):
         attr, key = state_map.get(inst, (None, None))
         if attr and key in dict_data:
             setattr(self, attr, dict_data[key])
+
+# endregion
         
 
 ### Observer's comment to message log ###
@@ -752,7 +932,7 @@ class MainWindow(QMainWindow):
 
 
 
-##### Main Functions corresponding to the GUI action #####
+##### Main Functions corresponding to the GUI button #####
 
     # Focusing button
 #    @asyncSlot()
@@ -786,8 +966,8 @@ class MainWindow(QMainWindow):
 #        await self.send_udp_message(messagetcs)
 
 
-
-    # region Telescope Slew by single button
+    # Telescope Slew by single button
+    # region 
     @asyncSlot()
     async def slew_button_clicked(self):
         if not self.check_connection():
@@ -808,8 +988,8 @@ class MainWindow(QMainWindow):
         await self.send_udp_message(messagetcs)
     # endregion
 
-
-    # region Exposure spectrograph from single mode
+    # Exposure spectrograph from single mode
+    # region 
     @asyncSlot()
     async def exp_start_clicked(self):
         if not self.check_connection():
@@ -825,8 +1005,19 @@ class MainWindow(QMainWindow):
         
 
 
-    ## Fiber positionser ##
+    ## Fiber positionser Part
     # region
+    @asyncSlot()
+    async def FBP_stop_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        await handle_fbp(f'fbpstop', self.ICS_client)
+        self.logging(f'Sent Stop Positioners rotation.', level='send')
+
     @asyncSlot()
     async def FBP_rotate_button_clicked(self):
         if not self.check_connection():
@@ -905,11 +1096,16 @@ class MainWindow(QMainWindow):
         if not self.check_syscheck():
             return
 
-        if self.fbp_state in ('zero', 'assign'):
+        if self.fbp_state == 'assign':
             await handle_fbp('fbpinitial', self.ICS_client)
             self.logging('Sent Move positioners to intial positions.', level='send')
+        elif self.fbp_state == 'stop':
+            await handle_fbp('fbpinitial_from_stop', self.ICS_client)
+            self.logging('Sent Move positioners to intial positions.', level='send')
+        elif self.fbp_state == 'initial':
+            self.logging(f'Current positioner status is already {self.fbp_state}.', level='error')
         else:
-            self.logging('Some positioners are manually rotated. Plase re-rotate positioners to zero positions manually.', level='error')
+            self.logging(f'This operation is only available when the positioners are in the assigned position. Current positioner status is {self.fbp_state}.', level='error')
 
 
     @asyncSlot()
@@ -930,7 +1126,7 @@ class MainWindow(QMainWindow):
             self.logging('Positioners are already zero postions.', level='error')
             return
         else:
-            self.logging('Positioners are already assign postions. Please move positioners to initial positions first.', level='error')
+            self.logging(f'Current positioner status is {self.fbp_state}. Please move positioners to initial positions first.', level='error')
 
 
     @asyncSlot()
@@ -1366,9 +1562,8 @@ class MainWindow(QMainWindow):
         self.mtlnum = float(self.ui.lineEdit_MTL_expnum.text())
         self.logging(f'Set MTL exposure time to {self.mtlexp}', level='send')
         self.scriptrun.MTL_set(self.mtlexp, self.mtlnum, self.mtlfile)
-    
+
     # endregion
-        
 
     ### Flat, Arc, Fiducial Part ###
     # region
@@ -1383,8 +1578,8 @@ class MainWindow(QMainWindow):
 
         await self._onoff_button_clicked(state_attr="flat_state", btn1=self.ui.pushbtn_Flat, btn2=self.ui.pushbtn_Flat_2,
         command_on="flaton",command_off="flatoff",label="Flat")
-
-
+    
+    
     ### Arc Button ###
     @asyncSlot()
     async def arc_button_clicked(self):
@@ -1900,6 +2095,9 @@ class MainWindow(QMainWindow):
                     self.show_spec(response_data)
                     await self.response_queue.put(response_data)
                     return
+
+                # 6. FBP 처리
+            #    if inst == "FBP" and 'data' in response_date:
 
                 # 6. 그 외 일반 응답
                 await self.response_queue.put(response_data)

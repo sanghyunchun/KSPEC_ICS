@@ -21,6 +21,8 @@ def fbp_status(positioner: str = None) :
     return create_fbp_command('fbpstatus',message='Show fiber positioner status.',positioner=positioner)
 def fbp_moveall(): return create_fbp_command('fbpmoveall', message = 'Move all positioners to target position.')
 def fbp_initial(): return create_fbp_command('fbpinitial', message = 'Move all positioners to initial position.')
+def fbp_stop(): return create_fbp_command('fbpstop', message = ' Stop current positioners moving.')
+def fbp_initial_from_stop(): return create_fbp_command('fbpinitial_from_stop', message = 'Move all positioners from stop to initial positions.')
 
 
 async def handle_fbp(arg, ICS_client):
@@ -28,7 +30,7 @@ async def handle_fbp(arg, ICS_client):
     cmd, *params = arg.split()
     command_map = {
         'fbpzero': fbp_zero, 'fbpoffset': fbp_offset, 'fbpmoveall': fbp_moveall,
-        'fbpinitial': fbp_initial
+        'fbpinitial': fbp_initial, 'fbpstop': fbp_stop, 'fbpinitial_from_stop': fbp_initial_from_stop
     }
     if cmd == 'fbpstatus':
         positioner = str(params[0])

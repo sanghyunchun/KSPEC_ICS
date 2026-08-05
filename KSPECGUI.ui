@@ -50,7 +50,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideLeft</enum>
@@ -6376,7 +6376,7 @@
            </widget>
           </item>
           <item row="0" column="2">
-           <widget class="QLabel" name="label_4">
+           <widget class="QLabel" name="label_A1">
             <property name="font">
              <font>
               <family>DejaVu Sans</family>
@@ -6815,7 +6815,7 @@
            </widget>
           </item>
           <item row="0" column="6">
-           <widget class="QLabel" name="circle_A1_221">
+           <widget class="QLabel" name="label_A5">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -6959,7 +6959,7 @@
            </widget>
           </item>
           <item row="0" column="14">
-           <widget class="QLabel" name="circle_A1_152">
+           <widget class="QLabel" name="label_I3">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -7609,7 +7609,7 @@
            </widget>
           </item>
           <item row="0" column="11">
-           <widget class="QLabel" name="circle_A1_163">
+           <widget class="QLabel" name="label_I0">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -7733,7 +7733,7 @@
            </widget>
           </item>
           <item row="0" column="3">
-           <widget class="QLabel" name="circle_A1_180">
+           <widget class="QLabel" name="label_A2">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -8054,7 +8054,7 @@
            </widget>
           </item>
           <item row="0" column="4">
-           <widget class="QLabel" name="circle_A1_206">
+           <widget class="QLabel" name="label_A3">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -9050,7 +9050,7 @@
            </widget>
           </item>
           <item row="0" column="13">
-           <widget class="QLabel" name="circle_A1_183">
+           <widget class="QLabel" name="label_I2">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -12439,7 +12439,7 @@
            </widget>
           </item>
           <item row="0" column="5">
-           <widget class="QLabel" name="circle_A1_195">
+           <widget class="QLabel" name="label_A4">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -13239,7 +13239,7 @@
            </widget>
           </item>
           <item row="0" column="12">
-           <widget class="QLabel" name="circle_A1_220">
+           <widget class="QLabel" name="label_I1">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -15181,7 +15181,7 @@
            </widget>
           </item>
           <item row="0" column="7">
-           <widget class="QLabel" name="circle_A0_74">
+           <widget class="QLabel" name="label_A6">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -15422,7 +15422,7 @@
            </widget>
           </item>
           <item row="0" column="1">
-           <widget class="QLabel" name="circle_A0_70">
+           <widget class="QLabel" name="label_A0">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -15464,7 +15464,7 @@
            </widget>
           </item>
           <item row="0" column="8">
-           <widget class="QLabel" name="circle_A1_170">
+           <widget class="QLabel" name="label_A7">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -16473,7 +16473,7 @@
         <widget class="QLabel" name="label_FBP_lock">
          <property name="geometry">
           <rect>
-           <x>347</x>
+           <x>417</x>
            <y>671</y>
            <width>97</width>
            <height>23</height>
@@ -16495,7 +16495,7 @@
         <widget class="QLineEdit" name="lineEdit_FBP_lock">
          <property name="geometry">
           <rect>
-           <x>340</x>
+           <x>410</x>
            <y>700</y>
            <width>111</width>
            <height>25</height>
@@ -16526,7 +16526,7 @@
          </property>
          <property name="geometry">
           <rect>
-           <x>600</x>
+           <x>610</x>
            <y>729</y>
            <width>71</width>
            <height>31</height>
@@ -16554,7 +16554,7 @@
          </property>
          <property name="geometry">
           <rect>
-           <x>520</x>
+           <x>530</x>
            <y>729</y>
            <width>71</width>
            <height>31</height>
@@ -16610,7 +16610,7 @@
          </property>
          <property name="geometry">
           <rect>
-           <x>340</x>
+           <x>410</x>
            <y>728</y>
            <width>111</width>
            <height>31</height>
@@ -16805,7 +16805,7 @@
          </property>
          <property name="geometry">
           <rect>
-           <x>600</x>
+           <x>610</x>
            <y>690</y>
            <width>71</width>
            <height>31</height>
@@ -16825,6 +16825,56 @@
          </property>
          <property name="text">
           <string>Zero</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pushbtn_FBP_stop">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="geometry">
+          <rect>
+           <x>690</x>
+           <y>690</y>
+           <width>71</width>
+           <height>71</height>
+          </rect>
+         </property>
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+           <strikeout>false</strikeout>
+          </font>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>Stop</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_4">
+         <property name="geometry">
+          <rect>
+           <x>269</x>
+           <y>670</y>
+           <width>111</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>14</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
+           <strikeout>false</strikeout>
+          </font>
+         </property>
+         <property name="text">
+          <string>+ : clockwise</string>
          </property>
         </widget>
        </widget>
