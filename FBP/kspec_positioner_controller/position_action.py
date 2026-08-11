@@ -13,8 +13,8 @@ ACC = 200.0
 DEC = 200.0
 
 
-ALPHA_FILE = "alpha_tile1001.json"
-BETA_FILE = "beta_tile1001.json"
+ALPHA_FILE = "./FBP/data/alpha_tile1001.json"
+BETA_FILE = "./FBP/data/beta_tile1001.json"
 
 POSITIONER_AXIS_MAP = {
     "A1": {"alpha": 1, "beta": 2},

@@ -232,33 +232,33 @@ class GFAActions:
                 # Images are kept in memory and only the final FITS is saved below.
                 save_intermediate = False
 
-#                tasks = [
-#                    self.env.controller.grabone(
-#                        CamNum=cam_id,
-#                        ExpTime=ExpTime,
-#                        Binning=Binning,
-#                        output_dir=str(grab_save_path),
-#                        packet_size=packet_size,
-#                        ipd=cam_ipd,
-#                        ftd_base=cam_ftd_base,
-#                        ra=ra,
-#                        dec=dec,
-#                        save=save_intermediate,
-#                    )
-#                    for cam_id in cam_list
-#                ]
+                # tasks = [
+                #     self.env.controller.grabone(
+                #         CamNum=cam_id,
+                #         ExpTime=ExpTime,
+                #         Binning=Binning,
+                #         output_dir=str(grab_save_path),
+                #         packet_size=packet_size,
+                #         ipd=cam_ipd,
+                #         ftd_base=cam_ftd_base,
+                #         ra=ra,
+                #         dec=dec,
+                #         save=save_intermediate,
+                #     )
+                #     for cam_id in cam_list
+                # ]
 
-#                results = await asyncio.gather(*tasks)
+                # results = await asyncio.gather(*tasks)
 
-#                for result in results:
-#                    cam_num = result["cam_num"]
+                # for result in results:
+                #     cam_num = result["cam_num"]
 
-#                    if result["timeout"]:
-#                        timeout_cameras.append(cam_num)
-#                        continue
+                #     if result["timeout"]:
+                #         timeout_cameras.append(cam_num)
+                #         continue
 
-#                    serial_by_camera[cam_num] = result["serial"]
-#                    images_by_camera[cam_num].append(result["image"])
+                #     serial_by_camera[cam_num] = result["serial"]
+                #     images_by_camera[cam_num].append(result["image"])
 
             grab_files = []
             timestamp = datetime.utcnow().strftime("D%Y%m%d_T%H%M%S")
@@ -274,16 +274,16 @@ class GFAActions:
                 else:
                     filename = f"{timestamp}_{serial}_exp{int(ExpTime)}s.fits"
 
-#                self.env.controller.img_class.save_fits(
-#                    image_array=image_list,
-#                    filename=filename,
-#                    exptime=ExpTime * len(image_list),
-#                    output_directory=str(grab_save_path),
-#                    ra=ra,
-#                    dec=dec,
-#                )
+                # self.env.controller.img_class.save_fits(
+                #     image_array=image_list,
+                #     filename=filename,
+                #     exptime=ExpTime * len(image_list),
+                #     output_directory=str(grab_save_path),
+                #     ra=ra,
+                #     dec=dec,
+                # )
 
-#                grab_files.append(str(grab_save_path / filename))
+                # grab_files.append(str(grab_save_path / filename))
 
             if CamNum == 0:
                 msg = f"Images grabbed from all cameras. ExpNum={ExpNum}."
@@ -358,101 +358,102 @@ class GFAActions:
         try:
             self.env.logger.info("Starting guiding sequence...")
 
-#            grab_result = await self.grab(
-#                CamNum=0,
-#                ExpTime=ExpTime,
-#                ExpNum=ExpNum,
-#                Binning=4,
-#                path=str(raw_save_path),
-#                ra=ra,
-#                dec=dec,
-#            )
+            # grab_result = await self.grab(
+            #     CamNum=0,
+            #     ExpTime=ExpTime,
+            #     ExpNum=ExpNum,
+            #     Binning=4,
+            #     path=str(raw_save_path),
+            #     ra=ra,
+            #     dec=dec,
+            # )
 
-#            if grab_result.get("status") != "success":
-#                return self._generate_response(
-#                    "error",
-#                    f"Guiding image grab failed: {grab_result.get('message')}",
-#                    raw_path=str(raw_save_path),
-#                    save_path=str(guiding_save_path),
-#                )
+            # if grab_result.get("status") != "success":
+            #     return self._generate_response(
+            #         "error",
+            #         f"Guiding image grab failed: {grab_result.get('message')}",
+            #         raw_path=str(raw_save_path),
+            #         save_path=str(guiding_save_path),
+            #     )
 
-#            if SaveGrabRaw:
-#                self.env.logger.info(f"Saving guiding images to {guiding_save_path}")
+            # if SaveGrabRaw:
+            #     self.env.logger.info(f"Saving guiding images to {guiding_save_path}")
 
-#                exts = (".fits", ".fit", ".fts")
-#                pattern = str(raw_save_path / "**" / "*")
-#                copied = 0
+            #     exts = (".fits", ".fit", ".fts")
+            #     pattern = str(raw_save_path / "**" / "*")
+            #     copied = 0
 
-#                try:
-#                    self.env.logger.info(
-#                        f"raw contents: {os.listdir(str(raw_save_path))}"
-#                    )
-#                except Exception as e:
-#                    self.env.logger.warning(
-#                        f"Failed to list raw directory: {raw_save_path}, error={e}"
-#                    )
+            #     try:
+            #         self.env.logger.info(
+            #             f"raw contents: {os.listdir(str(raw_save_path))}"
+            #         )
+            #     except Exception as e:
+            #         self.env.logger.warning(
+            #             f"Failed to list raw directory: {raw_save_path}, error={e}"
+            #         )
 
-#                for src in glob.glob(pattern, recursive=True):
-#                    if os.path.isfile(src) and src.lower().endswith(exts):
-#                        dst = guiding_save_path / os.path.basename(src)
-#                        self.env.logger.info(f"copying {src} to {dst}")
-#                        shutil.copy2(src, str(dst))
-#                        copied += 1
+            #     for src in glob.glob(pattern, recursive=True):
+            #         if os.path.isfile(src) and src.lower().endswith(exts):
+            #             dst = guiding_save_path / os.path.basename(src)
+            #             self.env.logger.info(f"copying {src} to {dst}")
+            #             shutil.copy2(src, str(dst))
+            #             copied += 1
 
-#                self.env.logger.info(
-#                    f"[guiding] saved {copied} fits files to {guiding_save_path}"
-#                )
+            #     self.env.logger.info(
+            #         f"[guiding] saved {copied} fits files to {guiding_save_path}"
+            #     )
 
-#            self._apply_clean_env_to_astrometry()
+            # self._apply_clean_env_to_astrometry()
 
             self.env.logger.info(
                 "Ensuring astrometry outputs are ready (no procimg dependency)..."
             )
-#            astro_files = self._ensure_astrometry_outputs_ready()
-#            self.env.logger.info(f"Astrometry inputs ready: {len(astro_files)} files.")
+            # astro_files = self._ensure_astrometry_outputs_ready()
+            # self.env.logger.info(f"Astrometry inputs ready: {len(astro_files)} files.")
 
-#            self.env.logger.info("Executing guider offset calculation...")
-#            fdx, fdy, fwhm = self.env.guider.exe_cal()
+            # self.env.logger.info("Executing guider offset calculation...")
+            # fdx, fdy, fwhm = self.env.guider.exe_cal()
 
-#            self.env.astrometry.clear_raw_files()
+            # self.env.astrometry.clear_raw_files()
 
-#            def _is_nan(x: Any) -> bool:
-#                try:
-#                    return x is None or (isinstance(x, float) and math.isnan(x))
-#                except Exception:
-#                    return True
+            # def _is_nan(x: Any) -> bool:
+            #     try:
+            #         return x is None or (isinstance(x, float) and math.isnan(x))
+            #     except Exception:
+            #         return True
 
-#            if _is_nan(fdx) or _is_nan(fdy) or _is_nan(fwhm):
-#                msg = (
-#                    "Guiding completed with WARNING: no reliable guide stars detected."
-#                )
-#                return self._generate_response(
-#                    "warning",
-#                    msg,
-#                    fdx=fdx,
-#                    fdy=fdy,
-#                    fwhm=fwhm,
-#                    raw_path=str(raw_save_path),
-#                    save_path=str(guiding_save_path),
-#                    astrometry_files=[os.path.basename(p) for p in astro_files],
-#                )
+            # if _is_nan(fdx) or _is_nan(fdy) or _is_nan(fwhm):
+            #     msg = (
+            #         "Guiding completed with WARNING: no reliable guide stars detected."
+            #     )
+            #     return self._generate_response(
+            #         "warning",
+            #         msg,
+            #         fdx=fdx,
+            #         fdy=fdy,
+            #         fwhm=fwhm,
+            #         raw_path=str(raw_save_path),
+            #         save_path=str(guiding_save_path),
+            #         astrometry_files=[os.path.basename(p) for p in astro_files],
+            #     )
 
-#            try:
-#                fwhm_val = float(fwhm)
-#            except Exception:
-#                fwhm_val = 0.0
+            # try:
+            #     fwhm_val = float(fwhm)
+            # except Exception:
+            #     fwhm_val = 0.0
 
-#            msg = f"Offsets: fdx={fdx}, fdy={fdy}, FWHM={fwhm_val} arcsec"
-#            return self._generate_response(
-#                "success",
-#                msg,
-#                fdx=fdx,
-#                fdy=fdy,
-#                fwhm=fwhm_val,
-#                raw_path=str(raw_save_path),
-#                save_path=str(guiding_save_path),
-#                astrometry_files=[os.path.basename(p) for p in astro_files],
-#            )
+            # msg = f"Offsets: fdx={fdx}, fdy={fdy}, FWHM={fwhm_val} arcsec"
+            # return self._generate_response(
+            #     "success",
+            #     msg,
+            #     fdx=fdx,
+            #     fdy=fdy,
+            #     fwhm=fwhm_val,
+            #     raw_path=str(raw_save_path),
+            #     save_path=str(guiding_save_path),
+            #     astrometry_files=[os.path.basename(p) for p in astro_files],
+            # )
+
         #### Simulation Parts Starts ###
             self.env.logger.info("Guiding test......")
             fdx = 0.04
@@ -467,6 +468,7 @@ class GFAActions:
                 fwhm=fwhm_val,
         #        astrometry_files=[os.path.basename(p) for p in astro_files],
             )
+
 
         except Exception as e:
             self.env.logger.error(f"Guiding failed: {str(e)}")
@@ -727,26 +729,26 @@ class GFAActions:
                     f"[pointing] grab/filter attempt {attempt}/{MaxGrabRetry}"
                 )
 
-#                if clear_dir:
-#                    self.env.astrometry.clear_raw_files()
+                # if clear_dir:
+                #     self.env.astrometry.clear_raw_files()
 
-#                grab_result = await self.grab(
-#                    CamNum=CamNum,
-#                    ExpTime=ExpTime,
-#                    ExpNum=ExpNum,
-#                    Binning=Binning,
-#                    path=str(pointing_raw_path),
-#                    ra=ra,
-#                    dec=dec,
-#                )
+                # grab_result = await self.grab(
+                #     CamNum=CamNum,
+                #     ExpTime=ExpTime,
+                #     ExpNum=ExpNum,
+                #     Binning=Binning,
+                #     path=str(pointing_raw_path),
+                #     ra=ra,
+                #     dec=dec,
+                # )
 
-#                if grab_result.get("status") != "success":
-#                    return self._generate_response(
-#                        "error",
-#                        f"Pointing image grab failed: {grab_result.get('message')}",
-#                        raw_path=str(pointing_raw_path),
-#                        save_path=str(pointing_save_path),
-#                    )
+                # if grab_result.get("status") != "success":
+                #     return self._generate_response(
+                #         "error",
+                #         f"Pointing image grab failed: {grab_result.get('message')}",
+                #         raw_path=str(pointing_raw_path),
+                #         save_path=str(pointing_save_path),
+                #     )
 
                 filter_result = self._filter_pointing_raw_images(
                     raw_path=pointing_raw_path,
@@ -854,7 +856,7 @@ class GFAActions:
 
     def status(self) -> Dict[str, Any]:
         try:
-#            status_info = self.env.controller.status()
+            # status_info = self.env.controller.status()
             status_info = "GFA cameras are OK."
             return self._generate_response("success", status_info)
         except Exception as e:
@@ -863,11 +865,11 @@ class GFAActions:
     def ping(self, CamNum: int = 0) -> Dict[str, Any]:
         try:
             if CamNum == 0:
-#                for cam_id in self.env.camera_ids:
-#                    self.env.controller.ping(cam_id)
+                # for cam_id in self.env.camera_ids:
+                #     self.env.controller.ping(cam_id)
                 return self._generate_response("success", "Pinged all cameras.")
             else:
-#                self.env.controller.ping(CamNum)
+                # self.env.controller.ping(CamNum)
                 return self._generate_response("success", f"Pinged Cam{CamNum}.")
         except Exception as e:
             return self._generate_response("error", f"Ping failed: {e}")
@@ -877,11 +879,11 @@ class GFAActions:
             if CamNum == 0:
                 messages = []
                 for cam_id in self.env.camera_ids:
-#                    param = self.env.controller.cam_params(cam_id)
+                    # param = self.env.controller.cam_params(cam_id)
                     messages.append(f"Cam{cam_id}: {param}")
                 return self._generate_response("success", "\n".join(messages))
             else:
-#                param = self.env.controller.cam_params(CamNum)
+                # param = self.env.controller.cam_params(CamNum)
                 return self._generate_response("success", f"Cam{CamNum}: {param}")
         except Exception as e:
             return self._generate_response("error", f"Parameter fetch failed: {e}")

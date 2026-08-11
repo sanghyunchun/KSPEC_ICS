@@ -12,12 +12,23 @@
           "star_catalog": "star_catalog",
           "grab_images": "grab",
           "guiding_save": "guiding_save",
-          "pointing_save": "pointing_save"
+          "pointing_save": "pointing_save",
+            "unclean_images": "unclean"
         }
       },
+    "pointing_filter": {
+        "min_valid_images": 5,
+        "min_std_bg": 0.3,
+        "min_peaks": 10,
+        "min_brightest_flux": 3000,
+        "dao": {
+          "fwhm": 3.0,
+          "sigma_threshold": 5.0
+        }
+    },
     "settings": {
         "cpu": {
-            "limit": 120
+            "limit": 6 
         },
         "image_processing": {
             "skycoord": {
@@ -29,12 +40,12 @@
                 "sub_ind2": [0, 1024, 512, 1024]
             },
             "crop_indices": [12, 979, 1, 1023],
-            "pixel_scale": 0.5
+            "pixel_scale": 0.4
         }
     },
     "astrometry": {
-        "scale_range": ["0.12", "0.22"],
-        "radius": 2
+        "scale_range": ["0.03", "0.16"],
+        "radius": 5
     },
     "detection": {
         "box_size": 40,
@@ -42,8 +53,8 @@
             "critical_outlier": 0.25
         },
         "peak_detection": {
-            "max": 30000,
-            "min": 200
+            "max": 4000,
+            "min": 300
         }
     },
     "catalog_matching": {
@@ -54,7 +65,7 @@
         },
         "tolerance": {
             "angular_distance": 0.06,
-            "mag_flux_min": 200
+            "mag_flux_min": 300
         }
     }
 }

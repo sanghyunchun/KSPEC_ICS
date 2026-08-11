@@ -84,7 +84,7 @@ class GFAEnvironment:
         )
 
         if role == "plate":
-#            self.controller = GFAController(self.gfa_config_path, self.logger)
+            self.controller = GFAController(self.gfa_config_path, self.logger)
             self.astrometry = GFAAstrometry(
                 self.ast_config_path,
                 self.logger,
@@ -96,18 +96,18 @@ class GFAEnvironment:
                 self.logger,
                 save_root=self.save_root,
             )
-#        elif role == "finder":
-#            self.controller = GFAController(self.gfa_config_path, self.logger)
-#            self.astrometry = None
-#            self.guider = None
+        elif role == "finder":
+            self.controller = GFAController(self.gfa_config_path, self.logger)
+            self.astrometry = None
+            self.guider = None
 
     def shutdown(self):
         self.logger.info(f"Shutting down environment ({self.role})")
-#        if self.role == "finder":
-#            self.controller.close_camera(7)
-#        else:
-        for cam_id in self.camera_ids:
-            self.controller.close_camera(cam_id)
+        if self.role == "finder":
+            self.controller.close_camera(7)
+        else:
+            for cam_id in self.camera_ids:
+                self.controller.close_camera(cam_id)
 
 
 def create_environment(

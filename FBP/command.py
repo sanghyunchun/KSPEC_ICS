@@ -144,7 +144,6 @@ async def identify_execute(FBP_server,cmd):
         )
 
         
-
         #reply_data = mkmsg.fbpmsg()
         #comment = 'Positioners successfully moved to their target positions.'
         #reply_data.update(result)
@@ -211,7 +210,7 @@ async def identify_execute(FBP_server,cmd):
         comment = 'Positioners start to move to initial positions from assigned positions.'
         await send_fbp_response(FBP_server,message=comment,process='START',status='success',fbp_state='ING')
 
-        result = FBP_action.reverse_all()
+        result = await asyncio.to_thread(FBP_action.reverse_all)
 
         await asyncio.sleep(5)
 
@@ -224,7 +223,7 @@ async def identify_execute(FBP_server,cmd):
         comment = 'Positioners start to move to initial positions from stop positions.'
         await send_fbp_response(FBP_server,message=comment,process='START',status='success',fbp_state='ING')
 
-        result = FBP_action.reverse_from_stop_step()
+        result = await asyncio.to_thread(FBP_action.reverse_from_stop_step)
 
         await send_fbp_response(
                 FBP_server, result, func = 'fbpintial_from_stop',

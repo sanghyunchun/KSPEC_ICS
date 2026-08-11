@@ -145,44 +145,72 @@ class GFAGuider:
         self.peakmin = self.inpar["detection"]["peak_detection"]["min"]
         self.ang_dist = self.inpar["catalog_matching"]["tolerance"]["angular_distance"]
         self.pixel_scale = self.inpar["settings"]["image_processing"]["pixel_scale"]
+        self.sigma_threshold = self.inpar.get(
+                "pointing_filter", {}
+            ).get(
+                "dao", {}
+            ).get("sigma_threshold", 5.0)
 
         self.logger.info("GFAGuider setup complete.")
 
     def _astro_to_raw_path(self, astro_file: str) -> Optional[str]:
         """
-        astro_*.fits -> raw 매칭을 '카메라 토큰'으로 수행
+        Match astro_*.fits to the corresponding raw FITS file.
 
-        파일명 예:
-        raw : D20260121_T171409_40103651_exp5s.fits
-        astro: astro_D20260121_T171409_40103651_exp5s.fits
-
-        매칭 규칙:
-        1) astro 파일명에서 cam_token(예: 40103651)을 추출
-        2) raw_dir에서 *_{cam_token}_*.fits 를 찾음
-        3) 여러 개면 가장 최신 수정(mtime) 파일 선택
+        Priority
+        --------
+        1. Exact filename match after removing the ``astro_`` prefix
+        2. Camera-token fallback match
         """
 
         base = os.path.basename(astro_file)
 
-        # astro_ prefix 제거 (있든 없든 처리)
         if base.startswith("astro_"):
-            base2 = base[len("astro_") :]
+            raw_basename = base[len("astro_"):]
         else:
-            base2 = base
+            raw_basename = base
 
-        # cam_token 추출: DYYYYMMDD_T######_<CAMTOKEN>_...
-        # 예: D20260121_T171409_40103651_exp5s.fits -> 40103651
-        m = re.match(r"^D\d{8}_T\d{6}_(\d+)_", base2)
-        if not m:
+        # ---------------------------------------------------------
+        # 1. Exact filename match
+        # ---------------------------------------------------------
+        exact_candidates = [
+            os.path.join(self.raw_dir, raw_basename),
+            os.path.join(self.raw_dir, "**", raw_basename),
+        ]
+
+        for candidate_pattern in exact_candidates:
+            matches = glob.glob(candidate_pattern, recursive=True)
+
+            matches = [
+                path
+                for path in matches
+                if os.path.isfile(path)
+            ]
+
+            if matches:
+                matches.sort(
+                    key=lambda path: os.path.getmtime(path),
+                    reverse=True,
+                )
+                return matches[0]
+
+        # ---------------------------------------------------------
+        # 2. Camera-token fallback
+        # ---------------------------------------------------------
+        match = re.match(
+            r"^D\d{8}_T\d{6}_(\d+)_",
+            raw_basename,
+        )
+
+        if not match:
             self.logger.warning(
-                f"[match] Cannot parse cam token from astro filename: {base}"
+                "[match] Cannot parse camera token from "
+                f"astro filename: {base}"
             )
             return None
 
-        cam_token = m.group(1)
+        cam_token = match.group(1)
 
-        # raw_dir에서 해당 cam_token을 가진 파일 찾기
-        candidates = []
         patterns = [
             os.path.join(self.raw_dir, f"*_{cam_token}_*.fits"),
             os.path.join(self.raw_dir, f"*_{cam_token}_*.fit"),
@@ -191,23 +219,39 @@ class GFAGuider:
             os.path.join(self.raw_dir, "**", f"*_{cam_token}_*.fit"),
             os.path.join(self.raw_dir, "**", f"*_{cam_token}_*.fts"),
         ]
-        for patt in patterns:
-            candidates.extend(glob.glob(patt, recursive=True))
 
-        # 혹시 같은 토큰이 다른 확장자/케이스로 올 경우
+        candidates = []
+
+        for pattern in patterns:
+            candidates.extend(
+                glob.glob(pattern, recursive=True)
+            )
+
         candidates = [
-            p
-            for p in candidates
-            if os.path.isfile(p) and p.lower().endswith((".fits", ".fit", ".fts"))
+            path
+            for path in candidates
+            if os.path.isfile(path)
+            and path.lower().endswith(
+                (".fits", ".fit", ".fts")
+            )
         ]
 
         if not candidates:
             return None
 
-        # 여러 개면 최신 파일 선택
-        candidates.sort(key=lambda p: os.path.getmtime(p), reverse=True)
-        return candidates[0]
+        candidates = sorted(
+            set(candidates),
+            key=lambda path: os.path.getmtime(path),
+            reverse=True,
+        )
 
+        self.logger.warning(
+            "[match] Exact RAW filename was not found. "
+            f"Using camera-token fallback: astro={base}, "
+            f"raw={os.path.basename(candidates[0])}"
+        )
+
+        return candidates[0]
     # ---------------------------------------------------------------------
     # ✅ NEW: combined_star.fits 경로 해석 (astrometry class와 동일 규칙)
     # ---------------------------------------------------------------------
@@ -249,29 +293,43 @@ class GFAGuider:
 
     def background(self, image_data_p: np.ndarray) -> Tuple[np.ndarray, float]:
         """
-        Perform sigma clipping to derive background and standard deviation.
+        Estimate and subtract the global image background using sigma clipping.
+
+        Parameters
+        ----------
+        image_data_p : np.ndarray
+            Input image data.
+
+        Returns
+        -------
+        image_data : np.ndarray
+            Background-subtracted image.
+        stddev : float
+            Standard deviation of the sigma-clipped background pixels.
         """
-        self.logger.info("Performing sigma clipping to derive background and stddev.")
-        image_data = np.zeros_like(image_data_p, dtype=float)
-        x_split = 511
+        self.logger.info(
+            "Performing global sigma clipping to derive background and stddev."
+        )
 
-        # Left region
-        region1 = image_data_p[:, :x_split]
-        sigclip1 = sigma_clip(region1, sigma=3, maxiters=False, masked=False)
-        avg1 = np.mean(sigclip1)
-        image_data[:, :x_split] = region1 - avg1
+        # Estimate the global background from the full image.
+        sigclip = sigma_clip(
+            image_data_p,
+            sigma=3,
+            maxiters=5,
+            masked=True,
+        )
 
-        # Right region
-        region2 = image_data_p[:, x_split:]
-        sigclip2 = sigma_clip(region2, sigma=3, maxiters=False, masked=False)
-        avg2 = np.mean(sigclip2)
-        image_data[:, x_split:] = region2 - avg2
+        background_level = float(np.ma.mean(sigclip))
+        stddev = float(np.ma.std(sigclip))
 
-        # Full image
-        sigclip = sigma_clip(image_data, sigma=3, maxiters=False, masked=False)
-        stddev = float(np.std(sigclip))
+        # Subtract a single global background level from the full image.
+        image_data = image_data_p.astype(float, copy=False) - background_level
 
-        self.logger.debug(f"Background subtraction done. Stddev={stddev:.4f}")
+        self.logger.debug(
+            "Global background subtraction done. "
+            f"Background={background_level:.4f}, Stddev={stddev:.4f}"
+        )
+
         return image_data, stddev
 
     def load_star_catalog(
@@ -389,13 +447,23 @@ class GFAGuider:
         """
         self.logger.debug("Selecting stars based on angular distance and flux.")
 
-        delta_sigma = np.arccos(
+        cos_delta = (
             np.sin(dec1_rad) * np.sin(dec2_rad)
-            + np.cos(dec1_rad) * np.cos(dec2_rad) * np.cos(ra1_rad - ra2_rad)
+            + np.cos(dec1_rad)
+            * np.cos(dec2_rad)
+            * np.cos(ra1_rad - ra2_rad)
         )
+
+        cos_delta = np.clip(cos_delta, -1.0, 1.0)
+        delta_sigma = np.arccos(cos_delta)
         angular_distance_degrees = np.degrees(delta_sigma)
 
-        valid_flux = np.nan_to_num(flux, nan=0.0)
+        valid_flux = np.nan_to_num(
+                flux,
+                nan=0.0,
+                posinf=0.0,
+                neginf=0.0,
+            )
 
         tol = self.inpar.get("catalog_matching", {}).get("tolerance", {})
         mag_flux_min = tol.get("mag_flux_min", None)
@@ -496,15 +564,24 @@ class GFAGuider:
         image_data: np.ndarray,
     ) -> Tuple[List[float], List[float], List[float], List[np.ndarray]]:
         self.logger.debug("==== Starting centroid offset calculation ====")
-        dx, dy, peakc = [], [], []
 
-        max_flux = max((val for val in fluxn if val < 30000), default=None)
+        dx: List[float] = []
+        dy: List[float] = []
+        peakc: List[float] = []
+
+        finite_flux = [
+            float(value)
+            for value in fluxn
+            if np.isfinite(value) and float(value) < 30000
+        ]
+        max_flux = max(finite_flux, default=None)
+
         boxsize = self.boxsize
 
-        # ✅ per-file threshold scalar (현재 로직: 5*stddev)
-        thr_val = float(5.0 * stddev)
+        # Peak detection threshold: 5 × background standard deviation
+        thr_val = float(self.sigma_threshold * stddev)
 
-        # ✅ stats counters for logging
+        # Per-file diagnostic counters
         cnt_ok = 0
         cnt_nopeak = 0
         cnt_oob = 0
@@ -512,76 +589,143 @@ class GFAGuider:
         cnt_badflux = 0
         cnt_exc = 0
 
-        # ✅ store peak_values only for OK detections (for min/med/max)
+        # Peak values from successfully measured stars
         ok_peak_values: List[float] = []
 
         self.logger.debug(f"Number of input stars: {len(dra)}")
-        self.logger.debug(f"Standard deviation for thresholding: {stddev:.3f}")
+        self.logger.debug(
+            f"Standard deviation for thresholding: {stddev:.3f}"
+        )
+        self.logger.debug(f"Peak detection threshold: {thr_val:.3f}")
         self.logger.debug(f"Box size: {boxsize}")
-        self.logger.debug(f"Max flux among stars (cutoff 30000): {max_flux}")
+        self.logger.debug(
+            f"Max catalog flux among stars (cutoff 30000): {max_flux}"
+        )
+
+        if not np.isfinite(stddev) or stddev <= 0:
+            self.logger.error(
+                f"Invalid background standard deviation: {stddev}. "
+                "Returning failed measurements."
+            )
+
+            n_stars = len(dra)
+            return (
+                [0.0] * n_stars,
+                [0.0] * n_stars,
+                [-1.0] * n_stars,
+                cutoutn_stack,
+            )
+
+        if image_data.ndim != 2:
+            raise ValueError(
+                f"image_data must be a 2D array, got shape={image_data.shape}"
+            )
 
         ny, nx = image_data.shape
 
         for i in range(len(dra)):
+            # Record list lengths before processing this star.
+            # This prevents duplicate append operations if an exception occurs
+            # after one or more values have already been added.
+            dx_len_before = len(dx)
+            dy_len_before = len(dy)
+            peak_len_before = len(peakc)
+
             try:
-                # -------------------------
-                # ✅ bounds check (image)
-                # -------------------------
-                # dra/ddec는 1-based로 들어오니까 0-based로 변환해서 체크
-                x0 = int(dra[i] - 1)
-                y0 = int(ddec[i] - 1)
-                if x0 < 0 or x0 >= nx or y0 < 0 or y0 >= ny:
+                # -------------------------------------------------------------
+                # 1. Validate expected catalog position
+                # -------------------------------------------------------------
+                if not (
+                    np.isfinite(dra[i])
+                    and np.isfinite(ddec[i])
+                    and np.isfinite(dra_f[i])
+                    and np.isfinite(ddec_f[i])
+                ):
                     cnt_oob += 1
-                    dx.append(0)
-                    dy.append(0)
-                    peakc.append(-1)
+                    dx.append(0.0)
+                    dy.append(0.0)
+                    peakc.append(-1.0)
                     continue
 
-                # -------------------------
-                # cutout #1
-                # -------------------------
+                # dra and ddec are stored as 1-based positions.
+                x0 = int(dra[i] - 1)
+                y0 = int(ddec[i] - 1)
+
+                if x0 < 0 or x0 >= nx or y0 < 0 or y0 >= ny:
+                    cnt_oob += 1
+                    dx.append(0.0)
+                    dy.append(0.0)
+                    peakc.append(-1.0)
+                    continue
+
+                # -------------------------------------------------------------
+                # 2. Create first cutout for peak detection
+                # -------------------------------------------------------------
                 y1 = int(ddec[i] - 1 - boxsize / 2)
                 y2 = int(ddec[i] - 1 + boxsize / 2 + 1)
                 x1 = int(dra[i] - 1 - boxsize / 2)
                 x2 = int(dra[i] - 1 + boxsize / 2 + 1)
 
-                # ✅ edge check (cutout boundary)
                 if y1 < 0 or x1 < 0 or y2 > ny or x2 > nx:
                     cnt_edge += 1
-                    dx.append(0)
-                    dy.append(0)
-                    peakc.append(-1)
+                    dx.append(0.0)
+                    dy.append(0.0)
+                    peakc.append(-1.0)
                     continue
 
                 cutout = image_data[y1:y2, x1:x2]
 
-                # threshold array
-                threshold = np.full(cutout.shape, thr_val, dtype=float)
-                peaks = pd.find_peaks(cutout, threshold, box_size=boxsize / 4, npeaks=1)
-
-                # ✅ photutils가 None/empty table을 돌려주는 케이스 방어
-                if peaks is None or len(peaks) == 0:
+                if cutout.size == 0 or not np.any(np.isfinite(cutout)):
                     cnt_nopeak += 1
-                    dx.append(0)
-                    dy.append(0)
-                    peakc.append(-1)
+                    dx.append(0.0)
+                    dy.append(0.0)
+                    peakc.append(-1.0)
                     continue
 
-                # 정상 peak
+                threshold = np.full(
+                    cutout.shape,
+                    thr_val,
+                    dtype=float,
+                )
+
+                peaks = pd.find_peaks(
+                    cutout,
+                    threshold,
+                    box_size=max(1, int(boxsize / 4)),
+                    npeaks=1,
+                )
+
+                if peaks is None or len(peaks) == 0:
+                    cnt_nopeak += 1
+                    dx.append(0.0)
+                    dy.append(0.0)
+                    peakc.append(-1.0)
+                    continue
+
                 x_peak = float(peaks["x_peak"][0])
                 y_peak = float(peaks["y_peak"][0])
                 peak_val = float(peaks["peak_value"][0])
-                peakc.append(peak_val)
 
-                cnt_ok += 1
-                ok_peak_values.append(peak_val)
+                if not (
+                    np.isfinite(x_peak)
+                    and np.isfinite(y_peak)
+                    and np.isfinite(peak_val)
+                ):
+                    cnt_nopeak += 1
+                    dx.append(0.0)
+                    dy.append(0.0)
+                    peakc.append(-1.0)
+                    continue
 
+                # Do not append peakc yet.
+                # It is appended only after all calculations for this star
+                # complete successfully.
                 nra = int(dra[i] - (0.5 * boxsize - x_peak))
                 ndec = int(ddec[i] - (0.5 * boxsize - y_peak))
 
-                # -------------------------
-                # cutout #2 (centroid)
-                # -------------------------
+                # -------------------------------------------------------------
+                # 3. Create second cutout for centroid calculation
+                # -------------------------------------------------------------
                 y1b = int(ndec - 1 - boxsize / 4)
                 y2b = int(ndec - 1 + boxsize / 4 + 1)
                 x1b = int(nra - 1 - boxsize / 4)
@@ -589,87 +733,208 @@ class GFAGuider:
 
                 if y1b < 0 or x1b < 0 or y2b > ny or x2b > nx:
                     cnt_edge += 1
-                    dx.append(0)
-                    dy.append(0)
-                    peakc[-1] = -1
+                    dx.append(0.0)
+                    dy.append(0.0)
+                    peakc.append(-1.0)
                     continue
 
                 cutout2 = image_data[y1b:y2b, x1b:x2b]
 
-                if fluxn[i] == max_flux:
-                    cutoutnp = image_data[
-                        int(ndec - 1 - boxsize / 2) : int(ndec - 1 + boxsize / 2 + 1),
-                        int(nra - 1 - boxsize / 2) : int(nra - 1 + boxsize / 2 + 1),
-                    ]
-                    if cutoutnp.size > 0 and np.max(cutoutnp) != 0:
-                        cutoutn = cutoutnp / np.max(cutoutnp) * 1000
-                        fits_file = os.path.join(
-                            self.cutout_path, f"cutout_fluxmax_{file_counter}.fits"
-                        )
-                        fits.writeto(fits_file, cutoutn, overwrite=True)
-                        cutoutn_stack.append(cutoutn)
-
-                total_flux = float(np.sum(cutout2))
-                if not np.isfinite(total_flux) or total_flux <= 0:
+                if cutout2.size == 0 or not np.any(np.isfinite(cutout2)):
                     cnt_badflux += 1
-                    dx.append(0)
-                    dy.append(0)
-                    peakc[-1] = -1
+                    dx.append(0.0)
+                    dy.append(0.0)
+                    peakc.append(-1.0)
                     continue
 
-                # centroid
-                xcs, ycs = 0.0, 0.0
-                for row in range(cutout2.shape[0]):
-                    for col in range(cutout2.shape[1]):
-                        val = float(cutout2[row, col])
-                        xcs += val * col
-                        ycs += val * row
+                # -------------------------------------------------------------
+                # 4. Save normalized cutout of the brightest catalog star
+                # -------------------------------------------------------------
+                if (
+                    max_flux is not None
+                    and np.isfinite(fluxn[i])
+                    and np.isclose(float(fluxn[i]), max_flux)
+                ):
+                    y1n = int(ndec - 1 - boxsize / 2)
+                    y2n = int(ndec - 1 + boxsize / 2 + 1)
+                    x1n = int(nra - 1 - boxsize / 2)
+                    x2n = int(nra - 1 + boxsize / 2 + 1)
+
+                    if y1n >= 0 and x1n >= 0 and y2n <= ny and x2n <= nx:
+                        cutoutnp = image_data[y1n:y2n, x1n:x2n]
+
+                        if (
+                            cutoutnp.size > 0
+                            and np.any(np.isfinite(cutoutnp))
+                        ):
+                            cutout_max = float(np.nanmax(cutoutnp))
+
+                            if np.isfinite(cutout_max) and cutout_max > 0:
+                                cutoutn = cutoutnp / cutout_max * 1000.0
+
+                                fits_file = os.path.join(
+                                    self.cutout_path,
+                                    f"cutout_fluxmax_{file_counter}.fits",
+                                )
+
+                                try:
+                                    fits.writeto(
+                                        fits_file,
+                                        cutoutn,
+                                        overwrite=True,
+                                    )
+                                    cutoutn_stack.append(cutoutn)
+                                except Exception as exc:
+                                    # Failure to save a seeing cutout should not
+                                    # invalidate the centroid measurement.
+                                    self.logger.warning(
+                                        "Failed to save normalized cutout for "
+                                        f"star {i + 1}: {exc}"
+                                    )
+
+                # -------------------------------------------------------------
+                # 5. Calculate flux-weighted centroid
+                # -------------------------------------------------------------
+                finite_cutout2 = np.nan_to_num(
+                    cutout2.astype(float, copy=False),
+                    nan=0.0,
+                    posinf=0.0,
+                    neginf=0.0,
+                )
+
+                total_flux = float(np.sum(finite_cutout2))
+
+                if not np.isfinite(total_flux) or total_flux <= 0:
+                    cnt_badflux += 1
+                    dx.append(0.0)
+                    dy.append(0.0)
+                    peakc.append(-1.0)
+                    continue
+
+                row_indices, col_indices = np.indices(
+                    finite_cutout2.shape,
+                    dtype=float,
+                )
+
+                xcs = float(np.sum(finite_cutout2 * col_indices))
+                ycs = float(np.sum(finite_cutout2 * row_indices))
 
                 xc = xcs / total_flux
                 yc = ycs / total_flux
 
+                if not np.isfinite(xc) or not np.isfinite(yc):
+                    cnt_badflux += 1
+                    dx.append(0.0)
+                    dy.append(0.0)
+                    peakc.append(-1.0)
+                    continue
+
                 fra = nra - (boxsize / 4 - xc)
                 fdec = ndec - (boxsize / 4 - yc)
 
-                # arcsec per pixel components
+                # -------------------------------------------------------------
+                # 6. Convert pixel offset to angular offset
+                # -------------------------------------------------------------
                 ra1, dec1 = wcs.pixel_to_world_values(fra, fdec)
                 ra2, dec2 = wcs.pixel_to_world_values(fra + 1, fdec)
+
                 x1d = (ra2 - ra1) * 3600.0
                 x2d = (dec2 - dec1) * 3600.0
 
-                ra1, dec1 = wcs.pixel_to_world_values(fra, fdec)
-                ra2, dec2 = wcs.pixel_to_world_values(fra, fdec + 1)
-                y1d = (ra2 - ra1) * 3600.0
-                y2d = (dec2 - dec1) * 3600.0
+                ra3, dec3 = wcs.pixel_to_world_values(fra, fdec)
+                ra4, dec4 = wcs.pixel_to_world_values(fra, fdec + 1)
 
-                dx_val = ((fra - dra_f[i]) * x1d) + ((fdec - ddec_f[i]) * x2d)
-                dy_val = ((fra - dra_f[i]) * y1d) + ((fdec - ddec_f[i]) * y2d)
-                dx.append(dx_val)
-                dy.append(dy_val)
+                y1d = (ra4 - ra3) * 3600.0
+                y2d = (dec4 - dec3) * 3600.0
+
+                dx_val = (
+                    (fra - dra_f[i]) * x1d
+                    + (fdec - ddec_f[i]) * x2d
+                )
+                dy_val = (
+                    (fra - dra_f[i]) * y1d
+                    + (fdec - ddec_f[i]) * y2d
+                )
+
+                if not np.isfinite(dx_val) or not np.isfinite(dy_val):
+                    raise ValueError(
+                        f"Non-finite offset: dx={dx_val}, dy={dy_val}"
+                    )
+
+                # Append all three outputs together only after successful
+                # completion of this star.
+                dx.append(float(dx_val))
+                dy.append(float(dy_val))
+                peakc.append(float(peak_val))
+
+                cnt_ok += 1
+                ok_peak_values.append(float(peak_val))
 
             except Exception as exc:
                 cnt_exc += 1
-                dx.append(0)
-                dy.append(0)
-                peakc.append(-1)
-                self.logger.debug(f"Finding peaks exception for star {i + 1}: {exc}")
 
-        # ✅ per-file summary: thr + peak stats
+                # Ensure exactly one dx, dy, and peakc value per input star.
+                if len(dx) == dx_len_before:
+                    dx.append(0.0)
+                elif len(dx) > dx_len_before + 1:
+                    del dx[dx_len_before + 1:]
+
+                if len(dy) == dy_len_before:
+                    dy.append(0.0)
+                elif len(dy) > dy_len_before + 1:
+                    del dy[dy_len_before + 1:]
+
+                if len(peakc) == peak_len_before:
+                    peakc.append(-1.0)
+                elif len(peakc) == peak_len_before + 1:
+                    peakc[-1] = -1.0
+                elif len(peakc) > peak_len_before + 1:
+                    del peakc[peak_len_before + 1:]
+                    peakc[-1] = -1.0
+
+                self.logger.debug(
+                    f"Finding peaks/centroid exception for star {i + 1}: {exc}"
+                )
+
+        # Final length validation
+        if not (len(dx) == len(dy) == len(peakc) == len(dra)):
+            self.logger.error(
+                "Centroid output length mismatch after processing: "
+                f"stars={len(dra)}, dx={len(dx)}, dy={len(dy)}, "
+                f"peakc={len(peakc)}"
+            )
+            raise RuntimeError(
+                "cal_centroid_offset() produced inconsistent output lengths."
+            )
+
         if ok_peak_values:
             pmin = float(np.min(ok_peak_values))
             pmed = float(np.median(ok_peak_values))
             pmax = float(np.max(ok_peak_values))
-            peak_stats = f"peak(min/med/max)={pmin:.2f}/{pmed:.2f}/{pmax:.2f}"
+            peak_stats = (
+                f"peak(min/med/max)="
+                f"{pmin:.2f}/{pmed:.2f}/{pmax:.2f}"
+            )
         else:
             peak_stats = "peak(min/med/max)=NA"
 
         self.logger.info(
-            f"[peaks][file#{file_counter}] stars={len(dra)} ok={cnt_ok} nopeak={cnt_nopeak} "
-            f"oob={cnt_oob} edge={cnt_edge} badflux={cnt_badflux} exc={cnt_exc} "
-            f"thr={thr_val:.2f} {peak_stats}"
+            f"[peaks][file#{file_counter}] "
+            f"stars={len(dra)} "
+            f"ok={cnt_ok} "
+            f"nopeak={cnt_nopeak} "
+            f"oob={cnt_oob} "
+            f"edge={cnt_edge} "
+            f"badflux={cnt_badflux} "
+            f"exc={cnt_exc} "
+            f"thr={thr_val:.2f} "
+            f"{peak_stats}"
         )
 
-        self.logger.debug("==== Finished centroid offset calculation ====")
+        self.logger.debug(
+            "==== Finished centroid offset calculation ===="
+        )
+
         return dx, dy, peakc, cutoutn_stack
 
     def peak_select(
@@ -764,7 +1029,12 @@ class GFAGuider:
             return "Warning", "Warning"
 
         distances = np.sqrt(dxp**2 + dyp**2)
-        clipped = sigma_clip(distances, sigma=3, maxiters=False)
+        clipped = sigma_clip(
+                    distances,
+                    sigma=3,
+                    maxiters=5,
+                    masked=True,
+                )
         cdx = dxp[~clipped.mask]
         cdy = dyp[~clipped.mask]
 
@@ -804,7 +1074,7 @@ class GFAGuider:
             )
             return float("nan")
 
-        averaged_cutoutn = np.median(cutoutn_stack, axis=0)
+        averaged_cutoutn = np.nanmedian(cutoutn_stack, axis=0)
         fits_file = os.path.join(self.cutout_path, "averaged_cutoutn.fits")
 
         try:
@@ -812,14 +1082,31 @@ class GFAGuider:
         except Exception as exc:
             self.logger.error(f"Error saving averaged cutout: {exc}")
 
+        if not np.all(np.isfinite(averaged_cutoutn)):
+            self.logger.warning(
+                "Averaged cutout contains non-finite values. "
+                "Replacing them with the median value."
+            )
+            median_value = float(np.nanmedian(averaged_cutoutn))
+            averaged_cutoutn = np.nan_to_num(
+                averaged_cutoutn,
+                nan=median_value,
+                posinf=median_value,
+                neginf=median_value,
+            )
+
         y_size, x_size = averaged_cutoutn.shape
-        xgrid, ygrid = np.meshgrid(np.arange(x_size), np.arange(y_size))
+        xgrid, ygrid = np.meshgrid(
+            np.arange(x_size, dtype=float),
+            np.arange(y_size, dtype=float),
+        )
+
         initial_guess = (
-            float(np.max(averaged_cutoutn)),
-            float(x_size // 2),
-            float(y_size // 2),
+            float(np.nanmax(averaged_cutoutn)),
+            float(x_size / 2.0),
+            float(y_size / 2.0),
             1.0,
-            0.0,
+            float(np.nanmedian(averaged_cutoutn)),
         )
 
         try:
@@ -828,10 +1115,37 @@ class GFAGuider:
                 (xgrid, ygrid),
                 averaged_cutoutn.ravel(),
                 p0=initial_guess,
+                maxfev=10000,
             )
-            _, _, _, sigma, _ = params
-            fwhm = 2.0 * math.sqrt(2.0 * math.log(2.0)) * sigma
-            return fwhm * self.pixel_scale
+
+            amplitude, x_center, y_center, sigma, offset = params
+            sigma = abs(float(sigma))
+
+            if not np.isfinite(sigma) or sigma <= 0.0:
+                self.logger.error(
+                    f"Invalid fitted Gaussian sigma: {sigma}. Returning NaN."
+                )
+                return float("nan")
+
+            fwhm_pixel = (
+                2.0
+                * math.sqrt(2.0 * math.log(2.0))
+                * sigma
+            )
+            fwhm_arcsec = fwhm_pixel * self.pixel_scale
+
+            self.logger.debug(
+                "Gaussian fitting completed. "
+                f"Amplitude={amplitude:.4f}, "
+                f"Center=({x_center:.4f}, {y_center:.4f}), "
+                f"Sigma={sigma:.4f} pixel, "
+                f"Offset={offset:.4f}, "
+                f"FWHM={fwhm_pixel:.4f} pixel, "
+                f"Seeing={fwhm_arcsec:.4f} arcsec"
+            )
+
+            return float(fwhm_arcsec)
+
         except Exception as exc:
             self.logger.error(f"Gaussian fitting failed: {exc}")
             return float("nan")
