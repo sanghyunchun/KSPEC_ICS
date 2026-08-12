@@ -23,6 +23,8 @@ def fbp_moveall(): return create_fbp_command('fbpmoveall', message = 'Move all p
 def fbp_initial(): return create_fbp_command('fbpinitial', message = 'Move all positioners to initial position.')
 def fbp_stop(): return create_fbp_command('fbpstop', message = ' Stop current positioners moving.')
 def fbp_initial_from_stop(): return create_fbp_command('fbpinitial_from_stop', message = 'Move all positioners from stop to initial positions.')
+def fbp_lock(positioner_list):
+    return create_fbp_command('fbplock',positioners=positioner_list, message=f'Lock positioners {positioner_list}')
 
 
 async def handle_fbp(arg, ICS_client):
@@ -42,6 +44,10 @@ async def handle_fbp(arg, ICS_client):
         angle = float(params[2])
         command_map[cmd] = lambda: fbp_moveone(positioner, motor, angle)
 
+    if cmd == 'fbplock':
+        positioner_list = params[0]
+        print(positioner_list)
+        command_map[cmd] = lambda: fbp_lock(positioner_list)
 
     if cmd in command_map:
         fbpmsg = command_map[cmd]()

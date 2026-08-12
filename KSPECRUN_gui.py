@@ -268,6 +268,9 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_FBP_initial.clicked.connect(self.FBP_initial_button_clicked)
         self.ui.pushbtn_FBP_stop.clicked.connect(self.FBP_stop_button_clicked)
 
+        self.ui.pushbtn_FBP_lock.clicked.connect(self.FBP_lock_button_clicked)
+        
+
 
 
         # MTL 
@@ -1017,6 +1020,25 @@ class MainWindow(QMainWindow):
 
         await handle_fbp(f'fbpstop', self.ICS_client)
         self.logging(f'Sent Stop Positioners rotation.', level='send')
+
+
+    @asyncSlot()
+    async def FBP_lock_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        if not self.ui.lineEdit_FBP_lock.text():
+            self.logging('Insert positioner label you want lock', level = 'error')
+            return
+        
+        positioner_text = self.ui.lineEdit_FBP_lock.text()
+    #    positioner_list = [item.strip() for item in positioner_text.split(',')]
+
+        await handle_fbp(f'fbplock {positioner_text}', self.ICS_client)
+    
 
     @asyncSlot()
     async def FBP_rotate_button_clicked(self):

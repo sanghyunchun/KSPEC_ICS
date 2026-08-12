@@ -1,0 +1,17 @@
+{
+    "status": "fail",
+    "message": "존재하지 않는 포지셔너가 입력되었습니다",
+    "data": {
+        "invalid_positioners": [
+            "B2"
+        ],
+        "available_positioners": [
+            "A1",
+            "A2",
+            "A3",
+            "A4",
+            "A5"
+        ]
+    },
+    "result_file": "/media/shyunc/DATA/KSpec/KSPEC_ICS/FBP/data/result_20260812_142209_877384.json"
+}
