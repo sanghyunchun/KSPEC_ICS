@@ -86,7 +86,9 @@ async def identify_execute(SPEC_server,cmd):
     if func == 'getobj':
         exptime=dict_data['time']
         numframe=dict_data['numframe']
-        await get_obj(SPEC_server,float(exptime),int(numframe))
+        header = dict_data['header']
+        print(header)
+        await get_obj(SPEC_server,float(exptime),int(numframe), header)
 
     if func == 'specstatus':
         comment=spec_status()
@@ -108,7 +110,8 @@ def illu_off():
     msg='Back illumination light off.'
     return msg
 
-async def get_obj(SPEC_server, exptime, nframe):
+async def get_obj(SPEC_server, exptime, nframe, header):
+    print(exptime)
     msg=f'Exposure Start!!!'
     reply_data=mkmsg.specmsg()
     reply_data.update(message=msg,process='ING',status='success')
@@ -116,7 +119,7 @@ async def get_obj(SPEC_server, exptime, nframe):
     print('\033[32m'+'[SPEC]', msg+'\033[0m')
     await SPEC_server.send_message('ICS', rsp)
 
-    result= await asyncio.gather(create_fits_image(exptime),remaining(SPEC_server,exptime))
+    result= await asyncio.gather(create_fits_image(exptime,header),remaining(SPEC_server,exptime))
     msg=f'Exposure finished. Creating the image now.'
     reply_data=mkmsg.specmsg()
     reply_data.update(message=msg,process='ING',status='success')
@@ -151,11 +154,13 @@ def get_next_filename(extension: str = "fits"):
             return filepath,filename
         index += 1
 
-async def create_fits_image(exptime, shape: tuple = (100, 100), data_type=np.float32):
+async def create_fits_image(exptime, header_info, shape: tuple = (100, 100), data_type=np.float32):
     data = np.random.random(shape).astype(data_type)
     hdu = fits.PrimaryHDU(data)
     filepath, filename = get_next_filename()
 #    print(filepath+filename)
+    hdu.header.update(header_info)
+    
     hdul = fits.HDUList([hdu])
     hdul.writeto(filepath+filename, overwrite=True)
     await asyncio.sleep(exptime)

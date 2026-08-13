@@ -15,6 +15,7 @@ from astropy.coordinates import Angle, SkyCoord
 import astropy.units as u
 import Lib.mkmessage as mkmsg
 import Lib.zscale as zs
+from Lib.updatelog import obslog
 import json
 from aio_pika import IncomingMessage
 
@@ -177,17 +178,18 @@ class MainWindow(QMainWindow):
 
         self.gfaexpt = None
         self.gfacam = 0
-
         self.adc = 0
-
-        self.obstype = None
-
+        
+        self.mtlexp = None
         self.msglog_path = None
-
         self.ra = None
         self.dec = None
-
-        self.mtlexp = None
+        self.obstype = None
+        self.TileID = None
+        self.exptime = None
+        self.expnum = None
+        self.project = None
+        self.fwhm = None
 
         ### Instrument position state & state ###
         self.adcadjusting_state = False
@@ -418,6 +420,16 @@ class MainWindow(QMainWindow):
         if save :
             with open(self.msglog_path,'a') as f:
                 f.write(f'[{self.uttime}][ICS] {message}\n')
+
+
+    def set_header_info(self, obstype: str='None', obsdate: str='19820913', TileID: str='0000', obsra: str='00:00:00.000',obsdec: str='00:00:00.000',
+        exptime: int=10, expnum: str='None', projID: str='None', fwhm: float='9.99'):
+
+        headerinfo = {'OBSDATE': obsdate, 'OBSTYPE': obstype, 'PROJID': projID, 'TileID': TileID, 'RA': obsra, 'DEC': obsdec, 'EXPTIME': exptime, 
+            'EXPNUM': expnum, 'FWHM': fwhm}
+
+        return headerinfo
+
 
 ### Observation Set function ###
 #    def save_observer(self):
@@ -969,6 +981,49 @@ class MainWindow(QMainWindow):
 #        await self.send_udp_message(messagetcs)
 
 
+    ##  Check instrument connection and initializing ##
+    # region
+    @asyncSlot()
+    async def syscheck(self):
+        if not self.check_connection():
+            return
+
+        self.logging('System check start. Initialize dependencies',level='normal')
+
+        self.scriptrun.initialize_dependencies(self.ICS_client, self.send_udp_message, self.send_telcom_command,
+            self.response_queue, self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue, self.show_status, self.dir_name)
+
+        self.dependencies = True
+        self.logging('Script dependencies delivered.',level='normal')        
+
+        await handle_script('obsinitial',scriptrun=self.scriptrun)
+
+        labels = [self.ui.label_status_gfa,self.ui.label_status_adc,self.ui.label_status_fiber,self.ui.label_status_metrology,
+            self.ui.label_status_spectrograph,self.ui.label_status_lamp]
+
+        for label in labels:
+            style = label.styleSheet().lower()
+            if "color: red" in style:
+                self.logging('While system checking, unexpected Errors have occurred in some instruments.',level='error')
+                return True
+        
+        self.fbp_state = 'zero'
+
+        try:
+            self.obslog = obslog(self.dir_name)
+            self.logging(self.obslog.message, level='normal')
+
+        except Exception as e:
+            self.obslog = None
+            self.logging(
+                f'Observation log sheet setup failed: {e}',
+                level='error'
+            )
+
+        self.logging('System check finished. All systems are OK.',level='normal')
+
+    #endregion
+
     # Telescope Slew by single button
     # region 
     @asyncSlot()
@@ -991,6 +1046,8 @@ class MainWindow(QMainWindow):
         await self.send_udp_message(messagetcs)
     # endregion
 
+    
+    ## Spectrograph Part ##
     # Exposure spectrograph from single mode
     # region 
     @asyncSlot()
@@ -998,15 +1055,48 @@ class MainWindow(QMainWindow):
         if not self.check_connection():
             return
 
-        exp_time = self.ui.lineEdit_exp_time_2.text()
-        exp_num = self.ui.lineEdit_n_exp_2.text()
-        if exp_time.strip() or exp_num.strip():
-            await handle_spec(f'getobj {exp_time} {exp_num}',self.ICS_client)
-        else:
-            self.logging(f"Please insert exposure time and number of exposure", level='error')
-    #endregion
-        
 
+        self.obstype = self.ui.obstype.currentText()
+        self.exptime = self.ui.lineEdit_exp_time_2.text()
+        self.expnum = self.ui.lineEdit_n_exp_2.text()
+
+        header=self.set_header_info(obsdate = self.dir_name, obstype = self.obstype, TileID = self.TileID, obsra = self.ra,
+            obsdec = self.dec, exptime = self.exptime, expnum = self.expnum, projID = self.project, fwhm=self.fwhm)
+
+        if self.obstype == 'Bias':
+            await handle_spec(f'getobj {self.exptime} {self.expnum}',self.ICS_client, header)    #### Need to change for bias
+        else:
+            await handle_spec(f'getobj {self.exptime} {self.expnum}',self.ICS_client, header)
+
+    #    if exp_time.strip() or exp_num.strip():
+    #        await handle_spec(f'getobj {exp_time} {exp_num}',self.ICS_client)
+    #    else:
+    #        self.logging(f"Please insert exposure time and number of exposure", level='error')
+    #endregion
+
+
+
+    # Show obtained spectra Part ##
+    # region
+    def show_spec(self, spec_response):
+    #    self.fwhm=response_data['fwhm']
+        spec_canvas = [self.canvas_B, self.canvas_R]
+
+        ### Simulation Start ####
+        with fits.open('/media/shyunc/DATA/KSpec/DATA/RAWDATA/20260304/26030210001.fits') as hdul:
+            data=hdul[0].data
+
+        self.S_zmin, self.S_zmax = zs.zscale(data)
+        self.canvas_B.imshows(data[0][540:740,:],vmin=self.S_zmin,vmax=self.S_zmax,cmap='gray',origin='lower',aspect='auto')
+
+        with fits.open('/media/shyunc/DATA/KSpec/DATA/RAWDATA/20260304/26030220001.fits') as hdul:
+            data=hdul[0].data
+
+        self.S_zmin, self.S_zmax = zs.zscale(data)
+        self.canvas_R.imshows(data[0][540:740,:],vmin=self.S_zmin,vmax=self.S_zmax,cmap='gray',origin='lower',aspect='auto')
+        ### Simulation END ###
+    # endregion
+        
 
     ## Fiber positionser Part
     # region
@@ -1277,44 +1367,7 @@ class MainWindow(QMainWindow):
         self.logging(f'Set GFA exposure time to {self.gfaexpt}', level='send')
         self.scriptrun.GFA_set(self.gfaexpt)
 
-
-#    def show_guiding(self):
-#        cutimgpath='/media/shyunc/DATA/KSpec/KSPEC_ICS/GFA/kspec_gfa_controller/src/img/cutout/'       # Need change when real observation
-#        cutimgpath='/home/kspecics/work/DATA/GFADATA/cutout/'       # Need change when real observation
-#        guidenum=['1','2','3','4','5','6']
-#        G_canvas=[self.canvas_G1,self.canvas_G2,self.canvas_G3,self.canvas_G4,self.canvas_G5,self.canvas_G6]
-
-#        for i,can in enumerate(G_canvas):
-#            with fits.open(cutimgpath+'cutout_fluxmax_'+str(i+1)+'.fits') as hdul:
-#                data=hdul[0].data
-
-#            self.G_zmin, self.G_zmax = zs.zscale(data)
-#            can.imshows(data,vmin=self.G_zmin,vmax=self.G_zmax,cmap='gray',origin='lower')
-
     # endregion
-
-
-    # Show obtained spectra Part ##
-    # region
-    def show_spec(self, spec_response):
-    #    self.fwhm=response_data['fwhm']
-        spec_canvas = [self.canvas_B, self.canvas_R]
-
-        ### Simulation Start ####
-        with fits.open('/media/shyunc/DATA/KSpec/DATA/RAWDATA/20260304/26030210001.fits') as hdul:
-            data=hdul[0].data
-
-        self.S_zmin, self.S_zmax = zs.zscale(data)
-        self.canvas_B.imshows(data[0][540:740,:],vmin=self.S_zmin,vmax=self.S_zmax,cmap='gray',origin='lower',aspect='auto')
-
-        with fits.open('/media/shyunc/DATA/KSpec/DATA/RAWDATA/20260304/26030220001.fits') as hdul:
-            data=hdul[0].data
-
-        self.S_zmin, self.S_zmax = zs.zscale(data)
-        self.canvas_R.imshows(data[0][540:740,:],vmin=self.S_zmin,vmax=self.S_zmax,cmap='gray',origin='lower',aspect='auto')
-        ### Simulation END ###
-    # endregion
-
 
     ### Pointing Part###
     # region
@@ -1378,7 +1431,7 @@ class MainWindow(QMainWindow):
         await self.send_udp_message(messagetcs)
     
     # endregion
-
+    
 
     ### ADC  Part###
     # region
@@ -1518,7 +1571,6 @@ class MainWindow(QMainWindow):
     # endregion
 
 
-
     ### MTL Part ###
     # region
     @asyncSlot()
@@ -1634,7 +1686,7 @@ class MainWindow(QMainWindow):
     @asyncSlot()
     async def load_tile(self):
         self.ui.lineEdit_CProj.setText(f'{self.project}')
-        self.ui.lineEdit_CTile.setText(f'{self.select_tile}')
+        self.ui.lineEdit_CTile.setText(f'{self.TileID}')
     #    self.logging('Sent Guide stars information to GFA',level='send')
     #    await self.ICS_client.send_message("GFA", self.guidemsg)
     #    await self.response_queue.get()
@@ -1660,7 +1712,7 @@ class MainWindow(QMainWindow):
     #    await self.response_queue.get()
     #    await asyncio.sleep(2)
 
-        self.logging(f'All accessary files for observation of Tile ID {self.select_tile} are successfully loaded', level='receive')
+        self.logging(f'All accessary files for observation of Tile ID {self.TileID} are successfully loaded', level='receive')
         await asyncio.sleep(2)
 #        self.show_status('GFA','success')
 #        self.show_status('MTL','success')
@@ -1670,14 +1722,14 @@ class MainWindow(QMainWindow):
 
 
 
-    #### Run observation script ####
+    ##### Run observation script #####
     @asyncSlot()
     async def run_obs_clicked(self):
         if not self.check_connection():
             return
 
-    #    if not self.check_syscheck():
-    #        return
+        if not self.check_syscheck():
+            return
 
         if not self.ui.lineEdit_ra_1.text() or not self.ui.lineEdit_dec_1.text():
             self.logging('Please load tile information.', level='error')
@@ -1691,30 +1743,6 @@ class MainWindow(QMainWindow):
 #        self.show_status('FBP','normal')
 #        self.show_status('LAMP','normal')
 #        self.show_status('SPEC','normal')
-
-
-    @asyncSlot()
-    async def take_image(self):
-        if not self.check_connection():
-            return
-
-        if not self.check_syscheck():
-            return
-#        self.obstype1=self.ui.obstype_1
-        self.ui.obstype_1.setCurrentText('Bias')
-#        await handle_spec('getobj 3 1', self.ICS_client)
-#        self.ui.log1.append("sent message to device 'SPEC'. message: Get 1 bias images.")
-#        self.ui.log1.append("sent message to device 'SPEC'. message: Get 1 bias images.")
-#        msg=await self.response_queue.get()
-#        self.ui.log.appendPlainText(f"{msg['file']}")
-
-#        filename=msg['file']
-
-#        self.reload_img(filename)
-        print(self.obstype)
-        self.obstype=self.ui.obstype_1.currentText()
-
-        print(self.obstype)
 
 
     @asyncSlot()
@@ -1746,9 +1774,9 @@ class MainWindow(QMainWindow):
 
         dialog = SelectTile(header[:4], tile_lines, self)
         if dialog.exec() == QDialog.Accepted and dialog.selected_values:
-            self.select_tile=dialog.selected_values[0]
+            self.TileID=dialog.selected_values[0]
             self.obsnum=dialog.selected_values[2]
-            self.expT= dialog.selected_values[3]
+            self.exptime= dialog.selected_values[3]
 #            self.ra = dialog.selected_values[4]        # For commission
 #            self.dec = dialog.selected_values[5]       # For commission
 
@@ -1842,41 +1870,8 @@ class MainWindow(QMainWindow):
 
 
 
-###  Check instrument connection and initializing
-    # region
-    @asyncSlot()
-    async def syscheck(self):
-        if not self.check_connection():
-            return
-
-        self.logging('System check start. Initialize dependencies',level='normal')
-
-        self.scriptrun.initialize_dependencies(self.ICS_client, self.send_udp_message, self.send_telcom_command,
-            self.response_queue, self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue, self.show_status, self.dir_name)
-
-        self.dependencies = True
-        self.logging('Script dependencies delivered.',level='normal')        
-
-        await handle_script('obsinitial',scriptrun=self.scriptrun)
-
-        labels = [self.ui.label_status_gfa,self.ui.label_status_adc,self.ui.label_status_fiber,self.ui.label_status_metrology,
-            self.ui.label_status_spectrograph,self.ui.label_status_lamp]
-
-        for label in labels:
-            style = label.styleSheet().lower()
-            if "color: red" in style:
-                self.logging('While system checking, unexpected Errors have occurred in some instruments.',level='error')
-                return True
-        
-        self.fbp_state = 'zero'
-        self.logging('System check finished. All systems are OK.',level='normal')
-
-    #endregion
-        
-
-
-
 ### Functions related with RabbitMQ ###
+# region
     ### Connect RabbitMQ Server ###
     @asyncSlot()
     async def rabbitmq_connect(self):
@@ -2288,7 +2283,7 @@ class MainWindow(QMainWindow):
             self.ui.lcd_lt.display(self.currentTime)
             self.ui.lcd_utc.display(self.currentutc)
 
-#    def load_data(self, 
+# endregion
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

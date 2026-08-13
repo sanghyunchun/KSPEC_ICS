@@ -1435,6 +1435,12 @@
                <strikeout>false</strikeout>
               </font>
              </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+             <property name="placeholderText">
+              <string>ex) 20260812</string>
+             </property>
             </widget>
            </item>
           </layout>
@@ -2755,7 +2761,7 @@
             </widget>
            </item>
            <item row="2" column="1">
-            <widget class="QComboBox" name="obstype_2">
+            <widget class="QComboBox" name="obstype">
              <item>
               <property name="text">
                <string>None</string>
@@ -2907,7 +2913,7 @@
          </widget>
          <widget class="QPushButton" name="pushbtn_exp_start">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <property name="geometry">
            <rect>

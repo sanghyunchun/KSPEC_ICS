@@ -22,8 +22,8 @@ def illu_off(): return create_spec_command('illuoff', message ='Turn off back-il
 
 def spec_initial(dir_name): return create_spec_command('specinitial', dirname=dir_name, message = f'Initialize Spectrograph')
 
-def get_obj(exptime,nframe):
-    return create_spec_command('getobj', time=exptime, numframe=nframe, message =f'Exposure {exptime} seconds for objects.')
+def get_obj(exptime,nframe,header):
+    return create_spec_command('getobj', time=exptime, numframe=nframe, header=header, message =f'Exposure {exptime} seconds for objects.')
 
 def get_bias(nframe): 
     return create_spec_command('getbias', numframe=nframe, message =f'Get {nframe} bias images.')
@@ -35,7 +35,7 @@ def get_arc(exptime,nframe):
     return create_spec_command('getarc', time=exptime, numframe=nframe, message =f'Get {nframe} arc images by {exptime} senconds exposure.')
 
 
-async def handle_spec(arg, ICS_client):
+async def handle_spec(arg, ICS_client, header):
     cmd, *params = arg.split()
     command_map = {
         'specstatus': spec_status,
@@ -43,6 +43,9 @@ async def handle_spec(arg, ICS_client):
         'illuoff' : illu_off
     }
 
+    print(header)
+
+    print(params)
     if cmd == 'specinitial':
         if len(params) != 1:
             print("Error: 'specinitial' needs one paramerter, i.e. directory name. ex) 20250918")
@@ -58,7 +61,7 @@ async def handle_spec(arg, ICS_client):
         except ValueError:
             print(f"Error: Input parameters of 'getobj' should be float and int. input value: {params[0]} {params[1]}")
             return
-        command_map[cmd] = lambda: get_obj(ExpT,obsnum)
+        command_map[cmd] = lambda: get_obj(ExpT,obsnum, header)
 
     if cmd == 'getbias':
         if len(params) != 1:
