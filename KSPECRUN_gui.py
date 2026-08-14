@@ -190,6 +190,7 @@ class MainWindow(QMainWindow):
         self.expnum = None
         self.project = None
         self.fwhm = None
+        self.object = None
 
         ### Instrument position state & state ###
         self.adcadjusting_state = False
@@ -1067,6 +1068,14 @@ class MainWindow(QMainWindow):
             await handle_spec(f'getobj {self.exptime} {self.expnum}',self.ICS_client, header)    #### Need to change for bias
         else:
             await handle_spec(f'getobj {self.exptime} {self.expnum}',self.ICS_client, header)
+
+        if self.object == 'None':
+            self.object = self.TileID
+        
+        cmt = ''
+    
+        self.obslog.add_log(self.uttime,self.project,self.TileID,self.obstype,self.object,self.exptime,self.expnum,cmt)
+        
 
     #    if exp_time.strip() or exp_num.strip():
     #        await handle_spec(f'getobj {exp_time} {exp_num}',self.ICS_client)

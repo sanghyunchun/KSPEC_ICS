@@ -4,14 +4,14 @@ from gspread_formatting import *
 class obslog():
     def __init__(self, dir_name):
         self.gc = gspread.service_account()
-        self.sh = self.gc.open("LOGtest")
+        self.sh = self.gc.open("CMDLOG")
         self.title = dir_name
         self.ws, self.created = self._get_or_create_worksheet()
 
         if self.created:
             self._setup_worksheet()
 
-        self.message = f'{self.title} observation log {"created" if self.created else "loaded"}'
+        self.message = f'{self.title} command log {"created" if self.created else "loaded"}'
 
     def _get_or_create_worksheet(self):
         try:
@@ -31,7 +31,7 @@ class obslog():
         for col in range(1, 10):               # 1..9
             self.ws.merge_cells(1, col, 2, col)     # (row_start=1, col_start=col, row_end=2, col_end=col)
 
-        letters = ['UT', 'File', 'Tile ID', 'Object', 'EXP #', 'Exposure', 'Airmass', 'FWHM', 'Comments']
+        letters = ['UT', 'PROJID', 'TILE ID', 'OBJTYPE', 'OBJECT', 'EXPOSURE', 'EXP #', 'Comments']
         self.ws.update([letters], range_name="A1:I1")          # gspread 6.x: values 먼저, range_name 키워드 인자
 
         fmt = CellFormat(
@@ -46,24 +46,22 @@ class obslog():
     def add_log(
         self,
         ut,
-        filename,
+        projid,
         tile_id,
+        objtype,
         object_name,
-        exp_num,
         exposure,
-        airmass,
-        fwhm,
+        exp_num,
         comments=""
     ):
         values = [
             ut,
-            filename,
+            projid,
             tile_id,
+            objtype,
             object_name,
-            exp_num,
             exposure,
-            airmass,
-            fwhm,
+            exp_num,
             comments
         ]
 
@@ -72,6 +70,7 @@ class obslog():
             value_input_option="USER_ENTERED"
         )
 
+        self.message = f'Current observation log is updated.'
 
 
 #obslog = obslog()
