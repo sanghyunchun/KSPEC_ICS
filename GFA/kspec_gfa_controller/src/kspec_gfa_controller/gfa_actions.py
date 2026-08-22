@@ -322,14 +322,19 @@ class GFAActions:
         SaveGrabRaw: bool = True,
         ra: str = None,
         dec: str = None,
+        MaxGrabRetry: int = 3,
     ) -> Dict[str, Any]:
         import math
+
+        if MaxGrabRetry < 1:
+            raise ValueError("MaxGrabRetry must be >= 1")
 
         save_root, dirs = self._get_save_root_and_dirs()
         date_str = datetime.now().strftime("%Y-%m-%d")
 
         raw_dir = dirs.get("raw_images", "raw")
         guiding_dir = dirs.get("guiding_save", "guiding_save")
+        unclean_dir = dirs.get("unclean_images", "unclean")
 
         raw_save_path = save_root / raw_dir
         guiding_save_path = save_root / guiding_dir / date_str
@@ -341,7 +346,8 @@ class GFAActions:
         self.env.logger.info(f"[guiding] dirs={dirs}")
         self.env.logger.info(
             f"[guiding] SaveGrabRaw={SaveGrabRaw}, "
-            f"raw_save_path={raw_save_path}, guiding_save_path={guiding_save_path}"
+            f"raw_save_path={raw_save_path}, "
+            f"guiding_save_path={guiding_save_path}"
         )
 
         self._debug_path_block(
@@ -353,79 +359,191 @@ class GFAActions:
             },
         )
 
-        self.env.astrometry.clear_raw_files()
-
         try:
             self.env.logger.info("Starting guiding sequence...")
 
-            grab_result = await self.grab(
-                CamNum=0,
-                ExpTime=ExpTime,
-                ExpNum=ExpNum,
-                Binning=4,
-                path=str(raw_save_path),
-                ra=ra,
-                dec=dec,
+            run_timestamp = datetime.now().strftime(
+                "D%Y%m%d_T%H%M%S"
             )
 
-            if grab_result.get("status") != "success":
+            cfg = self.env.astrometry.inpar["pointing_filter"]
+            min_valid_images = cfg["min_valid_images"]
+
+            grab_result = None
+            filter_result = None
+            guiding_unclean_path = None
+
+            for attempt in range(1, MaxGrabRetry + 1):
+                guiding_unclean_path = (
+                    save_root
+                    / unclean_dir
+                    / date_str
+                    / run_timestamp
+                    / "guiding"
+                    / f"attempt{attempt:02d}"
+                )
+                guiding_unclean_path.mkdir(
+                    parents=True,
+                    exist_ok=True,
+                )
+
+                self.env.logger.info(
+                    f"[guiding] grab/filter attempt "
+                    f"{attempt}/{MaxGrabRetry}"
+                )
+
+                self.env.astrometry.clear_raw_files()
+
+                grab_result = await self.grab(
+                    CamNum=0,
+                    ExpTime=ExpTime,
+                    ExpNum=ExpNum,
+                    Binning=4,
+                    path=str(raw_save_path),
+                    ra=ra,
+                    dec=dec,
+                )
+
+                if grab_result.get("status") != "success":
+                    return self._generate_response(
+                        "error",
+                        (
+                            "Guiding image grab failed: "
+                            f"{grab_result.get('message')}"
+                        ),
+                        raw_path=str(raw_save_path),
+                        unclean_path=str(guiding_unclean_path),
+                        save_path=str(guiding_save_path),
+                    )
+
+                filter_result = self._filter_pointing_raw_images(
+                    raw_path=raw_save_path,
+                    unclean_path=guiding_unclean_path,
+                    label="guiding",
+                )
+
+                self.env.logger.info(
+                    f"[guiding filter] attempt={attempt}, "
+                    f"passed={filter_result['n_passed']}, "
+                    f"failed={filter_result['n_failed']}"
+                )
+
+                if filter_result["n_passed"] >= min_valid_images:
+                    self.env.logger.info(
+                        "[guiding filter] pass: "
+                        f"{filter_result['n_passed']} images "
+                        "available for astrometry"
+                    )
+                    break
+
+                self.env.logger.warning(
+                    "[guiding filter] only "
+                    f"{filter_result['n_passed']} valid images. "
+                    f"Need at least {min_valid_images}. "
+                    "Retrying grab..."
+                )
+
+            if (
+                filter_result is None
+                or filter_result["n_passed"] < min_valid_images
+            ):
+                valid_count = (
+                    0
+                    if filter_result is None
+                    else filter_result["n_passed"]
+                )
+
+                msg = (
+                    "Guiding failed: not enough valid images "
+                    "after filtering. "
+                    f"valid={valid_count}, "
+                    f"required={min_valid_images}, "
+                    f"retries={MaxGrabRetry}"
+                )
+
+                self.env.logger.error(msg)
+
                 return self._generate_response(
                     "error",
-                    f"Guiding image grab failed: {grab_result.get('message')}",
+                    msg,
                     raw_path=str(raw_save_path),
+                    unclean_path=str(guiding_unclean_path),
                     save_path=str(guiding_save_path),
+                    filter_result=filter_result,
                 )
 
             if SaveGrabRaw:
-                self.env.logger.info(f"Saving guiding images to {guiding_save_path}")
+                self.env.logger.info(
+                    "Saving filtered guiding images to "
+                    f"{guiding_save_path}"
+                )
 
-                exts = (".fits", ".fit", ".fts")
-                pattern = str(raw_save_path / "**" / "*")
                 copied = 0
 
-                try:
+                for src in filter_result["passed_files"]:
+                    src_path = Path(src)
+                    dst = guiding_save_path / src_path.name
+
                     self.env.logger.info(
-                        f"raw contents: {os.listdir(str(raw_save_path))}"
-                    )
-                except Exception as e:
-                    self.env.logger.warning(
-                        f"Failed to list raw directory: {raw_save_path}, error={e}"
+                        f"copying filtered image "
+                        f"{src_path} to {dst}"
                     )
 
-                for src in glob.glob(pattern, recursive=True):
-                    if os.path.isfile(src) and src.lower().endswith(exts):
-                        dst = guiding_save_path / os.path.basename(src)
-                        self.env.logger.info(f"copying {src} to {dst}")
-                        shutil.copy2(src, str(dst))
-                        copied += 1
+                    shutil.copy2(
+                        str(src_path),
+                        str(dst),
+                    )
+                    copied += 1
 
                 self.env.logger.info(
-                    f"[guiding] saved {copied} fits files to {guiding_save_path}"
+                    f"[guiding] saved {copied} filtered FITS "
+                    f"files to {guiding_save_path}"
                 )
 
             self._apply_clean_env_to_astrometry()
 
             self.env.logger.info(
-                "Ensuring astrometry outputs are ready (no procimg dependency)..."
+                "Ensuring astrometry outputs are ready "
+                "(no procimg dependency)..."
             )
-            astro_files = self._ensure_astrometry_outputs_ready()
-            self.env.logger.info(f"Astrometry inputs ready: {len(astro_files)} files.")
 
-            self.env.logger.info("Executing guider offset calculation...")
+            astro_files = self._ensure_astrometry_outputs_ready()
+
+            self.env.logger.info(
+                f"Astrometry inputs ready: "
+                f"{len(astro_files)} files."
+            )
+
+            self.env.logger.info(
+                "Executing guider offset calculation..."
+            )
+
             fdx, fdy, fwhm = self.env.guider.exe_cal()
 
             self.env.astrometry.clear_raw_files()
 
-            def _is_nan(x: Any) -> bool:
+            def _is_nan(value: Any) -> bool:
                 try:
-                    return x is None or (isinstance(x, float) and math.isnan(x))
+                    return (
+                        value is None
+                        or (
+                            isinstance(value, float)
+                            and math.isnan(value)
+                        )
+                    )
                 except Exception:
                     return True
 
-            if _is_nan(fdx) or _is_nan(fdy) or _is_nan(fwhm):
+            if (
+                _is_nan(fdx)
+                or _is_nan(fdy)
+                or _is_nan(fwhm)
+            ):
                 msg = (
-                    "Guiding completed with WARNING: no reliable guide stars detected."
+                    "Guiding completed with WARNING: "
+                    "no reliable guide stars detected."
                 )
+
                 return self._generate_response(
                     "warning",
                     msg,
@@ -433,8 +551,13 @@ class GFAActions:
                     fdy=fdy,
                     fwhm=fwhm,
                     raw_path=str(raw_save_path),
+                    unclean_path=str(guiding_unclean_path),
                     save_path=str(guiding_save_path),
-                    astrometry_files=[os.path.basename(p) for p in astro_files],
+                    filter_result=filter_result,
+                    astrometry_files=[
+                        os.path.basename(path)
+                        for path in astro_files
+                    ],
                 )
 
             try:
@@ -442,7 +565,11 @@ class GFAActions:
             except Exception:
                 fwhm_val = 0.0
 
-            msg = f"Offsets: fdx={fdx}, fdy={fdy}, FWHM={fwhm_val} arcsec"
+            msg = (
+                f"Offsets: fdx={fdx}, fdy={fdy}, "
+                f"FWHM={fwhm_val} arcsec"
+            )
+
             return self._generate_response(
                 "success",
                 msg,
@@ -450,107 +577,26 @@ class GFAActions:
                 fdy=fdy,
                 fwhm=fwhm_val,
                 raw_path=str(raw_save_path),
+                unclean_path=str(guiding_unclean_path),
                 save_path=str(guiding_save_path),
-                astrometry_files=[os.path.basename(p) for p in astro_files],
+                filter_result=filter_result,
+                astrometry_files=[
+                    os.path.basename(path)
+                    for path in astro_files
+                ],
             )
 
         except Exception as e:
-            self.env.logger.error(f"Guiding failed: {str(e)}")
+            self.env.logger.error(
+                f"Guiding failed: {str(e)}"
+            )
+
             return self._generate_response(
                 "error",
                 f"Guiding failed: {str(e)}",
                 raw_path=str(raw_save_path),
                 save_path=str(guiding_save_path),
             )
-
-    def _evaluate_pointing_image_quality(
-        self,
-        fits_path: Path,
-    ) -> Dict[str, Any]:
-        """
-        Relaxed pointing image filter.
-        Reject only obviously bad images before astrometry.
-        """
-    
-        cfg = self.env.astrometry.inpar["pointing_filter"]
-    
-        min_std_bg = cfg["min_std_bg"]
-        min_peaks = cfg["min_peaks"]
-        min_brightest_flux = cfg["min_brightest_flux"]
-    
-        fwhm = cfg["dao"]["fwhm"]
-        sigma_threshold = cfg["dao"]["sigma_threshold"]
-    
-        reasons = []
-
-        try:
-            img = fits.getdata(str(fits_path))
-            img = np.asarray(img, dtype=float)
-
-            if img.ndim != 2:
-                reasons.append(f"invalid_dimension={img.ndim}")
-                return {
-                    "passed": False,
-                    "n_peaks": 0,
-                    "brightest_flux": 0.0,
-                    "std_bg": 0.0,
-                    "reasons": reasons,
-                }
-
-            finite_fraction = np.mean(np.isfinite(img))
-            if finite_fraction < 0.99:
-                reasons.append(f"low_finite_fraction={finite_fraction:.3f}<0.99")
-
-            mean_bg, median_bg, std_bg = sigma_clipped_stats(
-                img,
-                sigma=3.0,
-            )
-
-            n_peaks = 0
-            brightest_flux = 0.0
-
-            if std_bg > 0:
-                finder = DAOStarFinder(
-                    fwhm=fwhm,
-                    threshold=sigma_threshold * std_bg,
-                )
-
-                sources = finder(img - median_bg)
-
-                if sources is not None:
-                    n_peaks = len(sources)
-
-                    if n_peaks > 0 and "flux" in sources.colnames:
-                        brightest_flux = float(np.max(sources["flux"]))
-
-            if std_bg < min_std_bg:
-                reasons.append(f"low_std_bg={std_bg:.2f}<MIN_STD_BG={min_std_bg}")
-
-            if n_peaks < min_peaks:
-                reasons.append(f"few_peaks={n_peaks}<MIN_PEAKS={min_peaks}")
-
-            if brightest_flux < min_brightest_flux:
-                reasons.append(
-                    f"low_brightest_flux={brightest_flux:.2f}"
-                    f"<MIN_BRIGHTEST_FLUX={min_brightest_flux}"
-                )
-
-            return {
-                "passed": len(reasons) == 0,
-                "n_peaks": n_peaks,
-                "brightest_flux": brightest_flux,
-                "std_bg": float(std_bg),
-                "reasons": reasons,
-            }
-
-        except Exception as e:
-            return {
-                "passed": False,
-                "n_peaks": 0,
-                "brightest_flux": 0.0,
-                "std_bg": 0.0,
-                "reasons": [f"filter_error={e}"],
-            }
 
     def _move_with_unique_name(self, src: Path, dst_dir: Path) -> Path:
         dst_dir.mkdir(parents=True, exist_ok=True)
@@ -576,25 +622,27 @@ class GFAActions:
         self,
         raw_path: Path,
         unclean_path: Path,
+        label: str = "pointing",
     ) -> Dict[str, Any]:
         """
         Filter FITS files in raw_path.
+
         Passed files remain in raw_path.
         Failed files are moved to unclean_path.
         """
         exts = (".fits", ".fit", ".fts")
 
         fits_files = [
-            Path(p)
-            for p in glob.glob(str(raw_path / "*"))
-            if os.path.isfile(p) and p.lower().endswith(exts)
+            Path(path)
+            for path in glob.glob(str(raw_path / "*"))
+            if os.path.isfile(path) and path.lower().endswith(exts)
         ]
 
         passed_files = []
         failed_files = []
 
         self.env.logger.info(
-            f"[pointing filter] found {len(fits_files)} raw FITS files"
+            f"[{label} filter] found {len(fits_files)} raw FITS files"
         )
 
         for fits_file in sorted(fits_files):
@@ -602,18 +650,24 @@ class GFAActions:
 
             if result["passed"]:
                 passed_files.append(str(fits_file))
+
                 self.env.logger.info(
-                    f"[pointing filter PASS] {fits_file.name} | "
+                    f"[{label} filter PASS] {fits_file.name} | "
                     f"std_bg={result['std_bg']:.2f}, "
                     f"peaks={result['n_peaks']}, "
                     f"brightest_flux={result['brightest_flux']:.2f}"
                 )
+
             else:
-                moved_path = self._move_with_unique_name(fits_file, unclean_path)
+                moved_path = self._move_with_unique_name(
+                    fits_file,
+                    unclean_path,
+                )
                 failed_files.append(str(moved_path))
 
                 self.env.logger.warning(
-                    f"[pointing filter FAIL] {fits_file.name} -> {moved_path} | "
+                    f"[{label} filter FAIL] "
+                    f"{fits_file.name} -> {moved_path} | "
                     f"std_bg={result['std_bg']:.2f}, "
                     f"peaks={result['n_peaks']}, "
                     f"brightest_flux={result['brightest_flux']:.2f}, "
@@ -737,6 +791,7 @@ class GFAActions:
                 filter_result = self._filter_pointing_raw_images(
                     raw_path=pointing_raw_path,
                     unclean_path=pointing_unclean_path,
+                    label="pointing",
                 )
 
                 self.env.logger.info(
