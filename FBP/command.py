@@ -134,7 +134,7 @@ async def identify_execute(FBP_server,cmd):
 
         check_zero = await FBP_action.check_all_zero_positions()
 
-        print(check_zero)
+#        print(check_zero)
 
         if check_zero['status'] == 'fail':
             await send_fbp_response(
@@ -150,12 +150,12 @@ async def identify_execute(FBP_server,cmd):
 
 
     if func == 'fbpmoveall':
-        reply_data = mkmsg.fbpmsg()
-        comment = 'Positioners start to move to target positions.'
-        reply_data.update(message=comment,process='START',status='success',fbp_state = 'ING')
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[FBP]', comment+'\033[0m')
-        await FBP_server.send_message('ICS',rsp)
+#        reply_data = mkmsg.fbpmsg()
+#        comment = 'Positioners start to move to target positions.'
+#        reply_data.update(message=comment,process='START',status='success',fbp_state = 'ING')
+#        rsp=json.dumps(reply_data)
+#        print('\033[32m'+'[FBP]', comment+'\033[0m')
+#        await FBP_server.send_message('ICS',rsp)
 
         await send_fbp_response(
                     FBP_server, message=f'Positioners start to move to target positions.',
@@ -164,7 +164,6 @@ async def identify_execute(FBP_server,cmd):
         # await asyncio.sleep(5)
 
         result = await FBP_action.rotate_all()
-        print(result)
 
         if result.get('status') == 'success':
             fbp_state = 'assign'
@@ -215,12 +214,12 @@ async def identify_execute(FBP_server,cmd):
         await FBP_server.send_message('ICS',rsp)
 
     if func == 'fbpzero':
-        reply_data=mkmsg.fbpmsg()
-        comment = 'Positioners start to move to zero positions.'
-        reply_data.update(message=comment,process='START',status='success', fbp_state = 'ING')
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[FBP]', comment+'\033[0m')
-        await FBP_server.send_message('ICS',rsp)
+#        reply_data=mkmsg.fbpmsg()
+#        comment = 'Positioners start to move to zero positions.'
+#        reply_data.update(message=comment,process='START',status='success', fbp_state = 'ING')
+#        rsp=json.dumps(reply_data)
+#        print('\033[32m'+'[FBP]', comment+'\033[0m')
+#        await FBP_server.send_message('ICS',rsp)
 
         await send_fbp_response(
                     FBP_server, message=f'Positioners starts to move to zero positions.',
@@ -249,7 +248,7 @@ async def identify_execute(FBP_server,cmd):
 
         result = await FBP_action.reverse_all()
 
-        await asyncio.sleep(5)
+#        await asyncio.sleep(5)
 
         if result.get('status') == 'success':
             fbp_state = 'initial'

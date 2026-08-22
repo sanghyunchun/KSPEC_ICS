@@ -18,6 +18,13 @@ import kspec_0_function as _core  # noqa: E402
 
 
 def _resolve_motion_file(filename: str) -> str:
+    """
+    motion JSON 파일의 실제 경로를 찾는다.
+
+    상대 경로가 들어오면 현재 실행 디렉토리, kspec_positioner_controller,
+    FBP/data 순서로 파일을 찾고, 찾지 못하면 controller 디렉토리 아래 경로를
+    기본값으로 반환한다.
+    """
     path = Path(filename)
     if path.is_absolute():
         return str(path)
@@ -41,6 +48,13 @@ import kspec_zero_position as _kspec_zero_position  # noqa: E402
 
 
 def _sync_motion_file_globals() -> None:
+    """
+    motion 파일 경로를 실제 구동 모듈들의 전역 변수에 동기화한다.
+
+    kspec_main.py, kspec_reverse.py, kspec_reverse_from_stop_step.py,
+    kspec_zero_position.py는 ALPHA_FILE/BETA_FILE 전역 변수를 직접 참조한다.
+    따라서 position_action.py에서 보정한 파일 경로를 각 모듈에 다시 넣어준다.
+    """
     for module in (
         _kspec_main,
         _kspec_reverse,
@@ -55,6 +69,16 @@ _sync_motion_file_globals()
 
 
 def _error_result(message: str, **data: Any) -> dict[str, Any]:
+    """
+    예외 상황을 command.py가 처리할 수 있는 result dictionary로 변환한다.
+
+    Returns:
+        {
+            "status": "error",
+            "message": str,
+            "data": dict,
+        }
+    """
     return {
         "status": "error",
         "message": message,
@@ -63,6 +87,16 @@ def _error_result(message: str, **data: Any) -> dict[str, Any]:
 
 
 async def _close_plcs(plc_connections: dict[str, Any]) -> dict[str, str]:
+    """
+    열려 있는 PLC 연결들을 닫고, 닫기 실패 정보를 반환한다.
+
+    Args:
+        plc_connections: {"PLC1": plc, "PLC2": plc} 형태의 PLC 연결 dictionary.
+
+    Returns:
+        닫기에 실패한 PLC 정보. 실패가 없으면 빈 dictionary를 반환한다.
+        예: {"PLC1": "error message"}
+    """
     close_results = await asyncio.gather(
         *[
             asyncio.to_thread(plc.close)
@@ -80,6 +114,18 @@ async def _close_plcs(plc_connections: dict[str, Any]) -> dict[str, str]:
 
 
 async def _open_command_plcs() -> dict[str, Any]:
+    """
+    command 실행에 사용할 PLC1/PLC2 연결을 연다.
+
+    PLC1과 PLC2를 동시에 open한다. 한쪽 PLC 연결이 실패하면 이미 열린
+    다른 PLC 연결을 닫고 RuntimeError를 발생시킨다.
+
+    Returns:
+        {
+            "PLC1": plc_connection,
+            "PLC2": plc_connection,
+        }
+    """
     plc_connections = {
         "PLC1": _core.create_plc_connection("PLC1"),
         "PLC2": _core.create_plc_connection("PLC2"),
@@ -114,6 +160,33 @@ async def _run_with_plcs(
     *args: Any,
     **kwargs: Any,
 ) -> dict[str, Any]:
+    """
+    PLC 연결이 필요한 FBP 동작을 실행하는 공통 wrapper 함수.
+
+    command.py에서 호출되는 대부분의 public 함수는 이 함수를 통해 실행된다.
+    이 함수는 motion 파일 경로를 동기화하고, PLC1/PLC2 연결을 연 뒤,
+    실제 구동 함수(action)를 실행하고, 마지막에 PLC 연결을 닫는다.
+
+    Args:
+        action: plc_connections를 첫 번째 인자로 받는 실제 구동 coroutine.
+        *args: action에 전달할 위치 인자.
+        **kwargs: action에 전달할 키워드 인자.
+
+    Returns:
+        실행 결과 dictionary를 반환한다.
+
+        기본 구조:
+            {
+                "status": "success" | "fail" | "error" | "stopped" | "idle",
+                "message": str,
+                "data": dict,
+            }
+
+    Notes:
+        action 실행 중 예외가 발생하면 서버가 죽지 않도록 "error" 상태의
+        result dictionary로 변환한다. PLC 연결 종료 실패도 data 안에
+        failed_close_plcs로 추가한다.
+    """
     plc_connections = None
     result: dict[str, Any] | None = None
 
@@ -152,10 +225,60 @@ async def _run_with_plcs(
 
 
 async def rotate_all() -> dict[str, Any]:
+    """
+    Lock되지 않은 모든 포지셔너 축을 target position까지 정방향으로 이동한다.
+
+    command.py에서 fbpmoveall 명령을 처리하기 위한 wrapper 함수이다.
+    실제 구동은 kspec_main.main()에서 수행하며, PLC 연결은
+    _run_with_plcs()에서 열고 닫는다.
+
+    Returns:
+        실행 결과 dictionary를 반환한다.
+
+        성공 시 data 주요 항목:
+            {
+                "direction": "forward",
+                "total_steps": int,
+                "active_plcs": list[str],
+                "motion_axes": list[int],
+                "locked_axes": list[int],
+                "completed_steps": dict,
+                "allowed_steps": dict,
+                "final_positions": dict,
+            }
+
+    Notes:
+        kspec_main.main() 내부에서 result_*.json 파일이 FBP/Log 아래에 저장된다.
+    """
     return await _run_with_plcs(_kspec_main.main)
 
 
 async def reverse_all() -> dict[str, Any]:
+    """
+    전체 포지셔너를 target position에서 initial position 쪽으로 역방향 이동한다.
+
+    command.py에서 fbpinitial 명령을 처리하기 위한 wrapper 함수이다.
+    실제 구동은 kspec_reverse.reverse_main()에서 수행하며, PLC 연결은
+    _run_with_plcs()에서 열고 닫는다.
+
+    Returns:
+        실행 결과 dictionary를 반환한다.
+
+        성공 시 data 주요 항목:
+            {
+                "direction": "reverse",
+                "total_steps": int,
+                "active_plcs": list[str],
+                "motion_axes": list[int],
+                "locked_axes": list[int],
+                "completed_steps": dict,
+                "allowed_steps": dict,
+                "final_positions": dict,
+            }
+
+    Notes:
+        kspec_reverse.reverse_main() 내부에서 result_*.json 파일이 FBP/Log 아래에 저장된다.
+    """
     return await _run_with_plcs(_kspec_reverse.reverse_main)
 
 
@@ -163,6 +286,31 @@ async def reverse_from_stop_step(
     position_tolerance: float = 0.2,
     step_timeout: float = 300.0,
 ) -> dict[str, Any]:
+    """
+    Stop으로 중단된 구동을 Stop 기록 기준으로 initial 방향으로 복귀시킨다.
+
+    command.py에서 fbpinitial_from_stop 명령을 처리하기 위한 wrapper 함수이다.
+    실제 복귀 로직은 kspec_reverse_from_stop_step.reverse_from_stop_step()에서
+    수행한다.
+
+    Args:
+        position_tolerance: 복귀 시작 위치 확인에 사용할 허용오차. 단위는 degree.
+        step_timeout: 각 step 완료를 기다리는 최대 시간. 단위는 second.
+
+    Returns:
+        실행 결과 dictionary를 반환한다.
+
+        기본 구조:
+            {
+                "status": "success" | "fail" | "error" | "stopped",
+                "message": str,
+                "data": dict,
+            }
+
+    Notes:
+        PLC에 저장된 Stop 기록이 없거나, Stop 기록의 motion mode가 복귀 가능한
+        mode가 아니면 실패 result를 반환한다.
+    """
     return await _run_with_plcs(
         _kspec_reverse_from_stop_step.reverse_from_stop_step,
         position_tolerance=position_tolerance,
@@ -175,6 +323,31 @@ async def zero_main(
     zero_tolerance: float = 0.1,
     timeout: float = 60.0,
 ) -> dict[str, Any]:
+    """
+    포지셔너 축들을 0도 위치로 이동한다.
+
+    command.py에서 fbpzero 명령을 처리하기 위한 wrapper 함수이다.
+    실제 0도 이동 로직은 kspec_zero_position.zero_main()에서 수행한다.
+
+    Args:
+        start_tolerance: 0도 이동 시작 위치 확인에 사용할 허용오차. 단위는 degree.
+        zero_tolerance: 최종 0도 도착 확인에 사용할 허용오차. 단위는 degree.
+        timeout: 0도 이동 완료를 기다리는 최대 시간. 단위는 second.
+
+    Returns:
+        실행 결과 dictionary를 반환한다.
+
+        성공 시 data 주요 항목:
+            {
+                "direction": "zero",
+                "motion_axes": list[int],
+                "locked_axes": list[int],
+                "start_positions": dict,
+                "final_positions": dict,
+                "zero_total_steps": int,
+                "json_total_steps": int,
+            }
+    """
     return await _run_with_plcs(
         _kspec_zero_position.zero_main,
         start_tolerance=start_tolerance,
@@ -188,6 +361,24 @@ async def stop_all_positioner(
     start_timeout: float = 2.0,
     timeout: float = 30.0,
 ) -> dict[str, Any]:
+    """
+    현재 구동 중인 포지셔너 축들을 감속 정지한다.
+
+    command.py에서 fbpstop 명령을 처리하기 위한 wrapper 함수이다.
+    실제 Stop 명령 전송과 Stop 기록 확인은 kspec_stop.stop_all_positioner()에서
+    수행한다.
+
+    Args:
+        dec: Stop에 사용할 감속도.
+        start_timeout: PLC가 Stop 요청을 접수했는지 확인하는 최대 시간.
+        timeout: Stop 완료를 기다리는 최대 시간.
+
+    Returns:
+        실행 결과 dictionary를 반환한다.
+
+        정상 정지 시 status는 일반적으로 "stopped"이다.
+        data에는 moving_axes, stop_records, final_positions 등의 정보가 들어간다.
+    """
     return await _run_with_plcs(
         _kspec_stop.stop_all_positioner,
         dec=dec,
@@ -206,6 +397,43 @@ async def rotate_one(
     start_timeout: float = 2.0,
     timeout: float = 30.0,
 ) -> dict[str, Any]:
+    """
+    지정한 포지셔너의 alpha 또는 beta 모터 하나를 절대각도로 이동한다.
+
+    command.py에서 fbpmoveone 명령을 처리하기 위한 wrapper 함수이다.
+    실제 단일 축 구동은 kspec_0_function.rotate_one()에서 수행한다.
+    PLC 연결은 _run_with_plcs()에서 열고 닫는다.
+
+    Args:
+        positioner: 포지셔너 이름. 예: "A1", "A2", ..., "A5".
+        motor: 모터 이름. "alpha" 또는 "beta".
+        angle: 이동할 목표 절대각도. 단위는 degree.
+        velocity: 모터 구동 속도.
+        acc: 모터 가속도.
+        dec: 모터 감속도.
+        start_timeout: PLC가 모션 시작을 확인할 때까지 기다리는 최대 시간.
+        timeout: 모터 이동 완료를 기다리는 최대 시간.
+
+    Returns:
+        실행 결과 dictionary를 반환한다.
+
+        성공 시 data 예:
+            {
+                "positioner": str,
+                "motor": str,
+                "plc_name": str,
+                "global_axis": int,
+                "local_axis": int,
+                "current_position_before_move": float,
+                "target_angle": float,
+                "actual_position": float,
+                "locked": bool,
+            }
+
+    Notes:
+        이 함수 자체는 result JSON 파일을 저장하지 않는다.
+        반환된 결과는 command.py에서 ICS/GUI로 전송된다.
+    """
     return await _run_with_plcs(
         _core.rotate_one,
         positioner=positioner,
@@ -220,14 +448,62 @@ async def rotate_one(
 
 
 async def positioner_lock(positioners: list[str] | str) -> dict[str, Any]:
+    """
+    입력한 포지셔너들을 Lock 상태로 설정하고 나머지는 Unlock한다.
+
+    command.py에서 fbplock 명령을 처리하기 위한 wrapper 함수이다.
+    실제 Lock 변경과 검증은 kspec_0_function.positioner_lock()에서 수행한다.
+
+    Args:
+        positioners: Lock할 포지셔너 목록. 예: ["A1", "A3"].
+            빈 list 또는 빈 문자열이면 전체 Unlock으로 처리된다.
+
+    Returns:
+        실행 결과 dictionary를 반환한다.
+
+        성공 시 data 주요 항목:
+            {
+                "locked_positioners": list[str],
+                "locked_axes": list[int],
+                "unlocked_positioners": list[str],
+                "unlocked_axes": list[int],
+            }
+    """
     return await _run_with_plcs(_core.positioner_lock, positioners)
 
 
 async def show_status(axis: str) -> dict[str, Any]:
+    """
+    포지셔너 하나의 alpha/beta 현재 상태를 읽는다.
+
+    command.py에서 fbpstatus 명령을 처리하기 위한 wrapper 함수이다.
+    실제 상태 읽기는 kspec_0_function.show_status()에서 수행한다.
+
+    Args:
+        axis: 상태를 확인할 포지셔너 이름. 예: "A1".
+
+    Returns:
+        실행 결과 dictionary를 반환한다.
+
+        성공 시 data에는 alpha와 beta의 현재 각도, Busy, Error, Locked 상태가
+        들어간다.
+    """
     return await _run_with_plcs(_core.show_status, axis)
 
 
 async def show_status_all() -> dict[str, Any]:
+    """
+    A1부터 A5까지 모든 포지셔너의 현재 상태를 읽는다.
+
+    실제 상태 읽기는 kspec_0_function.show_status_all()에서 수행한다.
+
+    Returns:
+        실행 결과 dictionary를 반환한다.
+
+    Notes:
+        kspec_0_function.show_status_all() 내부에서 result_*.json 파일이
+        FBP/Log 아래에 저장된다.
+    """
     return await _run_with_plcs(_core.show_status_all)
 
 
@@ -236,6 +512,28 @@ async def _check_all_zero_positions(
     zero_tolerance: float = 0.1,
     include_locked_axes: bool = False,
 ) -> dict[str, Any]:
+    """
+    PLC 연결을 이용해 검사 대상 축들이 모두 0도 위치에 있는지 확인한다.
+
+    Args:
+        plc_connections: {"PLC1": plc, "PLC2": plc} 형태의 열린 PLC 연결.
+        zero_tolerance: 0도 판정에 사용할 허용오차. 단위는 degree.
+        include_locked_axes: True이면 Lock된 축도 검사하고,
+            False이면 Lock된 축은 검사 대상에서 제외한다.
+
+    Returns:
+        0도 검사 결과 dictionary를 반환한다.
+
+        data 주요 항목:
+            {
+                "zero_tolerance": float,
+                "include_locked_axes": bool,
+                "locked_axes": list[int],
+                "unlocked_axes": list[int],
+                "invalid_axes": list[dict],
+                "final_positions": dict,
+            }
+    """
     lock_results = await asyncio.gather(
         _core.read_one_plc_lock_state("PLC1", plc_connections["PLC1"]),
         _core.read_one_plc_lock_state("PLC2", plc_connections["PLC2"]),
@@ -338,6 +636,23 @@ async def check_all_zero_positions(
     zero_tolerance: float = 0.1,
     include_locked_axes: bool = False,
 ) -> dict[str, Any]:
+    """
+    현재 모든 검사 대상 축이 0도 위치에 있는지 확인한다.
+
+    command.py에서 fbpmoveone 이후 fbp_state를 "manual" 또는 "zero"로
+    결정할 때 사용하는 wrapper 함수이다. PLC 연결은 _run_with_plcs()에서
+    열고 닫는다.
+
+    Args:
+        zero_tolerance: 0도 판정에 사용할 허용오차. 단위는 degree.
+        include_locked_axes: True이면 Lock된 축도 검사하고,
+            False이면 Lock된 축은 검사 대상에서 제외한다.
+
+    Returns:
+        검사 결과 dictionary를 반환한다.
+        모든 검사 대상 축이 0도이면 status는 "success"이고,
+        하나라도 허용오차를 벗어나면 status는 "fail"이다.
+    """
     return await _run_with_plcs(
         _check_all_zero_positions,
         zero_tolerance=zero_tolerance,
