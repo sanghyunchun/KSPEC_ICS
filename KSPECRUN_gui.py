@@ -412,7 +412,7 @@ class MainWindow(QMainWindow):
 
         color = color_map.get(level,"black")
 
-        self.uttime = QDateTime.currentDateTimeUtc().toString('hh:mm:ss')
+        self.uttime = QDateTime.currentDateTimeUtc().toString('hh:mm:ss.ss')
         self.ui.log1.append(f'<span style="color:{color};">[{self.uttime}][ICS] {message}</span>')
         self.ui.log2.append(f'<span style="color:{color};">[{self.uttime}][ICS] {message}</span>')
         self.ui.log1.moveCursor(QTextCursor.End)
@@ -1129,14 +1129,14 @@ class MainWindow(QMainWindow):
         if not self.check_syscheck():
             return
 
-        if not self.ui.lineEdit_FBP_lock.text():
-            self.logging('Insert positioner label you want lock', level = 'error')
-            return
-        
-        positioner_text = self.ui.lineEdit_FBP_lock.text()
-    #    positioner_list = [item.strip() for item in positioner_text.split(',')]
+        positioner_text = self.ui.lineEdit_FBP_lock.text().strip()
 
-        await handle_fbp(f'fbplock {positioner_text}', self.ICS_client)
+        if positioner_text:
+            await handle_fbp(f'fbplock {positioner_text}', self.ICS_client)
+            self.logging(f'Sent Lock Positioners {positioner_text}', level='send')
+        else:
+            await handle_fbp('fbplock', self.ICS_client)
+            self.logging('Sent Unlock All Positioners', level='send')
     
 
     @asyncSlot()

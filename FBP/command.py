@@ -73,7 +73,7 @@ async def identify_execute(FBP_server,cmd):
 
     if func == 'fbpstatus':
         positioner = dict_data['positioner']
-        result = FBP_action.show_status(axis=positioner)
+        result = await FBP_action.show_status(axis=positioner)
         print(result['data'])
 
         await send_fbp_response(
@@ -82,12 +82,24 @@ async def identify_execute(FBP_server,cmd):
         )
 
     if func == 'fbplock':
-        positioner_text = dict_data['positioners']
-        positioner_list = [item.strip() for item in positioner_text.split(',')]
+        positioner_text = dict_data.get('positioners', '')
 
-        print(positioner_list)
+        if isinstance(positioner_text, list):
+            positioner_list = [
+                str(item).strip()
+                for item in positioner_text
+                if str(item).strip()
+            ]
+        else:
+            positioner_text = str(positioner_text).strip()
+            positioner_list = [
+                item.strip()
+                for item in positioner_text.split(',')
+                if item.strip()
+            ]
 
-        result = FBP_action.positioner_lock(positioner_list)
+    #    print(positioner_list)
+        result = await FBP_action.positioner_lock(positioner_list)
 
         await send_fbp_response(
             FBP_server, result, func='fbplock',process = 'Done', fbp_state = 'None')
@@ -97,11 +109,11 @@ async def identify_execute(FBP_server,cmd):
         await send_fbp_response(
                     FBP_server, message=f'Start stop current positioners moving',
                     process='START', status='success', fbp_state='assign')
-        await asyncio.sleep(5)
+        await asyncio.sleep(1)
 
-        result = FBP_action.stop_all_positioner()
+        result = await FBP_action.stop_all_positioner()
         
-        if result['status'] == 'success':
+        if result['status'] in ('success', 'stopped'):
             await send_fbp_response(
                     FBP_server, result, func = 'fbpstop', process = 'Done', fbp_state = 'stop')
         else:
@@ -118,9 +130,9 @@ async def identify_execute(FBP_server,cmd):
 
         # await asyncio.sleep(5)
 
-        result = FBP_action.rotate_one(positioner=positioner, motor=motor, angle=angle)
+        result = await FBP_action.rotate_one(positioner=positioner, motor=motor, angle=angle)
 
-        check_zero = FBP_action.check_all_zero_positions()
+        check_zero = await FBP_action.check_all_zero_positions()
 
         print(check_zero)
 
@@ -151,12 +163,19 @@ async def identify_execute(FBP_server,cmd):
 
         # await asyncio.sleep(5)
 
-        result = await asyncio.to_thread(FBP_action.rotate_all)
+        result = await FBP_action.rotate_all()
         print(result)
+
+        if result.get('status') == 'success':
+            fbp_state = 'assign'
+        elif result.get('status') == 'stopped':
+            fbp_state = 'stop'
+        else:
+            fbp_state = 'None'
 
         await send_fbp_response(
                 FBP_server, result, func = 'fbpmoveall',
-                process='Done', fbp_state = 'assign'
+                process='Done', fbp_state = fbp_state
         )
 
         
@@ -211,9 +230,16 @@ async def identify_execute(FBP_server,cmd):
 
         result = await FBP_action.zero_main()
 
+        if result.get('status') == 'success':
+            fbp_state = 'zero'
+        elif result.get('status') == 'stopped':
+            fbp_state = 'stop'
+        else:
+            fbp_state = 'None'
+
         await send_fbp_response(
                 FBP_server, result, func = 'fbpzero',
-                process='Done', fbp_state = 'zero'
+                process='Done', fbp_state = fbp_state
         )
 
 
@@ -221,24 +247,38 @@ async def identify_execute(FBP_server,cmd):
         comment = 'Positioners start to move to initial positions from assigned positions.'
         await send_fbp_response(FBP_server,message=comment,process='START',status='success',fbp_state='ING')
 
-        result = await asyncio.to_thread(FBP_action.reverse_all)
+        result = await FBP_action.reverse_all()
 
         await asyncio.sleep(5)
 
+        if result.get('status') == 'success':
+            fbp_state = 'initial'
+        elif result.get('status') == 'stopped':
+            fbp_state = 'stop'
+        else:
+            fbp_state = 'None'
+
         await send_fbp_response(
                 FBP_server, result, func = 'fbpinitial',
-                process='Done', fbp_state = 'initial'
+                process='Done', fbp_state = fbp_state
         )
 
     if func == 'fbpinitial_from_stop':
         comment = 'Positioners start to move to initial positions from stop positions.'
         await send_fbp_response(FBP_server,message=comment,process='START',status='success',fbp_state='ING')
 
-        result = await asyncio.to_thread(FBP_action.reverse_from_stop_step)
+        result = await FBP_action.reverse_from_stop_step()
+
+        if result.get('status') == 'success':
+            fbp_state = 'initial'
+        elif result.get('status') == 'stopped':
+            fbp_state = 'stop'
+        else:
+            fbp_state = 'None'
 
         await send_fbp_response(
                 FBP_server, result, func = 'fbpintial_from_stop',
-                process='Done', fbp_state = 'initial'
+                process='Done', fbp_state = fbp_state
         )
 
 # Below functions are for simulation. When connect the Fiber positioner, please annotate
@@ -327,8 +367,3 @@ def savemotion(dict_data):
 
     msg=f'Motion plan of {arm} is successfully loaded in FBP server.'
     return 'success', msg
-
-
-
-
-

@@ -29,7 +29,14 @@ def fbp_lock(positioner_list):
 
 async def handle_fbp(arg, ICS_client):
     """Handle Fiber positioner commands."""
-    cmd, *params = arg.split()
+    parts = arg.strip().split(maxsplit=1)
+    if not parts:
+        return
+
+    cmd = parts[0]
+    raw_params = parts[1] if len(parts) > 1 else ''
+    params = raw_params.split()
+
     command_map = {
         'fbpzero': fbp_zero, 'fbpoffset': fbp_offset, 'fbpmoveall': fbp_moveall,
         'fbpinitial': fbp_initial, 'fbpstop': fbp_stop, 'fbpinitial_from_stop': fbp_initial_from_stop
@@ -45,9 +52,7 @@ async def handle_fbp(arg, ICS_client):
         command_map[cmd] = lambda: fbp_moveone(positioner, motor, angle)
 
     if cmd == 'fbplock':
-        positioner_list = params[0]
-        print(positioner_list)
-        command_map[cmd] = lambda: fbp_lock(positioner_list)
+        command_map[cmd] = lambda: fbp_lock(raw_params.strip())
 
     if cmd in command_map:
         fbpmsg = command_map[cmd]()

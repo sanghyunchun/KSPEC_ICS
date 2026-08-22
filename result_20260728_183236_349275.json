@@ -1,8 +1,0 @@
-{
-    "status": "fail",
-    "message": "JSON 파일을 찾을 수 없습니다: alpha_tile1001.json",
-    "data": {
-        "missing_file": "alpha_tile1001.json"
-    },
-    "result_file": "/media/shyunc/DATA/KSpec/KSPEC_ICS/result_20260728_183236_349275.json"
-}
