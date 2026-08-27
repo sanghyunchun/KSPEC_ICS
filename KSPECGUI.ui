@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1512</width>
-    <height>1013</height>
+    <height>1014</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -1635,7 +1635,7 @@
         <widget class="QPushButton" name="pushbtn_reset1">
          <property name="geometry">
           <rect>
-           <x>770</x>
+           <x>690</x>
            <y>30</y>
            <width>171</width>
            <height>51</height>
@@ -1816,6 +1816,25 @@
          </property>
          <property name="textFormat">
           <enum>Qt::PlainText</enum>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_7">
+         <property name="geometry">
+          <rect>
+           <x>868</x>
+           <y>30</y>
+           <width>81</width>
+           <height>51</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="pixmap">
+          <pixmap>Taegeukgi.png</pixmap>
+         </property>
+         <property name="scaledContents">
+          <bool>true</bool>
          </property>
         </widget>
        </widget>
@@ -2047,7 +2066,7 @@
          </sizepolicy>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="tab_queue">
          <attribute name="title">
@@ -2443,7 +2462,7 @@
          </widget>
          <widget class="QPushButton" name="pushbtn_run_calib">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <property name="geometry">
            <rect>
@@ -16479,8 +16498,8 @@
         <widget class="QLabel" name="label_FBP_lock">
          <property name="geometry">
           <rect>
-           <x>417</x>
-           <y>671</y>
+           <x>600</x>
+           <y>670</y>
            <width>97</width>
            <height>23</height>
           </rect>
@@ -16501,10 +16520,10 @@
         <widget class="QLineEdit" name="lineEdit_FBP_lock">
          <property name="geometry">
           <rect>
-           <x>410</x>
-           <y>700</y>
+           <x>590</x>
+           <y>696</y>
            <width>111</width>
-           <height>25</height>
+           <height>30</height>
           </rect>
          </property>
          <property name="font">
@@ -16532,10 +16551,10 @@
          </property>
          <property name="geometry">
           <rect>
-           <x>610</x>
-           <y>729</y>
+           <x>790</x>
+           <y>730</y>
            <width>71</width>
-           <height>31</height>
+           <height>30</height>
           </rect>
          </property>
          <property name="font">
@@ -16560,10 +16579,10 @@
          </property>
          <property name="geometry">
           <rect>
-           <x>530</x>
-           <y>729</y>
+           <x>710</x>
+           <y>696</y>
            <width>71</width>
-           <height>31</height>
+           <height>30</height>
           </rect>
          </property>
          <property name="font">
@@ -16589,9 +16608,9 @@
          <property name="geometry">
           <rect>
            <x>200</x>
-           <y>727</y>
+           <y>730</y>
            <width>81</width>
-           <height>31</height>
+           <height>30</height>
           </rect>
          </property>
          <property name="font">
@@ -16616,10 +16635,10 @@
          </property>
          <property name="geometry">
           <rect>
-           <x>410</x>
-           <y>728</y>
+           <x>590</x>
+           <y>730</y>
            <width>111</width>
-           <height>31</height>
+           <height>30</height>
           </rect>
          </property>
          <property name="font">
@@ -16642,9 +16661,9 @@
          <property name="geometry">
           <rect>
            <x>200</x>
-           <y>700</y>
+           <y>696</y>
            <width>81</width>
-           <height>25</height>
+           <height>30</height>
           </rect>
          </property>
          <property name="font">
@@ -16672,7 +16691,7 @@
            <x>210</x>
            <y>670</y>
            <width>61</width>
-           <height>21</height>
+           <height>23</height>
           </rect>
          </property>
          <property name="text">
@@ -16698,7 +16717,7 @@
            <x>100</x>
            <y>670</y>
            <width>101</width>
-           <height>21</height>
+           <height>23</height>
           </rect>
          </property>
          <property name="text">
@@ -16709,9 +16728,9 @@
          <property name="geometry">
           <rect>
            <x>100</x>
-           <y>700</y>
+           <y>696</y>
            <width>91</width>
-           <height>25</height>
+           <height>30</height>
           </rect>
          </property>
          <property name="font">
@@ -16740,9 +16759,9 @@
          <property name="geometry">
           <rect>
            <x>100</x>
-           <y>727</y>
+           <y>730</y>
            <width>91</width>
-           <height>31</height>
+           <height>30</height>
           </rect>
          </property>
          <property name="font">
@@ -16811,10 +16830,10 @@
          </property>
          <property name="geometry">
           <rect>
-           <x>610</x>
-           <y>690</y>
+           <x>790</x>
+           <y>696</y>
            <width>71</width>
-           <height>31</height>
+           <height>30</height>
           </rect>
          </property>
          <property name="font">
@@ -16839,10 +16858,10 @@
          </property>
          <property name="geometry">
           <rect>
-           <x>690</x>
-           <y>690</y>
+           <x>870</x>
+           <y>696</y>
            <width>71</width>
-           <height>71</height>
+           <height>64</height>
           </rect>
          </property>
          <property name="font">
@@ -16858,7 +16877,8 @@
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To set the information of the observation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
-          <string>Stop</string>
+          <string>FBP 
+STOP</string>
          </property>
         </widget>
         <widget class="QLabel" name="label_4">
@@ -16867,7 +16887,7 @@
            <x>269</x>
            <y>670</y>
            <width>111</width>
-           <height>21</height>
+           <height>23</height>
           </rect>
          </property>
          <property name="font">
@@ -16881,6 +16901,29 @@
          </property>
          <property name="text">
           <string>+ : clockwise</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_9">
+         <property name="geometry">
+          <rect>
+           <x>464</x>
+           <y>670</y>
+           <width>111</width>
+           <height>23</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Loaded Tile</string>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="lineEdit">
+         <property name="geometry">
+          <rect>
+           <x>460</x>
+           <y>696</y>
+           <width>113</width>
+           <height>30</height>
+          </rect>
          </property>
         </widget>
        </widget>
@@ -17885,7 +17928,7 @@
         <widget class="QPushButton" name="pushbtn_reset2">
          <property name="geometry">
           <rect>
-           <x>770</x>
+           <x>690</x>
            <y>30</y>
            <width>171</width>
            <height>51</height>
@@ -18098,6 +18141,25 @@
          </property>
          <property name="textFormat">
           <enum>Qt::PlainText</enum>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_8">
+         <property name="geometry">
+          <rect>
+           <x>868</x>
+           <y>30</y>
+           <width>81</width>
+           <height>51</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="pixmap">
+          <pixmap>Taegeukgi.png</pixmap>
+         </property>
+         <property name="scaledContents">
+          <bool>true</bool>
          </property>
         </widget>
        </widget>

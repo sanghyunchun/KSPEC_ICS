@@ -1,0 +1,14 @@
+{
+    "Flat": {
+        "exptime": 10,
+        "expnum": 10
+    },
+    "Arc": {
+        "exptime": 10,
+        "expnum": 10
+    },
+    "Bias": {
+        "exptime": 0,
+        "expnum" : 10
+    }
+}

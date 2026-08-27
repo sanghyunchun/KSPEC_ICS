@@ -7,6 +7,7 @@ import asyncio
 import json
 
 
+
 def create_spec_command(func, **kwargs):
     """Helper function to create SPECTROGRAPH commands."""
     cmd_data = mkmsg.specmsg()
@@ -22,21 +23,24 @@ def illu_off(): return create_spec_command('illuoff', message ='Turn off back-il
 
 def spec_initial(dir_name): return create_spec_command('specinitial', dirname=dir_name, message = f'Initialize Spectrograph')
 
-def get_obj(exptime,nframe,header):
+def get_obj(exptime,nframe, header):
     return create_spec_command('getobj', time=exptime, numframe=nframe, header=header, message =f'Exposure {exptime} seconds for objects.')
 
-def get_bias(nframe): 
-    return create_spec_command('getbias', numframe=nframe, message =f'Get {nframe} bias images.')
+def get_bias(nframe, header): 
+    return create_spec_command('getbias', numframe=nframe, header=header, message =f'Get {nframe} bias images.')
 
-def get_flat(exptime,nframe): 
-    return create_spec_command('getflat', time=exptime, numframe=nframe, message =f'Get {nframe} flat images by {exptime} senconds exposure.')
+def get_flat(exptime,nframe, header): 
+    return create_spec_command('getflat', time=exptime, numframe=nframe, header=header, message =f'Get {nframe} flat images by {exptime} senconds exposure.')
 
-def get_arc(exptime,nframe):
-    return create_spec_command('getarc', time=exptime, numframe=nframe, message =f'Get {nframe} arc images by {exptime} senconds exposure.')
+def get_arc(exptime,nframe, header):
+    return create_spec_command('getarc', time=exptime, numframe=nframe, header=header, message =f'Get {nframe} arc images by {exptime} senconds exposure.')
 
 
-async def handle_spec(arg, ICS_client, header):
+async def handle_spec(arg, ICS_client, header=None):
     cmd, *params = arg.split()
+    if header is None:
+        header = {}
+
     command_map = {
         'specstatus': spec_status,
         'illuon' : illu_on,
@@ -61,7 +65,7 @@ async def handle_spec(arg, ICS_client, header):
         except ValueError:
             print(f"Error: Input parameters of 'getobj' should be float and int. input value: {params[0]} {params[1]}")
             return
-        command_map[cmd] = lambda: get_obj(ExpT,obsnum, header)
+        command_map[cmd] = lambda: get_obj(ExpT, obsnum, header)
 
     if cmd == 'getbias':
         if len(params) != 1:
@@ -73,7 +77,7 @@ async def handle_spec(arg, ICS_client, header):
         except ValueError:
             print(f"Error: Input parameters of 'getbias' should be int. input value: {params[0]}")
             return
-        command_map[cmd] = lambda: get_bias(obsnum)
+        command_map[cmd] = lambda: get_bias(obsnum, header)
 
     if cmd == 'getflat':
         if len(params) != 2:
@@ -84,7 +88,7 @@ async def handle_spec(arg, ICS_client, header):
         except ValueError:
             print(f"Error: Input parameters of 'getflat' should be float and int. input value: {params[0]} {params[1]}")
             return
-        command_map[cmd] = lambda: get_flat(ExpT,obsnum)
+        command_map[cmd] = lambda: get_flat(ExpT,obsnum, header)
 
     if cmd == 'getarc':
         if len(params) != 2:
@@ -95,11 +99,10 @@ async def handle_spec(arg, ICS_client, header):
         except ValueError:
             print(f"Error: Input parameters of 'getarc' should be float and int. input value: {params[0]} {params[1]}")
             return
-        command_map[cmd] = lambda: get_arc(ExpT,obsnum)
+        command_map[cmd] = lambda: get_arc(ExpT,obsnum, header)
 
     if cmd in command_map:
         specmsg = command_map[cmd]()
         await ICS_client.send_message("SPEC", specmsg)
     else:
         print(f"Error: '{cmd}' is not right command for SPECTROGRAPH.")
-
