@@ -695,10 +695,27 @@ class MainWindow(QMainWindow):
         if inst == "GFA" and process == "ING":
             fwhm = response_data.get("fwhm")
             if fwhm is not None:
-                self.fwhm = round(fwhm, 2)
-                # self.ui.lineEdit_seeing.setText(f"{self.fwhm}")
-                # self.show_guiding()
+                try:
+                    fwhm_value = float(fwhm)
+                except (TypeError, ValueError):
+                    fwhm_value = None
 
+                if fwhm_value is not None and np.isfinite(fwhm_value):
+                    self.fwhm = round(fwhm_value, 2)
+                    # self.ui.lineEdit_seeing.setText(f"{self.fwhm}")
+                    # self.show_guiding()
+
+        return True
+
+    async def _handle_gfa_guiding_terminal_response(self, response_data, inst, process, status, msg):
+        if inst != "GFA" or process != "Done" or status not in ("warning", "error", "fail"):
+            return False
+
+        if "guid" not in str(msg).lower():
+            return False
+
+        await self.GFA_response_queue.put(response_data)
+        await self.response_queue.put(response_data)
         return True
 
     async def on_ics_message(self, message: IncomingMessage):
@@ -728,6 +745,10 @@ class MainWindow(QMainWindow):
                 # 4. GFA POINT 완료 처리
                 if inst == "GFA" and process == "Done" and subinst == "POINT":
                     await self._handle_gfa_point_response(response_data, status)
+                    return
+
+                # 5. GFA guiding terminal warning/error 처리
+                if await self._handle_gfa_guiding_terminal_response(response_data, inst, process, status, msg):
                     return
 
                 # 5. SPEC image 처리
@@ -1190,7 +1211,7 @@ class MainWindow(QMainWindow):
         if not self.check_syscheck():
             return
 
-        if not self.ui.lineEdit_FBP_number.text() or not self.ui.lineEdit_FBP_angle.text():
+        if not self.ui.lineEdit_FBP_number.text().strip() or not self.ui.lineEdit_FBP_angle.text().strip():
             self.logging('Insert positioner label you wnat to rotate and the desired angle.', level = 'error')
             return
         
@@ -1201,18 +1222,34 @@ class MainWindow(QMainWindow):
             self.logging('Please check one motor you want to rotate.', level='error')
             return
 
-        if self.fbp_state in ('zero', 'manual'):
-            positioner_label = self.ui.lineEdit_FBP_number.text()
-            angle = self.ui.lineEdit_FBP_angle.text()
+        if motor_alpha and motor_beta:
+            self.logging('Please check only one motor you want to rotate.', level='error')
+            return
 
-            if motor_alpha:
-                await handle_fbp(f'fbpmoveone {positioner_label} alpha {angle}', self.ICS_client)
-                self.logging(f'Sent Rotate Positioner {positioner_label} alpha motor by {angle}.', level='send')
-                self.ui.lineEdit_FBP_number.clear()
-                self.ui.lineEdit_FBP_angle.clear()
-            else:
-                await handle_fbp(f'fbpmoveone {positioner_label} beta {angle}', self.ICS_client)
-                self.logging(f'Sent Rotate Positioner {positioner_label} beta motor by {angle}.',level='send')
+        motor_name = 'alpha' if motor_alpha else 'beta'
+        max_angle = 360.0 if motor_alpha else 180.0
+        angle = self.ui.lineEdit_FBP_angle.text().strip()
+
+        try:
+            angle_value = float(angle)
+        except ValueError:
+            self.logging('Insert a numeric FBP rotation angle.', level='error')
+            return
+
+        if not np.isfinite(angle_value):
+            self.logging('Insert a finite FBP rotation angle.', level='error')
+            return
+
+        if angle_value < 0 or angle_value > max_angle:
+            self.logging(f'{motor_name.capitalize()} angle must be between 0 and {max_angle:g} degrees.', level='error')
+            return
+
+        if self.fbp_state in ('zero', 'manual'):
+            positioner_label = self.ui.lineEdit_FBP_number.text().strip()
+            await handle_fbp(f'fbpmoveone {positioner_label} {motor_name} {angle}', self.ICS_client)
+            self.logging(f'Sent Rotate Positioner {positioner_label} {motor_name} motor by {angle}.', level='send')
+            self.ui.lineEdit_FBP_number.clear()
+            self.ui.lineEdit_FBP_angle.clear()
         else:
             self.logging('Manual rotation of positioners is possible in zero positions. Please move positioners to zero position first.', level='error')
 
@@ -1795,8 +1832,10 @@ class MainWindow(QMainWindow):
         # command and logging
         command = command_on if state else command_off
         #if command in ('fiducialon', 'fiducialoff'):
-        await handle_lamp(command, self.ICS_client)
+        result = await handle_lamp(command, self.ICS_client)
         self.logging(f"Sent {label} {'ON' if state else 'OFF'}", level='send')
+        self.logging(f"{label} {'ON' if result == 1 else 'OFF'}", level='receive')
+       
 
     @asyncSlot()
     async def flat_button_clicked(self):

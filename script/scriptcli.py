@@ -3,6 +3,7 @@ import json
 import redis
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import asyncio
+import math
 import numpy as np
 import pandas as pd
 from astropy.coordinates import Angle, SkyCoord
@@ -288,11 +289,50 @@ class script():
         
         print(calinfo)
 
-        # if logging != None:
-        #     logging('Sent Flat on.', level='send')
+        # Bias        
+        if logging != None:
+            logging(f'Sent getbias {calinfo['Bias']['exptime']} {calinfo['Bias']['expnum']}.', level='send')
 
-        # await handle_lamp('flaton',scriptrun.ICSclient)
-        # await scriptrun.response_queue.get()
+        await self.send_spec_and_log(
+            f'getbias {calinfo['Bias']['exptime']} {calinfo['Bias']['expnum']}',
+            'Flat',
+            calinfo['Bias']['exptime'],
+            calinfo['Bias']['expnum'],
+            scriptrun,
+            logging=logging,
+        )
+
+        # Arc
+        if logging != None:
+            logging('Sent Arc on.',level='send')
+
+        await handle_lamp('arcon',scriptrun.ICSclient)
+        await scriptrun.response_queue.get()
+        
+        if logging != None:
+            logging(f'Sent getarc {calinfo['Arc']['exptime']} {calinfo['Arc']['expnum']}.',level='send')
+
+        await self.send_spec_and_log(
+            f'getarc {calinfo['Arc']['exptime']} {calinfo['Arc']['expnum']}',
+            'Arc',
+            calinfo['Arc']['exptime'],
+            calinfo['Arc']['expnum'],
+            scriptrun,
+            logging=logging,
+        )
+
+        if logging != None:
+            logging('Sent Arc off.',level='send')
+
+        await handle_lamp('arcoff',scriptrun.ICSclient)
+        await scriptrun.response_queue.get()
+
+        # Flat
+        if logging != None:
+            logging('Sent Flat on.', level='send')
+
+        await handle_lamp('flaton',scriptrun.ICSclient)
+        await scriptrun.response_queue.get()
     
         if logging != None:
             logging(f'Sent getflat {calinfo['Flat']['exptime']} {calinfo['Flat']['expnum']}.', level='send')
@@ -308,46 +348,19 @@ class script():
             logging=logging,
         )
         
-        # if logging != None:
-        #     logging('Sent Flat off.', level='send')
-
-        # await handle_lamp('flatoff',scriptrun.ICSclient)
-        # await scriptrun.response_queue.get()
-        
-        # if logging != None:
-        #     logging('Sent Arc on.',level='send')
-
-        # await handle_lamp('arcon',scriptrun.ICSclient)
-        # await scriptrun.response_queue.get()
-        
         if logging != None:
-            logging(f'Sent getarc {calinfo['Arc']['exptime']} {calinfo['Arc']['expnum']}.',level='send')
+            logging('Sent Flat off.', level='send')
 
-        await self.send_spec_and_log(
-            f'getarc {calinfo['Arc']['exptime']} {calinfo['Arc']['expnum']}',
-            'Arc',
-            calinfo['Arc']['exptime'],
-            calinfo['Arc']['expnum'],
-            scriptrun,
-            logging=logging,
-        )
-
-        # await handle_spec('getarc 10 10',scriptrun.ICSclient)
-        # await scriptrun.response_queue.get()
+        await handle_lamp('flatoff',scriptrun.ICSclient)
+        await scriptrun.response_queue.get()
         
-        # if logging != None:
-        #     logging('Sent Arc off.',level='send')
-
-        # await handle_lamp('arcoff',scriptrun.ICSclient)
-        # await scriptrun.response_queue.get()
-
-        # printing("All Calibration images were obtained.")
-        # self.scrpt_task = None
-        # if logging != None:
-        #     logging("All Calibration images were obtained.", level='send')
-        #     scriptrun.show_status('LAMP','normal')
-        #     scriptrun.show_status('SPEC','normal')
-        #     logging('Run Calibration Task finished', level='normal')
+        printing("All Calibration images were obtained.")
+        self.scrpt_task = None
+        if logging != None:
+            logging("All Calibration images were obtained.", level='send')
+            scriptrun.show_status('LAMP','normal')
+            scriptrun.show_status('SPEC','normal')
+            logging('Run Calibration Task finished', level='normal')
 
 
     async def run_autoguide(self, scriptrun, exptime: float = 5.0, expnum: int = 1, save: bool = False, logging = None):
@@ -367,6 +380,12 @@ class script():
         value = abs(x)
         return f"{sign}{int(value * 100):04d}"
 
+    def _is_valid_guiding_number(self, value):
+        try:
+            return math.isfinite(float(value))
+        except (TypeError, ValueError):
+            return False
+
     async def handle_autoguide(self, exptime, expnum, save, scriptrun, logging):
         try:
             ra_bytes = await scriptrun.send_telcom_command('getra')
@@ -383,10 +402,30 @@ class script():
                     print("No GFA response")
                     continue
                 
-                if "fdx" in response_data:
-                    fdx=response_data['fdx']
-                    fdy=response_data['fdy']
-                    self.fwhm=response_data['fwhm']
+                status = response_data.get('status', 'error')
+                if status in ('warning', 'error', 'fail'):
+                    msg = response_data.get('message', 'GFA guiding stopped.')
+                    level = 'error' if status == 'error' else 'warning'
+                    logging(f'Autoguiding stopped without applying offset: {msg}', level=level)
+                    return
+
+                if "fdx" not in response_data:
+                    continue
+
+                fdx=response_data.get('fdx')
+                fdy=response_data.get('fdy')
+                fwhm=response_data.get('fwhm')
+
+                if not all(self._is_valid_guiding_number(value) for value in (fdx, fdy, fwhm)):
+                    logging(
+                        'Autoguiding stopped without applying offset: invalid guiding values received.',
+                        level='warning',
+                    )
+                    return
+
+                fdx = float(fdx)
+                fdy = float(fdy)
+                self.fwhm = float(fwhm)
 
                 #### Simulation ### 
                 #fdx = -0.78
@@ -407,15 +446,15 @@ class script():
                 #    logging(f'DEC offset {fdy} finished', level='receive')
 
                 ### Autoguiding using New coordinate ###
-                    logging(f'Calculated Offset (RA,DEC)=({fdx}, {fdy})', level='normal')
-                    ra_bytes = await scriptrun.send_telcom_command('getra')
-                    dec_bytes = await scriptrun.send_telcom_command('getdec')
-                    rahms=bytes_to_sexagesimal(ra_bytes)
-                    decdms=bytes_to_sexagesimal(dec_bytes)
-                    new_coord=apply_offset(rahms,decdms,fdx,fdy)
-                    logging(f'Applied Offset. New (RA,DEC) = {new_coord}', level='normal')
-                    messagetcs = 'KSPEC>TC ' + 'tmradec ' + new_coord
-                    await scriptrun.send_udp_message(messagetcs)
+                logging(f'Calculated Offset (RA,DEC)=({fdx}, {fdy})', level='normal')
+                ra_bytes = await scriptrun.send_telcom_command('getra')
+                dec_bytes = await scriptrun.send_telcom_command('getdec')
+                rahms=bytes_to_sexagesimal(ra_bytes)
+                decdms=bytes_to_sexagesimal(dec_bytes)
+                new_coord=apply_offset(rahms,decdms,fdx,fdy)
+                logging(f'Applied Offset. New (RA,DEC) = {new_coord}', level='normal')
+                messagetcs = 'KSPEC>TC ' + 'tmradec ' + new_coord
+                await scriptrun.send_udp_message(messagetcs)
 
         except asyncio.CancelledError:
             print("Autoguide task was cancelled.")

@@ -6,6 +6,7 @@ import Lib.mkmessage as mkmsg
 import asyncio
 import json
 import requests
+import xml.etree.ElementTree as ET
 
 """
 def create_lamp_command(func, **kwargs):
@@ -46,6 +47,15 @@ async def handle_lamp(arg, ICS_client):
         await ICS_client.send_message("LAMP", lampmsg)
 """
 
+def parse_relay1state(xml_text):
+    root = ET.fromstring(xml_text)
+    value = root.findtext("relay1state")
+
+    if value is None:
+        raise ValueError("relay1state not found in WebRelay response")
+
+    return int(value)
+
 async def handle_lamp(arg, ICS_client):
     cmd, *params = arg.split()
     webrelay_IP = "127.0.0.1:8080"
@@ -61,7 +71,7 @@ async def handle_lamp(arg, ICS_client):
 #        'fiducialoff': fiducialoff
 #    }
 
-    print(cmd)
+#    print(cmd)
     if cmd == 'flaton':
         url = f"http://{webrelay_IP}/state.xml?relayState=1"
     elif cmd == 'flatoff':
@@ -79,6 +89,15 @@ async def handle_lamp(arg, ICS_client):
 
     r = requests.get(url, auth=(webrelay_user, webrelay_pass), timeout=3)
     r.raise_for_status()
+
+
+    relay1state = parse_relay1state(r.text)
+
+    return relay1state
+
+    #print(r.status_code)
+    #print(r.text)
+    #print(r.headers)
 
 
 

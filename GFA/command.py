@@ -472,7 +472,16 @@ async def handle_guiding(GFA_server, gfa_actions, expt, expnum, save, ra: str=No
     try:
         while True:
             result = await gfa_actions.guiding(expt, expnum, SaveGrabRaw=save, ra=ra, dec=dec)
-            await send_gfa_response(GFA_server, result, process='ING')
+
+            status = result.get('status', 'error')
+            stop_statuses = ('error', 'warning', 'fail')
+            process = 'Done' if status in stop_statuses else 'ING'
+
+            await send_gfa_response(GFA_server, result, process=process)
+
+            if status in stop_statuses:
+                printing(f"Guiding stopped because status is {status}.")
+                return
 
             await asyncio.sleep(70)
 
