@@ -114,7 +114,7 @@ class script():
         self.fwhm = None
         self.ra = None
         self.dec = None
-        self.select_tile = None
+        self.TileID = None
         self.object = None
         self.project = None
         self.obsdate = None
@@ -132,13 +132,13 @@ class script():
     def configure_cordinate(self, project, obsdate, tileid, value1, value2, obsnum, expT, object_name=None):
         self.project = project
         self.obsdate = obsdate
-        self.select_tile = tileid
+        self.TileID = tileid
         self.object = object_name
         self.ra = value1
         self.dec = value2
         self.obsnum = obsnum
         self.expT = expT
-        print(f'{self.select_tile}, {self.ra}, {self.dec}')
+        print(f'{self.TileID}, {self.ra}, {self.dec}')
 
     def initialize_dependencies(self, ICSclient, send_udp_message, send_telcom_command,
             response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue,
@@ -172,7 +172,7 @@ class script():
         return set_header_info(
             obsdate=self.obsdate or self.dir_name,
             obstype=obstype,
-            TileID=self.select_tile,
+            TileID=self.TileID,
             obsra=self.ra,
             obsdec=self.dec,
             exptime=exptime,
@@ -185,13 +185,13 @@ class script():
         if self.obslog is None:
             return
 
-        object_name = self.object or self.select_tile
+        object_name = self.object or self.TileID
         try:
             await asyncio.to_thread(
                 self.obslog.add_log,
                 self.current_uttime(),
                 self.project,
-                self.select_tile,
+                self.TileID,
                 obstype,
                 object_name,
                 exptime,
@@ -494,8 +494,8 @@ class script():
         await clear_queue(scriptrun.ADC_response_queue)
         await clear_queue(scriptrun.SPEC_response_queue)
 
-        logging(f'###### Observation for Tile ID {self.select_tile} starts ######',level='comment')
-        printing(f'###### Observation for Tile ID {self.select_tile} starts ######')
+        logging(f'###### Observation for Tile ID {self.TileID} starts ######',level='comment')
+        printing(f'###### Observation for Tile ID {self.TileID} starts ######')
         
         if logging == None:
             printing('###### Observation Script Start!!! ######')
@@ -536,24 +536,24 @@ class script():
 
             tile_ids = set(row[0] for row in data)
             while True:
-                self.select_tile=input('\nPlease select Tile ID above you want to runscript.: ')
-                if self.select_tile.strip() in tile_ids:
-                    printing(f'Tile ID {self.select_tile} is selected from observation plan.')
+                self.TileID=input('\nPlease select Tile ID above you want to runscript.: ')
+                if self.TileID.strip() in tile_ids:
+                    printing(f'Tile ID {self.TileID} is selected from observation plan.')
                     for row in data:
-                        if row[0] == self.select_tile:
+                        if row[0] == self.TileID:
                             print(row)
                             obs_num=row[2]
                             print(f'Observation number of exposure: {obs_num}')
                     break
                 else:
-                    print(f'Tile ID {self.select_tile} was not found. Please enter a valid ID.')
+                    print(f'Tile ID {self.TileID} was not found. Please enter a valid ID.')
 
         
-            tilemsg,guidemsg,objmsg,motionmsg1,motionmsg2=sciobs.loadtile(self.select_tile)
+            tilemsg,guidemsg,objmsg,motionmsg1,motionmsg2=sciobs.loadtile(self.TileID)
             tile_data=json.loads(tilemsg)
             self.ra,self.dec=convert_to_sexagesimal(tile_data['ra'],tile_data['dec'])
 
-            printing(f'RA and DEC of Tile ID {self.select_tile}: {self.ra} {self.dec}')
+            printing(f'RA and DEC of Tile ID {self.TileID}: {self.ra} {self.dec}')
 
             await scriptrun.ICSclient.send_message("GFA", guidemsg)
             await scriptrun.response_queue.get()
@@ -576,7 +576,7 @@ class script():
             await scriptrun.response_queue.get()
             await asyncio.sleep(2)
 
-            printing(f'All accessary files for observation of Tile ID {self.select_tile} are successfully loaded')
+            printing(f'All accessary files for observation of Tile ID {self.TileID} are successfully loaded')
             ### End of CLI version ###
         
         await asyncio.sleep(2)
@@ -695,8 +695,8 @@ class script():
         await scriptrun.response_queue.get()
         
 
-        printing(f'###### Observation Script for Tile ID {self.select_tile} END!!! ######')
-        logging(f'###### Observation Script for Tile ID {self.select_tile} END!!! ######',level='comment')
+        printing(f'###### Observation Script for Tile ID {self.TileID} END!!! ######')
+        logging(f'###### Observation Script for Tile ID {self.TileID} END!!! ######',level='comment')
         
         
 

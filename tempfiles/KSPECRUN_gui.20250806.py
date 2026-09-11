@@ -639,7 +639,7 @@ class MainWindow(QMainWindow):
     @asyncSlot()
     async def load_tile(self):
         self.ui.lineEdit_CProj.setText(f'{self.project}')
-        self.ui.lineEdit_CTile.setText(f'{self.select_tile}')
+        self.ui.lineEdit_CTile.setText(f'{self.TileID}')
         await self.ICS_client.send_message("GFA", self.guidemsg)
         await self.response_queue.get()
         await asyncio.sleep(2)
@@ -712,7 +712,7 @@ class MainWindow(QMainWindow):
 
         dialog = SelectTile(header[:4], tile_lines, self)
         if dialog.exec() == QDialog.Accepted and dialog.selected_values:
-            self.select_tile=dialog.selected_values[0]
+            self.TileID=dialog.selected_values[0]
             self.obsnum=dialog.selected_values[2]
             self.expT=dialog.selected_values[3]
 
@@ -723,10 +723,10 @@ class MainWindow(QMainWindow):
         sciobs.obsdate=wild[-1].split('.')[0]
         self.project=wild[0]
         self.obsdate=wild[-1].split('.')[0]
-        self.tilemsg,self.guidemsg,self.objmsg,self.motionmsg1,self.motionmsg2=sciobs.loadtile(self.select_tile)
+        self.tilemsg,self.guidemsg,self.objmsg,self.motionmsg1,self.motionmsg2=sciobs.loadtile(self.TileID)
         self.ra,self.dec=self.convert_to_sexagesimal(sciobs.ra,sciobs.dec)
 
-        self.ui.lineEdit_TileID.setText(f'{self.select_tile}')
+        self.ui.lineEdit_TileID.setText(f'{self.TileID}')
         self.ui.lineEdit_ra_1.setText(f'{self.ra}')
         self.ui.lineEdit_dec_1.setText(f'{self.dec}')
         self.ui.lineEdit_exp_time_1.setText(f'{self.expT}')

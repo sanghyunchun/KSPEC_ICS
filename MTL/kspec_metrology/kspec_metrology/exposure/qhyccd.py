@@ -113,6 +113,7 @@ class QHY_Camera:
 
     def CamCapture(self):
         log = get_logger()
+
         log.info("Exposure")
         self.sdk.GetQHYCCDMemLength(self.Cam)
         self.imgdata = (c_uint16 * self.w.value* self.h.value)()

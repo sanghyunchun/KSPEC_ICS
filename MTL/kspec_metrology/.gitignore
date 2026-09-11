@@ -1,1 +1,22 @@
+# 이 저장소는 kspec_metrology 패키지만 추적한다.
+# src/ 에는 분석 노트북과 관측 데이터가 함께 있으므로, 기본을 "무시"로 두고
+# 패키지에 필요한 것만 되살린다. 새 파일을 추적하려면 여기에 !줄을 추가할 것.
+*
+
+!.gitignore
+!README.md
+!LICENSE
+!pyproject.toml
+!poetry.lock
+!kspec_metrology/
+!kspec_metrology/**
+
+# 패키지 안에서도 제외할 것
+kspec_metrology/.claude/
 **/__pycache__/
+*.py[cod]
+
+# 빌드 산출물 / 백업
+dist/
+*.egg-info/
+*.bak

@@ -187,8 +187,6 @@ class MainWindow(QMainWindow):
         self.dec = None
         self.obstype = None
         self.TileID = None
-        self.select_tile = None
-        self.exptime = None
         self.expT = None
         self.expnum = None
         self.obsnum = None
@@ -1880,16 +1878,16 @@ class MainWindow(QMainWindow):
 
 
         self.obstype = self.ui.obstype.currentText()
-        self.exptime = self.ui.lineEdit_exp_time_2.text()
+        self.expT = self.ui.lineEdit_exp_time_2.text()
         self.expnum = self.ui.lineEdit_n_exp_2.text()
 
         header=set_header_info(obsdate = self.dir_name, obstype = self.obstype, TileID = self.TileID, obsra = self.ra,
-            obsdec = self.dec, exptime = self.exptime, expnum = self.expnum, projID = self.project, fwhm=self.fwhm)
+            obsdec = self.dec, exptime = self.expT, expnum = self.expnum, projID = self.project, fwhm=self.fwhm)
 
         if self.obstype == 'Bias':
-            await handle_spec(f'getobj {self.exptime} {self.expnum}',self.ICS_client, header)    #### Need to change for bias
+            await handle_spec(f'getobj {self.expT} {self.expnum}',self.ICS_client, header)    #### Need to change for bias
         else:
-            await handle_spec(f'getobj {self.exptime} {self.expnum}',self.ICS_client, header)
+            await handle_spec(f'getobj {self.expT} {self.expnum}',self.ICS_client, header)
 
         if self.object in (None, '', 'None'):
             self.object = self.TileID
@@ -1908,7 +1906,7 @@ class MainWindow(QMainWindow):
                 self.TileID,
                 self.obstype,
                 self.object,
-                self.exptime,
+                self.expT,
                 self.expnum,
                 cmt,
             )
@@ -1989,7 +1987,6 @@ class MainWindow(QMainWindow):
             return False
 
         self.TileID = tile_id
-        self.select_tile = tile_id
         self.ra = ra
         self.dec = dec
         self.expT = exp_time
@@ -1998,7 +1995,7 @@ class MainWindow(QMainWindow):
         self.scriptrun.configure_cordinate(
             self.project,
             self.obsdate,
-            self.select_tile,
+            self.TileID,
             self.ra,
             self.dec,
             self.obsnum,
@@ -2092,10 +2089,8 @@ class MainWindow(QMainWindow):
             return
 
         self.TileID = dialog.selected_values[0]
-        self.select_tile = self.TileID
         self.obsnum = dialog.selected_values[2]
-        self.exptime = dialog.selected_values[3]
-        self.expT = self.exptime
+        self.expT = dialog.selected_values[3]
 #            self.ra = dialog.selected_values[4]        # For commission
 #            self.dec = dialog.selected_values[5]       # For commission
 
@@ -2110,15 +2105,15 @@ class MainWindow(QMainWindow):
         self.obsdate=wild[-1].split('.')[0]
         print(self.project)
         print(self.obsdate)
-        print(self.select_tile)
+        print(self.TileID)
 #        print(self.ra)
 #        print(self.dec)
 
 
-#        self.objmsg=sciobs.loadtile(self.select_tile)   # For commission
+#        self.objmsg=sciobs.loadtile(self.TileID)   # For commission
 #        self.ra, self.dec=self.convert_to_sexagesimal(self.ra,self.dec)    # For commission
-#        self.scriptrun.configure_cordinate(self.project, self.obsdate, self.select_tile, self.ra, self.dec, self.obsnum, self.expT)   # For commission
-#        self.ui.lineEdit_TileID.setText(f'{self.select_tile}')
+#        self.scriptrun.configure_cordinate(self.project, self.obsdate, self.TileID, self.ra, self.dec, self.obsnum, self.expT)   # For commission
+#        self.ui.lineEdit_TileID.setText(f'{self.TileID}')
 #        self.ui.lineEdit_ra_1.setText(f'{self.ra}')
 #        self.ui.lineEdit_dec_1.setText(f'{self.dec}')
 #        self.ui.lineEdit_exp_time_1.setText(f'{self.expT}')
@@ -2126,13 +2121,13 @@ class MainWindow(QMainWindow):
    
 
     ### Real survey Observation ####    
-        self.tilemsg,self.guidemsg,self.objmsg,self.motionmsg1,self.motionmsg2=sciobs.loadtile(self.select_tile)
+        self.tilemsg,self.guidemsg,self.objmsg,self.motionmsg1,self.motionmsg2=sciobs.loadtile(self.TileID)
         self.ra, self.dec=self.convert_to_sexagesimal(sciobs.ra,sciobs.dec)
 
         self.scriptrun.configure_cordinate(
             self.project,
             self.obsdate,
-            self.select_tile,
+            self.TileID,
             self.ra,
             self.dec,
             self.obsnum,
@@ -2140,7 +2135,7 @@ class MainWindow(QMainWindow):
             object_name=self.object,
         )
 
-        self.ui.lineEdit_TileID.setText(f'{self.select_tile}')
+        self.ui.lineEdit_TileID.setText(f'{self.TileID}')
         self.ui.lineEdit_ra_1.setText(f'{self.ra}')
         self.ui.lineEdit_dec_1.setText(f'{self.dec}')
         self.ui.lineEdit_exp_time_1.setText(f'{self.expT}')

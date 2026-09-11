@@ -1,19 +1,36 @@
 [tool.poetry]
-name = "kspec-metrology"
-version = "0.2.0"
-description = ""
+name = "kspec_metrology"
+version = "0.3.0"
+description = "KSPEC focal plane metrology: QHY camera exposure, peak finding, fiber matching, distortion fitting"
 authors = ["Dongkok Kim"]
+license = "BSD-3-Clause"
+readme = "README.md"
+packages = [
+	{include = "kspec_metrology"},
+]
 include = [
-	{path = "kspec_metrology/lib/*", format="wheel"}
+	{path = "kspec_metrology/lib/*", format="wheel"},
+	{path = "kspec_metrology/analysis/*.txt"},
+]
+exclude = [
+	"kspec_metrology/.claude/**",
+	"**/__pycache__/**",
 ]
 
+# 하한만 지정하고 상한은 열어둡니다.
+# 코드가 쓰는 API는 numpy/scipy/astropy/photutils의 오래된 안정 코어뿐이라
+# (arctan2, curve_fit, cKDTree, fits.getdata, sigma_clipped_stats, find_peaks)
+# 상한을 걸 근거가 없습니다.
+#
+# python 하한이 3.11인 이유: astropy>=7, photutils>=2, scipy>=1.15가
+# 모두 Requires-Python >=3.11 입니다. 3.9/3.10까지 열면 poetry가
+# astropy<6 / photutils<2 로 강제 고정합니다.
 [tool.poetry.dependencies]
-python = "^3.9"
-scipy = "^1.6.2"
-numpy = "^1.21.2"
-photutils = "^1.9.0"
-astropy = "^5.0.4"
-
+python = ">=3.11,<4.0"
+numpy = ">=1.24"       # astropy>=7 요구 하한
+scipy = ">=1.11"       # photutils>=2 요구 하한
+astropy = ">=5.3"      # photutils>=2 요구 하한
+photutils = ">=1.9"
 
 [build-system]
 requires = ["poetry-core"]

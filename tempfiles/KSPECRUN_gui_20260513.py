@@ -1278,7 +1278,7 @@ class MainWindow(QMainWindow):
     @asyncSlot()
     async def load_tile(self):
         self.ui.lineEdit_CProj.setText(f'{self.project}')
-        self.ui.lineEdit_CTile.setText(f'{self.select_tile}')
+        self.ui.lineEdit_CTile.setText(f'{self.TileID}')
     #    self.logging('Sent Guide stars information to GFA',level='send')
     #    await self.ICS_client.send_message("GFA", self.guidemsg)
     #    await self.response_queue.get()
@@ -1304,7 +1304,7 @@ class MainWindow(QMainWindow):
     #    await self.response_queue.get()
     #    await asyncio.sleep(2)
 
-        self.logging(f'All accessary files for observation of Tile ID {self.select_tile} are successfully loaded', level='receive')
+        self.logging(f'All accessary files for observation of Tile ID {self.TileID} are successfully loaded', level='receive')
         await asyncio.sleep(2)
 #        self.show_status('GFA','success')
 #        self.show_status('MTL','success')
@@ -1388,7 +1388,7 @@ class MainWindow(QMainWindow):
 
         dialog = SelectTile(header[:4], tile_lines, self)
         if dialog.exec() == QDialog.Accepted and dialog.selected_values:
-            self.select_tile=dialog.selected_values[0]
+            self.TileID=dialog.selected_values[0]
             self.obsnum=dialog.selected_values[2]
             self.expT= dialog.selected_values[3]
 #            self.ra = dialog.selected_values[4]        # For commission
@@ -1405,15 +1405,15 @@ class MainWindow(QMainWindow):
         self.obsdate=wild[-1].split('.')[0]
         print(self.project)
         print(self.obsdate)
-        print(self.select_tile)
+        print(self.TileID)
 #        print(self.ra)
 #        print(self.dec)
 
 
-#        self.objmsg=sciobs.loadtile(self.select_tile)   # For commission
+#        self.objmsg=sciobs.loadtile(self.TileID)   # For commission
 #        self.ra, self.dec=self.convert_to_sexagesimal(self.ra,self.dec)    # For commission
-#        self.scriptrun.configure_cordinate(self.project, self.obsdate, self.select_tile, self.ra, self.dec, self.obsnum, self.expT)   # For commission
-#        self.ui.lineEdit_TileID.setText(f'{self.select_tile}')
+#        self.scriptrun.configure_cordinate(self.project, self.obsdate, self.TileID, self.ra, self.dec, self.obsnum, self.expT)   # For commission
+#        self.ui.lineEdit_TileID.setText(f'{self.TileID}')
 #        self.ui.lineEdit_ra_1.setText(f'{self.ra}')
 #        self.ui.lineEdit_dec_1.setText(f'{self.dec}')
 #        self.ui.lineEdit_exp_time_1.setText(f'{self.expT}')
@@ -1421,12 +1421,12 @@ class MainWindow(QMainWindow):
    
 
     ### Real survey Observation ####    
-        self.tilemsg,self.guidemsg,self.objmsg,self.motionmsg1,self.motionmsg2=sciobs.loadtile(self.select_tile)
+        self.tilemsg,self.guidemsg,self.objmsg,self.motionmsg1,self.motionmsg2=sciobs.loadtile(self.TileID)
         self.ra, self.dec=self.convert_to_sexagesimal(sciobs.ra,sciobs.dec)
 
-        self.scriptrun.configure_cordinate(self.project, self.obsdate, self.select_tile, self.ra, self.dec, self.obsnum, self.expT)
+        self.scriptrun.configure_cordinate(self.project, self.obsdate, self.TileID, self.ra, self.dec, self.obsnum, self.expT)
 
-        self.ui.lineEdit_TileID.setText(f'{self.select_tile}')
+        self.ui.lineEdit_TileID.setText(f'{self.TileID}')
         self.ui.lineEdit_ra_1.setText(f'{self.ra}')
         self.ui.lineEdit_dec_1.setText(f'{self.dec}')
         self.ui.lineEdit_exp_time_1.setText(f'{self.expT}')

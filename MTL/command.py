@@ -4,8 +4,8 @@ from Lib.AMQ import *
 import Lib.mkmessage as mkmsg
 import json
 import asyncio
-from .MTL.kspec_metrology.kspec_metrology.exposure import mtlexp
-from .MTL.kspec_metrology.kspec_metrology.analysis import mtlcal
+from kspec_metrology.exposure import mtlexp
+from kspec_metrology.analysis import mtlcal
 
 
 async def identify_execute(MTL_server,cmd):
