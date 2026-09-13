@@ -1,63 +1,180 @@
-import os, sys
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-# from Lib.MsgMiddleware import *
-from Lib.AMQ import *
-import Lib.mkmessage as mkmsg
-import asyncio
 import json
+import shlex
+
+import Lib.mkmessage as mkmsg
 
 
 def create_mtl_command(func, **kwargs):
-    """Helper function to create ADC commands."""
+    """MTL 서버에 전달할 JSON 명령을 생성한다."""
     cmd_data = mkmsg.mtlmsg()
     cmd_data.update(func=func, **kwargs)
     return json.dumps(cmd_data)
 
-def mtl_status(): return create_mtl_command('mtlstatus',message='Show Metrology status')
-def mtl_cal(filename):
-    return create_mtl_command('mtlcal',file=filename,message='Calculate offset between Target and Fiber position')
-def mtl_exp(exptime,nexposure,filename): 
-    return create_mtl_command('mtlexp',time=exptime,nexposure=nexposure,file=filename,message=f'Exposure Metrology camera {exptime} seconds, {nexposure} times.')
+
+def mtl_status():
+    return create_mtl_command(
+        "mtlstatus",
+        message="Show metrology status",
+    )
+
+
+def mtl_start(
+        target_file=None,
+        tolerance=None,
+        max_trial=None,
+        nexposure=None,
+        exptime=None,
+        ):
+    """MetrologyRun을 초기화하고 Trial 0 기준 JSON 생성을 요청한다."""
+    data = {
+        "message": "Initialize metrology run",
+    }
+
+    if target_file is not None:
+        data["target_file"] = target_file
+    if tolerance is not None:
+        data["tolerance"] = tolerance
+    if max_trial is not None:
+        data["max_trial"] = max_trial
+    if nexposure is not None:
+        data["nexposure"] = nexposure
+    if exptime is not None:
+        data["time"] = exptime
+
+    return create_mtl_command("mtlstart", **data)
+
+
+def mtl_exp(exptime=None, nexposure=None, filename=None):
+    """다음 metrology trial의 카메라 촬영을 요청한다."""
+    data = {
+        "message": "Expose metrology camera",
+    }
+
+    if exptime is not None:
+        data["time"] = exptime
+    if nexposure is not None:
+        data["nexposure"] = nexposure
+    if filename is not None:
+        # 기존 GUI와 scriptcli 호출 형식을 유지하기 위한 호환 필드다.
+        data["file"] = filename
+
+    return create_mtl_command("mtlexp", **data)
+
+
+def mtl_cal(filename=None):
+    """가장 최근에 촬영한 metrology trial의 분석을 요청한다."""
+    data = {
+        "message": "Analyze metrology images",
+    }
+
+    if filename is not None:
+        # 서버는 tile/trial 기반 파일명을 사용하지만 기존 호출 형식을 허용한다.
+        data["file"] = filename
+
+    return create_mtl_command("mtlcal", **data)
+
+
+def mtl_result():
+    return create_mtl_command(
+        "mtlresult",
+        message="Get metrology run result",
+    )
+
+
+def mtl_reset():
+    return create_mtl_command(
+        "mtlreset",
+        message="Reset metrology run",
+    )
 
 
 async def handle_mtl(arg, ICS_client):
-    """Handle MTL commands with error checking."""
-    cmd, *params = arg.split()
+    """MTL CLI 명령을 검사하고 JSON 메시지로 변환해 서버에 전달한다."""
+    try:
+        parts = shlex.split(arg)
+    except ValueError as error:
+        print(f"Error: Invalid MTL command: {error}")
+        return
 
-    # Basic command without parameters
-    command_map = {
-        'mtlstatus': mtl_status
-    }
+    if not parts:
+        print("Error: Empty MTL command")
+        return
 
-    if cmd == 'mtlexp':
-        if len(params) != 3:
-            print("Error: 'mtlexp' need one exposure time value, number of exposure and filename. ex) mtlexp 10 1 test.fits")
+    cmd, *params = parts
+
+    try:
+        if cmd == "mtlstatus":
+            if params:
+                raise ValueError("Usage: mtlstatus")
+            message = mtl_status()
+
+        elif cmd == "mtlstart":
+            if len(params) > 5:
+                raise ValueError(
+                    "Usage: mtlstart "
+                    "[target_file] [tolerance] [max_trial] [nexposure] [exptime]"
+                )
+
+            target_file = params[0] if len(params) >= 1 else None
+            tolerance = float(params[1]) if len(params) >= 2 else None
+            max_trial = int(params[2]) if len(params) >= 3 else None
+            nexposure = int(params[3]) if len(params) >= 4 else None
+            exptime = float(params[4]) if len(params) >= 5 else None
+
+            message = mtl_start(
+                target_file=target_file,
+                tolerance=tolerance,
+                max_trial=max_trial,
+                nexposure=nexposure,
+                exptime=exptime,
+            )
+
+        elif cmd == "mtlexp":
+            # 새 형식: mtlexp 또는 mtlexp <시간> <장수>
+            # 기존 형식: mtlexp <시간> <장수> <파일명>
+            if len(params) not in (0, 2, 3):
+                raise ValueError(
+                    "Usage: mtlexp [exptime nexposure [filename]]"
+                )
+
+            if params:
+                exptime = float(params[0])
+                nexposure = int(params[1])
+                filename = params[2] if len(params) == 3 else None
+            else:
+                exptime = None
+                nexposure = None
+                filename = None
+
+            message = mtl_exp(
+                exptime=exptime,
+                nexposure=nexposure,
+                filename=filename,
+            )
+
+        elif cmd == "mtlcal":
+            if len(params) > 1:
+                raise ValueError("Usage: mtlcal [filename]")
+
+            filename = params[0] if params else None
+            message = mtl_cal(filename)
+
+        elif cmd == "mtlresult":
+            if params:
+                raise ValueError("Usage: mtlresult")
+            message = mtl_result()
+
+        elif cmd == "mtlreset":
+            if params:
+                raise ValueError("Usage: mtlreset")
+            message = mtl_reset()
+
+        else:
+            print(f"Error: '{cmd}' is not a valid MTL command")
             return
-        try:
-            exptime = float(params[0])
-            nexposure = int(params[1])
-            filename = str(params[2])
-        except ValueError:
-            print(f"Error: Input parameters of 'mtlexp' should be float. input value: {params[0]}")
-            return
 
-        command_map[cmd] = lambda: mtl_exp(exptime,nexposure,filename)
+    except ValueError as error:
+        print(f"Error: {error}")
+        return
 
-    if cmd == 'mtlcal':
-        try:
-            filename = str(params[0])
-        except ValueError:
-            print(f"Error: Input parameters of 'mtlcal' should be nexposure and filename. ex) mtlcal 1 test.fits")
-            return
-
-        command_map[cmd] = lambda: mtl_cal(filename)
-
-    # Right command
-    if cmd in command_map:
-        mtlmsg = command_map[cmd]()
-        await ICS_client.send_message("MTL", mtlmsg)
-    else:
-        print(f"Error: '{cmd}' is not right command for MTL")
-
-
-
+    await ICS_client.send_message("MTL", message)

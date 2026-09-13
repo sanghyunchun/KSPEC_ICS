@@ -1,103 +1,277 @@
-import os,sys
-import time
-from Lib.AMQ import *
-import Lib.mkmessage as mkmsg
-import json
 import asyncio
-from kspec_metrology.exposure import mtlexp
-from kspec_metrology.analysis import mtlcal
+import json
+import os
+import time
+
+import Lib.mkmessage as mkmsg
+from kspec_metrology.mtlrun import MetrologyRun
 
 
-async def identify_execute(MTL_server,cmd):
-    receive_msg=json.loads(cmd)
-    func=receive_msg['func']
+class MTLContext:
+    """MTL 서버가 실행되는 동안 현재 metrology run 상태를 보관한다."""
 
-    if func == 'mtlstatus':
-        comment=mtl_status()
-        reply_data=mkmsg.mtlmsg()
-        reply_data.update(message=comment,process='Done',status='success')
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[MTL]', comment+'\033[0m')
-        await MTL_server.send_message('ICS',rsp)
+    def __init__(self):
+        self.run = None
+        self.pending_trial = None
+        self.pending_images = []
+        self.lock = asyncio.Lock()
 
-    if func == 'loadobj':
-        tid=receive_msg['tile_id']
-        ra=receive_msg['ra']
-        dec=receive_msg['dec']
-        xp=receive_msg['xp']
-        yp=receive_msg['yp']
-#        clss=receive_msg['class']     # For commission
-
-        status, comment=savedata(receive_msg)     # save the loaded objects
-        reply_data=mkmsg.mtlmsg()
-        reply_data.update(message=comment,process='Done',status=status)
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[MTL]', comment+'\033[0m')
-        await MTL_server.send_message('ICS',rsp)
-
-    if func == 'mtlexp':
-        reply_data=mkmsg.mtlmsg()
-        reply_data.update(message='MTL exposure starts.',process='ING',status='success')
-        rsp=json.dumps(reply_data)
-        await MTL_server.send_message('ICS',rsp)
-
-        exptime=float(receive_msg['time'])
-        filename = str(receive_msg['file'])
-        nexposure = int(receive_msg['nexposure'])
-        status, comment=mtlexp.mtlexp(exptime,filename,nexposure=nexposure)
-        reply_data=mkmsg.mtlmsg()
-        reply_data.update(message=comment,process='Done',status=status)
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[MTL]', comment+'\033[0m')
-        await MTL_server.send_message('ICS',rsp)
-
-    if func == 'mtlcal':
-        reply_data=mkmsg.mtlmsg()
-        reply_data.update(message='MTL calculation starts.',process='ING',status='success')
-        rsp=json.dumps(reply_data)
-        await MTL_server.send_message('ICS',rsp)
+    def reset(self):
+        self.run = None
+        self.pending_trial = None
+        self.pending_images = []
 
 
-        filename = str(receive_msg['file'])
-        nexposure = int(receive_msg['nexposure'])
-        status, comment, offx,offy = mtlcal.mtlcal()
-#        comment='Metrology analysis finished successfully. Offsets were calculated.'
-        reply_data=mkmsg.mtlmsg()
-        reply_data.update(savedata='True',filename='MTLresult.json',offsetx=offx.tolist(),offsety=offy.tolist(),message=comment)
-        reply_data.update(process='Done',status='success')
-        rsp=json.dumps(reply_data)
+def _is_missing(value):
+    return value is None or (isinstance(value, str) and value.strip() in ("", "None"))
 
-        with open('./Lib/KSPEC.ini','r') as fs:
-            kspecinfo=json.load(fs)
-    
-        mtlfilepath=kspecinfo['MTL']['mtlfilepath']
 
-        with open(mtlfilepath+'MTLresult.json',"w") as f:
-            json.dump(reply_data, f)
+def _value(message, key, default, cast=None):
+    value = message.get(key, default)
+    if _is_missing(value):
+        value = default
+    return cast(value) if cast is not None and value is not None else value
 
-        print('\033[32m'+'[MTL]', comment+'\033[0m')
-        await MTL_server.send_message('ICS',rsp)
+
+def _load_mtl_config():
+    with open("./Lib/KSPEC.ini", "r", encoding="utf-8") as file:
+        return json.load(file)["MTL"]
+
+
+async def _send_response(server, func, message, process="Done", status="success", **data):
+    reply_data = mkmsg.mtlmsg()
+    reply_data.update(
+        func=func,
+        message=message,
+        process=process,
+        status=status,
+        **data,
+    )
+    await server.send_message("ICS", json.dumps(reply_data))
+    return reply_data
+
+
+def _require_run(context):
+    if context.run is None:
+        raise RuntimeError("MTL run이 초기화되지 않았습니다. mtlstart를 먼저 실행하십시오.")
+    return context.run
+
+
+async def identify_execute(MTL_server, cmd, context):
+    """MTL 명령을 실행하고 MetrologyRun의 상태를 다음 명령까지 유지한다."""
+
+    receive_msg = json.loads(cmd)
+    func = receive_msg["func"]
+
+    async with context.lock:
+        try:
+            if func == "mtlstatus":
+                comment = await asyncio.to_thread(mtl_status)
+                run = context.run
+                await _send_response(
+                    MTL_server,
+                    func,
+                    comment,
+                    initialized=run is not None,
+                    itrial=run.itrial if run is not None else 0,
+                    converged=run.converged if run is not None else False,
+                    should_continue=run.should_continue if run is not None else False,
+                    pending_trial=context.pending_trial,
+                )
+                return
+
+            if func == "loadobj":
+                status, comment = await asyncio.to_thread(savedata, receive_msg)
+                if status == "success":
+                    # target이 바뀌었으므로 기존 run을 다시 사용하지 않는다.
+                    context.reset()
+                await _send_response(MTL_server, func, comment, status=status)
+                return
+
+            if func == "mtlstart":
+                config = _load_mtl_config()
+                target_file = _value(
+                    receive_msg,
+                    "target_file",
+                    os.path.join(config["mtlfilepath"], "object.info"),
+                )
+                data_dir = _value(receive_msg, "data_dir", config["mtlimagepath"])
+                json_dir = _value(receive_msg, "json_dir", config["mtlfilepath"])
+                tile = _value(receive_msg, "tile", None)
+
+                run = MetrologyRun(
+                    target_file=target_file,
+                    data_dir=data_dir,
+                    json_dir=json_dir,
+                    tolerance=_value(receive_msg, "tolerance", 10.0, float),
+                    metric=_value(receive_msg, "metric", "max", str),
+                    max_trial=_value(receive_msg, "max_trial", 5, int),
+                    nexposure=_value(receive_msg, "nexposure", 1, int),
+                    mode=_value(receive_msg, "mode", "Predict", str),
+                    threshold=_value(receive_msg, "threshold", 3000.0, float),
+                    exptime=_value(receive_msg, "time", 0.1, float),
+                    gain=_value(receive_msg, "gain", 10, float),
+                    offset=_value(receive_msg, "offset", 30, float),
+                    readmode=_value(receive_msg, "readmode", 1, int),
+                    usb_traffic=_value(receive_msg, "usb_traffic", 40, int),
+                    tile=tile,
+                )
+                trial0_json = await asyncio.to_thread(run.start)
+
+                # 생성과 start가 모두 성공한 경우에만 현재 run을 교체한다.
+                context.run = run
+                context.pending_trial = None
+                context.pending_images = []
+
+                await _send_response(
+                    MTL_server,
+                    func,
+                    "MTL run이 초기화되었고 Trial 0 기준 JSON이 생성되었습니다.",
+                    savedata="True",
+                    filename=trial0_json,
+                    tile=run.tile,
+                    itrial=run.itrial,
+                    max_trial=run.max_trial,
+                    nexposure=run.nexposure,
+                    tolerance=run.tolerance,
+                    metric=run.metric,
+                )
+                return
+
+            if func == "mtlexp":
+                run = _require_run(context)
+                if context.pending_trial is not None:
+                    raise RuntimeError(
+                        f"Trial {context.pending_trial} 촬영 결과가 아직 분석되지 않았습니다. "
+                        "mtlcal을 먼저 실행하십시오."
+                    )
+                if not run.should_continue:
+                    raise RuntimeError("이미 수렴했거나 max_trial 횟수에 도달했습니다.")
+
+                # 기존 CLI의 time/nexposure 인자가 있으면 다음 촬영부터 반영한다.
+                if not _is_missing(receive_msg.get("time")):
+                    run.camera["exptime"] = float(receive_msg["time"])
+                if not _is_missing(receive_msg.get("nexposure")):
+                    run.nexposure = int(receive_msg["nexposure"])
+
+                itrial = run.itrial + 1
+                await _send_response(
+                    MTL_server,
+                    func,
+                    f"MTL Trial {itrial} exposure starts.",
+                    process="ING",
+                    itrial=itrial,
+                )
+
+                images = await asyncio.to_thread(run.expose, itrial)
+                context.pending_trial = itrial
+                context.pending_images = list(images)
+
+                await _send_response(
+                    MTL_server,
+                    func,
+                    f"MTL Trial {itrial} exposure finished successfully.",
+                    itrial=itrial,
+                    nexposure=len(context.pending_images),
+                    images=context.pending_images,
+                )
+                return
+
+            if func == "mtlcal":
+                run = _require_run(context)
+                expected_trial = run.itrial + 1
+                if context.pending_trial is None:
+                    raise RuntimeError("분석할 촬영 결과가 없습니다. mtlexp를 먼저 실행하십시오.")
+                if context.pending_trial != expected_trial:
+                    raise RuntimeError(
+                        f"촬영 trial과 분석 trial이 다릅니다: "
+                        f"{context.pending_trial} != {expected_trial}"
+                    )
+
+                await _send_response(
+                    MTL_server,
+                    func,
+                    f"MTL Trial {expected_trial} calculation starts.",
+                    process="ING",
+                    itrial=expected_trial,
+                )
+
+                result = await asyncio.to_thread(run.trial, False)
+                context.pending_trial = None
+                context.pending_images = []
+
+                await _send_response(
+                    MTL_server,
+                    func,
+                    f"MTL Trial {result.itrial} calculation finished successfully.",
+                    savedata="True",
+                    filename=result.json,
+                    itrial=result.itrial,
+                    err_max=result.err_max,
+                    err_median=result.err_median,
+                    converged=result.converged,
+                    should_continue=run.should_continue,
+                    offsetx=result.dx.tolist(),
+                    offsety=result.dy.tolist(),
+                    images=result.images,
+                )
+                return
+
+            if func == "mtlresult":
+                run = _require_run(context)
+                result = run.result()
+                await _send_response(
+                    MTL_server,
+                    func,
+                    "MTL run result.",
+                    filename=result.json,
+                    tile=result.tile,
+                    itrial=result.ntrial,
+                    converged=result.converged,
+                    err_max=result.err_max if result.history else None,
+                    err_median=result.err_median if result.history else None,
+                    should_continue=run.should_continue,
+                )
+                return
+
+            if func == "mtlreset":
+                context.reset()
+                await _send_response(MTL_server, func, "MTL run 상태를 초기화했습니다.")
+                return
+
+            await _send_response(
+                MTL_server,
+                func,
+                f"지원하지 않는 MTL 명령입니다: {func}",
+                status="fail",
+            )
+
+        except Exception as error:
+            await _send_response(
+                MTL_server,
+                func,
+                f"MTL {func} failed: {error}",
+                status="fail",
+                pending_trial=context.pending_trial,
+            )
 
 
 def savedata(data):
-    with open('./Lib/KSPEC.ini','r') as fs:
-        kspecinfo=json.load(fs)
-
-    mtlfilepath=kspecinfo['MTL']['mtlfilepath']
+    config = _load_mtl_config()
+    mtlfilepath = config["mtlfilepath"]
 
     try:
-        with open(mtlfilepath+'object.info','w') as savefile:
-            json.dump(data,savefile)
+        os.makedirs(mtlfilepath, exist_ok=True)
+        with open(os.path.join(mtlfilepath, "object.info"), "w", encoding="utf-8") as savefile:
+            json.dump(data, savefile)
     except TypeError:
-        return 'fail', "Non-numeric values encountered while formatting output."
-    except OSError as e:
-        return 'fail', f"Failed to write file: {e}"
+        return "fail", "Non-numeric values encountered while formatting output."
+    except OSError as error:
+        return "fail", f"Failed to write file: {error}"
 
-    msg="'Objects are loaded in MTL server.'"
-    return 'success', msg
+    return "success", "Objects are loaded in MTL server."
 
-# Below functions are for simulation. When connect the instruments, pleas annotate.
+
 def mtl_status():
     time.sleep(3)
-    mtl_rsp = 'Metrology Status is below. MTL is ready.'
-    return mtl_rsp
+    return "Metrology Status is below. MTL is ready."

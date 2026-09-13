@@ -4,7 +4,7 @@ from Lib.AMQ import *
 import asyncio
 import aio_pika
 import json
-from MTL.command import *
+from MTL.command import MTLContext, identify_execute
 
 
 
@@ -31,18 +31,19 @@ async def main():
     print('MTL Server Started!!!')
     MTL_server=AMQclass(ip_addr,idname,pwd,'MTL','ics.ex')
     await MTL_server.connect()
+    context = MTLContext()
 
     async def on_mtl_message(message: aio_pika.IncomingMessage):
         async with message.process():
             try:
                 dict_data = json.loads(message.body)
-                message_text = dict_data['message']
+                message_text = dict_data.get('message', dict_data.get('func', 'None'))
                 print('\033[94m' + '[MTL received: ' + message_text + '\033[0m')
 
-                await identify_execute(MTL_server, message.body)
+                await identify_execute(MTL_server, message.body, context)
 
             except Exception as e:
-                print(f"Error in on_gfa_message: {e}", flush=True)
+                print(f"Error in on_mtl_message: {e}", flush=True)
 
         print('Waiting for message from client......')
 
@@ -55,7 +56,7 @@ async def main():
 #        message=dict_data['message']
 #        print('\033[94m'+'[MTL] received: ', message+'\033[0m')
 
-#        await identify_execute(MTL_server,msg)
+#        await identify_execute(MTL_server, msg, context)
 
 
 if __name__ == "__main__":
