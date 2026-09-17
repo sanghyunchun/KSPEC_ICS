@@ -50,7 +50,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideLeft</enum>
@@ -17281,42 +17281,17 @@ STOP</string>
           <string>ex) 4</string>
          </property>
         </widget>
-        <widget class="QPushButton" name="pushbtn_MTL_cal">
+        <widget class="QPushButton" name="pushbtn_MTL_trial">
          <property name="geometry">
           <rect>
-           <x>130</x>
+           <x>150</x>
            <y>100</y>
-           <width>91</width>
-           <height>31</height>
+           <width>71</width>
+           <height>71</height>
           </rect>
          </property>
          <property name="text">
-          <string>CALCUL</string>
-         </property>
-        </widget>
-        <widget class="QPushButton" name="pushbtn_MTL_exp">
-         <property name="geometry">
-          <rect>
-           <x>70</x>
-           <y>100</y>
-           <width>51</width>
-           <height>31</height>
-          </rect>
-         </property>
-         <property name="font">
-          <font>
-           <family>Arial</family>
-           <pointsize>14</pointsize>
-           <weight>75</weight>
-           <bold>true</bold>
-           <strikeout>false</strikeout>
-          </font>
-         </property>
-         <property name="toolTip">
-          <string/>
-         </property>
-         <property name="text">
-          <string>GO</string>
+          <string>Trial</string>
          </property>
         </widget>
         <widget class="QPushButton" name="pushbtn_MTL_set">
@@ -17424,6 +17399,32 @@ STOP</string>
          </property>
          <property name="placeholderText">
           <string>ex) 1</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pushbtn_MTL_test">
+         <property name="geometry">
+          <rect>
+           <x>80</x>
+           <y>140</y>
+           <width>61</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Test</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pushbtn_MTL_reset">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>140</y>
+           <width>61</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Reset</string>
          </property>
         </widget>
        </widget>

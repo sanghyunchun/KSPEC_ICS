@@ -48,6 +48,9 @@ def load_configuration(target_file=None, apply_zenith_offset=True):
                if i not in cfg.FIDUCIAL_EXCLUDE]
     pick_ids = list(dict.fromkeys(list(ids) + list(fid_ids)))
 
+    log.info("Fiber table %s: %d positioners + %d fiducials",
+             cfg.FIBER_TABLE_PATH, nfib, len(fid_ids))
+
     xy_map = {r["ID"]: (r["X"], r["Y"]) for r in tab}
     xy = np.array([xy_map[i] for i in pick_ids], dtype=float)
     xorigin, yorigin = xy[:, 0], xy[:, 1]
@@ -174,6 +177,7 @@ def mtlcal(data_dir='./MTL/data/'
            , head='test'
            , mode='Raw'
            , threshold=3e3
+           , nwindow=40
            , nexposure=1
            , target_file=None
            , json_dir=None
@@ -183,6 +187,12 @@ def mtlcal(data_dir='./MTL/data/'
 
     mode는 findpeak에 그대로 넘어간다. "Raw"는 threshold를 조절해 가며 peak을
     찾고, "Predict"는 목표 위치에서 출발해 가장 밝은 픽셀로 정렬한다.
+
+    nwindow는 findpeak이 center of mass를 잴 때 쓰는 crop 반폭 [pixel]이다.
+    이 창 안에 이웃 spot이 들어오면 무게중심이 끌려가 위치를 잘못 잰다. 창의
+    반폭을 focal plane 거리로 환산하면 nwindow * 3.76e-3 mm/px * 배율(~8.47)
+    이므로, fiber 사이 최소 이격 거리의 절반보다 작아야 한다.
+    최소 이격 3mm 기준이면 nwindow <= 40 이어야 한다.
 
     json_dir와 target_name을 주면 누적 각도를 trial별 json으로 저장한다.
     누적 각도는 직전 trial의 json에 이번 회전량을 더한 값이라, itrial-1 파일이
@@ -204,6 +214,7 @@ def mtlcal(data_dir='./MTL/data/'
                                 , head=head
                                 , nexposure=nexposure
                                 , threshold=threshold
+                                , nwindow=nwindow
                                 , mode=mode
                                 , x=x, y=y)
 
@@ -211,7 +222,6 @@ def mtlcal(data_dir='./MTL/data/'
 
     xfocal, yfocal, dx, dy, _ = fitdistortion(x, y, fid_flag
                                               , xobs, yobs
-                                              , xorigin, yorigin
                                               , imatch, theta_guess
                                               , xoff_guess, yoff_guess)
 

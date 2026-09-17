@@ -11,10 +11,22 @@ packages = [
 include = [
 	{path = "kspec_metrology/lib/*", format="wheel"},
 	{path = "kspec_metrology/analysis/*.txt"},
+	# mock 데이터. 이미지(.fits)는 용량 때문에 뺀다.
+	# 여기 glob이 .fits까지 잡으면 exclude보다 우선해서 들어가 버리므로,
+	# 넣을 것만 하나씩 적는다.
+	{path = "kspec_metrology/tmp/README.md"},
+	{path = "kspec_metrology/tmp/object.info"},
 ]
 exclude = [
 	"kspec_metrology/.claude/**",
 	"**/__pycache__/**",
+	# mock 이미지는 416MB라 배포 패키지에 넣지 않는다 (넣으면 pip install이
+	# 그만큼 무거워진다). 저장소에서도 .gitignore로 빠져 있고, 따로 공유한다.
+	# truth npz(분석에 안 쓰임)와 run_mock이 만드는 결과 json도 뺀다.
+	# tmp/의 나머지(object.info, README)는 위 include로 같이 들어간다.
+	"kspec_metrology/tmp/*.fits",
+	"kspec_metrology/tmp/*.npz",
+	"kspec_metrology/tmp/*.json",
 ]
 
 # 하한만 지정하고 상한은 열어둡니다.

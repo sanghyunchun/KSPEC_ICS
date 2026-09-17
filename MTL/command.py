@@ -4,6 +4,7 @@ import os
 import time
 
 import Lib.mkmessage as mkmsg
+from kspec_metrology.exposure.mtlexp import mtlexp as take_test_exposure
 from kspec_metrology.mtlrun import MetrologyRun
 
 
@@ -135,6 +136,61 @@ async def identify_execute(MTL_server, cmd, context):
                     nexposure=run.nexposure,
                     tolerance=run.tolerance,
                     metric=run.metric,
+                )
+                return
+
+            if func == "mtltest":
+                config = _load_mtl_config()
+                exptime = _value(receive_msg, "time", 0.1, float)
+                nexposure = _value(receive_msg, "nexposure", 1, int)
+                data_dir = _value(
+                    receive_msg,
+                    "data_dir",
+                    config["mtlimagepath"],
+                    str,
+                )
+                requested_file = _value(receive_msg, "file", "test.fits", str)
+
+                if exptime <= 0:
+                    raise ValueError("exptime은 0보다 커야 합니다.")
+                if nexposure < 1:
+                    raise ValueError("nexposure는 1 이상이어야 합니다.")
+
+                # mtlexp()는 최종 파일명이 아닌 파일명 접두어(head)를 받는다.
+                # 경로 성분은 제거하여 테스트 이미지가 data_dir 밖에 저장되지 않게 한다.
+                filename = os.path.basename(requested_file)
+                stem = os.path.splitext(filename)[0] or "test"
+                head = f"{stem}_"
+
+                await _send_response(
+                    MTL_server,
+                    func,
+                    "MTL camera test exposure starts.",
+                    process="ING",
+                    exptime=exptime,
+                    nexposure=nexposure,
+                )
+
+                images = await asyncio.to_thread(
+                    take_test_exposure,
+                    exptime=exptime,
+                    nexposure=nexposure,
+                    data_dir=data_dir,
+                    head=head,
+                    gain=_value(receive_msg, "gain", 10, float),
+                    offset=_value(receive_msg, "offset", 30, float),
+                    readmode=_value(receive_msg, "readmode", 1, int),
+                    usb_traffic=_value(receive_msg, "usb_traffic", 40, int),
+                    extra_header={"IMAGETYP": "MTL CAMERA TEST"},
+                )
+
+                await _send_response(
+                    MTL_server,
+                    func,
+                    "MTL camera test exposure finished successfully.",
+                    exptime=exptime,
+                    nexposure=len(images),
+                    images=list(images),
                 )
                 return
 

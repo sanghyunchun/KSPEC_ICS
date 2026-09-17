@@ -18,6 +18,7 @@ def findpeak(npeaks
             , nwindow=100
             , mode="Raw"
             , x=None, y=None
+            , niter_max=50
             , niter_refine=2
             , SigmaClipping=False
             , ReturnFiberImage=False
@@ -39,24 +40,65 @@ def findpeak(npeaks
     #---Find Peaks Using any method---------------------------------------------------------------------------------------------------    
     log.info("Start finding peaks with %s", mode)
     if mode == "Raw":
+        # 검출 개수가 정확히 npeaks가 되는 문턱값을 찾는다.
+        #
+        # 문턱을 올리면 검출이 줄고 내리면 늘어난다. 한 번이라도 양쪽을 다 봤으면
+        # 그 사이를 이분법으로 좁히고, 아직 한쪽만 봤으면 10%씩 옮긴다. 개수가
+        # 이산적이라 정확히 npeaks가 되는 문턱이 아예 없을 수도 있으므로
+        # (cosmic ray, hot pixel, 어두운 fiber 하나 등) niter_max에서 끊고
+        # 가장 가까웠던 시도로 넘어간다. 옛 구현은 상한이 없어서 이 경우
+        # 무한 루프였다.
         threshold_temp = threshold
-        niter = 0
-        while True:
+        t_many = None       # 너무 많이 나온 문턱 (더 올려야 한다)
+        t_few = None        # 너무 적게 나온 문턱 (더 내려야 한다)
+        best = None         # (|개수차|, peak_table, 문턱)
+
+        for niter in range(1, niter_max+1):
             peak_table_raw = find_peaks(im, threshold=threshold_temp, box_size=boxsize)
             peak_table = dedupe_peaks_kdtree(peak_table_raw, min_dist=40)
-            xf, yf = peak_table['x_peak'].data, peak_table['y_peak'].data   
-            log.info(f"Found {xf.size} peaks")
-            if xf.size > npeaks:
-                log.warning("Too many peaks detected")
-                threshold_temp *= 1.1
-            elif xf.size < npeaks:
-                log.warning(f"{npeaks-xf.size} peaks are not detected")
-                threshold_temp *= 0.9
-            niter += 1
-            print(f"Peak finding iteration {niter}")
-            if xf.size == npeaks:
-                print("Done")
+            nfound = len(peak_table)
+            log.info("Iteration %d: threshold %.4g -> %d peaks (target %d)",
+                     niter, threshold_temp, nfound, npeaks)
+
+            if best is None or abs(nfound-npeaks) < best[0]:
+                best = (abs(nfound-npeaks), peak_table, threshold_temp)
+
+            if nfound == npeaks:
                 break
+
+            if nfound > npeaks:
+                t_many = threshold_temp
+            else:
+                t_few = threshold_temp
+
+            if t_many is not None and t_few is not None:
+                threshold_temp = 0.5*(t_many + t_few)       # 양쪽을 봤으니 이분법
+            elif nfound > npeaks:
+                threshold_temp *= 1.1
+            else:
+                threshold_temp *= 0.9
+        else:
+            # 상한까지 못 맞췄다. 가장 가까웠던 시도를 쓴다.
+            _, peak_table, threshold_temp = best
+            nfound = len(peak_table)
+            log.warning("Could not reach %d peaks in %d iterations; "
+                        "using the closest attempt (%d peaks at threshold %.4g)",
+                        npeaks, niter_max, nfound, threshold_temp)
+
+            if nfound < npeaks:
+                raise RuntimeError(
+                    f"Only {nfound} peaks found but {npeaks} expected. "
+                    "Lower `threshold`, or check the image and the fiber "
+                    "configuration (fiber_config.FIBERS).")
+
+            # 남는 것은 가장 어두운 쪽부터 버린다 (cosmic ray / hot pixel로 본다)
+            order = np.argsort(-np.asarray(peak_table['peak_value'], dtype=float))
+            peak_table = peak_table[order[:npeaks]]
+            log.warning("Dropped %d faintest detections to match %d",
+                        nfound-npeaks, npeaks)
+
+        xf, yf = peak_table['x_peak'].data, peak_table['y_peak'].data
+        log.info("Found %d peaks at threshold %.4g", xf.size, threshold_temp)
 
     elif mode=="Predict":
         coeff_temp = np.copy(focal2camera_coeff_comm)

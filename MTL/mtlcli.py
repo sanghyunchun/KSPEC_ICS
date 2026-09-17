@@ -4,6 +4,11 @@ import shlex
 import Lib.mkmessage as mkmsg
 
 
+def seconds_to_microseconds(exptime):
+    """GUI/CLI의 초 단위 노출시간을 kspec_metrology용 마이크로초로 바꾼다."""
+    return float(exptime) * 1_000_000.0
+
+
 def create_mtl_command(func, **kwargs):
     """MTL 서버에 전달할 JSON 명령을 생성한다."""
     cmd_data = mkmsg.mtlmsg()
@@ -39,7 +44,7 @@ def mtl_start(
     if nexposure is not None:
         data["nexposure"] = nexposure
     if exptime is not None:
-        data["time"] = exptime
+        data["time"] = seconds_to_microseconds(exptime)
 
     return create_mtl_command("mtlstart", **data)
 
@@ -51,7 +56,7 @@ def mtl_exp(exptime=None, nexposure=None, filename=None):
     }
 
     if exptime is not None:
-        data["time"] = exptime
+        data["time"] = seconds_to_microseconds(exptime)
     if nexposure is not None:
         data["nexposure"] = nexposure
     if filename is not None:
@@ -59,6 +64,22 @@ def mtl_exp(exptime=None, nexposure=None, filename=None):
         data["file"] = filename
 
     return create_mtl_command("mtlexp", **data)
+
+
+def mtl_test(exptime=None, nexposure=None, filename=None):
+    """MetrologyRun과 무관하게 metrology 카메라 시험 촬영을 요청한다."""
+    data = {
+        "message": "Test metrology camera",
+    }
+
+    if exptime is not None:
+        data["time"] = seconds_to_microseconds(exptime)
+    if nexposure is not None:
+        data["nexposure"] = nexposure
+    if filename is not None:
+        data["file"] = filename
+
+    return create_mtl_command("mtltest", **data)
 
 
 def mtl_cal(filename=None):
@@ -147,6 +168,27 @@ async def handle_mtl(arg, ICS_client):
                 filename = None
 
             message = mtl_exp(
+                exptime=exptime,
+                nexposure=nexposure,
+                filename=filename,
+            )
+
+        elif cmd == "mtltest":
+            if len(params) not in (0, 2, 3):
+                raise ValueError(
+                    "Usage: mtltest [exptime nexposure [filename]]"
+                )
+
+            if params:
+                exptime = float(params[0])
+                nexposure = int(params[1])
+                filename = params[2] if len(params) == 3 else None
+            else:
+                exptime = None
+                nexposure = None
+                filename = None
+
+            message = mtl_test(
                 exptime=exptime,
                 nexposure=nexposure,
                 filename=filename,

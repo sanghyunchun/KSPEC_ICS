@@ -84,8 +84,15 @@ class MetrologyRun:
         metric      : 수렴을 판정할 통계. 'max' (기본) 또는 'median'
         max_trial   : 최대 반복 횟수. None이면 제한 없음
         nexposure   : trial 한 번에 찍을 이미지 장수
-        mode        : findpeak의 peak 검출 방식. 'Predict' 또는 'Raw'
+        mode        : findpeak의 peak 검출 방식. 'Raw' 또는 'Predict'.
+                      'Predict'는 목표 위치를 focal2camera_coeff_comm으로
+                      투영해 출발하므로 그 계수가 실제 광학계와 맞아야 한다.
+                      맞지 않으면 엉뚱한 픽셀에서 무게중심을 재면서도 에러
+                      없이 그럴듯한 값을 내놓는다. 기본값은 그 가정이 필요
+                      없는 'Raw'로 둔다 (mtlcal과 동일)
         threshold   : 'Raw' mode의 검출 문턱값
+        nwindow     : center of mass를 잴 crop 반폭 [pixel]. fiber 사이 최소
+                      이격 거리에 맞춰야 한다 (mtlcal 참고)
         exptime, gain, offset, readmode, usb_traffic : 카메라 설정
         tile        : 파일 이름에 쓸 타일 이름. None이면 target 파일에서 읽는다
     """
@@ -98,8 +105,9 @@ class MetrologyRun:
                  , metric='max'
                  , max_trial=5
                  , nexposure=1
-                 , mode='Predict'
+                 , mode='Raw'
                  , threshold=3e3
+                 , nwindow=40
                  , exptime=0.1
                  , gain=10
                  , offset=30
@@ -128,6 +136,7 @@ class MetrologyRun:
         self.nexposure = nexposure
         self.mode = mode
         self.threshold = threshold
+        self.nwindow = nwindow
 
         self.camera = dict(exptime=exptime, gain=gain, offset=offset,
                            readmode=readmode, usb_traffic=usb_traffic)
@@ -190,6 +199,7 @@ class MetrologyRun:
                       , head=self.image_head(itrial)
                       , mode=self.mode
                       , threshold=self.threshold
+                      , nwindow=self.nwindow
                       , nexposure=self.nexposure
                       , target_file=self.target_file
                       , json_dir=self.json_dir

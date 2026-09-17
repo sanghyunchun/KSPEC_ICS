@@ -39,7 +39,7 @@ class KSPECRunner:
             "gfa": ["gfastatus", "gfagrab", "gfaguidestop", "gfaguide","fdgrab"],
             "fbp": ["fbpstatus", "fbpzero", "fbpmove", "fbpoffset"],
 #            "endo": ["endoguide", "endotest", "endofocus", "endostop","endoexpset","endoclear","endostatus"],
-            "mtl": ["mtlstatus", "mtlstart", "mtlexp", "mtlcal", "mtlresult", "mtlreset"],
+            "mtl": ["mtlstatus", "mtlstart", "mtltest", "mtlexp", "mtlcal", "mtlresult", "mtlreset"],
             "lamp": ["lampstatus", "arcon", "arcoff", "flaton", "flatoff","fiducialon","fiducialoff"],
             "spec": ["specstatus", "illuon", "illuoff", "getobj", "getbias", "getflat","getar"],
             "tcs": ["tmradec", "start", "stop", "tcsint", "tcsreset", "tcsclose",

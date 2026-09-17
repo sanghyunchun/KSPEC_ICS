@@ -283,12 +283,12 @@ class MainWindow(QMainWindow):
 
 
         # MTL
-        self.ui.pushbtn_MTL_exp.clicked.connect(self.MTL_exp_button_clicked)
         #    self.ui.pushbtn_MTL_exp_2.clicked.connect(self.MTL_exp_button_clicked)
         #    self.ui.pushbtn_MTL_exp_3.clicked.connect(self.MTL_exp_button_clicked)
-
-        self.ui.pushbtn_MTL_cal.clicked.connect(self.MTL_cal_button_clicked)
+        self.ui.pushbtn_MTL_test.clicked.connect(self.MTL_test_button_clicked)
+        self.ui.pushbtn_MTL_trial.clicked.connect(self.MTL_cal_button_clicked)
         self.ui.pushbtn_MTL_set.clicked.connect(self.MTL_set_button_clicked)
+        self.ui.pushbtn_MTL_reset.clicked.connect(self.MTL_set_button_clicked)
 
 
         # Load Sequence
@@ -538,7 +538,7 @@ class MainWindow(QMainWindow):
             "adcpoweroff", "adcrotate1", "adcrotate2", "adcstop", "adcpark", "adcctrotate", "adccorotate"],
             "gfa": ["gfastatus", "gfagrab", "fdgrab"],
             "fbp": ["fbpstatus", "fbpzero", "fbpmove", "fbpoffset"],
-            "mtl": ["mtlstatus", "mtlstart", "mtlexp", "mtlcal", "mtlresult", "mtlreset"],
+            "mtl": ["mtlstatus", "mtlstart", "mtltest", "mtlexp", "mtlcal", "mtlresult", "mtlreset"],
             "lamp": ["lampstatus", "arcon", "arcoff", "flaton", "flatoff","fiducialon","fiducialoff"],
             "spec": ["specstatus", "specinitial","illuon", "illuoff", "getobj", "getbias", "getflat","getar"],
             "tcs": ["tmradec", "start", "stop", "tcsint", "tcsreset", "tcsclose",
@@ -1238,8 +1238,12 @@ class MainWindow(QMainWindow):
             self.logging('Insert a finite FBP rotation angle.', level='error')
             return
 
-        if angle_value < 0 or angle_value > max_angle:
-            self.logging(f'{motor_name.capitalize()} angle must be between 0 and {max_angle:g} degrees.', level='error')
+        if angle_value < -max_angle or angle_value > max_angle:
+            self.logging(
+                f'{motor_name.capitalize()} angle must be between '
+                f'{-max_angle:g} and {max_angle:g} degrees.',
+                level='error',
+            )
             return
 
         if self.fbp_state in ('zero', 'manual'):
@@ -1721,7 +1725,7 @@ class MainWindow(QMainWindow):
 
     # region MTL controls
     @asyncSlot()
-    async def MTL_exp_button_clicked(self):
+    async def MTL_test_button_clicked(self):
         if not self.check_connection():
             return
 
@@ -1740,8 +1744,8 @@ class MainWindow(QMainWindow):
         self.mtlexp = float(self.ui.lineEdit_MTL_exptime.text())
         self.mtlfile = str(self.ui.lineEdit_MTL_file.text())
         self.nexposure = int(self.ui.lineEdit_MTL_expnum.text())
-        self.logging(f'Sent MTL exposure', level='send')
-        await handle_mtl(f'mtlexp {self.mtlexp} {self.nexposure} {self.mtlfile}', self.ICS_client)
+        self.logging(f'Sent MTL camera test exposure', level='send')
+        await handle_mtl(f'mtltest {self.mtlexp} {self.nexposure} {self.mtlfile}', self.ICS_client)
 
     @asyncSlot()
     async def MTL_cal_button_clicked(self):
@@ -2049,7 +2053,40 @@ class MainWindow(QMainWindow):
 
         self.logging('Sent Target information to MTL',level='send')
         await self.ICS_client.send_message("MTL", self.objmsg)
-        await self.response_queue.get()
+        loadobj_response = await self.response_queue.get()
+
+        loadobj_succeeded = (
+            loadobj_response.get('inst') == 'MTL'
+            and loadobj_response.get('func') == 'loadobj'
+            and loadobj_response.get('status') == 'success'
+        )
+        if not loadobj_succeeded:
+            message = loadobj_response.get('message', 'Unknown error')
+            self.logging(
+                f'MTL target information could not be loaded: {message}',
+                status=loadobj_response.get('status', 'fail'),
+                level='error',
+            )
+            return
+
+        self.logging('Sent MTL run initialization command', level='send')
+        await handle_mtl("mtlstart", self.ICS_client)
+        mtlstart_response = await self.response_queue.get()
+
+        mtlstart_succeeded = (
+            mtlstart_response.get('inst') == 'MTL'
+            and mtlstart_response.get('func') == 'mtlstart'
+            and mtlstart_response.get('status') == 'success'
+        )
+        if not mtlstart_succeeded:
+            message = mtlstart_response.get('message', 'Unknown error')
+            self.logging(
+                f'MTL run could not be initialized: {message}',
+                status=mtlstart_response.get('status', 'fail'),
+                level='error',
+            )
+            return
+
         await asyncio.sleep(2)
 
     #    self.logging('Sent Target information to FBP',level='send')

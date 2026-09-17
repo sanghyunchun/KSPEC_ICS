@@ -53,7 +53,18 @@ focal2camera_coeff = np.array([-1.18e-1, 0., 0., 0.
                             ,  1e-7 ,  1e-11, -1e-1
                             , -1e-10, -1e-10,  1e-8 , -1e-8])
 
-camera2focal_coeff = np.array([-8.9, 3.39, -17.6, 6.12
+# camera -> focal 배율(magnification) 초기값.
+#
+# matchfiber는 회전과 offset만 grid search하고 배율은 맞추지 않으므로, 이 값이
+# 실제와 몇 % 이상 어긋나면 시야 가장자리에서 fiber 매칭이 어긋난다.
+#
+# 지금 값은 image_simulation의 mock 이미지(Zemax 설계 광학계)에 맞춘 것이다.
+#   focal2ccd 배율 -0.11809820162629767 의 역수
+# 실카메라 배율이 확정되면 이 상수만 바꾸면 된다 (참고: 커미셔닝 카메라를 fit한
+# camera2focal_coeff_comm[0]은 -8.86122935).
+CAMERA2FOCAL_M = -8.467529447775467
+
+camera2focal_coeff = np.array([CAMERA2FOCAL_M, 3.39, -17.6, 6.12
                             , 1e-7 , 1e-10,  -1e-14, 1e-19
                             , 1e-5 , -1e-5, -1e-5 
                             , -1e-12, 1e-12, -1e-8, -1e-8])
