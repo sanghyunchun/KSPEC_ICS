@@ -291,10 +291,10 @@ class script():
 
         # Bias        
         if logging != None:
-            logging(f'Sent getbias {calinfo['Bias']['exptime']} {calinfo['Bias']['expnum']}.', level='send')
+            logging(f"Sent getbias {calinfo['Bias']['exptime']} {calinfo['Bias']['expnum']}.", level='send')
 
         await self.send_spec_and_log(
-            f'getbias {calinfo['Bias']['exptime']} {calinfo['Bias']['expnum']}',
+            f"getbias {calinfo['Bias']['exptime']} {calinfo['Bias']['expnum']}",
             'Flat',
             calinfo['Bias']['exptime'],
             calinfo['Bias']['expnum'],
@@ -310,10 +310,10 @@ class script():
         await scriptrun.response_queue.get()
         
         if logging != None:
-            logging(f'Sent getarc {calinfo['Arc']['exptime']} {calinfo['Arc']['expnum']}.',level='send')
+            logging(f"Sent getarc {calinfo['Arc']['exptime']} {calinfo['Arc']['expnum']}.",level='send')
 
         await self.send_spec_and_log(
-            f'getarc {calinfo['Arc']['exptime']} {calinfo['Arc']['expnum']}',
+            f"getarc {calinfo['Arc']['exptime']} {calinfo['Arc']['expnum']}",
             'Arc',
             calinfo['Arc']['exptime'],
             calinfo['Arc']['expnum'],
@@ -335,12 +335,12 @@ class script():
         await scriptrun.response_queue.get()
     
         if logging != None:
-            logging(f'Sent getflat {calinfo['Flat']['exptime']} {calinfo['Flat']['expnum']}.', level='send')
+            logging(f"Sent getflat {calinfo['Flat']['exptime']} {calinfo['Flat']['expnum']}.", level='send')
 
         exptime = 10
         expnum = 10
         await self.send_spec_and_log(
-            f'getflat {calinfo['Flat']['exptime']} {calinfo['Flat']['expnum']}',
+            f"getflat {calinfo['Flat']['exptime']} {calinfo['Flat']['expnum']}",
             'Flat',
             calinfo['Flat']['exptime'],
             calinfo['Flat']['expnum'],
