@@ -1,0 +1,1126 @@
+{
+    "status": "success",
+    "message": "PLC1과 PLC2의 모든 구동 대상 포지셔너가 정방향 구동을 완료했습니다.",
+    "data": {
+        "direction": "forward",
+        "total_steps": 671,
+        "active_plcs": [
+            "PLC1",
+            "PLC2"
+        ],
+        "motion_axes": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            40,
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54,
+            55,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            79,
+            80,
+            81,
+            82,
+            83,
+            84,
+            85,
+            86,
+            87,
+            88,
+            89,
+            90,
+            91,
+            92,
+            93,
+            94,
+            95,
+            96,
+            97,
+            98,
+            99,
+            100,
+            101,
+            102,
+            103,
+            104,
+            105,
+            106,
+            107,
+            108,
+            109,
+            110
+        ],
+        "locked_axes": [],
+        "completed_steps": {
+            "PLC1": 671,
+            "PLC2": 671
+        },
+        "allowed_steps": {
+            "PLC1": 0,
+            "PLC2": 0
+        },
+        "final_positions": {
+            "1": {
+                "plc_name": "PLC1",
+                "local_axis": 1,
+                "positioner": "O2",
+                "motor": "alpha",
+                "actual_position": 200.4778981264637,
+                "busy": false,
+                "error": false
+            },
+            "2": {
+                "plc_name": "PLC1",
+                "local_axis": 2,
+                "positioner": "O2",
+                "motor": "beta",
+                "actual_position": 90.60514856557377,
+                "busy": false,
+                "error": false
+            },
+            "3": {
+                "plc_name": "PLC1",
+                "local_axis": 3,
+                "positioner": "N4",
+                "motor": "alpha",
+                "actual_position": 182.04392015515222,
+                "busy": false,
+                "error": false
+            },
+            "4": {
+                "plc_name": "PLC1",
+                "local_axis": 4,
+                "positioner": "N4",
+                "motor": "beta",
+                "actual_position": 72.53672972775176,
+                "busy": false,
+                "error": false
+            },
+            "5": {
+                "plc_name": "PLC1",
+                "local_axis": 5,
+                "positioner": "O5",
+                "motor": "alpha",
+                "actual_position": 207.0435542300937,
+                "busy": false,
+                "error": false
+            },
+            "6": {
+                "plc_name": "PLC1",
+                "local_axis": 6,
+                "positioner": "O5",
+                "motor": "beta",
+                "actual_position": 41.38475190281031,
+                "busy": false,
+                "error": false
+            },
+            "7": {
+                "plc_name": "PLC1",
+                "local_axis": 7,
+                "positioner": "N7",
+                "motor": "alpha",
+                "actual_position": 201.33869108606558,
+                "busy": false,
+                "error": false
+            },
+            "8": {
+                "plc_name": "PLC1",
+                "local_axis": 8,
+                "positioner": "N7",
+                "motor": "beta",
+                "actual_position": 66.96195294203747,
+                "busy": false,
+                "error": false
+            },
+            "9": {
+                "plc_name": "PLC1",
+                "local_axis": 9,
+                "positioner": "M9",
+                "motor": "alpha",
+                "actual_position": 338.9153066451991,
+                "busy": false,
+                "error": false
+            },
+            "10": {
+                "plc_name": "PLC1",
+                "local_axis": 10,
+                "positioner": "M9",
+                "motor": "beta",
+                "actual_position": 96.2433218676815,
+                "busy": false,
+                "error": false
+            },
+            "11": {
+                "plc_name": "PLC1",
+                "local_axis": 11,
+                "positioner": "K10",
+                "motor": "alpha",
+                "actual_position": 215.17271662763468,
+                "busy": false,
+                "error": false
+            },
+            "12": {
+                "plc_name": "PLC1",
+                "local_axis": 12,
+                "positioner": "K10",
+                "motor": "beta",
+                "actual_position": 53.20820221018736,
+                "busy": false,
+                "error": false
+            },
+            "13": {
+                "plc_name": "PLC1",
+                "local_axis": 13,
+                "positioner": "J12",
+                "motor": "alpha",
+                "actual_position": 147.64225336651054,
+                "busy": false,
+                "error": false
+            },
+            "14": {
+                "plc_name": "PLC1",
+                "local_axis": 14,
+                "positioner": "J12",
+                "motor": "beta",
+                "actual_position": 143.81829076405154,
+                "busy": false,
+                "error": false
+            },
+            "15": {
+                "plc_name": "PLC1",
+                "local_axis": 15,
+                "positioner": "I11",
+                "motor": "beta",
+                "actual_position": 88.65838151346605,
+                "busy": false,
+                "error": false
+            },
+            "16": {
+                "plc_name": "PLC1",
+                "local_axis": 16,
+                "positioner": "I11",
+                "motor": "alpha",
+                "actual_position": 15.308612046252929,
+                "busy": false,
+                "error": false
+            },
+            "17": {
+                "plc_name": "PLC1",
+                "local_axis": 17,
+                "positioner": "J9",
+                "motor": "beta",
+                "actual_position": 62.51267015515223,
+                "busy": false,
+                "error": false
+            },
+            "18": {
+                "plc_name": "PLC1",
+                "local_axis": 18,
+                "positioner": "J9",
+                "motor": "alpha",
+                "actual_position": 331.9099915837237,
+                "busy": false,
+                "error": false
+            },
+            "19": {
+                "plc_name": "PLC1",
+                "local_axis": 19,
+                "positioner": "L8",
+                "motor": "beta",
+                "actual_position": 104.11478154274005,
+                "busy": false,
+                "error": false
+            },
+            "20": {
+                "plc_name": "PLC1",
+                "local_axis": 20,
+                "positioner": "L8",
+                "motor": "alpha",
+                "actual_position": 318.22046069964875,
+                "busy": false,
+                "error": false
+            },
+            "21": {
+                "plc_name": "PLC1",
+                "local_axis": 21,
+                "positioner": "K7",
+                "motor": "beta",
+                "actual_position": 164.15745755269322,
+                "busy": false,
+                "error": false
+            },
+            "22": {
+                "plc_name": "PLC1",
+                "local_axis": 22,
+                "positioner": "K7",
+                "motor": "alpha",
+                "actual_position": 68.7514637002342,
+                "busy": false,
+                "error": false
+            },
+            "23": {
+                "plc_name": "PLC1",
+                "local_axis": 23,
+                "positioner": "M6",
+                "motor": "beta",
+                "actual_position": 60.41317513173303,
+                "busy": false,
+                "error": false
+            },
+            "24": {
+                "plc_name": "PLC1",
+                "local_axis": 24,
+                "positioner": "M6",
+                "motor": "alpha",
+                "actual_position": 275.29402078454336,
+                "busy": false,
+                "error": false
+            },
+            "25": {
+                "plc_name": "PLC1",
+                "local_axis": 25,
+                "positioner": "L5",
+                "motor": "beta",
+                "actual_position": 71.09631147540983,
+                "busy": false,
+                "error": false
+            },
+            "26": {
+                "plc_name": "PLC1",
+                "local_axis": 26,
+                "positioner": "L5",
+                "motor": "alpha",
+                "actual_position": 297.5157347775176,
+                "busy": false,
+                "error": false
+            },
+            "27": {
+                "plc_name": "PLC1",
+                "local_axis": 27,
+                "positioner": "M3",
+                "motor": "beta",
+                "actual_position": 50.78060963114754,
+                "busy": false,
+                "error": false
+            },
+            "28": {
+                "plc_name": "PLC1",
+                "local_axis": 28,
+                "positioner": "M3",
+                "motor": "alpha",
+                "actual_position": 269.6472025029274,
+                "busy": false,
+                "error": false
+            },
+            "29": {
+                "plc_name": "PLC1",
+                "local_axis": 29,
+                "positioner": "N1",
+                "motor": "alpha",
+                "actual_position": 21.149736533957846,
+                "busy": false,
+                "error": false
+            },
+            "30": {
+                "plc_name": "PLC1",
+                "local_axis": 30,
+                "positioner": "N1",
+                "motor": "beta",
+                "actual_position": 120.36322636124123,
+                "busy": false,
+                "error": false
+            },
+            "31": {
+                "plc_name": "PLC1",
+                "local_axis": 31,
+                "positioner": "K4",
+                "motor": "alpha",
+                "actual_position": 244.2783043032787,
+                "busy": false,
+                "error": false
+            },
+            "32": {
+                "plc_name": "PLC1",
+                "local_axis": 32,
+                "positioner": "K4",
+                "motor": "beta",
+                "actual_position": 120.19979508196722,
+                "busy": false,
+                "error": false
+            },
+            "33": {
+                "plc_name": "PLC1",
+                "local_axis": 33,
+                "positioner": "J6",
+                "motor": "alpha",
+                "actual_position": 31.743129757025763,
+                "busy": false,
+                "error": false
+            },
+            "34": {
+                "plc_name": "PLC1",
+                "local_axis": 34,
+                "positioner": "J6",
+                "motor": "beta",
+                "actual_position": 15.309023711943794,
+                "busy": false,
+                "error": false
+            },
+            "35": {
+                "plc_name": "PLC1",
+                "local_axis": 35,
+                "positioner": "I8",
+                "motor": "alpha",
+                "actual_position": 318.4769284250586,
+                "busy": false,
+                "error": false
+            },
+            "36": {
+                "plc_name": "PLC1",
+                "local_axis": 36,
+                "positioner": "I8",
+                "motor": "beta",
+                "actual_position": 133.3846238290398,
+                "busy": false,
+                "error": false
+            },
+            "37": {
+                "plc_name": "PLC1",
+                "local_axis": 37,
+                "positioner": "H10",
+                "motor": "alpha",
+                "actual_position": 324.6272138466042,
+                "busy": false,
+                "error": false
+            },
+            "38": {
+                "plc_name": "PLC1",
+                "local_axis": 38,
+                "positioner": "H10",
+                "motor": "beta",
+                "actual_position": 141.98637843969556,
+                "busy": false,
+                "error": false
+            },
+            "39": {
+                "plc_name": "PLC1",
+                "local_axis": 39,
+                "positioner": "H13",
+                "motor": "alpha",
+                "actual_position": 118.89110985070258,
+                "busy": false,
+                "error": false
+            },
+            "40": {
+                "plc_name": "PLC1",
+                "local_axis": 40,
+                "positioner": "H13",
+                "motor": "beta",
+                "actual_position": 83.17005452283372,
+                "busy": false,
+                "error": false
+            },
+            "41": {
+                "plc_name": "PLC1",
+                "local_axis": 41,
+                "positioner": "F12",
+                "motor": "beta",
+                "actual_position": 152.94491913056206,
+                "busy": false,
+                "error": false
+            },
+            "42": {
+                "plc_name": "PLC1",
+                "local_axis": 42,
+                "positioner": "F12",
+                "motor": "alpha",
+                "actual_position": 106.08748353337238,
+                "busy": false,
+                "error": false
+            },
+            "43": {
+                "plc_name": "PLC1",
+                "local_axis": 43,
+                "positioner": "G11",
+                "motor": "beta",
+                "actual_position": 113.35667630269322,
+                "busy": false,
+                "error": false
+            },
+            "44": {
+                "plc_name": "PLC1",
+                "local_axis": 44,
+                "positioner": "G11",
+                "motor": "alpha",
+                "actual_position": 4.445166129976581,
+                "busy": false,
+                "error": false
+            },
+            "45": {
+                "plc_name": "PLC1",
+                "local_axis": 45,
+                "positioner": "G8",
+                "motor": "beta",
+                "actual_position": 30.73948880269321,
+                "busy": false,
+                "error": false
+            },
+            "46": {
+                "plc_name": "PLC1",
+                "local_axis": 46,
+                "positioner": "G8",
+                "motor": "alpha",
+                "actual_position": 192.25775761124123,
+                "busy": false,
+                "error": false
+            },
+            "47": {
+                "plc_name": "PLC1",
+                "local_axis": 47,
+                "positioner": "H7",
+                "motor": "beta",
+                "actual_position": 143.09293581674473,
+                "busy": false,
+                "error": false
+            },
+            "48": {
+                "plc_name": "PLC1",
+                "local_axis": 48,
+                "positioner": "H7",
+                "motor": "alpha",
+                "actual_position": 312.2352532201405,
+                "busy": false,
+                "error": false
+            },
+            "49": {
+                "plc_name": "PLC1",
+                "local_axis": 49,
+                "positioner": "I5",
+                "motor": "beta",
+                "actual_position": 84.98920521077284,
+                "busy": false,
+                "error": false
+            },
+            "50": {
+                "plc_name": "PLC1",
+                "local_axis": 50,
+                "positioner": "I5",
+                "motor": "alpha",
+                "actual_position": 251.36512917154568,
+                "busy": false,
+                "error": false
+            },
+            "51": {
+                "plc_name": "PLC1",
+                "local_axis": 51,
+                "positioner": "L2",
+                "motor": "beta",
+                "actual_position": 126.42088700234193,
+                "busy": false,
+                "error": false
+            },
+            "52": {
+                "plc_name": "PLC1",
+                "local_axis": 52,
+                "positioner": "L2",
+                "motor": "alpha",
+                "actual_position": 118.49302912763467,
+                "busy": false,
+                "error": false
+            },
+            "53": {
+                "plc_name": "PLC1",
+                "local_axis": 53,
+                "positioner": "M0",
+                "motor": "beta",
+                "actual_position": 141.10911885245903,
+                "busy": false,
+                "error": false
+            },
+            "54": {
+                "plc_name": "PLC1",
+                "local_axis": 54,
+                "positioner": "M0",
+                "motor": "alpha",
+                "actual_position": 102.58791349531616,
+                "busy": false,
+                "error": false
+            },
+            "55": {
+                "plc_name": "PLC2",
+                "local_axis": 1,
+                "positioner": "K1",
+                "motor": "alpha",
+                "actual_position": 111.21807303864169,
+                "busy": false,
+                "error": false
+            },
+            "56": {
+                "plc_name": "PLC2",
+                "local_axis": 2,
+                "positioner": "K1",
+                "motor": "beta",
+                "actual_position": 58.44006147540984,
+                "busy": false,
+                "error": false
+            },
+            "57": {
+                "plc_name": "PLC2",
+                "local_axis": 3,
+                "positioner": "J3",
+                "motor": "alpha",
+                "actual_position": 64.79288641686183,
+                "busy": false,
+                "error": false
+            },
+            "58": {
+                "plc_name": "PLC2",
+                "local_axis": 4,
+                "positioner": "J3",
+                "motor": "beta",
+                "actual_position": 116.21075453747073,
+                "busy": false,
+                "error": false
+            },
+            "59": {
+                "plc_name": "PLC2",
+                "local_axis": 5,
+                "positioner": "H4",
+                "motor": "alpha",
+                "actual_position": 238.9694635538642,
+                "busy": false,
+                "error": false
+            },
+            "60": {
+                "plc_name": "PLC2",
+                "local_axis": 6,
+                "positioner": "H4",
+                "motor": "beta",
+                "actual_position": 156.86726983313818,
+                "busy": false,
+                "error": false
+            },
+            "61": {
+                "plc_name": "PLC2",
+                "local_axis": 7,
+                "positioner": "F6",
+                "motor": "alpha",
+                "actual_position": 242.07589285714286,
+                "busy": false,
+                "error": false
+            },
+            "62": {
+                "plc_name": "PLC2",
+                "local_axis": 8,
+                "positioner": "F6",
+                "motor": "beta",
+                "actual_position": 163.55107399004686,
+                "busy": false,
+                "error": false
+            },
+            "63": {
+                "plc_name": "PLC2",
+                "local_axis": 9,
+                "positioner": "E7",
+                "motor": "alpha",
+                "actual_position": 228.39871194379393,
+                "busy": false,
+                "error": false
+            },
+            "64": {
+                "plc_name": "PLC2",
+                "local_axis": 10,
+                "positioner": "E7",
+                "motor": "beta",
+                "actual_position": 135.65619511124123,
+                "busy": false,
+                "error": false
+            },
+            "65": {
+                "plc_name": "PLC2",
+                "local_axis": 11,
+                "positioner": "F9",
+                "motor": "alpha",
+                "actual_position": 354.887112119438,
+                "busy": false,
+                "error": false
+            },
+            "66": {
+                "plc_name": "PLC2",
+                "local_axis": 12,
+                "positioner": "F9",
+                "motor": "beta",
+                "actual_position": 86.24560889929742,
+                "busy": false,
+                "error": false
+            },
+            "67": {
+                "plc_name": "PLC2",
+                "local_axis": 13,
+                "positioner": "E10",
+                "motor": "alpha",
+                "actual_position": 211.08446465163937,
+                "busy": false,
+                "error": false
+            },
+            "68": {
+                "plc_name": "PLC2",
+                "local_axis": 14,
+                "positioner": "E10",
+                "motor": "beta",
+                "actual_position": 46.732700892857146,
+                "busy": false,
+                "error": false
+            },
+            "69": {
+                "plc_name": "PLC2",
+                "local_axis": 15,
+                "positioner": "C9",
+                "motor": "beta",
+                "actual_position": 89.81145711358315,
+                "busy": false,
+                "error": false
+            },
+            "70": {
+                "plc_name": "PLC2",
+                "local_axis": 16,
+                "positioner": "C9",
+                "motor": "alpha",
+                "actual_position": 271.3659067622951,
+                "busy": false,
+                "error": false
+            },
+            "71": {
+                "plc_name": "PLC2",
+                "local_axis": 17,
+                "positioner": "D8",
+                "motor": "beta",
+                "actual_position": 78.53058218676816,
+                "busy": false,
+                "error": false
+            },
+            "72": {
+                "plc_name": "PLC2",
+                "local_axis": 18,
+                "positioner": "D8",
+                "motor": "alpha",
+                "actual_position": 232.5268954918033,
+                "busy": false,
+                "error": false
+            },
+            "73": {
+                "plc_name": "PLC2",
+                "local_axis": 19,
+                "positioner": "D5",
+                "motor": "beta",
+                "actual_position": 52.78994986826698,
+                "busy": false,
+                "error": false
+            },
+            "74": {
+                "plc_name": "PLC2",
+                "local_axis": 20,
+                "positioner": "D5",
+                "motor": "alpha",
+                "actual_position": 87.15662507318501,
+                "busy": false,
+                "error": false
+            },
+            "75": {
+                "plc_name": "PLC2",
+                "local_axis": 21,
+                "positioner": "G5",
+                "motor": "beta",
+                "actual_position": 126.47069855093677,
+                "busy": false,
+                "error": false
+            },
+            "76": {
+                "plc_name": "PLC2",
+                "local_axis": 22,
+                "positioner": "G5",
+                "motor": "alpha",
+                "actual_position": 90.68418837822014,
+                "busy": false,
+                "error": false
+            },
+            "77": {
+                "plc_name": "PLC2",
+                "local_axis": 23,
+                "positioner": "F3",
+                "motor": "beta",
+                "actual_position": 109.26224934133491,
+                "busy": false,
+                "error": false
+            },
+            "78": {
+                "plc_name": "PLC2",
+                "local_axis": 24,
+                "positioner": "F3",
+                "motor": "alpha",
+                "actual_position": 302.85915544496487,
+                "busy": false,
+                "error": false
+            },
+            "79": {
+                "plc_name": "PLC2",
+                "local_axis": 25,
+                "positioner": "I2",
+                "motor": "beta",
+                "actual_position": 78.5915087090164,
+                "busy": false,
+                "error": false
+            },
+            "80": {
+                "plc_name": "PLC2",
+                "local_axis": 26,
+                "positioner": "I2",
+                "motor": "alpha",
+                "actual_position": 340.8180254683841,
+                "busy": false,
+                "error": false
+            },
+            "81": {
+                "plc_name": "PLC2",
+                "local_axis": 27,
+                "positioner": "J0",
+                "motor": "beta",
+                "actual_position": 121.06758635831382,
+                "busy": false,
+                "error": false
+            },
+            "82": {
+                "plc_name": "PLC2",
+                "local_axis": 28,
+                "positioner": "J0",
+                "motor": "alpha",
+                "actual_position": 52.72202502927401,
+                "busy": false,
+                "error": false
+            },
+            "83": {
+                "plc_name": "PLC2",
+                "local_axis": 29,
+                "positioner": "H1",
+                "motor": "alpha",
+                "actual_position": 135.46559389637002,
+                "busy": false,
+                "error": false
+            },
+            "84": {
+                "plc_name": "PLC2",
+                "local_axis": 30,
+                "positioner": "H1",
+                "motor": "beta",
+                "actual_position": 21.159204844847775,
+                "busy": false,
+                "error": false
+            },
+            "85": {
+                "plc_name": "PLC2",
+                "local_axis": 31,
+                "positioner": "G2",
+                "motor": "alpha",
+                "actual_position": 312.1360417886417,
+                "busy": false,
+                "error": false
+            },
+            "86": {
+                "plc_name": "PLC2",
+                "local_axis": 32,
+                "positioner": "G2",
+                "motor": "beta",
+                "actual_position": 91.34902846896956,
+                "busy": false,
+                "error": false
+            },
+            "87": {
+                "plc_name": "PLC2",
+                "local_axis": 33,
+                "positioner": "D2",
+                "motor": "alpha",
+                "actual_position": 68.14631513466043,
+                "busy": false,
+                "error": false
+            },
+            "88": {
+                "plc_name": "PLC2",
+                "local_axis": 34,
+                "positioner": "D2",
+                "motor": "beta",
+                "actual_position": 106.9857380708431,
+                "busy": false,
+                "error": false
+            },
+            "89": {
+                "plc_name": "PLC2",
+                "local_axis": 35,
+                "positioner": "E4",
+                "motor": "alpha",
+                "actual_position": 139.59542410714286,
+                "busy": false,
+                "error": false
+            },
+            "90": {
+                "plc_name": "PLC2",
+                "local_axis": 36,
+                "positioner": "E4",
+                "motor": "beta",
+                "actual_position": 92.65689036885246,
+                "busy": false,
+                "error": false
+            },
+            "91": {
+                "plc_name": "PLC2",
+                "local_axis": 37,
+                "positioner": "C3",
+                "motor": "alpha",
+                "actual_position": 194.9142363144028,
+                "busy": false,
+                "error": false
+            },
+            "92": {
+                "plc_name": "PLC2",
+                "local_axis": 38,
+                "positioner": "C3",
+                "motor": "beta",
+                "actual_position": 95.91728264051523,
+                "busy": false,
+                "error": false
+            },
+            "93": {
+                "plc_name": "PLC2",
+                "local_axis": 39,
+                "positioner": "C6",
+                "motor": "alpha",
+                "actual_position": 106.1558200380562,
+                "busy": false,
+                "error": false
+            },
+            "94": {
+                "plc_name": "PLC2",
+                "local_axis": 40,
+                "positioner": "C6",
+                "motor": "beta",
+                "actual_position": 85.82570989461358,
+                "busy": false,
+                "error": false
+            },
+            "95": {
+                "plc_name": "PLC2",
+                "local_axis": 41,
+                "positioner": "B7",
+                "motor": "alpha",
+                "actual_position": 273.52385831381736,
+                "busy": false,
+                "error": false
+            },
+            "96": {
+                "plc_name": "PLC2",
+                "local_axis": 42,
+                "positioner": "B7",
+                "motor": "beta",
+                "actual_position": 84.08024736533959,
+                "busy": false,
+                "error": false
+            },
+            "97": {
+                "plc_name": "PLC2",
+                "local_axis": 43,
+                "positioner": "A5",
+                "motor": "beta",
+                "actual_position": 62.45092030152225,
+                "busy": false,
+                "error": false
+            },
+            "98": {
+                "plc_name": "PLC2",
+                "local_axis": 44,
+                "positioner": "A5",
+                "motor": "alpha",
+                "actual_position": 359.24624012002346,
+                "busy": false,
+                "error": false
+            },
+            "99": {
+                "plc_name": "PLC2",
+                "local_axis": 45,
+                "positioner": "B4",
+                "motor": "beta",
+                "actual_position": 43.76747292154567,
+                "busy": false,
+                "error": false
+            },
+            "100": {
+                "plc_name": "PLC2",
+                "local_axis": 46,
+                "positioner": "B4",
+                "motor": "alpha",
+                "actual_position": 118.32095286885247,
+                "busy": false,
+                "error": false
+            },
+            "101": {
+                "plc_name": "PLC2",
+                "local_axis": 47,
+                "positioner": "A2",
+                "motor": "beta",
+                "actual_position": 148.31862009660423,
+                "busy": false,
+                "error": false
+            },
+            "102": {
+                "plc_name": "PLC2",
+                "local_axis": 48,
+                "positioner": "A2",
+                "motor": "alpha",
+                "actual_position": 338.4369511124122,
+                "busy": false,
+                "error": false
+            },
+            "103": {
+                "plc_name": "PLC2",
+                "local_axis": 49,
+                "positioner": "B1",
+                "motor": "beta",
+                "actual_position": 67.72929778981265,
+                "busy": false,
+                "error": false
+            },
+            "104": {
+                "plc_name": "PLC2",
+                "local_axis": 50,
+                "positioner": "B1",
+                "motor": "alpha",
+                "actual_position": 264.12100226873537,
+                "busy": false,
+                "error": false
+            },
+            "105": {
+                "plc_name": "PLC2",
+                "local_axis": 51,
+                "positioner": "C0",
+                "motor": "beta",
+                "actual_position": 111.52723397248243,
+                "busy": false,
+                "error": false
+            },
+            "106": {
+                "plc_name": "PLC2",
+                "local_axis": 52,
+                "positioner": "C0",
+                "motor": "alpha",
+                "actual_position": 117.40088004976582,
+                "busy": false,
+                "error": false
+            },
+            "107": {
+                "plc_name": "PLC2",
+                "local_axis": 53,
+                "positioner": "E1",
+                "motor": "beta",
+                "actual_position": 45.891256220726,
+                "busy": false,
+                "error": false
+            },
+            "108": {
+                "plc_name": "PLC2",
+                "local_axis": 54,
+                "positioner": "E1",
+                "motor": "alpha",
+                "actual_position": 342.40417337529277,
+                "busy": false,
+                "error": false
+            },
+            "109": {
+                "plc_name": "PLC2",
+                "local_axis": 55,
+                "positioner": "F0",
+                "motor": "beta",
+                "actual_position": 114.31585736241219,
+                "busy": false,
+                "error": false
+            },
+            "110": {
+                "plc_name": "PLC2",
+                "local_axis": 56,
+                "positioner": "F0",
+                "motor": "alpha",
+                "actual_position": 296.9072928864169,
+                "busy": false,
+                "error": false
+            }
+        }
+    },
+    "result_file": "C:\\Users\\kasi\\Desktop\\Fiber_test\\Log\\result_20260911_174548_235730.json"
+}

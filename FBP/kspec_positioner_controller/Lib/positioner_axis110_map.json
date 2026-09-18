@@ -1,0 +1,607 @@
+{
+    "O2": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 1,
+            "local_axis": 1
+        },
+        "beta": {
+            "global_axis": 2,
+            "local_axis": 2
+        }
+    },
+    "N4": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 3,
+            "local_axis": 3
+        },
+        "beta": {
+            "global_axis": 4,
+            "local_axis": 4
+        }
+    },
+    "O5": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 5,
+            "local_axis": 5
+        },
+        "beta": {
+            "global_axis": 6,
+            "local_axis": 6
+        }
+    },
+    "N7": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 7,
+            "local_axis": 7
+        },
+        "beta": {
+            "global_axis": 8,
+            "local_axis": 8
+        }
+    },
+    "M9": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 9,
+            "local_axis": 9
+        },
+        "beta": {
+            "global_axis": 10,
+            "local_axis": 10
+        }
+    },
+    "K10": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 11,
+            "local_axis": 11
+        },
+        "beta": {
+            "global_axis": 12,
+            "local_axis": 12
+        }
+    },
+    "J12": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 13,
+            "local_axis": 13
+        },
+        "beta": {
+            "global_axis": 14,
+            "local_axis": 14
+        }
+    },
+    "I11": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 16,
+            "local_axis": 16
+        },
+        "beta": {
+            "global_axis": 15,
+            "local_axis": 15
+        }
+    },
+    "J9": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 18,
+            "local_axis": 18
+        },
+        "beta": {
+            "global_axis": 17,
+            "local_axis": 17
+        }
+    },
+    "L8": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 20,
+            "local_axis": 20
+        },
+        "beta": {
+            "global_axis": 19,
+            "local_axis": 19
+        }
+    },
+    "K7": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 22,
+            "local_axis": 22
+        },
+        "beta": {
+            "global_axis": 21,
+            "local_axis": 21
+        }
+    },
+    "M6": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 24,
+            "local_axis": 24
+        },
+        "beta": {
+            "global_axis": 23,
+            "local_axis": 23
+        }
+    },
+    "L5": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 26,
+            "local_axis": 26
+        },
+        "beta": {
+            "global_axis": 25,
+            "local_axis": 25
+        }
+    },
+    "M3": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 28,
+            "local_axis": 28
+        },
+        "beta": {
+            "global_axis": 27,
+            "local_axis": 27
+        }
+    },
+    "N1": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 29,
+            "local_axis": 29
+        },
+        "beta": {
+            "global_axis": 30,
+            "local_axis": 30
+        }
+    },
+    "K4": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 31,
+            "local_axis": 31
+        },
+        "beta": {
+            "global_axis": 32,
+            "local_axis": 32
+        }
+    },
+    "J6": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 33,
+            "local_axis": 33
+        },
+        "beta": {
+            "global_axis": 34,
+            "local_axis": 34
+        }
+    },
+    "I8": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 35,
+            "local_axis": 35
+        },
+        "beta": {
+            "global_axis": 36,
+            "local_axis": 36
+        }
+    },
+    "H10": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 37,
+            "local_axis": 37
+        },
+        "beta": {
+            "global_axis": 38,
+            "local_axis": 38
+        }
+    },
+    "H13": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 39,
+            "local_axis": 39
+        },
+        "beta": {
+            "global_axis": 40,
+            "local_axis": 40
+        }
+    },
+    "F12": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 42,
+            "local_axis": 42
+        },
+        "beta": {
+            "global_axis": 41,
+            "local_axis": 41
+        }
+    },
+    "G11": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 44,
+            "local_axis": 44
+        },
+        "beta": {
+            "global_axis": 43,
+            "local_axis": 43
+        }
+    },
+    "G8": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 46,
+            "local_axis": 46
+        },
+        "beta": {
+            "global_axis": 45,
+            "local_axis": 45
+        }
+    },
+    "H7": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 48,
+            "local_axis": 48
+        },
+        "beta": {
+            "global_axis": 47,
+            "local_axis": 47
+        }
+    },
+    "I5": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 50,
+            "local_axis": 50
+        },
+        "beta": {
+            "global_axis": 49,
+            "local_axis": 49
+        }
+    },
+    "L2": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 52,
+            "local_axis": 52
+        },
+        "beta": {
+            "global_axis": 51,
+            "local_axis": 51
+        }
+    },
+    "M0": {
+        "plc": "PLC1",
+        "alpha": {
+            "global_axis": 54,
+            "local_axis": 54
+        },
+        "beta": {
+            "global_axis": 53,
+            "local_axis": 53
+        }
+    },
+    "K1": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 55,
+            "local_axis": 1
+        },
+        "beta": {
+            "global_axis": 56,
+            "local_axis": 2
+        }
+    },
+    "J3": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 57,
+            "local_axis": 3
+        },
+        "beta": {
+            "global_axis": 58,
+            "local_axis": 4
+        }
+    },
+    "H4": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 59,
+            "local_axis": 5
+        },
+        "beta": {
+            "global_axis": 60,
+            "local_axis": 6
+        }
+    },
+    "F6": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 61,
+            "local_axis": 7
+        },
+        "beta": {
+            "global_axis": 62,
+            "local_axis": 8
+        }
+    },
+    "E7": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 63,
+            "local_axis": 9
+        },
+        "beta": {
+            "global_axis": 64,
+            "local_axis": 10
+        }
+    },
+    "F9": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 65,
+            "local_axis": 11
+        },
+        "beta": {
+            "global_axis": 66,
+            "local_axis": 12
+        }
+    },
+    "E10": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 67,
+            "local_axis": 13
+        },
+        "beta": {
+            "global_axis": 68,
+            "local_axis": 14
+        }
+    },
+    "C9": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 70,
+            "local_axis": 16
+        },
+        "beta": {
+            "global_axis": 69,
+            "local_axis": 15
+        }
+    },
+    "D8": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 72,
+            "local_axis": 18
+        },
+        "beta": {
+            "global_axis": 71,
+            "local_axis": 17
+        }
+    },
+    "D5": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 74,
+            "local_axis": 20
+        },
+        "beta": {
+            "global_axis": 73,
+            "local_axis": 19
+        }
+    },
+    "G5": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 76,
+            "local_axis": 22
+        },
+        "beta": {
+            "global_axis": 75,
+            "local_axis": 21
+        }
+    },
+    "F3": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 78,
+            "local_axis": 24
+        },
+        "beta": {
+            "global_axis": 77,
+            "local_axis": 23
+        }
+    },
+    "I2": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 80,
+            "local_axis": 26
+        },
+        "beta": {
+            "global_axis": 79,
+            "local_axis": 25
+        }
+    },
+    "J0": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 82,
+            "local_axis": 28
+        },
+        "beta": {
+            "global_axis": 81,
+            "local_axis": 27
+        }
+    },
+    "H1": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 83,
+            "local_axis": 29
+        },
+        "beta": {
+            "global_axis": 84,
+            "local_axis": 30
+        }
+    },
+    "G2": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 85,
+            "local_axis": 31
+        },
+        "beta": {
+            "global_axis": 86,
+            "local_axis": 32
+        }
+    },
+    "D2": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 87,
+            "local_axis": 33
+        },
+        "beta": {
+            "global_axis": 88,
+            "local_axis": 34
+        }
+    },
+    "E4": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 89,
+            "local_axis": 35
+        },
+        "beta": {
+            "global_axis": 90,
+            "local_axis": 36
+        }
+    },
+    "C3": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 91,
+            "local_axis": 37
+        },
+        "beta": {
+            "global_axis": 92,
+            "local_axis": 38
+        }
+    },
+    "C6": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 93,
+            "local_axis": 39
+        },
+        "beta": {
+            "global_axis": 94,
+            "local_axis": 40
+        }
+    },
+    "B7": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 95,
+            "local_axis": 41
+        },
+        "beta": {
+            "global_axis": 96,
+            "local_axis": 42
+        }
+    },
+    "A5": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 98,
+            "local_axis": 44
+        },
+        "beta": {
+            "global_axis": 97,
+            "local_axis": 43
+        }
+    },
+    "B4": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 100,
+            "local_axis": 46
+        },
+        "beta": {
+            "global_axis": 99,
+            "local_axis": 45
+        }
+    },
+    "A2": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 102,
+            "local_axis": 48
+        },
+        "beta": {
+            "global_axis": 101,
+            "local_axis": 47
+        }
+    },
+    "B1": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 104,
+            "local_axis": 50
+        },
+        "beta": {
+            "global_axis": 103,
+            "local_axis": 49
+        }
+    },
+    "C0": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 106,
+            "local_axis": 52
+        },
+        "beta": {
+            "global_axis": 105,
+            "local_axis": 51
+        }
+    },
+    "E1": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 108,
+            "local_axis": 54
+        },
+        "beta": {
+            "global_axis": 107,
+            "local_axis": 53
+        }
+    },
+    "F0": {
+        "plc": "PLC2",
+        "alpha": {
+            "global_axis": 110,
+            "local_axis": 56
+        },
+        "beta": {
+            "global_axis": 109,
+            "local_axis": 55
+        }
+    }
+}

@@ -5078,7 +5078,7 @@ class Ui_MainWindow(object):
         self.beta_checkBox.setFont(font2)
         self.pushbtn_FBP_zero = QPushButton(self.group_fiber)
         self.pushbtn_FBP_zero.setObjectName(u"pushbtn_FBP_zero")
-        self.pushbtn_FBP_zero.setEnabled(True)
+        self.pushbtn_FBP_zero.setEnabled(False)
         self.pushbtn_FBP_zero.setGeometry(QRect(790, 696, 71, 30))
         self.pushbtn_FBP_zero.setFont(font1)
         self.pushbtn_FBP_stop = QPushButton(self.group_fiber)

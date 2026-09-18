@@ -651,6 +651,7 @@ async def reverse_main(plc_connections):
         # ==========================================
         # 구동 중 상태 감시
         # ==========================================
+        print()
         while True:
 
             snapshot_results = await asyncio.gather(
@@ -724,12 +725,15 @@ async def reverse_main(plc_connections):
 
 
             print(
-                "Step | "
+                "\033[1A\r\033[2K"
+                + "Step | "
                 + "  ".join(step_status_parts)
-                + "\n상태 | "
-                + "  ".join(status_parts)
+                + "\n\033[2K"
+                + "상태 | "
+                + "  ".join(status_parts),
+                end="\r",
+                flush=True
             )
-
 
 
             # ==============================

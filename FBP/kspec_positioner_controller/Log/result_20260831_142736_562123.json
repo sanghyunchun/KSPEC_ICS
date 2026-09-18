@@ -1,0 +1,180 @@
+{
+    "status": "success",
+    "message": "PLC1, PLC2의 Stop 복귀가 공통 원본 1130단계에서 원본 1단계까지 완료되었습니다.",
+    "data": {
+        "direction": "stop_reverse",
+        "stop_records_before_recovery": {
+            "PLC1": {
+                "plc_name": "PLC1",
+                "stopped_valid": true,
+                "stop_occurred": true,
+                "stop_busy": false,
+                "stop_done": true,
+                "last_completed_step": 275,
+                "target_step": 275,
+                "stopped_total_points": 1404,
+                "stopped_mode": 2,
+                "stopped_selected_axes": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6
+                ],
+                "stopped_locked_axes": []
+            },
+            "PLC2": {
+                "plc_name": "PLC2",
+                "stopped_valid": true,
+                "stop_occurred": true,
+                "stop_busy": false,
+                "stop_done": true,
+                "last_completed_step": 275,
+                "target_step": 275,
+                "stopped_total_points": 1404,
+                "stopped_mode": 2,
+                "stopped_selected_axes": [
+                    7,
+                    8,
+                    9,
+                    10
+                ],
+                "stopped_locked_axes": []
+            }
+        },
+        "common_return_step": 1130,
+        "recovery_total_steps": 1130,
+        "motion_axes": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+        ],
+        "locked_axes": [],
+        "position_tolerance": 0.2,
+        "final_positions": {
+            "1": {
+                "plc_name": "PLC1",
+                "local_axis": 1,
+                "positioner": "A1",
+                "motor": "alpha",
+                "expected_step_1_position": 30.018,
+                "actual_position": 30.018250512295083,
+                "position_error": 0.00025051229508221695,
+                "busy": false,
+                "error": false
+            },
+            "2": {
+                "plc_name": "PLC1",
+                "local_axis": 2,
+                "positioner": "A1",
+                "motor": "beta",
+                "expected_step_1_position": 149.994,
+                "actual_position": 149.9932761270492,
+                "position_error": 0.0007238729508003416,
+                "busy": false,
+                "error": false
+            },
+            "3": {
+                "plc_name": "PLC1",
+                "local_axis": 3,
+                "positioner": "A2",
+                "motor": "alpha",
+                "expected_step_1_position": 30.007,
+                "actual_position": 30.007135538641688,
+                "position_error": 0.00013553864168613927,
+                "busy": false,
+                "error": false
+            },
+            "4": {
+                "plc_name": "PLC1",
+                "local_axis": 4,
+                "positioner": "A2",
+                "motor": "beta",
+                "expected_step_1_position": 149.986,
+                "actual_position": 149.98545447892272,
+                "position_error": 0.0005455210772709052,
+                "busy": false,
+                "error": false
+            },
+            "5": {
+                "plc_name": "PLC1",
+                "local_axis": 5,
+                "positioner": "A3",
+                "motor": "alpha",
+                "expected_step_1_position": 29.998,
+                "actual_position": 29.998078893442624,
+                "position_error": 7.889344262324016e-05,
+                "busy": false,
+                "error": false
+            },
+            "6": {
+                "plc_name": "PLC1",
+                "local_axis": 6,
+                "positioner": "A3",
+                "motor": "beta",
+                "expected_step_1_position": 149.98,
+                "actual_position": 149.9821611533958,
+                "position_error": 0.0021611533958036944,
+                "busy": false,
+                "error": false
+            },
+            "7": {
+                "plc_name": "PLC2",
+                "local_axis": 1,
+                "positioner": "A4",
+                "motor": "alpha",
+                "expected_step_1_position": 29.997,
+                "actual_position": 29.996843896370024,
+                "position_error": 0.00015610362997620086,
+                "busy": false,
+                "error": false
+            },
+            "8": {
+                "plc_name": "PLC2",
+                "local_axis": 2,
+                "positioner": "A4",
+                "motor": "beta",
+                "expected_step_1_position": 150.0,
+                "actual_position": 150.00068610948477,
+                "position_error": 0.0006861094847749882,
+                "busy": false,
+                "error": false
+            },
+            "9": {
+                "plc_name": "PLC2",
+                "local_axis": 3,
+                "positioner": "A5",
+                "motor": "alpha",
+                "expected_step_1_position": 29.986,
+                "actual_position": 29.98696391978923,
+                "position_error": 0.0009639197892283846,
+                "busy": false,
+                "error": false
+            },
+            "10": {
+                "plc_name": "PLC2",
+                "local_axis": 4,
+                "positioner": "A5",
+                "motor": "beta",
+                "expected_step_1_position": 149.997,
+                "actual_position": 149.99821611533957,
+                "position_error": 0.0012161153395595647,
+                "busy": false,
+                "error": false
+            }
+        },
+        "stopped_info_cleared_plcs": [
+            "PLC1",
+            "PLC2"
+        ]
+    },
+    "result_file": "C:\\Users\\kasi\\Desktop\\Fiber_test\\Log\\result_20260831_142736_562123.json"
+}

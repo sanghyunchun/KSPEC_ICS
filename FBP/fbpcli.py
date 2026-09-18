@@ -13,7 +13,7 @@ def create_fbp_command(func, **kwargs):
     cmd_data.update(func=func, **kwargs)
     return json.dumps(cmd_data)
 
-def fbp_zero() : return create_fbp_command('fbpzero',message='Move all positioners to zero position.')
+#def fbp_zero() : return create_fbp_command('fbpzero',message='Move all positioners to zero position.')
 def fbp_moveone(positioner: str = None, motor : str = None, angle: float= 0) : 
     return create_fbp_command('fbpmoveone', positioner = positioner, motor = motor, angle = angle, message=f'Move fiber positioners {positioner} {motor} by {angle}.')
 def fbp_offset() : return create_fbp_command('fbpoffset',message='Offset fiber positioners to targets.')
@@ -38,7 +38,7 @@ async def handle_fbp(arg, ICS_client):
     params = raw_params.split()
 
     command_map = {
-        'fbpzero': fbp_zero, 'fbpoffset': fbp_offset, 'fbpmoveall': fbp_moveall,
+        'fbpoffset': fbp_offset, 'fbpmoveall': fbp_moveall,
         'fbpinitial': fbp_initial, 'fbpstop': fbp_stop, 'fbpinitial_from_stop': fbp_initial_from_stop
     }
     if cmd == 'fbpstatus':

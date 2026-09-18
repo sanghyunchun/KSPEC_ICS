@@ -1,0 +1,126 @@
+{
+    "status": "success",
+    "message": "PLC1과 PLC2의 모든 구동 대상 포지셔너가 정방향 구동을 완료했습니다.",
+    "data": {
+        "direction": "forward",
+        "total_steps": 1404,
+        "active_plcs": [
+            "PLC1",
+            "PLC2"
+        ],
+        "motion_axes": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+        ],
+        "locked_axes": [],
+        "completed_steps": {
+            "PLC1": 1404,
+            "PLC2": 1404
+        },
+        "allowed_steps": {
+            "PLC1": 0,
+            "PLC2": 0
+        },
+        "final_positions": {
+            "1": {
+                "plc_name": "PLC1",
+                "local_axis": 1,
+                "positioner": "A1",
+                "motor": "alpha",
+                "actual_position": 136.34532347775178,
+                "busy": false,
+                "error": false
+            },
+            "2": {
+                "plc_name": "PLC1",
+                "local_axis": 2,
+                "positioner": "A1",
+                "motor": "beta",
+                "actual_position": 120.780243706089,
+                "busy": false,
+                "error": false
+            },
+            "3": {
+                "plc_name": "PLC1",
+                "local_axis": 3,
+                "positioner": "A2",
+                "motor": "alpha",
+                "actual_position": 15.547378146955504,
+                "busy": false,
+                "error": false
+            },
+            "4": {
+                "plc_name": "PLC1",
+                "local_axis": 4,
+                "positioner": "A2",
+                "motor": "beta",
+                "actual_position": 71.00286336358315,
+                "busy": false,
+                "error": false
+            },
+            "5": {
+                "plc_name": "PLC1",
+                "local_axis": 5,
+                "positioner": "A3",
+                "motor": "alpha",
+                "actual_position": 260.2105898711944,
+                "busy": false,
+                "error": false
+            },
+            "6": {
+                "plc_name": "PLC1",
+                "local_axis": 6,
+                "positioner": "A3",
+                "motor": "beta",
+                "actual_position": 107.53654676522248,
+                "busy": false,
+                "error": false
+            },
+            "7": {
+                "plc_name": "PLC2",
+                "local_axis": 1,
+                "positioner": "A4",
+                "motor": "alpha",
+                "actual_position": 225.934481118267,
+                "busy": false,
+                "error": false
+            },
+            "8": {
+                "plc_name": "PLC2",
+                "local_axis": 2,
+                "positioner": "A4",
+                "motor": "beta",
+                "actual_position": 113.45959272540985,
+                "busy": false,
+                "error": false
+            },
+            "9": {
+                "plc_name": "PLC2",
+                "local_axis": 3,
+                "positioner": "A5",
+                "motor": "alpha",
+                "actual_position": 35.691415398126466,
+                "busy": false,
+                "error": false
+            },
+            "10": {
+                "plc_name": "PLC2",
+                "local_axis": 4,
+                "positioner": "A5",
+                "motor": "beta",
+                "actual_position": 46.86690390807963,
+                "busy": false,
+                "error": false
+            }
+        }
+    },
+    "result_file": "C:\\Users\\kasi\\Desktop\\Fiber_test\\Log\\result_20260831_141534_012549.json"
+}

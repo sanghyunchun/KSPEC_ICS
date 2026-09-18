@@ -1,0 +1,1110 @@
+{
+    "status": "fail",
+    "message": "현재 위치가 원본 JSON 마지막 Step 위치와 일치하지 않아 역방향 구동을 시작할 수 없습니다. ",
+    "data": {
+        "position_tolerance": 0.2,
+        "invalid_start_axes": [
+            {
+                "plc_name": "PLC1",
+                "global_axis": 1,
+                "local_axis": 1,
+                "positioner": "O2",
+                "motor": "alpha",
+                "expected_position": 200.47684,
+                "actual_position": 200.96778029859485,
+                "difference": 0.4909402985948361
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 2,
+                "local_axis": 2,
+                "positioner": "O2",
+                "motor": "beta",
+                "expected_position": 90.60555,
+                "actual_position": 90.11403139637002,
+                "difference": 0.49151860362997013
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 3,
+                "local_axis": 3,
+                "positioner": "N4",
+                "motor": "alpha",
+                "expected_position": 182.04433,
+                "actual_position": 182.53627232142858,
+                "difference": 0.4919423214285814
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 4,
+                "local_axis": 4,
+                "positioner": "N4",
+                "motor": "beta",
+                "expected_position": 72.537,
+                "actual_position": 72.04520089285715,
+                "difference": 0.49179910714285313
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 5,
+                "local_axis": 5,
+                "positioner": "O5",
+                "motor": "alpha",
+                "expected_position": 207.04338,
+                "actual_position": 207.5350830649883,
+                "difference": 0.4917030649882861
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 6,
+                "local_axis": 6,
+                "positioner": "O5",
+                "motor": "beta",
+                "expected_position": 41.38437,
+                "actual_position": 40.89404639929742,
+                "difference": 0.49032360070257397
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 7,
+                "local_axis": 7,
+                "positioner": "N7",
+                "motor": "alpha",
+                "expected_position": 201.33889,
+                "actual_position": 201.8191049473068,
+                "difference": 0.4802149473068198
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 8,
+                "local_axis": 8,
+                "positioner": "N7",
+                "motor": "beta",
+                "expected_position": 66.96219,
+                "actual_position": 66.47042410714286,
+                "difference": 0.49176589285714556
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 9,
+                "local_axis": 9,
+                "positioner": "M9",
+                "motor": "alpha",
+                "expected_position": 338.91597,
+                "actual_position": 339.40395382025764,
+                "difference": 0.4879838202576252
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 10,
+                "local_axis": 10,
+                "positioner": "M9",
+                "motor": "beta",
+                "expected_position": 96.24278,
+                "actual_position": 95.75138136709603,
+                "difference": 0.4913986329039659
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 11,
+                "local_axis": 11,
+                "positioner": "K10",
+                "motor": "alpha",
+                "expected_position": 215.17436,
+                "actual_position": 215.66589212529274,
+                "difference": 0.4915321252927356
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 12,
+                "local_axis": 12,
+                "positioner": "K10",
+                "motor": "beta",
+                "expected_position": 53.20842,
+                "actual_position": 52.71626170960187,
+                "difference": 0.4921582903981232
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 13,
+                "local_axis": 13,
+                "positioner": "J12",
+                "motor": "alpha",
+                "expected_position": 147.64406,
+                "actual_position": 148.13625219555036,
+                "difference": 0.4921921955503592
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 14,
+                "local_axis": 14,
+                "positioner": "J12",
+                "motor": "beta",
+                "expected_position": 143.81855,
+                "actual_position": 143.32635026346605,
+                "difference": 0.4921997365339337
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 15,
+                "local_axis": 15,
+                "positioner": "I11",
+                "motor": "beta",
+                "expected_position": 88.65874,
+                "actual_position": 88.16685267857143,
+                "difference": 0.49188732142856395
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 16,
+                "local_axis": 16,
+                "positioner": "I11",
+                "motor": "alpha",
+                "expected_position": 15.30801,
+                "actual_position": 14.816671545667448,
+                "difference": 0.49133845433255097
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 17,
+                "local_axis": 17,
+                "positioner": "J9",
+                "motor": "beta",
+                "expected_position": 62.51314,
+                "actual_position": 62.02813963700235,
+                "difference": 0.4850003629976527
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 18,
+                "local_axis": 18,
+                "positioner": "J9",
+                "motor": "alpha",
+                "expected_position": 331.91005,
+                "actual_position": 332.3916404420375,
+                "difference": 0.48159044203748635
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 19,
+                "local_axis": 19,
+                "positioner": "L8",
+                "motor": "beta",
+                "expected_position": 104.11493,
+                "actual_position": 103.6273693647541,
+                "difference": 0.48756063524589877
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 20,
+                "local_axis": 20,
+                "positioner": "L8",
+                "motor": "alpha",
+                "expected_position": 318.22155,
+                "actual_position": 318.70704954625296,
+                "difference": 0.4854995462529814
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 21,
+                "local_axis": 21,
+                "positioner": "K7",
+                "motor": "beta",
+                "expected_position": 164.1578,
+                "actual_position": 164.64281140222482,
+                "difference": 0.48501140222481354
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 22,
+                "local_axis": 22,
+                "positioner": "K7",
+                "motor": "alpha",
+                "expected_position": 68.75093,
+                "actual_position": 69.24216920374708,
+                "difference": 0.4912392037470852
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 23,
+                "local_axis": 23,
+                "positioner": "M6",
+                "motor": "beta",
+                "expected_position": 60.41262,
+                "actual_position": 59.92164629683841,
+                "difference": 0.4909737031615862
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 24,
+                "local_axis": 24,
+                "positioner": "M6",
+                "motor": "alpha",
+                "expected_position": 275.29376,
+                "actual_position": 275.7801979654567,
+                "difference": 0.4864379654566733
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 25,
+                "local_axis": 25,
+                "positioner": "L5",
+                "motor": "beta",
+                "expected_position": 71.09689,
+                "actual_position": 70.60642930327869,
+                "difference": 0.4904606967213141
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 26,
+                "local_axis": 26,
+                "positioner": "L5",
+                "motor": "alpha",
+                "expected_position": 297.51478,
+                "actual_position": 298.00397028688525,
+                "difference": 0.4891902868852753
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 27,
+                "local_axis": 27,
+                "positioner": "M3",
+                "motor": "beta",
+                "expected_position": 50.78023,
+                "actual_position": 50.289904127634664,
+                "difference": 0.4903258723653394
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 28,
+                "local_axis": 28,
+                "positioner": "M3",
+                "motor": "alpha",
+                "expected_position": 269.6467,
+                "actual_position": 270.1370846750586,
+                "difference": 0.4903846750585785
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 29,
+                "local_axis": 29,
+                "positioner": "N1",
+                "motor": "alpha",
+                "expected_position": 21.14991,
+                "actual_position": 20.6586193647541,
+                "difference": 0.49129063524589967
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 30,
+                "local_axis": 30,
+                "positioner": "N1",
+                "motor": "beta",
+                "expected_position": 120.36326,
+                "actual_position": 119.87993084016394,
+                "difference": 0.4833291598360603
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 31,
+                "local_axis": 31,
+                "positioner": "K4",
+                "motor": "alpha",
+                "expected_position": 244.27721,
+                "actual_position": 244.7673631440281,
+                "difference": 0.4901531440281133
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 32,
+                "local_axis": 32,
+                "positioner": "K4",
+                "motor": "beta",
+                "expected_position": 120.20037,
+                "actual_position": 119.713206235363,
+                "difference": 0.4871637646370033
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 33,
+                "local_axis": 33,
+                "positioner": "J6",
+                "motor": "alpha",
+                "expected_position": 31.74278,
+                "actual_position": 32.23095360070258,
+                "difference": 0.4881736007025772
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 34,
+                "local_axis": 34,
+                "positioner": "J6",
+                "motor": "beta",
+                "expected_position": 15.30929,
+                "actual_position": 14.820376536885247,
+                "difference": 0.4889134631147538
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 35,
+                "local_axis": 35,
+                "positioner": "I8",
+                "motor": "alpha",
+                "expected_position": 318.47638,
+                "actual_position": 318.9680455942623,
+                "difference": 0.49166559426231515
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 36,
+                "local_axis": 36,
+                "positioner": "I8",
+                "motor": "beta",
+                "expected_position": 133.38405,
+                "actual_position": 132.89350665983608,
+                "difference": 0.4905433401639243
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 37,
+                "local_axis": 37,
+                "positioner": "H10",
+                "motor": "alpha",
+                "expected_position": 324.62778,
+                "actual_position": 325.1154493559719,
+                "difference": 0.4876693559719456
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 38,
+                "local_axis": 38,
+                "positioner": "H10",
+                "motor": "beta",
+                "expected_position": 141.98676,
+                "actual_position": 141.49526127049182,
+                "difference": 0.4914987295081801
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 39,
+                "local_axis": 39,
+                "positioner": "H13",
+                "motor": "alpha",
+                "expected_position": 118.89139,
+                "actual_position": 119.38305035128806,
+                "difference": 0.4916603512880613
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 40,
+                "local_axis": 40,
+                "positioner": "H13",
+                "motor": "beta",
+                "expected_position": 83.17054,
+                "actual_position": 82.68181901346604,
+                "difference": 0.4887209865339628
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 41,
+                "local_axis": 41,
+                "positioner": "F12",
+                "motor": "beta",
+                "expected_position": 152.94446,
+                "actual_position": 153.4352129683841,
+                "difference": 0.49075296838410054
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 42,
+                "local_axis": 42,
+                "positioner": "F12",
+                "motor": "alpha",
+                "expected_position": 106.08745,
+                "actual_position": 106.57736570550352,
+                "difference": 0.48991570550352037
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 43,
+                "local_axis": 43,
+                "positioner": "G11",
+                "motor": "beta",
+                "expected_position": 113.35713,
+                "actual_position": 112.8663824648712,
+                "difference": 0.4907475351288042
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 44,
+                "local_axis": 44,
+                "positioner": "G11",
+                "motor": "alpha",
+                "expected_position": 4.44554,
+                "actual_position": 3.9556956235363,
+                "difference": 0.4898443764637004
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 45,
+                "local_axis": 45,
+                "positioner": "G8",
+                "motor": "beta",
+                "expected_position": 30.73897,
+                "actual_position": 30.249194964871197,
+                "difference": 0.48977503512880105
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 46,
+                "local_axis": 46,
+                "positioner": "G8",
+                "motor": "alpha",
+                "expected_position": 192.2574,
+                "actual_position": 192.74928644613584,
+                "difference": 0.491886446135851
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 47,
+                "local_axis": 47,
+                "positioner": "H7",
+                "motor": "beta",
+                "expected_position": 143.09299,
+                "actual_position": 142.60099531615927,
+                "difference": 0.49199468384071565
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 48,
+                "local_axis": 48,
+                "positioner": "H7",
+                "motor": "alpha",
+                "expected_position": 312.23556,
+                "actual_position": 312.72678205503513,
+                "difference": 0.4912220550351094
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 49,
+                "local_axis": 49,
+                "positioner": "I5",
+                "motor": "beta",
+                "expected_position": 84.98979,
+                "actual_position": 84.49891137295083,
+                "difference": 0.4908786270491703
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 50,
+                "local_axis": 50,
+                "positioner": "I5",
+                "motor": "alpha",
+                "expected_position": 251.36561,
+                "actual_position": 251.85418801229508,
+                "difference": 0.48857801229507913
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 51,
+                "local_axis": 51,
+                "positioner": "L2",
+                "motor": "beta",
+                "expected_position": 126.42063,
+                "actual_position": 125.9318281615925,
+                "difference": 0.4888018384074968
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 52,
+                "local_axis": 52,
+                "positioner": "L2",
+                "motor": "alpha",
+                "expected_position": 118.49317,
+                "actual_position": 118.98414629683842,
+                "difference": 0.4909762968384115
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 53,
+                "local_axis": 53,
+                "positioner": "M0",
+                "motor": "beta",
+                "expected_position": 141.1086,
+                "actual_position": 140.61759001756442,
+                "difference": 0.49100998243557115
+            },
+            {
+                "plc_name": "PLC1",
+                "global_axis": 54,
+                "local_axis": 54,
+                "positioner": "M0",
+                "motor": "alpha",
+                "expected_position": 102.58848,
+                "actual_position": 103.07944233021078,
+                "difference": 0.4909623302107775
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 55,
+                "local_axis": 1,
+                "positioner": "K1",
+                "motor": "alpha",
+                "expected_position": 111.21748,
+                "actual_position": 111.7096018735363,
+                "difference": 0.49212187353630554
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 56,
+                "local_axis": 2,
+                "positioner": "K1",
+                "motor": "beta",
+                "expected_position": 58.44026,
+                "actual_position": 57.948944306206094,
+                "difference": 0.4913156937939078
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 57,
+                "local_axis": 3,
+                "positioner": "J3",
+                "motor": "alpha",
+                "expected_position": 64.79228,
+                "actual_position": 65.2835919203747,
+                "difference": 0.49131192037469873
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 58,
+                "local_axis": 4,
+                "positioner": "J3",
+                "motor": "beta",
+                "expected_position": 116.21113,
+                "actual_position": 115.72004903395785,
+                "difference": 0.4910809660421478
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 59,
+                "local_axis": 5,
+                "positioner": "H4",
+                "motor": "alpha",
+                "expected_position": 238.96942,
+                "actual_position": 239.46140405444967,
+                "difference": 0.4919840544496594
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 60,
+                "local_axis": 6,
+                "positioner": "H4",
+                "motor": "beta",
+                "expected_position": 156.86554,
+                "actual_position": 157.3575636709602,
+                "difference": 0.4920236709601795
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 61,
+                "local_axis": 7,
+                "positioner": "F6",
+                "motor": "alpha",
+                "expected_position": 242.07694,
+                "actual_position": 242.56989168618267,
+                "difference": 0.49295168618266416
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 62,
+                "local_axis": 8,
+                "positioner": "F6",
+                "motor": "beta",
+                "expected_position": 163.55072,
+                "actual_position": 164.04136782786887,
+                "difference": 0.4906478278688553
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 63,
+                "local_axis": 9,
+                "positioner": "E7",
+                "motor": "alpha",
+                "expected_position": 228.3993,
+                "actual_position": 228.8906524443794,
+                "difference": 0.49135244437940173
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 64,
+                "local_axis": 10,
+                "positioner": "E7",
+                "motor": "beta",
+                "expected_position": 135.65578,
+                "actual_position": 135.16466627634662,
+                "difference": 0.49111372365337047
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 65,
+                "local_axis": 11,
+                "positioner": "F9",
+                "motor": "alpha",
+                "expected_position": 354.8877,
+                "actual_position": 355.37987595140515,
+                "difference": 0.4921759514051587
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 66,
+                "local_axis": 12,
+                "positioner": "F9",
+                "motor": "beta",
+                "expected_position": 86.24599,
+                "actual_position": 85.75366839871195,
+                "difference": 0.49232160128805447
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 67,
+                "local_axis": 13,
+                "positioner": "E10",
+                "motor": "alpha",
+                "expected_position": 211.08495,
+                "actual_position": 211.5768168179157,
+                "difference": 0.49186681791570663
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 68,
+                "local_axis": 14,
+                "positioner": "E10",
+                "motor": "beta",
+                "expected_position": 46.73249,
+                "actual_position": 46.2415837236534,
+                "difference": 0.49090627634659967
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 69,
+                "local_axis": 15,
+                "positioner": "C9",
+                "motor": "beta",
+                "expected_position": 89.81195,
+                "actual_position": 89.3203399443794,
+                "difference": 0.49161005562059756
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 70,
+                "local_axis": 16,
+                "positioner": "C9",
+                "motor": "alpha",
+                "expected_position": 271.36452,
+                "actual_position": 271.8562006001171,
+                "difference": 0.4916806001170926
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 71,
+                "local_axis": 17,
+                "positioner": "D8",
+                "motor": "beta",
+                "expected_position": 78.53072,
+                "actual_position": 78.03823002049181,
+                "difference": 0.49248997950819273
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 72,
+                "local_axis": 18,
+                "positioner": "D8",
+                "motor": "alpha",
+                "expected_position": 232.52688,
+                "actual_position": 233.0184243266979,
+                "difference": 0.49154432669789117
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 73,
+                "local_axis": 19,
+                "positioner": "D5",
+                "motor": "beta",
+                "expected_position": 52.78996,
+                "actual_position": 52.29883269906323,
+                "difference": 0.4911273009367676
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 74,
+                "local_axis": 20,
+                "positioner": "D5",
+                "motor": "alpha",
+                "expected_position": 87.15753,
+                "actual_position": 87.6498005708431,
+                "difference": 0.4922705708431039
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 75,
+                "local_axis": 21,
+                "positioner": "G5",
+                "motor": "beta",
+                "expected_position": 126.4705,
+                "actual_position": 125.97916971604216,
+                "difference": 0.4913302839578364
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 76,
+                "local_axis": 22,
+                "positioner": "G5",
+                "motor": "alpha",
+                "expected_position": 90.68458,
+                "actual_position": 91.17612887880563,
+                "difference": 0.4915488788056308
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 77,
+                "local_axis": 23,
+                "positioner": "F3",
+                "motor": "beta",
+                "expected_position": 109.26238,
+                "actual_position": 108.76989717505856,
+                "difference": 0.49248282494143325
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 78,
+                "local_axis": 24,
+                "positioner": "F3",
+                "motor": "alpha",
+                "expected_position": 302.85975,
+                "actual_position": 303.352330942623,
+                "difference": 0.4925809426229648
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 79,
+                "local_axis": 25,
+                "positioner": "I2",
+                "motor": "beta",
+                "expected_position": 78.59187,
+                "actual_position": 78.09956820843092,
+                "difference": 0.4923017915690764
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 80,
+                "local_axis": 26,
+                "positioner": "I2",
+                "motor": "alpha",
+                "expected_position": 340.81757,
+                "actual_position": 341.3103776346604,
+                "difference": 0.4928076346604371
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 81,
+                "local_axis": 27,
+                "positioner": "J0",
+                "motor": "beta",
+                "expected_position": 121.06727,
+                "actual_position": 120.57605752341921,
+                "difference": 0.4912124765807846
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 82,
+                "local_axis": 28,
+                "positioner": "J0",
+                "motor": "alpha",
+                "expected_position": 52.72203,
+                "actual_position": 53.213553864168624,
+                "difference": 0.49152386416862726
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 83,
+                "local_axis": 29,
+                "positioner": "H1",
+                "motor": "alpha",
+                "expected_position": 135.46671,
+                "actual_position": 135.95794606264639,
+                "difference": 0.4912360626463794
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 84,
+                "local_axis": 30,
+                "positioner": "H1",
+                "motor": "beta",
+                "expected_position": 21.15937,
+                "actual_position": 20.667264344262296,
+                "difference": 0.4921056557377028
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 85,
+                "local_axis": 31,
+                "positioner": "G2",
+                "motor": "alpha",
+                "expected_position": 312.13629,
+                "actual_position": 312.62839395491807,
+                "difference": 0.4921039549180932
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 86,
+                "local_axis": 32,
+                "positioner": "G2",
+                "motor": "beta",
+                "expected_position": 91.34917,
+                "actual_position": 90.85708796838408,
+                "difference": 0.49208203161592223
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 87,
+                "local_axis": 33,
+                "positioner": "D2",
+                "motor": "alpha",
+                "expected_position": 68.14606,
+                "actual_position": 68.63784396955504,
+                "difference": 0.4917839695550299
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 88,
+                "local_axis": 34,
+                "positioner": "D2",
+                "motor": "beta",
+                "expected_position": 106.98606,
+                "actual_position": 106.49462090163935,
+                "difference": 0.4914390983606438
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 89,
+                "local_axis": 35,
+                "positioner": "E4",
+                "motor": "alpha",
+                "expected_position": 139.59495,
+                "actual_position": 140.08654127634662,
+                "difference": 0.49159127634661104
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 90,
+                "local_axis": 36,
+                "positioner": "E4",
+                "motor": "beta",
+                "expected_position": 92.65635,
+                "actual_position": 92.16494986826699,
+                "difference": 0.4914001317330161
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 91,
+                "local_axis": 37,
+                "positioner": "C3",
+                "motor": "alpha",
+                "expected_position": 194.9137,
+                "actual_position": 195.40535348360658,
+                "difference": 0.49165348360656935
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 92,
+                "local_axis": 38,
+                "positioner": "C3",
+                "motor": "beta",
+                "expected_position": 95.91759,
+                "actual_position": 95.42534213992975,
+                "difference": 0.49224786007025045
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 93,
+                "local_axis": 39,
+                "positioner": "C6",
+                "motor": "alpha",
+                "expected_position": 106.15576,
+                "actual_position": 106.64734887295083,
+                "difference": 0.4915888729508282
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 94,
+                "local_axis": 40,
+                "positioner": "C6",
+                "motor": "beta",
+                "expected_position": 85.82589,
+                "actual_position": 85.33418105971897,
+                "difference": 0.49170894028102907
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 95,
+                "local_axis": 41,
+                "positioner": "B7",
+                "motor": "alpha",
+                "expected_position": 273.52384,
+                "actual_position": 274.0162104800937,
+                "difference": 0.49237048009371165
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 96,
+                "local_axis": 42,
+                "positioner": "B7",
+                "motor": "beta",
+                "expected_position": 84.07908,
+                "actual_position": 83.5870718676815,
+                "difference": 0.49200813231850304
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 97,
+                "local_axis": 43,
+                "positioner": "A5",
+                "motor": "beta",
+                "expected_position": 62.45047,
+                "actual_position": 61.958568135245905,
+                "difference": 0.49190186475409803
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 98,
+                "local_axis": 44,
+                "positioner": "A5",
+                "motor": "alpha",
+                "expected_position": 359.24598,
+                "actual_position": 359.73818062060894,
+                "difference": 0.4922006206089691
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 99,
+                "local_axis": 45,
+                "positioner": "B4",
+                "motor": "beta",
+                "expected_position": 43.76804,
+                "actual_position": 43.27553242096019,
+                "difference": 0.4925075790398097
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 100,
+                "local_axis": 46,
+                "positioner": "B4",
+                "motor": "alpha",
+                "expected_position": 118.32135,
+                "actual_position": 118.81289336943794,
+                "difference": 0.49154336943794874
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 101,
+                "local_axis": 47,
+                "positioner": "A2",
+                "motor": "beta",
+                "expected_position": 148.31821,
+                "actual_position": 147.82667959601875,
+                "difference": 0.49153040398124404
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 102,
+                "local_axis": 48,
+                "positioner": "A2",
+                "motor": "alpha",
+                "expected_position": 338.43613,
+                "actual_position": 338.9284799473068,
+                "difference": 0.49234994730682047
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 103,
+                "local_axis": 49,
+                "positioner": "B1",
+                "motor": "beta",
+                "expected_position": 67.72918,
+                "actual_position": 67.2381806206089,
+                "difference": 0.4909993793910985
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 104,
+                "local_axis": 50,
+                "positioner": "B1",
+                "motor": "alpha",
+                "expected_position": 264.12255,
+                "actual_position": 264.6145894320843,
+                "difference": 0.49203943208431156
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 105,
+                "local_axis": 51,
+                "positioner": "C0",
+                "motor": "beta",
+                "expected_position": 111.52668,
+                "actual_position": 111.03529347189696,
+                "difference": 0.4913865281030354
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 106,
+                "local_axis": 52,
+                "positioner": "C0",
+                "motor": "alpha",
+                "expected_position": 117.40082,
+                "actual_position": 117.89323221604216,
+                "difference": 0.4924122160421689
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 107,
+                "local_axis": 53,
+                "positioner": "E1",
+                "motor": "beta",
+                "expected_position": 45.89083,
+                "actual_position": 45.39931572014052,
+                "difference": 0.49151427985948004
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 108,
+                "local_axis": 54,
+                "positioner": "E1",
+                "motor": "alpha",
+                "expected_position": 342.40464,
+                "actual_position": 342.89693720725995,
+                "difference": 0.4922972072599805
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 109,
+                "local_axis": 55,
+                "positioner": "F0",
+                "motor": "beta",
+                "expected_position": 114.31538,
+                "actual_position": 113.8239168618267,
+                "difference": 0.4914631381733017
+            },
+            {
+                "plc_name": "PLC2",
+                "global_axis": 110,
+                "local_axis": 56,
+                "positioner": "F0",
+                "motor": "alpha",
+                "expected_position": 296.90718,
+                "actual_position": 297.39964505269324,
+                "difference": 0.49246505269326235
+            }
+        ]
+    },
+    "result_file": "C:\\Users\\kasi\\Desktop\\Fiber_test\\Log\\result_20260914_105044_049400.json"
+}

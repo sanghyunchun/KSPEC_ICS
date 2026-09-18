@@ -870,6 +870,7 @@ async def reverse_from_stop_step( # pyright: ignore[reportGeneralTypeIssues]
         # ====================================================
         # 복귀 중 상태 감시 + 2-PLC step 동기화
         # ====================================================
+        print()
         while True:
 
             snapshot_results = await asyncio.gather(
@@ -958,10 +959,14 @@ async def reverse_from_stop_step( # pyright: ignore[reportGeneralTypeIssues]
 
 
             print(
-                "복귀 Step | "
+                "\033[1A\r\033[2K"
+                + "복귀 Step | "
                 + "  ".join(step_status_parts)
-                + "\n상태 | "
-                + "  ".join(status_parts)
+                + "\n\033[2K"
+                + "상태 | "
+                + "  ".join(status_parts),
+                end="\r",
+                flush=True
             )
 
 

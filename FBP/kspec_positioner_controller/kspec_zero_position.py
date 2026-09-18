@@ -912,6 +912,7 @@ async def zero_main( # pyright: ignore[reportGeneralTypeIssues]
         # ====================================================
         # 0도 이동 상태 감시
         # ====================================================
+        print()
         while True:
 
             snapshot_results = await asyncio.gather(
@@ -983,16 +984,15 @@ async def zero_main( # pyright: ignore[reportGeneralTypeIssues]
 
 
             print(
-                "Zero Step | "
-                + "  ".join(
-                    step_status_parts
-                )
-                + "\n상태 | "
-                + "  ".join(
-                    status_parts
-                )
+                "\033[1A\r\033[2K"
+                + "Zero Step | "
+                + "  ".join(step_status_parts)
+                + "\n\033[2K"
+                + "상태 | "
+                + "  ".join(status_parts),
+                end="\r",
+                flush=True
             )
-
 
             # =================================================
             # 축 Error 발생

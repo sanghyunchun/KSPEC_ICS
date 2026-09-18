@@ -1,0 +1,1054 @@
+{
+    "status": "success",
+    "message": "전체 포지셔너 현재 상태 확인 완료",
+    "data": {
+        "positioners": {
+            "O2": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 1,
+                    "local_axis": 1,
+                    "current_angle_degree": 200.96778029859485,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 2,
+                    "local_axis": 2,
+                    "current_angle_degree": 90.11403139637002,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "N4": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 3,
+                    "local_axis": 3,
+                    "current_angle_degree": 182.53627232142858,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 4,
+                    "local_axis": 4,
+                    "current_angle_degree": 72.04520089285715,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "O5": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 5,
+                    "local_axis": 5,
+                    "current_angle_degree": 207.5350830649883,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 6,
+                    "local_axis": 6,
+                    "current_angle_degree": 40.89404639929742,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "N7": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 7,
+                    "local_axis": 7,
+                    "current_angle_degree": 201.8191049473068,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 8,
+                    "local_axis": 8,
+                    "current_angle_degree": 66.47042410714286,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "M9": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 9,
+                    "local_axis": 9,
+                    "current_angle_degree": 339.40395382025764,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 10,
+                    "local_axis": 10,
+                    "current_angle_degree": 95.75138136709603,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "K10": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 11,
+                    "local_axis": 11,
+                    "current_angle_degree": 215.66589212529274,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 12,
+                    "local_axis": 12,
+                    "current_angle_degree": 52.71626170960187,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "J12": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 13,
+                    "local_axis": 13,
+                    "current_angle_degree": 148.13625219555036,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 14,
+                    "local_axis": 14,
+                    "current_angle_degree": 143.32635026346605,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "I11": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 16,
+                    "local_axis": 16,
+                    "current_angle_degree": 14.816671545667448,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 15,
+                    "local_axis": 15,
+                    "current_angle_degree": 88.16685267857143,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "J9": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 18,
+                    "local_axis": 18,
+                    "current_angle_degree": 332.3916404420375,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 17,
+                    "local_axis": 17,
+                    "current_angle_degree": 62.02813963700235,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "L8": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 20,
+                    "local_axis": 20,
+                    "current_angle_degree": 318.70704954625296,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 19,
+                    "local_axis": 19,
+                    "current_angle_degree": 103.6273693647541,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "K7": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 22,
+                    "local_axis": 22,
+                    "current_angle_degree": 69.24216920374708,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 21,
+                    "local_axis": 21,
+                    "current_angle_degree": 164.64281140222482,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "M6": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 24,
+                    "local_axis": 24,
+                    "current_angle_degree": 275.7801979654567,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 23,
+                    "local_axis": 23,
+                    "current_angle_degree": 59.92164629683841,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "L5": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 26,
+                    "local_axis": 26,
+                    "current_angle_degree": 298.00397028688525,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 25,
+                    "local_axis": 25,
+                    "current_angle_degree": 70.60642930327869,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "M3": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 28,
+                    "local_axis": 28,
+                    "current_angle_degree": 270.1370846750586,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 27,
+                    "local_axis": 27,
+                    "current_angle_degree": 50.289904127634664,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "N1": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 29,
+                    "local_axis": 29,
+                    "current_angle_degree": 20.6586193647541,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 30,
+                    "local_axis": 30,
+                    "current_angle_degree": 119.87993084016394,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "K4": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 31,
+                    "local_axis": 31,
+                    "current_angle_degree": 244.7673631440281,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 32,
+                    "local_axis": 32,
+                    "current_angle_degree": 119.713206235363,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "J6": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 33,
+                    "local_axis": 33,
+                    "current_angle_degree": 32.23095360070258,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 34,
+                    "local_axis": 34,
+                    "current_angle_degree": 14.820376536885247,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "I8": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 35,
+                    "local_axis": 35,
+                    "current_angle_degree": 318.9680455942623,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 36,
+                    "local_axis": 36,
+                    "current_angle_degree": 132.89350665983608,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "H10": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 37,
+                    "local_axis": 37,
+                    "current_angle_degree": 325.1154493559719,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 38,
+                    "local_axis": 38,
+                    "current_angle_degree": 141.49526127049182,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "H13": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 39,
+                    "local_axis": 39,
+                    "current_angle_degree": 119.38305035128806,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 40,
+                    "local_axis": 40,
+                    "current_angle_degree": 82.68181901346604,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "F12": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 42,
+                    "local_axis": 42,
+                    "current_angle_degree": 106.57736570550352,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 41,
+                    "local_axis": 41,
+                    "current_angle_degree": 153.4352129683841,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "G11": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 44,
+                    "local_axis": 44,
+                    "current_angle_degree": 3.9556956235363,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 43,
+                    "local_axis": 43,
+                    "current_angle_degree": 112.8663824648712,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "G8": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 46,
+                    "local_axis": 46,
+                    "current_angle_degree": 192.74928644613584,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 45,
+                    "local_axis": 45,
+                    "current_angle_degree": 30.249194964871197,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "H7": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 48,
+                    "local_axis": 48,
+                    "current_angle_degree": 312.72678205503513,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 47,
+                    "local_axis": 47,
+                    "current_angle_degree": 142.60099531615927,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "I5": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 50,
+                    "local_axis": 50,
+                    "current_angle_degree": 251.85418801229508,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 49,
+                    "local_axis": 49,
+                    "current_angle_degree": 84.49891137295083,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "L2": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 52,
+                    "local_axis": 52,
+                    "current_angle_degree": 118.98414629683842,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 51,
+                    "local_axis": 51,
+                    "current_angle_degree": 125.9318281615925,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "M0": {
+                "plc_name": "PLC1",
+                "alpha": {
+                    "global_axis": 54,
+                    "local_axis": 54,
+                    "current_angle_degree": 103.07944233021078,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 53,
+                    "local_axis": 53,
+                    "current_angle_degree": 140.61759001756442,
+                    "busy": false,
+                    "error": true,
+                    "locked": false
+                }
+            },
+            "K1": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 55,
+                    "local_axis": 1,
+                    "current_angle_degree": 111.7096018735363,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 56,
+                    "local_axis": 2,
+                    "current_angle_degree": 57.948532640515225,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "J3": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 57,
+                    "local_axis": 3,
+                    "current_angle_degree": 65.28441525175644,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 58,
+                    "local_axis": 4,
+                    "current_angle_degree": 115.72004903395785,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "H4": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 59,
+                    "local_axis": 5,
+                    "current_angle_degree": 239.46181572014052,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 60,
+                    "local_axis": 6,
+                    "current_angle_degree": 157.35674033957847,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "F6": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 61,
+                    "local_axis": 7,
+                    "current_angle_degree": 242.56989168618267,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 62,
+                    "local_axis": 8,
+                    "current_angle_degree": 164.0421911592506,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "E7": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 63,
+                    "local_axis": 9,
+                    "current_angle_degree": 228.89147577576114,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 64,
+                    "local_axis": 10,
+                    "current_angle_degree": 135.16466627634662,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "F9": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 65,
+                    "local_axis": 11,
+                    "current_angle_degree": 355.3794642857143,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 66,
+                    "local_axis": 12,
+                    "current_angle_degree": 85.75325673302108,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "E10": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 67,
+                    "local_axis": 13,
+                    "current_angle_degree": 211.57599348653397,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 68,
+                    "local_axis": 14,
+                    "current_angle_degree": 46.24117205796253,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "C9": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 70,
+                    "local_axis": 16,
+                    "current_angle_degree": 271.85578893442624,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 69,
+                    "local_axis": 15,
+                    "current_angle_degree": 89.3203399443794,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "D8": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 72,
+                    "local_axis": 18,
+                    "current_angle_degree": 233.01924765807965,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 71,
+                    "local_axis": 17,
+                    "current_angle_degree": 78.03905335187353,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "D5": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 74,
+                    "local_axis": 20,
+                    "current_angle_degree": 87.64938890515224,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 73,
+                    "local_axis": 19,
+                    "current_angle_degree": 52.29883269906323,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "G5": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 76,
+                    "local_axis": 22,
+                    "current_angle_degree": 91.17654054449649,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 75,
+                    "local_axis": 21,
+                    "current_angle_degree": 125.97834638466043,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "F3": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 78,
+                    "local_axis": 24,
+                    "current_angle_degree": 303.3519192769321,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 77,
+                    "local_axis": 23,
+                    "current_angle_degree": 108.76989717505856,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "I2": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 80,
+                    "local_axis": 26,
+                    "current_angle_degree": 341.3083193062061,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 79,
+                    "local_axis": 25,
+                    "current_angle_degree": 78.09956820843092,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "J0": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 82,
+                    "local_axis": 28,
+                    "current_angle_degree": 53.213553864168624,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 81,
+                    "local_axis": 27,
+                    "current_angle_degree": 120.57605752341921,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "H1": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 83,
+                    "local_axis": 29,
+                    "current_angle_degree": 135.95794606264639,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 84,
+                    "local_axis": 30,
+                    "current_angle_degree": 20.667676009953162,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "G2": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 85,
+                    "local_axis": 31,
+                    "current_angle_degree": 312.62839395491807,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 86,
+                    "local_axis": 32,
+                    "current_angle_degree": 90.85749963407494,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "D2": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 87,
+                    "local_axis": 33,
+                    "current_angle_degree": 68.63784396955504,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 88,
+                    "local_axis": 34,
+                    "current_angle_degree": 106.49379757025761,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "E4": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 89,
+                    "local_axis": 35,
+                    "current_angle_degree": 140.08654127634662,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 90,
+                    "local_axis": 36,
+                    "current_angle_degree": 92.16494986826699,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "C3": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 91,
+                    "local_axis": 37,
+                    "current_angle_degree": 195.4061768149883,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 92,
+                    "local_axis": 38,
+                    "current_angle_degree": 95.42534213992975,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "C6": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 93,
+                    "local_axis": 39,
+                    "current_angle_degree": 106.64734887295083,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 94,
+                    "local_axis": 40,
+                    "current_angle_degree": 85.33459272540983,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "B7": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 95,
+                    "local_axis": 41,
+                    "current_angle_degree": 274.0162104800937,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 96,
+                    "local_axis": 42,
+                    "current_angle_degree": 83.58789519906324,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "A5": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 98,
+                    "local_axis": 44,
+                    "current_angle_degree": 359.73776895491807,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 97,
+                    "local_axis": 43,
+                    "current_angle_degree": 61.958979800936774,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "B4": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 100,
+                    "local_axis": 46,
+                    "current_angle_degree": 118.81371670081968,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 99,
+                    "local_axis": 45,
+                    "current_angle_degree": 43.27594408665106,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "A2": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 102,
+                    "local_axis": 48,
+                    "current_angle_degree": 338.9284799473068,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 101,
+                    "local_axis": 47,
+                    "current_angle_degree": 147.82667959601875,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "B1": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 104,
+                    "local_axis": 50,
+                    "current_angle_degree": 264.6141777663935,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 103,
+                    "local_axis": 49,
+                    "current_angle_degree": 67.2381806206089,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "C0": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 106,
+                    "local_axis": 52,
+                    "current_angle_degree": 117.89240888466043,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 105,
+                    "local_axis": 51,
+                    "current_angle_degree": 111.03447014051523,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "E1": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 108,
+                    "local_axis": 54,
+                    "current_angle_degree": 342.89611387587826,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 107,
+                    "local_axis": 53,
+                    "current_angle_degree": 45.39849238875878,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            },
+            "F0": {
+                "plc_name": "PLC2",
+                "alpha": {
+                    "global_axis": 110,
+                    "local_axis": 56,
+                    "current_angle_degree": 297.3988217213115,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                },
+                "beta": {
+                    "global_axis": 109,
+                    "local_axis": 55,
+                    "current_angle_degree": 113.8239168618267,
+                    "busy": false,
+                    "error": false,
+                    "locked": false
+                }
+            }
+        }
+    },
+    "result_file": "C:\\Users\\kasi\\Desktop\\Fiber_test\\Log\\result_20260914_104615_784888.json"
+}

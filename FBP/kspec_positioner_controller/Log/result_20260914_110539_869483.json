@@ -1,0 +1,10 @@
+{
+    "status": "fail",
+    "message": "이전 Stop 기록이 남아 있어 역방향 구동을 시작할 수 없습니다. reverse_from_stop_step을 실행후 main()실행 후 완료된 다음 실행해주세요.",
+    "data": {
+        "stopped_valid_plcs": [
+            "PLC2"
+        ]
+    },
+    "result_file": "C:\\Users\\kasi\\Desktop\\Fiber_test\\Log\\result_20260914_110539_869483.json"
+}

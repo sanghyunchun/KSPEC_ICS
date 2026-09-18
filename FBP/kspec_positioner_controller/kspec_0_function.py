@@ -5,6 +5,7 @@ import os
 import asyncio
 from datetime import datetime
 
+######
 ##PLC 1
 PLC1_AMS_NET_ID = "172.18.233.11.1.1" 
 PLC1_AMS_PORT = 851
@@ -18,8 +19,30 @@ VELOCITY = 10.0
 ACC = 200.0
 DEC = 200.0
 
-ALPHA_FILE = "alpha_tile1001.json"
-BETA_FILE = "beta_tile1001.json"
+# ALPHA_FILE = "config55_0005.alpha.json"
+# BETA_FILE = "config55_0005.beta.json"
+
+# 알파, 베타 경로 json 파일
+FBP_DIR = os.path.dirname(os.path.abspath(__file__))
+# print(CONTROLLER_DIR)
+
+# FBP_DIR = os.path.dirname(CONTROLLER_DIR)
+# print(FBP_DIR)
+DATA_DIR = os.path.join(FBP_DIR, "data")
+
+#결과 json Log 파일
+LOG_DIR = os.path.join(FBP_DIR, "Log")
+
+
+
+# POSITIONER_AXIS_MAP 불러오기
+LIB_DIR = os.path.join(FBP_DIR, "Lib")
+POSITIONER_AXIS_MAP_FILE = os.path.join(LIB_DIR, "positioner_axis_map.json")
+
+ALPHA_FILE = os.path.join(DATA_DIR, "config55_0005_converted3.alpha.json")
+BETA_FILE = os.path.join(DATA_DIR, "config55_0005_converted3.beta.json")
+
+
 
 # PLC step 동기화용 전역 변수 이름
 # PLC 코드에도 동일한 이름/자료형(INT)으로 추가해야 한다.
@@ -28,64 +51,83 @@ STEP_SYNC_ALLOWED_TAG = "GVL.gAllowedStep"
 
 # global_axis(실제 축 번호) 
 # local_axis(PLC가 인식하는 축 번호)
-POSITIONER_AXIS_MAP = {
-    "A1": {
-        "plc": "PLC1",
-        "alpha": {
-            "global_axis": 1,
-            "local_axis": 1,
-        },
-        "beta": {
-            "global_axis": 2,
-            "local_axis": 2,
-        },
-    },
+# region
+# POSITIONER_AXIS_MAP = {
+#     "A1": {
+#         "plc": "PLC1",
+#         "alpha": {
+#             "global_axis": 1,
+#             "local_axis": 1,
+#         },
+#         "beta": {
+#             "global_axis": 2,
+#             "local_axis": 2,
+#         },
+#     },
 
-    "A2": {
-        "plc": "PLC1",
-        "alpha": {
-            "global_axis": 3,
-            "local_axis": 3,
-        },
-        "beta": {
-            "global_axis": 4,
-            "local_axis": 4,
-        },
-    },
-    "A3": {
-        "plc": "PLC1",
-        "alpha": {
-            "global_axis": 5,
-            "local_axis": 5,
-        },
-        "beta": {
-            "global_axis": 6,
-            "local_axis": 6,
-        },
-    },
-    "A4": {
-        "plc": "PLC2",
-        "alpha": {
-            "global_axis": 7,
-            "local_axis": 1,
-        },
-        "beta": {
-            "global_axis": 8,
-            "local_axis": 2,
-        },
-    },
-    "A5": {
-        "plc": "PLC2",
-        "alpha": {
-            "global_axis": 9,
-            "local_axis": 3,
-        },
-        "beta": {
-            "global_axis": 10,
-            "local_axis": 4,
-        },
-    },   
-}
+#     "A2": {
+#         "plc": "PLC1",
+#         "alpha": {
+#             "global_axis": 3,
+#             "local_axis": 3,
+#         },
+#         "beta": {
+#             "global_axis": 4,
+#             "local_axis": 4,
+#         },
+#     },
+#     "A3": {
+#         "plc": "PLC1",
+#         "alpha": {
+#             "global_axis": 5,
+#             "local_axis": 5,
+#         },
+#         "beta": {
+#             "global_axis": 6,
+#             "local_axis": 6,
+#         },
+#     },
+#     "A4": {
+#         "plc": "PLC2",
+#         "alpha": {
+#             "global_axis": 7,
+#             "local_axis": 1,
+#         },
+#         "beta": {
+#             "global_axis": 8,
+#             "local_axis": 2,
+#         },
+#     },
+#     "A5": {
+#         "plc": "PLC2",
+#         "alpha": {
+#             "global_axis": 9,
+#             "local_axis": 3,
+#         },
+#         "beta": {
+#             "global_axis": 10,
+#             "local_axis": 4,
+#         },
+#     },   
+# }
+# endregion
+
+def load_positioner_axis_map():
+    """
+    
+    Lib/positioner_axis_map.json 파일에서
+    포지셔너 축 매핑 정보를 읽는다.
+    
+    """
+
+    with open(POSITIONER_AXIS_MAP_FILE, "r", encoding="utf-8") as f:
+        positioner_axis_map = json.load(f)
+
+
+    return positioner_axis_map
+
+POSITIONER_AXIS_MAP = load_positioner_axis_map()
+
 
 
 
@@ -254,7 +296,7 @@ async def clear_one_plc_motion_flags(
 ## 요구사항 3번 : 코드 실행후 json파일 생성
 def save_result_json(
         result: dict, 
-        output_dir: str = None
+        output_dir: str | None = None
         ) -> str:
 
     """
@@ -263,13 +305,7 @@ def save_result_json(
     """
 
     if output_dir is None:
-        output_dir = os.path.abspath(
-            os.path.join(
-                os.path.dirname(__file__),
-                "..",
-                "Log"
-            )
-        )
+        output_dir = LOG_DIR
 
     os.makedirs(output_dir, exist_ok=True)
 

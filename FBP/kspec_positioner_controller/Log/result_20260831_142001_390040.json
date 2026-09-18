@@ -1,0 +1,238 @@
+{
+    "status": "stopped",
+    "message": "PLC1과 PLC2의 구동 중인 모든 포지셔너가 감속 정지했고 Stop 복귀 기록도 정상 저장되었습니다.",
+    "data": {
+        "stop_deceleration": 200.0,
+        "moving_axes": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+        ],
+        "moving_plcs": [
+            "PLC1",
+            "PLC2"
+        ],
+        "positions_before_stop": {
+            "1": {
+                "plc_name": "PLC1",
+                "local_axis": 1,
+                "positioner": "A1",
+                "motor": "alpha",
+                "actual_position": 69.21541093384076,
+                "busy": true,
+                "error": false
+            },
+            "2": {
+                "plc_name": "PLC1",
+                "local_axis": 2,
+                "positioner": "A1",
+                "motor": "beta",
+                "actual_position": 149.99368779274005,
+                "busy": true,
+                "error": false
+            },
+            "3": {
+                "plc_name": "PLC1",
+                "local_axis": 3,
+                "positioner": "A2",
+                "motor": "alpha",
+                "actual_position": 30.007547204332553,
+                "busy": true,
+                "error": false
+            },
+            "4": {
+                "plc_name": "PLC1",
+                "local_axis": 4,
+                "positioner": "A2",
+                "motor": "beta",
+                "actual_position": 138.20399407201407,
+                "busy": true,
+                "error": false
+            },
+            "5": {
+                "plc_name": "PLC1",
+                "local_axis": 5,
+                "positioner": "A3",
+                "motor": "alpha",
+                "actual_position": 192.9155993852459,
+                "busy": true,
+                "error": false
+            },
+            "6": {
+                "plc_name": "PLC1",
+                "local_axis": 6,
+                "positioner": "A3",
+                "motor": "beta",
+                "actual_position": 149.97804449648712,
+                "busy": true,
+                "error": false
+            },
+            "7": {
+                "plc_name": "PLC2",
+                "local_axis": 1,
+                "positioner": "A4",
+                "motor": "alpha",
+                "actual_position": 158.80127524882906,
+                "busy": true,
+                "error": false
+            },
+            "8": {
+                "plc_name": "PLC2",
+                "local_axis": 2,
+                "positioner": "A4",
+                "motor": "beta",
+                "actual_position": 150.00109777517565,
+                "busy": true,
+                "error": false
+            },
+            "9": {
+                "plc_name": "PLC2",
+                "local_axis": 3,
+                "positioner": "A5",
+                "motor": "alpha",
+                "actual_position": 29.98572892271663,
+                "busy": true,
+                "error": false
+            },
+            "10": {
+                "plc_name": "PLC2",
+                "local_axis": 4,
+                "positioner": "A5",
+                "motor": "beta",
+                "actual_position": 114.03880635245902,
+                "busy": true,
+                "error": false
+            }
+        },
+        "stop_records": {
+            "PLC1": {
+                "stopped_valid": true,
+                "last_completed_step": 275,
+                "target_step": 275,
+                "total_points": 1404,
+                "stopped_state": 30,
+                "motion_mode": 2,
+                "motion_sequence": 12
+            },
+            "PLC2": {
+                "stopped_valid": true,
+                "last_completed_step": 275,
+                "target_step": 275,
+                "total_points": 1404,
+                "stopped_state": 30,
+                "motion_mode": 2,
+                "motion_sequence": 8
+            }
+        },
+        "invalid_stop_record_plcs": [],
+        "moving_stop_failed_plcs": [],
+        "moving_not_accepted_plcs": [],
+        "final_positions": {
+            "1": {
+                "plc_name": "PLC1",
+                "local_axis": 1,
+                "positioner": "A1",
+                "motor": "alpha",
+                "actual_position": 68.96923485070258,
+                "busy": false,
+                "error": false
+            },
+            "2": {
+                "plc_name": "PLC1",
+                "local_axis": 2,
+                "positioner": "A1",
+                "motor": "beta",
+                "actual_position": 149.9932761270492,
+                "busy": false,
+                "error": false
+            },
+            "3": {
+                "plc_name": "PLC1",
+                "local_axis": 3,
+                "positioner": "A2",
+                "motor": "alpha",
+                "actual_position": 30.006723872950822,
+                "busy": false,
+                "error": false
+            },
+            "4": {
+                "plc_name": "PLC1",
+                "local_axis": 4,
+                "positioner": "A2",
+                "motor": "beta",
+                "actual_position": 138.37771699355972,
+                "busy": false,
+                "error": false
+            },
+            "5": {
+                "plc_name": "PLC1",
+                "local_axis": 5,
+                "positioner": "A3",
+                "motor": "alpha",
+                "actual_position": 192.83367791276348,
+                "busy": false,
+                "error": false
+            },
+            "6": {
+                "plc_name": "PLC1",
+                "local_axis": 6,
+                "positioner": "A3",
+                "motor": "beta",
+                "actual_position": 149.98010282494147,
+                "busy": false,
+                "error": false
+            },
+            "7": {
+                "plc_name": "PLC2",
+                "local_axis": 1,
+                "positioner": "A4",
+                "motor": "alpha",
+                "actual_position": 158.55551083138175,
+                "busy": false,
+                "error": false
+            },
+            "8": {
+                "plc_name": "PLC2",
+                "local_axis": 2,
+                "positioner": "A4",
+                "motor": "beta",
+                "actual_position": 149.99945111241217,
+                "busy": false,
+                "error": false
+            },
+            "9": {
+                "plc_name": "PLC2",
+                "local_axis": 3,
+                "positioner": "A5",
+                "motor": "alpha",
+                "actual_position": 29.985317257025763,
+                "busy": false,
+                "error": false
+            },
+            "10": {
+                "plc_name": "PLC2",
+                "local_axis": 4,
+                "positioner": "A5",
+                "motor": "beta",
+                "actual_position": 114.24463919789228,
+                "busy": false,
+                "error": false
+            }
+        },
+        "opened_plcs": [
+            "PLC1",
+            "PLC2"
+        ],
+        "connection_failed_plcs": {},
+        "stop_failed_plcs": {},
+        "not_accepted_plcs": []
+    },
+    "result_file": "C:\\Users\\kasi\\Desktop\\Fiber_test\\Log\\result_20260831_142001_390040.json"
+}

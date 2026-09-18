@@ -16826,7 +16826,7 @@
         </widget>
         <widget class="QPushButton" name="pushbtn_FBP_zero">
          <property name="enabled">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
          <property name="geometry">
           <rect>

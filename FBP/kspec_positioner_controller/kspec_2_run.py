@@ -25,7 +25,7 @@ async def run():
     plc_connections = await open_plcs()
 
     # # main
-    #await main(plc_connections)
+    # await main(plc_connections)
 
     # # reverse_main()
     # await reverse_main(plc_connections)
@@ -36,23 +36,28 @@ async def run():
 
 ###############################################################
 ###############################################################
-    # kspec_rotate_one()
-    # await rotate_one(plc_connections, positioner="A1", motor="alpha", angle=0.0 )
+    #kspec_rotate_one()
+#    await rotate_one(plc_connections, positioner="H4", motor="beta", angle=0 )
 
-    # #kspec_lock()
-    # await positioner_lock(plc_connections ,["A1", "A4"])
+#     #kspec_lock()
+#    await positioner_lock(plc_connections ,[])
 
-    # #kspec_show_status()
-    # await show_status(plc_connections, "A4")
+#     #kspec_show_status()
+    # await show_status(plc_connections, "O5")
 
-    #kspec_show_status_all
+#     #kspec_show_status_all
     # await show_status_all(plc_connections)
 
 
-###############################################################
-###############################################################
-    # # 실험 마지막에만 사용
-    await zero_and_close(plc_connections)
+# ###############################################################
+# ###############################################################
+#     # zero_position_and_plc_close
+#     # 실험 마지막에만 사용
+
+#    await zero_and_close(plc_connections)
+
+
+
 
 
 

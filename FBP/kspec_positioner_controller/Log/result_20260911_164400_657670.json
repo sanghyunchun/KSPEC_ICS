@@ -1,0 +1,13 @@
+{
+    "status": "error",
+    "message": "예상하지 못한 에러가 발생했습니다: Power ON에 실패한 축이 있습니다: [{'plc_name': 'PLC1', 'global_axis': 30, 'local_axis': 30, 'positioner': 'N1', 'motor': 'beta'}, {'plc_name': 'PLC2', 'global_axis': 60, 'local_axis': 6, 'positioner': 'H4', 'motor': 'beta'}]",
+    "data": {
+        "stop_success_plcs": [
+            "PLC1",
+            "PLC2"
+        ],
+        "stop_failed_plcs": {},
+        "stop_wait_error": null
+    },
+    "result_file": "C:\\Users\\kasi\\Desktop\\Fiber_test\\Log\\result_20260911_164400_657670.json"
+}

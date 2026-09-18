@@ -1,0 +1,8 @@
+{
+    "status": "fail",
+    "message": "JSON 파일 내부 구조가 예상과 다릅니다. Key: 'alpha JSON에 C10 데이터가 없습니다.'",
+    "data": {
+        "missing_key": "'alpha JSON에 C10 데이터가 없습니다.'"
+    },
+    "result_file": "C:\\Users\\kasi\\Desktop\\Fiber_test\\Log\\result_20260911_163813_290074.json"
+}

@@ -264,7 +264,7 @@ class MainWindow(QMainWindow):
 
 
         # Fiber assign
-        self.ui.pushbtn_FBP_zero.clicked.connect(self.FBP_zero_button_clicked)
+        self.ui.pushbtn_FBP_zero.setEnabled(False)
         #    self.ui.pushbtn_FBP_offset.clicked.connect(self.FBP_offset_button_clicked)
         self.ui.pushbtn_FBP_status.clicked.connect(self.FBP_Status_button_clicked)
         self.ui.pushbtn_FBP_rotate.clicked.connect(self.FBP_rotate_button_clicked)
@@ -537,7 +537,7 @@ class MainWindow(QMainWindow):
             "adc": ["adcstatus", "adcactivate", "adcadjust", "adcconnect", "adcdisconnect", "adchome", "adczero",
             "adcpoweroff", "adcrotate1", "adcrotate2", "adcstop", "adcpark", "adcctrotate", "adccorotate"],
             "gfa": ["gfastatus", "gfagrab", "fdgrab"],
-            "fbp": ["fbpstatus", "fbpzero", "fbpmove", "fbpoffset"],
+            "fbp": ["fbpstatus", "fbpmove", "fbpoffset"],
             "mtl": ["mtlstatus", "mtlstart", "mtltest", "mtlexp", "mtlcal", "mtlresult", "mtlreset"],
             "lamp": ["lampstatus", "arcon", "arcoff", "flaton", "flatoff","fiducialon","fiducialoff"],
             "spec": ["specstatus", "specinitial","illuon", "illuoff", "getobj", "getbias", "getflat","getar"],
@@ -1098,6 +1098,11 @@ class MainWindow(QMainWindow):
         status = dict_data.get('status', 'None')
         next_state = dict_data.get('fbp_state', 'None')
 
+        # 이전 서버는 영점 확인 오류에도 zero를 보내므로 initial로 신뢰하지 않는다.
+        # 갱신된 서버가 영점 확인 성공 후 명시적으로 initial을 보낸다.
+        if next_state == 'zero':
+            next_state = 'manual'
+
         if status == 'stopped':
             self.fbp_state = 'stop'
         elif next_state not in (None, 'None'):
@@ -1106,7 +1111,7 @@ class MainWindow(QMainWindow):
         if process in ('ING', 'START', 'Done') and self.fbp_state in ('assign', 'manual', 'stop'):
             self._set_button_state(self.ui.pushbtn_FBP_assign, 'FBP Assigned', 'green', True)
             self._set_button_state(self.ui.pushbtn_FBP_assign_2, 'FBP Assigned', 'green', True)
-        elif process == 'Done' and self.fbp_state in ('zero', 'initial'):
+        elif process == 'Done' and self.fbp_state == 'initial':
             self._set_button_state(self.ui.pushbtn_FBP_assign, 'FBP Assign', 'black', False)
             self._set_button_state(self.ui.pushbtn_FBP_assign_2, 'FBP Assign', 'black', False)
 
@@ -1138,15 +1143,17 @@ class MainWindow(QMainWindow):
             return
 
         if func == 'fbpmoveone' and status == 'success':
+            if self.fbp_state == 'initial':
+                self.reset_fbp_error_labels()
             positioner = fbp_data.get('positioner')
             if positioner:
                 label = getattr(self.ui, f'label_{positioner}', None)
                 if label is not None:
-                    color = 'black' if self.fbp_state in ('zero', 'initial') else 'green'
+                    color = 'black' if self.fbp_state == 'initial' else 'green'
                     self.FPLabelStyle(label, color)
             return
 
-        if status == 'success' and self.fbp_state in ('zero', 'initial'):
+        if status == 'success' and self.fbp_state == 'initial':
             if positions:
                 self.update_fbp_error_labels(
                     positions,
@@ -1166,7 +1173,7 @@ class MainWindow(QMainWindow):
             return
 
         if positions:
-            default_color = 'black' if self.fbp_state in ('zero', 'initial') else 'green'
+            default_color = 'black' if self.fbp_state == 'initial' else 'green'
             self.update_fbp_error_labels(
                 positions,
                 normal_color=default_color,
@@ -1246,14 +1253,14 @@ class MainWindow(QMainWindow):
             )
             return
 
-        if self.fbp_state in ('zero', 'manual'):
+        if self.fbp_state in ('initial', 'manual'):
             positioner_label = self.ui.lineEdit_FBP_number.text().strip()
             await handle_fbp(f'fbpmoveone {positioner_label} {motor_name} {angle}', self.ICS_client)
             self.logging(f'Sent Rotate Positioner {positioner_label} {motor_name} motor by {angle}.', level='send')
             self.ui.lineEdit_FBP_number.clear()
             self.ui.lineEdit_FBP_angle.clear()
         else:
-            self.logging('Manual rotation of positioners is possible in zero positions. Please move positioners to zero position first.', level='error')
+            self.logging('Manual rotation is available in initial or manual state. Please move positioners to initial positions first.', level='error')
 
     @asyncSlot()
     async def FBP_assign_button_clicked(self):
@@ -1263,7 +1270,7 @@ class MainWindow(QMainWindow):
         if not self.check_syscheck():
             return
         
-        if self.fbp_state in ('zero','initial'):
+        if self.fbp_state == 'initial':
             self.assign_state = not getattr(self,"assign_state",False)
             # sync two button
             self.ui.pushbtn_FBP_assign.setChecked(self.assign_state)
@@ -1271,7 +1278,7 @@ class MainWindow(QMainWindow):
             await handle_fbp('fbpmoveall',self.ICS_client)
             self.logging('Sent Positioner assignment Starts.', level='send')
         else:
-            self.logging('Some positioners are manually rotated. Plase re-rotate positioners to zero positions manually.', level='error')
+            self.logging(f'Positioner assignment is only available in initial state. Current positioner status is {self.fbp_state}.', level='error')
 
     @asyncSlot()
     async def FBP_initial_button_clicked(self):
@@ -1291,26 +1298,6 @@ class MainWindow(QMainWindow):
             self.logging(f'Current positioner status is already {self.fbp_state}.', level='error')
         else:
             self.logging(f'This operation is only available when the positioners are in the assigned position. Current positioner status is {self.fbp_state}.', level='error')
-
-    @asyncSlot()
-    async def FBP_zero_button_clicked(self):
-        if not self.check_connection():
-            return
-
-        if not self.check_syscheck():
-            return
-
-        if self.fbp_state == 'initial':
-            await handle_fbp('fbpzero', self.ICS_client)
-            self.logging('Sent Fiber moves to zero position.', level='send')
-        elif self.fbp_state == 'manual':
-            self.logging('Some positioners are manually rotated. Please re-rotate positioners to zero positions manually.', level='error')
-            return
-        elif self.fbp_state == 'zero':
-            self.logging('Positioners are already zero postions.', level='error')
-            return
-        else:
-            self.logging(f'Current positioner status is {self.fbp_state}. Please move positioners to initial positions first.', level='error')
 
     @asyncSlot()
     async def FBP_offset_button_clicked(self):
@@ -1962,7 +1949,7 @@ class MainWindow(QMainWindow):
                 self.logging('While system checking, unexpected Errors have occurred in some instruments.',level='error')
                 return True
         
-        self.fbp_state = 'zero'
+        self.fbp_state = 'initial'
 
         try:
             self.obslog = obslog(self.dir_name)

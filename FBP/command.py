@@ -128,25 +128,21 @@ async def identify_execute(FBP_server,cmd):
                     FBP_server, message=f'Positioner {positioner} {motor} starts to move to {angle}.',
                     process='START', status='success', fbp_state='manual')
 
-        # await asyncio.sleep(5)
-
         result = await FBP_action.rotate_one(positioner=positioner, motor=motor, angle=angle)
 
-        check_zero = await FBP_action.check_all_zero_positions()
+        fbp_state = 'manual'
+        if result.get('status') == 'stopped':
+            fbp_state = 'stop'
+        elif result.get('status') == 'success':
+            # 초기각은 alpha/beta 모두 0도이다. 전체 비잠금 축을 확인한다.
+            check_zero = await FBP_action.check_all_zero_positions()
+            if check_zero.get('status') == 'success':
+                fbp_state = 'initial'
 
-#        print(check_zero)
-
-        if check_zero['status'] == 'fail':
-            await send_fbp_response(
-                    FBP_server, result, func = 'fbpmoveone',
-                    process='Done', fbp_state='manual'
-            )
-        else:
-            await send_fbp_response(
-                    FBP_server, result, func = 'fbpmoveone',
-                    process='Done', fbp_state='zero'
-            )
-        #항상 마지막에 zero position에 있는지 확인하여, zero에 있으면 fbp_state를 zero로 만들기 추가
+        await send_fbp_response(
+            FBP_server, result, func='fbpmoveone',
+            process='Done', fbp_state=fbp_state
+        )
 
 
     if func == 'fbpmoveall':
@@ -213,34 +209,33 @@ async def identify_execute(FBP_server,cmd):
         print('\033[32m'+'[FBP]', comment+'\033[0m')
         await FBP_server.send_message('ICS',rsp)
 
-    if func == 'fbpzero':
-#        reply_data=mkmsg.fbpmsg()
-#        comment = 'Positioners start to move to zero positions.'
-#        reply_data.update(message=comment,process='START',status='success', fbp_state = 'ING')
-#        rsp=json.dumps(reply_data)
-#        print('\033[32m'+'[FBP]', comment+'\033[0m')
-#        await FBP_server.send_message('ICS',rsp)
+#     if func == 'fbpzero':
+# #        reply_data=mkmsg.fbpmsg()
+# #        comment = 'Positioners start to move to zero positions.'
+# #        reply_data.update(message=comment,process='START',status='success', fbp_state = 'ING')
+# #        rsp=json.dumps(reply_data)
+# #        print('\033[32m'+'[FBP]', comment+'\033[0m')
+# #        await FBP_server.send_message('ICS',rsp)
 
-        await send_fbp_response(
-                    FBP_server, message=f'Positioners starts to move to zero positions.',
-                    process='START', status='success', fbp_state='ING')
+#         await send_fbp_response(
+#                     FBP_server, message=f'Positioners starts to move to zero positions.',
+#                     process='START', status='success', fbp_state='ING')
 
-        await asyncio.sleep(5)
+#         await asyncio.sleep(5)
 
-        result = await FBP_action.zero_main()
+#         result = await FBP_action.zero_main()
 
-        if result.get('status') == 'success':
-            fbp_state = 'zero'
-        elif result.get('status') == 'stopped':
-            fbp_state = 'stop'
-        else:
-            fbp_state = 'None'
+#         if result.get('status') == 'success':
+#             fbp_state = 'zero'
+#         elif result.get('status') == 'stopped':
+#             fbp_state = 'stop'
+#         else:
+#             fbp_state = 'None'
 
-        await send_fbp_response(
-                FBP_server, result, func = 'fbpzero',
-                process='Done', fbp_state = fbp_state
-        )
-
+#         await send_fbp_response(
+#                 FBP_server, result, func = 'fbpzero',
+#                 process='Done', fbp_state = fbp_state
+#         )
 
     if func == 'fbpinitial':
         comment = 'Positioners start to move to initial positions from assigned positions.'
