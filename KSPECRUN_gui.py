@@ -727,7 +727,7 @@ class MainWindow(QMainWindow):
                 subinst = response_data.get("subinst", "None")
                 msg = response_data.get("message", "None")
 
-                print(response_data)
+            #    print(response_data)
 
                 # 1. 상태 업데이트
                 self.set_inst_pos_state(response_data)
@@ -2056,23 +2056,23 @@ class MainWindow(QMainWindow):
             )
             return
 
-        # self.logging('Sent MTL run initialization command', level='send')
-        # await handle_mtl("mtlstart", self.ICS_client)
-        # mtlstart_response = await self.response_queue.get()
+        self.logging('Sent MTL run initialization command', level='send')
+        await handle_mtl("mtlstart", self.ICS_client)
+        mtlstart_response = await self.response_queue.get()
 
-        # mtlstart_succeeded = (
-        #     mtlstart_response.get('inst') == 'MTL'
-        #     and mtlstart_response.get('func') == 'mtlstart'
-        #     and mtlstart_response.get('status') == 'success'
-        # )
-        # if not mtlstart_succeeded:
-        #     message = mtlstart_response.get('message', 'Unknown error')
-        #     self.logging(
-        #         f'MTL run could not be initialized: {message}',
-        #         status=mtlstart_response.get('status', 'fail'),
-        #         level='error',
-        #     )
-        #     return
+        mtlstart_succeeded = (
+            mtlstart_response.get('inst') == 'MTL'
+            and mtlstart_response.get('func') == 'mtlstart'
+            and mtlstart_response.get('status') == 'success'
+        )
+        if not mtlstart_succeeded:
+            message = mtlstart_response.get('message', 'Unknown error')
+            self.logging(
+                f'MTL run could not be initialized: {message}',
+                status=mtlstart_response.get('status', 'fail'),
+                level='error',
+            )
+            return
 
         await asyncio.sleep(2)
 

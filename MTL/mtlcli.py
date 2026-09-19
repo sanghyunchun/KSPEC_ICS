@@ -142,6 +142,9 @@ async def handle_mtl(arg, ICS_client):
             nexposure = int(params[3]) if len(params) >= 4 else None
             exptime = float(params[4]) if len(params) >= 5 else None
 
+
+            print(f'dfdfdf {target_file} {exptime}')
+
             message = mtl_start(
                 target_file=target_file,
                 tolerance=tolerance,
