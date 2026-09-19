@@ -13,6 +13,7 @@ class MTLContext:
 
     def __init__(self):
         self.run = None
+        self.target_file = None
         self.pending_trial = None
         self.pending_images = []
         self.lock = asyncio.Lock()
@@ -37,6 +38,14 @@ def _value(message, key, default, cast=None):
 def _load_mtl_config():
     with open("./Lib/KSPEC.ini", "r", encoding="utf-8") as file:
         return json.load(file)["MTL"]
+
+
+def _target_filename(data):
+    project = data["project"]
+    if not isinstance(project, str) or not project or os.path.basename(project) != project:
+        raise ValueError("Invalid target project name")
+    return f'{project}_2627_{int(data["tile_id"]):04d}.assign.json'
+#    return f'object.info'
 
 
 async def _send_response(server, func, message, process="Done", status="success", **data):
@@ -86,6 +95,9 @@ async def identify_execute(MTL_server, cmd, context):
                 if status == "success":
                     # target이 바뀌었으므로 기존 run을 다시 사용하지 않는다.
                     context.reset()
+                    context.target_file = os.path.join(
+                        _load_mtl_config()["mtlfilepath"], _target_filename(receive_msg)
+                    )
                 await _send_response(MTL_server, func, comment, status=status)
                 return
 
@@ -94,7 +106,7 @@ async def identify_execute(MTL_server, cmd, context):
                 target_file = _value(
                     receive_msg,
                     "target_file",
-                    os.path.join(config["mtlfilepath"], "object.info"),
+                    context.target_file or os.path.join(config["mtlfilepath"], "object.info"),
                 )
                 data_dir = _value(receive_msg, "data_dir", config["mtlimagepath"])
                 json_dir = _value(receive_msg, "json_dir", config["mtlfilepath"])
@@ -313,19 +325,19 @@ async def identify_execute(MTL_server, cmd, context):
 
 
 def savedata(data):
-    config = _load_mtl_config()
-    mtlfilepath = config["mtlfilepath"]
-
     try:
+        config = _load_mtl_config()
+        mtlfilepath = config["mtlfilepath"]
+        target_file = os.path.join(mtlfilepath, _target_filename(data))
         os.makedirs(mtlfilepath, exist_ok=True)
-        with open(os.path.join(mtlfilepath, "object.info"), "w", encoding="utf-8") as savefile:
+        with open(target_file, "w", encoding="utf-8") as savefile:
             json.dump(data, savefile)
-    except TypeError:
-        return "fail", "Non-numeric values encountered while formatting output."
+    except (KeyError, TypeError, ValueError) as error:
+        return "fail", f"Invalid target data or configuration: {error}"
     except OSError as error:
         return "fail", f"Failed to write file: {error}"
 
-    return "success", "Objects are loaded in MTL server."
+    return "success", f"Objects are saved to {target_file} in MTL server."
 
 
 def mtl_status():

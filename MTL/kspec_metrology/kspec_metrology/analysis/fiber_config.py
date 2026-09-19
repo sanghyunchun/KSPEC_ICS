@@ -41,7 +41,7 @@ from astropy.io import ascii
 # xp, yp도 같은 순서로 다시 만들어야 한다. xp가 더 많으면 앞에서 잘라 쓰면서
 # 조용히 지나가므로(mtlcal.load_configuration) 특히 주의할 것.
 FIBER_TABLE_ENV = 'KSPEC_FIBER_TABLE'
-DEFAULT_FIBER_TABLE_PATH = str(Path(__file__).with_name('Fiber_Configuration_250415.txt'))
+DEFAULT_FIBER_TABLE_PATH = str(Path(__file__).with_name('Fiber_Configuration_config55.txt'))
 
 FIBER_TABLE_PATH = os.environ.get(FIBER_TABLE_ENV) or DEFAULT_FIBER_TABLE_PATH
 

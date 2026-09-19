@@ -2056,40 +2056,43 @@ class MainWindow(QMainWindow):
             )
             return
 
-        self.logging('Sent MTL run initialization command', level='send')
-        await handle_mtl("mtlstart", self.ICS_client)
-        mtlstart_response = await self.response_queue.get()
+        # self.logging('Sent MTL run initialization command', level='send')
+        # await handle_mtl("mtlstart", self.ICS_client)
+        # mtlstart_response = await self.response_queue.get()
 
-        mtlstart_succeeded = (
-            mtlstart_response.get('inst') == 'MTL'
-            and mtlstart_response.get('func') == 'mtlstart'
-            and mtlstart_response.get('status') == 'success'
-        )
-        if not mtlstart_succeeded:
-            message = mtlstart_response.get('message', 'Unknown error')
-            self.logging(
-                f'MTL run could not be initialized: {message}',
-                status=mtlstart_response.get('status', 'fail'),
-                level='error',
-            )
-            return
+        # mtlstart_succeeded = (
+        #     mtlstart_response.get('inst') == 'MTL'
+        #     and mtlstart_response.get('func') == 'mtlstart'
+        #     and mtlstart_response.get('status') == 'success'
+        # )
+        # if not mtlstart_succeeded:
+        #     message = mtlstart_response.get('message', 'Unknown error')
+        #     self.logging(
+        #         f'MTL run could not be initialized: {message}',
+        #         status=mtlstart_response.get('status', 'fail'),
+        #         level='error',
+        #     )
+        #     return
 
         await asyncio.sleep(2)
 
-    #    self.logging('Sent Target information to FBP',level='send')
-    #    await self.ICS_client.send_message("FBP", self.objmsg)
-    #    await self.response_queue.get()
-    #    await asyncio.sleep(2)
-
-    #    self.logging('Sent Motion plan of alpha motor to FBP',level='send')
-    #    await self.ICS_client.send_message("FBP", self.motionmsg1)
-    #    await self.response_queue.get()
-    #    await asyncio.sleep(2)
-
-    #    self.logging('Sent Motion plan of beta motor to FBP',level='send')
-    #    await self.ICS_client.send_message("FBP", self.motionmsg2)
-    #    await self.response_queue.get()
-    #    await asyncio.sleep(2)
+        for arm, motionmsg in (('alpha', self.motionmsg1), ('beta', self.motionmsg2)):
+            self.logging(f'Sent Motion plan of {arm} motor to FBP', level='send')
+            await self.ICS_client.send_message("FBP", motionmsg)
+            response = await self.response_queue.get()
+            if not (
+                response.get('inst') == 'FBP'
+                and response.get('func') == 'loadmotion'
+                and response.get('arm') == arm
+                and response.get('status') == 'success'
+            ):
+                message = response.get('message', 'Unknown error')
+                self.logging(
+                    f'FBP {arm} motion plan could not be loaded: {message}',
+                    status=response.get('status', 'fail'),
+                    level='error',
+                )
+                return
 
         self.logging(f'All accessary files for observation of Tile ID {self.TileID} are successfully loaded', level='receive')
         await asyncio.sleep(2)
@@ -2145,7 +2148,7 @@ class MainWindow(QMainWindow):
    
 
     ### Real survey Observation ####    
-        self.tilemsg,self.guidemsg,self.objmsg,self.motionmsg1,self.motionmsg2=sciobs.loadtile(self.TileID)
+        self.tilemsg,self.objmsg,self.motionmsg1,self.motionmsg2=sciobs.loadtile(self.TileID)
         self.ra, self.dec=self.convert_to_sexagesimal(sciobs.ra,sciobs.dec)
 
         self.scriptrun.configure_cordinate(

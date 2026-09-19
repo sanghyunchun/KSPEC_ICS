@@ -66,7 +66,7 @@ async def identify_execute(FBP_server,cmd):
     if func == 'loadmotion':
         status, comment = savemotion(dict_data)
         reply_data=mkmsg.fbpmsg()
-        reply_data.update(message=comment,process='Done',status=status)
+        reply_data.update(func='loadmotion',arm=dict_data.get('arm'),message=comment,process='Done',status=status)
         rsp=json.dumps(reply_data)
         print('\033[32m'+'[FBP]', comment+'\033[0m')
         await FBP_server.send_message('ICS',rsp)
@@ -342,22 +342,22 @@ def savemotion(dict_data):
     except Exception as e:
         return 'fail', str(e)
 
-    arm=dict_data['arm']
     try:
-        if dict_data['arm'] == 'alpha':
-            file_path=(fbpfilepath+'motion_alpha.info')
-            with open(file_path,"w") as f:
-                json.dump(dict_data,f)
+        arm=dict_data['arm']
+        if arm not in ('alpha', 'beta'):
+            raise ValueError(f'Invalid motion arm: {arm}')
+        project=dict_data['project']
+        if not isinstance(project, str) or not project or os.path.basename(project) != project:
+            raise ValueError('Invalid motion project name')
+        tile_id=int(dict_data['tileid'])
+        file_path=os.path.join(fbpfilepath, f'{project}_2627_{tile_id:04d}_{arm}.path.json')
+        with open(file_path, 'w') as f:
+            json.dump(dict_data, f)
 
-        if dict_data['arm'] == 'beta':
-            file_path=(fbpfilepath+'motion_beta.info')
-            with open(file_path,"w") as f:
-                json.dump(dict_data,f)
-    
-    except TypeError:
-        return 'fail', "Non-numeric values encountered while formatting output."
+    except (KeyError, TypeError, ValueError) as e:
+        return 'fail', f'Invalid motion data: {e}'
     except OSError as e:
         return 'fail', f"Failed to write file: {e}"
 
-    msg=f'Motion plan of {arm} is successfully loaded in FBP server.'
+    msg=f'Motion plan of {arm} is successfully saved to {file_path}.'
     return 'success', msg

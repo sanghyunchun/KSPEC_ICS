@@ -39,8 +39,8 @@ LOG_DIR = os.path.join(FBP_DIR, "Log")
 LIB_DIR = os.path.join(FBP_DIR, "Lib")
 POSITIONER_AXIS_MAP_FILE = os.path.join(LIB_DIR, "positioner_axis_map.json")
 
-ALPHA_FILE = os.path.join(DATA_DIR, "config55_0005_converted3.alpha.json")
-BETA_FILE = os.path.join(DATA_DIR, "config55_0005_converted3.beta.json")
+ALPHA_FILE = os.path.join(DATA_DIR, "ASPECS_2627_0005_alpha.path.json")
+BETA_FILE = os.path.join(DATA_DIR, "ASPECS_2627_0005_beta.path.json")
 
 
 

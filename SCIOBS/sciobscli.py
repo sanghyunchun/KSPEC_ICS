@@ -70,36 +70,19 @@ class sciobscli:
         return tiledata
 
 
-# Load RA/DEC and X/Y of science objects assigned in ???? tile_ID
+# Load science objects from the assignment file for the selected tile.
     def load_target(self):
-    #     For commission Starts #
-    #    dtype=[('fiber_id','i'),('xp','f'),('yp','f'),('ra','f'),('dec','f'),('mag','f'),('priority','i')]
-    #    fiberid,xp,yp,ra,dec,mag,priority=np.loadtxt(self.targetpath+self.tile_id+'.assign.txt',dtype=dtype,unpack=True,usecols=(0,1,2,3,4,5,6))
-
-    #    message='Load Target Objects of Tile'
-    #    dict_data = { "tile_id":self.tile_id, "inst" : 'SCIOBS', "func" : 'loadobj', "ra":ra.tolist(), "dec":dec.tolist(),"xp":xp.tolist(),
-    #            "yp":yp.tolist(),'message':message, 'process': 'Done'}
-
-    #    For commission Ends #
-
-    #   Fore real OBS Starts #
-        dtype=[('tid','i'),('fiber_id','i'),('xp','f'),('yp','f'),('ra','f'),('dec','f'),('class','U8')]
-        tid,fiberid,xp,yp,ra,dec,clss=np.loadtxt(self.targetpath+self.project+'_assign.txt',dtype=dtype,skiprows=1,unpack=True,usecols=(0,1,2,3,4,5,6))
-        idx = (tid == int(self.tile_id))
-        obj_tid=tid[idx]
-        obj_fiberid=fiberid[idx]
-        obj_xp=xp[idx]
-        obj_yp=yp[idx]
-        obj_ra=ra[idx]
-        obj_dec=dec[idx]
-        obj_class=clss[idx]
+        tile_id=int(self.tile_id)
+        assignfile=os.path.join(self.targetpath, f'{self.project}_2627_{tile_id:04d}.assign.txt')
+        # File columns: fiberid, xp, yp, mag, class, flag, ra, dec (no header).
+        dtype=[('fiber_id','U16'),('xp','f'),('yp','f'),('ra','f'),('dec','f'),('class','U8')]
+        obj_fiberid,obj_xp,obj_yp,obj_ra,obj_dec,obj_class=np.loadtxt(
+            assignfile,dtype=dtype,unpack=True,usecols=(0,1,2,6,7,4),ndmin=1)
 
         message='Load Target Objects of Tile'
 
-        dict_data = { "tile_id":obj_tid[0].tolist(), "inst" : 'SCIOBS', "func" : 'loadobj', "ra":obj_ra.tolist(), "dec":obj_dec.tolist(),"xp":obj_xp.tolist(),
+        dict_data = { "tile_id":tile_id, "project":self.project, "inst" : 'SCIOBS', "func" : 'loadobj', "ra":obj_ra.tolist(), "dec":obj_dec.tolist(),"xp":obj_xp.tolist(),
                 "yp":obj_yp.tolist(),"class":obj_class.tolist(),'message':message, 'process': 'Done'}
-
-    #   For real OBS Starts #
 
         objdata=json.dumps(dict_data)
         return objdata
@@ -126,31 +109,51 @@ class sciobscli:
         return guidedata
 
 
-# Load motion plan of 150 fiber positioner
+# Load alpha/beta motion plans from the selected tile's path file.
     def load_motion(self):
-#        dirs='../inputdata/motion/'
-        alpha=np.loadtxt(self.motionpath+self.project+'_assign_tilen'+self.tile_id+'_Pathdata_Alpha_motor.csv',delimiter=',')
-        beta=np.loadtxt(self.motionpath+self.project+'_assign_tilen'+self.tile_id+'_Pathdata_Beta_motor.csv',delimiter=',')
-        Fibnum=np.loadtxt('./Lib/Fibnum.def',dtype=str)
+        # Reload offsets so configuration changes apply to the next tile load.
+        with open('./Lib/KSPEC.ini','r') as fs:
+            motion_config=json.load(fs)['SCIOBS']
+        offsets={'a': float(motion_config['alpha_offset_deg']),
+                 'b': float(motion_config['beta_offset_deg'])}
 
-        motion_alpha={}
-        motion_beta={}
-        for i  in range(150):
-            motion_alpha[Fibnum[i]]=alpha[:,i].tolist()
-            motion_beta[Fibnum[i]]=beta[:,i].tolist()
+        pathfile=os.path.join(self.motionpath, f'{self.project}_2627_{int(self.tile_id):04d}.path.txt')
+        with open(pathfile, 'r') as fs:
+            columns=[column.strip() for column in fs.readline().strip().split(',')]
+            angles=np.loadtxt(fs,delimiter=',',ndmin=2)
+
+        if angles.size == 0 or angles.shape[1] != len(columns):
+            raise ValueError(f'Invalid motion data or header column count in {pathfile}')
+
+        # Each data row is one step, numbered from 1.
+        steps=list(range(1,angles.shape[0]+1))
+        motion_alpha={'step': steps}
+        motion_beta={'step': steps}
+        for i, column in enumerate(columns):
+            fiberid, separator, arm=column.rpartition('_')
+            if not separator or not fiberid or arm not in ('a','b'):
+                raise ValueError(f'Invalid motion column: {column}')
+            motion=motion_alpha if arm == 'a' else motion_beta
+            if fiberid in motion:
+                raise ValueError(f'Duplicate motion column: {column}')
+            motion[fiberid]=(angles[:,i]+offsets[arm]).tolist()
+
+        if motion_alpha.keys() != motion_beta.keys():
+            raise ValueError(f'Alpha/beta fiber IDs do not match in {pathfile}')
 
         a_motion=mkmsg.fbpmsg()
         comment=f'Load Motion plan of alpha arm for Tile ID {self.tile_id}.'
-        a_motion.update(func='loadmotion',message=comment,arm='alpha',tileid=self.tile_id,process='Done')
+        a_motion.update(func='loadmotion',message=comment,arm='alpha',tileid=self.tile_id,project=self.project,process='Done')
         a_motion.update(motion_alpha)
 
         b_motion=mkmsg.fbpmsg()
         comment=f'Load Motion plan of beta arm for Tile ID {self.tile_id}.'
-        b_motion.update(func='loadmotion',message=comment,arm='beta',tileid=self.tile_id,process='Done')
+        b_motion.update(func='loadmotion',message=comment,arm='beta',tileid=self.tile_id,project=self.project,process='Done')
         b_motion.update(motion_beta)
 
         motionmsg1=json.dumps(a_motion)
         motionmsg2=json.dumps(b_motion)
+
         return motionmsg1,motionmsg2
 
 
@@ -160,13 +163,13 @@ class sciobscli:
         tileinfo = self.load_tilepos()
         TCSmsg = tileinfo
 
-        guideinfo=self.load_guide()
-        GFAmsg=guideinfo
+    #    guideinfo=self.load_guide()
+    #    GFAmsg=guideinfo
 
         objinfo=self.load_target()
         OBJmsg=objinfo
 
-#        print(OBJmsg)
+        print(OBJmsg)
 
         motionmsg1,motionmsg2=self.load_motion()
 
@@ -175,8 +178,5 @@ class sciobscli:
             json.dump(obs_info,f)
 
 #        return OBJmsg
-        return TCSmsg,GFAmsg,OBJmsg,motionmsg1,motionmsg2
+        return TCSmsg,OBJmsg,motionmsg1,motionmsg2
        
-
-
-
