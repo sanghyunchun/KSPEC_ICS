@@ -63,7 +63,6 @@ async def script_run(ICS_client,transport,filename):
 #    specmsg=spec_illu_on()
 #    await ICS_client.send_message("SPEC",specmsg)
 
-#    mtlmsg=mtl_exp(3)
 #    await ICS_client.send_message("MTL", mtlmsg)
 
 #    ttt=tcscli.Telcomclass()
@@ -78,7 +77,6 @@ async def script_run(ICS_client,transport,filename):
 #    gfamsg=gfa_allexp(10)
 #    await ICS_client.send_message("GFA", gfamsg)
 
-#    mtlmsg=mtl_exp()
 #    await ICS_client.send_message("MTL", mtlmsg)
 
 

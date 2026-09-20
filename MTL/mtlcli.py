@@ -49,23 +49,6 @@ def mtl_start(
     return create_mtl_command("mtlstart", **data)
 
 
-def mtl_exp(exptime=None, nexposure=None, filename=None):
-    """다음 metrology trial의 카메라 촬영을 요청한다."""
-    data = {
-        "message": "Expose metrology camera",
-    }
-
-    if exptime is not None:
-        data["time"] = seconds_to_microseconds(exptime)
-    if nexposure is not None:
-        data["nexposure"] = nexposure
-    if filename is not None:
-        # 기존 GUI와 scriptcli 호출 형식을 유지하기 위한 호환 필드다.
-        data["file"] = filename
-
-    return create_mtl_command("mtlexp", **data)
-
-
 def mtl_test(exptime=None, nexposure=None, filename=None):
     """MetrologyRun과 무관하게 metrology 카메라 시험 촬영을 요청한다."""
     data = {
@@ -82,17 +65,17 @@ def mtl_test(exptime=None, nexposure=None, filename=None):
     return create_mtl_command("mtltest", **data)
 
 
-def mtl_cal(filename=None):
-    """가장 최근에 촬영한 metrology trial의 분석을 요청한다."""
+def mtl_trial(filename=None):
+    """초기화된 run으로 다음 trial의 촬영, 분석, JSON 저장을 요청한다."""
     data = {
-        "message": "Analyze metrology images",
+        "message": "Expose and analyze metrology trial",
     }
 
     if filename is not None:
         # 서버는 tile/trial 기반 파일명을 사용하지만 기존 호출 형식을 허용한다.
         data["file"] = filename
 
-    return create_mtl_command("mtlcal", **data)
+    return create_mtl_command("mtltrial", **data)
 
 
 def mtl_result():
@@ -143,7 +126,7 @@ async def handle_mtl(arg, ICS_client):
             exptime = float(params[4]) if len(params) >= 5 else None
 
 
-            print(f'dfdfdf {target_file} {exptime}')
+        #    print(f'dfdfdf {target_file} {exptime}')
 
             message = mtl_start(
                 target_file=target_file,
@@ -151,29 +134,6 @@ async def handle_mtl(arg, ICS_client):
                 max_trial=max_trial,
                 nexposure=nexposure,
                 exptime=exptime,
-            )
-
-        elif cmd == "mtlexp":
-            # 새 형식: mtlexp 또는 mtlexp <시간> <장수>
-            # 기존 형식: mtlexp <시간> <장수> <파일명>
-            if len(params) not in (0, 2, 3):
-                raise ValueError(
-                    "Usage: mtlexp [exptime nexposure [filename]]"
-                )
-
-            if params:
-                exptime = float(params[0])
-                nexposure = int(params[1])
-                filename = params[2] if len(params) == 3 else None
-            else:
-                exptime = None
-                nexposure = None
-                filename = None
-
-            message = mtl_exp(
-                exptime=exptime,
-                nexposure=nexposure,
-                filename=filename,
             )
 
         elif cmd == "mtltest":
@@ -197,12 +157,12 @@ async def handle_mtl(arg, ICS_client):
                 filename=filename,
             )
 
-        elif cmd == "mtlcal":
+        elif cmd == "mtltrial":
             if len(params) > 1:
-                raise ValueError("Usage: mtlcal [filename]")
+                raise ValueError("Usage: mtltrial [filename]")
 
             filename = params[0] if params else None
-            message = mtl_cal(filename)
+            message = mtl_trial(filename)
 
         elif cmd == "mtlresult":
             if params:

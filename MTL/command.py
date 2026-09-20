@@ -14,14 +14,10 @@ class MTLContext:
     def __init__(self):
         self.run = None
         self.target_file = None
-        self.pending_trial = None
-        self.pending_images = []
         self.lock = asyncio.Lock()
 
     def reset(self):
         self.run = None
-        self.pending_trial = None
-        self.pending_images = []
 
 
 def _is_missing(value):
@@ -86,7 +82,6 @@ async def identify_execute(MTL_server, cmd, context):
                     itrial=run.itrial if run is not None else 0,
                     converged=run.converged if run is not None else False,
                     should_continue=run.should_continue if run is not None else False,
-                    pending_trial=context.pending_trial,
                 )
                 return
 
@@ -133,8 +128,6 @@ async def identify_execute(MTL_server, cmd, context):
 
                 # 생성과 start가 모두 성공한 경우에만 현재 run을 교체한다.
                 context.run = run
-                context.pending_trial = None
-                context.pending_images = []
 
                 await _send_response(
                     MTL_server,
@@ -206,72 +199,26 @@ async def identify_execute(MTL_server, cmd, context):
                 )
                 return
 
-            if func == "mtlexp":
+            if func == "mtltrial":
                 run = _require_run(context)
-                if context.pending_trial is not None:
-                    raise RuntimeError(
-                        f"Trial {context.pending_trial} 촬영 결과가 아직 분석되지 않았습니다. "
-                        "mtlcal을 먼저 실행하십시오."
-                    )
                 if not run.should_continue:
                     raise RuntimeError("이미 수렴했거나 max_trial 횟수에 도달했습니다.")
-
-                # 기존 CLI의 time/nexposure 인자가 있으면 다음 촬영부터 반영한다.
-                if not _is_missing(receive_msg.get("time")):
-                    run.camera["exptime"] = float(receive_msg["time"])
-                if not _is_missing(receive_msg.get("nexposure")):
-                    run.nexposure = int(receive_msg["nexposure"])
-
-                itrial = run.itrial + 1
-                await _send_response(
-                    MTL_server,
-                    func,
-                    f"MTL Trial {itrial} exposure starts.",
-                    process="ING",
-                    itrial=itrial,
-                )
-
-                images = await asyncio.to_thread(run.expose, itrial)
-                context.pending_trial = itrial
-                context.pending_images = list(images)
-
-                await _send_response(
-                    MTL_server,
-                    func,
-                    f"MTL Trial {itrial} exposure finished successfully.",
-                    itrial=itrial,
-                    nexposure=len(context.pending_images),
-                    images=context.pending_images,
-                )
-                return
-
-            if func == "mtlcal":
-                run = _require_run(context)
                 expected_trial = run.itrial + 1
-                if context.pending_trial is None:
-                    raise RuntimeError("분석할 촬영 결과가 없습니다. mtlexp를 먼저 실행하십시오.")
-                if context.pending_trial != expected_trial:
-                    raise RuntimeError(
-                        f"촬영 trial과 분석 trial이 다릅니다: "
-                        f"{context.pending_trial} != {expected_trial}"
-                    )
 
                 await _send_response(
                     MTL_server,
                     func,
-                    f"MTL Trial {expected_trial} calculation starts.",
+                    f"MTL Trial {expected_trial} exposure and analysis start.",
                     process="ING",
                     itrial=expected_trial,
                 )
 
-                result = await asyncio.to_thread(run.trial, False)
-                context.pending_trial = None
-                context.pending_images = []
+                result = await asyncio.to_thread(run.trial, expose=True)
 
                 await _send_response(
                     MTL_server,
                     func,
-                    f"MTL Trial {result.itrial} calculation finished successfully.",
+                    f"MTL Trial {result.itrial} exposure, analysis and JSON saving finished successfully.",
                     savedata="True",
                     filename=result.json,
                     itrial=result.itrial,
@@ -320,7 +267,6 @@ async def identify_execute(MTL_server, cmd, context):
                 func,
                 f"MTL {func} failed: {error}",
                 status="fail",
-                pending_trial=context.pending_trial,
             )
 
 

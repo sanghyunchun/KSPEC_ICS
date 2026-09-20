@@ -625,19 +625,14 @@ class script():
         await scriptrun.response_queue.get()
         await asyncio.sleep(2)
                 
-        await handle_mtl(f'mtlexp {self.MTLexpT} 1 "fiducial.fits"',scriptrun.ICSclient)                       # Change exposure time in real observation
-        await scriptrun.response_queue.get()                                     # Start MTL exposure message
-        await scriptrun.response_queue.get()                                     # Wait for MTL exposure finish
-        await asyncio.sleep(2)
-
         await handle_spec('illuon',scriptrun.ICSclient)
         await scriptrun.response_queue.get()
         await asyncio.sleep(2)
 
-        testfile = 'test.fits'
-        await handle_mtl(f'mtlcal {testfile}',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()                                    # Start MTL calculation message
-        await scriptrun.response_queue.get()                                    # Wait for MTL calculation finish
+        # mtlstart에서 준비한 촬영 설정으로 노출부터 JSON 저장까지 실행한다.
+        await handle_mtl('mtltrial',scriptrun.ICSclient)
+        await scriptrun.response_queue.get()                                    # Start MTL trial message
+        await scriptrun.response_queue.get()                                    # Wait for MTL trial finish
         await asyncio.sleep(2)
 
         await handle_fbp('fbpoffset',scriptrun.ICSclient)

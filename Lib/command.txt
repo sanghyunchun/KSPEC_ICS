@@ -29,8 +29,7 @@ fbpoffset       : Rotate specific Fiber positioner by calculated offset.
             
 [MTL]
 mtlstatus       : Show Metrology camera status.
-mtlexp          : Exposure Metrology camera.
-mtlcal          : Calcuate the position between Fiber positioner and Target position.
+mtltrial          : Expose, analyze, and save the next metrology trial JSON after mtlstart.
 
 [LAMP]   
 lampstatus      : Show lamps (arc, flat, fiducial, back-illumination) status.

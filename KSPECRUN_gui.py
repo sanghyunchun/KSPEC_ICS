@@ -283,10 +283,8 @@ class MainWindow(QMainWindow):
 
 
         # MTL
-        #    self.ui.pushbtn_MTL_exp_2.clicked.connect(self.MTL_exp_button_clicked)
-        #    self.ui.pushbtn_MTL_exp_3.clicked.connect(self.MTL_exp_button_clicked)
         self.ui.pushbtn_MTL_test.clicked.connect(self.MTL_test_button_clicked)
-        self.ui.pushbtn_MTL_trial.clicked.connect(self.MTL_cal_button_clicked)
+        self.ui.pushbtn_MTL_trial.clicked.connect(self.MTL_trial_button_clicked)
         self.ui.pushbtn_MTL_set.clicked.connect(self.MTL_set_button_clicked)
         self.ui.pushbtn_MTL_reset.clicked.connect(self.MTL_set_button_clicked)
 
@@ -538,7 +536,7 @@ class MainWindow(QMainWindow):
             "adcpoweroff", "adcrotate1", "adcrotate2", "adcstop", "adcpark", "adcctrotate", "adccorotate"],
             "gfa": ["gfastatus", "gfagrab", "fdgrab"],
             "fbp": ["fbpstatus", "fbpmove", "fbpoffset"],
-            "mtl": ["mtlstatus", "mtlstart", "mtltest", "mtlexp", "mtlcal", "mtlresult", "mtlreset"],
+            "mtl": ["mtlstatus", "mtlstart", "mtltest", "mtltrial", "mtlresult", "mtlreset"],
             "lamp": ["lampstatus", "arcon", "arcoff", "flaton", "flatoff","fiducialon","fiducialoff"],
             "spec": ["specstatus", "specinitial","illuon", "illuoff", "getobj", "getbias", "getflat","getar"],
             "tcs": ["tmradec", "start", "stop", "tcsint", "tcsreset", "tcsclose",
@@ -1735,28 +1733,15 @@ class MainWindow(QMainWindow):
         await handle_mtl(f'mtltest {self.mtlexp} {self.nexposure} {self.mtlfile}', self.ICS_client)
 
     @asyncSlot()
-    async def MTL_cal_button_clicked(self):
+    async def MTL_trial_button_clicked(self):
         if not self.check_connection():
             return
 
         if not self.check_syscheck():
             return
 
-    #    if not self.ui.lineEdit_MTL_exptime.text():
-    #        self.ui.lineEdit_MTL_exptime.setText('5')
-            
-        if not self.ui.lineEdit_MTL_file.text():
-            self.ui.lineEdit_MTL_file.setText('test.fits')
-            
-    #    if not self.ui.lineEdit_MTL_expnum.text():
-    #        self.ui.lineEdit_MTL_expnum.setText('1')
-
-    #    self.mtlexp = float(self.ui.lineEdit_MTL_exptime.text())
-        self.mtlfile = str(self.ui.lineEdit_MTL_file.text())
-    #    self.nexposure = int(self.ui.lineEdit_MTL_expnum.text())
-
-        self.logging(f'Sent MTL calculation', level='send')
-        await handle_mtl(f'mtlcal {self.mtlfile}', self.ICS_client)
+        self.logging('Sent MTL trial', level='send')
+        await handle_mtl('mtltrial', self.ICS_client)
 
     @asyncSlot()
     async def MTL_set_button_clicked(self):

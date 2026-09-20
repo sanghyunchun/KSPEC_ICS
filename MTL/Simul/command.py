@@ -4,7 +4,6 @@ from Lib.AMQ import *
 import Lib.mkmessage as mkmsg
 import json
 import asyncio
-from MTL.Simul.kspec_metrology.exposure import mtlexp
 from MTL.Simul.kspec_metrology.analysis import mtlcal
 
 
@@ -35,23 +34,7 @@ async def identify_execute(MTL_server,cmd):
         print('\033[32m'+'[MTL]', comment+'\033[0m')
         await MTL_server.send_message('ICS',rsp)
 
-    if func == 'mtlexp':
-        reply_data=mkmsg.mtlmsg()
-        reply_data.update(message='MTL exposure starts.',process='ING',status='success')
-        rsp=json.dumps(reply_data)
-        await MTL_server.send_message('ICS',rsp)
-
-        exptime=float(receive_msg['time'])
-        filename = str(receive_msg['file'])
-        nexposure = int(receive_msg['nexposure'])
-        status, comment=mtlexp.mtlexp(exptime,filename,nexposure=nexposure)
-        reply_data=mkmsg.mtlmsg()
-        reply_data.update(message=comment,process='Done',status=status)
-        rsp=json.dumps(reply_data)
-        print('\033[32m'+'[MTL]', comment+'\033[0m')
-        await MTL_server.send_message('ICS',rsp)
-
-    if func == 'mtlcal':
+    if func == 'mtltrial':
         reply_data=mkmsg.mtlmsg()
         reply_data.update(message='MTL calculation starts.',process='ING',status='success')
         rsp=json.dumps(reply_data)
