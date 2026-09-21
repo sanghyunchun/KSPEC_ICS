@@ -1,2 +1,44 @@
 [Command]            [Usages (Type below)]
 mtltrial             mtltrial
+
+mtlcal : 기존 이미지로 metrology 계산 (mtlstart 필요 없음)
+
+[Test 이미지 분석 예제]
+GUI Test에서 MTL_file을 test.fits로 지정하면 실제 이미지는
+test_0.fits, test_1.fits, ... 형태로 저장됩니다.
+아래 명령은 ./MTL/data/test_0.fits 한 장을 분석합니다.
+CMD에 한 줄로 입력하세요. target_file은 준비한 파일 경로로 바꾸세요.
+
+mtlcal --data_dir ./MTL/data/ --head test_ --nexposure 1 --target_file ./MTL/target/calibration.assign.json --json_dir ./MTL/calibration/ --target_name test --itrial 1
+
+저장 결과: ./MTL/calibration/test_MetrologyTrial_1.json
+
+[파일 저장 없이 계산 결과만 받기]
+mtlcal --data_dir ./MTL/data/ --head test_ --target_file ./MTL/target/calibration.assign.json
+
+[옵션: analysis.mtlcal과 동일한 인자 이름]
+--data_dir     이미지 폴더 (기본: ./MTL/data/)
+--head         이미지 접두어 (기본: test)
+               {head}0.fits부터 {head}{nexposure-1}.fits까지 읽습니다.
+               test_0.fits는 --head test_로 지정합니다.
+               정확히 test.fits인 파일은 test_0.fits로 복사/변경해야 합니다.
+--nexposure    분석할 이미지 수 (기본: 1, 1 이상)
+--target_file  최종 목표 좌표 JSON 경로
+               생략하면 analysis의 TARGET_INFO_PATH를 사용합니다.
+--mode         Raw 또는 Predict (기본: Raw)
+--threshold    Raw 모드 peak 검출 문턱값 (기본: 3000)
+--nwindow      위치 측정 창의 반폭, pixel (기본: 40, 1 이상)
+--json_dir     계산 결과 JSON 저장 폴더 (기본: 저장 안 함)
+--target_name  결과 파일 이름의 접두어
+--itrial       결과 trial 번호 (기본: 1, 1 이상)
+--help         전체 옵션 도움말 출력
+
+[사용 안내]
+- 모든 경로는 MTL 서버 기준입니다. 공백이 있는 경로는 따옴표로 감싸세요.
+- JSON 저장에는 --json_dir와 --target_name을 함께 지정하세요.
+- 출력 이름: {target_name}_MetrologyTrial_{itrial}.json
+- 같은 출력 폴더에 이전 trial JSON이 있으면 그 각도에 보정량을 누적합니다.
+  이전 파일이 없으면 target의 목표 각도를 기준으로 계산합니다.
+- 응답에는 위치 오차(offsetx/offsety), 보정각(angle_rot),
+  누적각(angle_cum)이 포함됩니다.
+- 촬영이나 positioner 이동은 수행하지 않으며 기존 관측 run 상태도 유지합니다.

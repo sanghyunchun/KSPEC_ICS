@@ -536,7 +536,7 @@ class MainWindow(QMainWindow):
             "adcpoweroff", "adcrotate1", "adcrotate2", "adcstop", "adcpark", "adcctrotate", "adccorotate"],
             "gfa": ["gfastatus", "gfagrab", "fdgrab"],
             "fbp": ["fbpstatus", "fbpmove", "fbpoffset"],
-            "mtl": ["mtlstatus", "mtlstart", "mtltest", "mtltrial", "mtlresult", "mtlreset"],
+            "mtl": ["mtlstatus", "mtlstart", "mtltest", "mtlcal", "mtltrial", "mtlresult", "mtlreset"],
             "lamp": ["lampstatus", "arcon", "arcoff", "flaton", "flatoff","fiducialon","fiducialoff"],
             "spec": ["specstatus", "specinitial","illuon", "illuoff", "getobj", "getbias", "getflat","getar"],
             "tcs": ["tmradec", "start", "stop", "tcsint", "tcsreset", "tcsclose",

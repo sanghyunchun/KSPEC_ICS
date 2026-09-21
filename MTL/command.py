@@ -6,6 +6,7 @@ import time
 import Lib.mkmessage as mkmsg
 from kspec_metrology.exposure.mtlexp import mtlexp as take_test_exposure
 from kspec_metrology.mtlrun import MetrologyRun
+from kspec_metrology.analysis.mtlcal import mtlcal as analyze_images, json_path
 
 
 class MTLContext:
@@ -196,6 +197,40 @@ async def identify_execute(MTL_server, cmd, context):
                     exptime=exptime,
                     nexposure=len(images),
                     images=list(images),
+                )
+                return
+
+            if func == "mtlcal":
+                options = {
+                    'data_dir': _value(receive_msg, 'data_dir', './MTL/data/', str),
+                    'head': _value(receive_msg, 'head', 'test', str),
+                    'mode': _value(receive_msg, 'mode', 'Raw', str),
+                    'threshold': _value(receive_msg, 'threshold', 3e3, float),
+                    'nwindow': _value(receive_msg, 'nwindow', 40, int),
+                    'nexposure': _value(receive_msg, 'nexposure', 1, int),
+                    'target_file': _value(receive_msg, 'target_file', None, str),
+                    'json_dir': _value(receive_msg, 'json_dir', None, str),
+                    'target_name': _value(receive_msg, 'target_name', None, str),
+                    'itrial': _value(receive_msg, 'itrial', 1, int),
+                }
+                if options['mode'] not in ('Raw', 'Predict'):
+                    raise ValueError('mode must be Raw or Predict')
+                if options['nwindow'] < 1 or options['nexposure'] < 1 or options['itrial'] < 1:
+                    raise ValueError('nwindow, nexposure and itrial must be at least 1')
+                if (options['json_dir'] is None) != (options['target_name'] is None):
+                    raise ValueError('Specify both json_dir and target_name to save JSON')
+
+                await _send_response(MTL_server, func, 'MTL image analysis starts.', process='ING')
+                dx, dy, angle_rot, angle_cum = await asyncio.to_thread(analyze_images, **options)
+                filename = None
+                if options['json_dir'] is not None:
+                    filename = json_path(options['json_dir'], options['target_name'], options['itrial'])
+                await _send_response(
+                    MTL_server, func, 'MTL image analysis finished successfully.',
+                    savedata='True' if filename is not None else 'False',
+                    filename=filename, itrial=options['itrial'],
+                    offsetx=dx.tolist(), offsety=dy.tolist(),
+                    angle_rot=angle_rot.tolist(), angle_cum=angle_cum.tolist(),
                 )
                 return
 

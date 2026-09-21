@@ -29,6 +29,10 @@ fbpoffset       : Rotate specific Fiber positioner by calculated offset.
             
 [MTL]
 mtlstatus       : Show Metrology camera status.
+mtlcal          : Analyze existing images without mtlstart; use mtlcal --help for all options.
+                  Example: mtlcal --data_dir ./MTL/data/ --head calibration_ --nexposure 1 --target_file ./MTL/target/calibration.assign.json --json_dir ./MTL/calibration/ --target_name calibration --itrial 1
+                  Reads calibration_0.fits. Without json_dir/target_name, returns results without saving JSON.
+                  With both, saves calibration_MetrologyTrial_1.json; an existing Trial 0 is used for cumulative angles.
 mtltrial          : Expose, analyze, and save the next metrology trial JSON after mtlstart.
 
 [LAMP]   

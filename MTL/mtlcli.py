@@ -1,3 +1,4 @@
+import argparse
 import json
 import shlex
 
@@ -63,6 +64,36 @@ def mtl_test(exptime=None, nexposure=None, filename=None):
         data["file"] = filename
 
     return create_mtl_command("mtltest", **data)
+
+
+def mtl_cal(data_dir='./MTL/data/', head='test', mode='Raw', threshold=3e3,
+            nwindow=40, nexposure=1, target_file=None, json_dir=None,
+            target_name=None, itrial=1):
+    """기존 이미지를 analysis.mtlcal의 인자로 분석한다 (촬영/run 초기화 없음)."""
+    return create_mtl_command(
+        'mtlcal', message='Analyze existing metrology images',
+        data_dir=data_dir, head=head, mode=mode, threshold=threshold,
+        nwindow=nwindow, nexposure=nexposure, target_file=target_file,
+        json_dir=json_dir, target_name=target_name, itrial=itrial,
+    )
+
+
+def _parse_mtlcal(params):
+    parser = argparse.ArgumentParser(
+        prog='mtlcal', allow_abbrev=False,
+        description='Analyze {data_dir}/{head}{0..nexposure-1}.fits without mtlstart.',
+    )
+    parser.add_argument('--data_dir', '--data-dir', default='./MTL/data/')
+    parser.add_argument('--head', default='test')
+    parser.add_argument('--mode', choices=('Raw', 'Predict'), default='Raw')
+    parser.add_argument('--threshold', type=float, default=3e3)
+    parser.add_argument('--nwindow', type=int, default=40)
+    parser.add_argument('--nexposure', type=int, default=1)
+    parser.add_argument('--target_file', '--target-file')
+    parser.add_argument('--json_dir', '--json-dir')
+    parser.add_argument('--target_name', '--target-name')
+    parser.add_argument('--itrial', type=int, default=1)
+    return vars(parser.parse_args(params))
 
 
 def mtl_trial(filename=None):
@@ -156,6 +187,14 @@ async def handle_mtl(arg, ICS_client):
                 nexposure=nexposure,
                 filename=filename,
             )
+
+        elif cmd == "mtlcal":
+            try:
+                options = _parse_mtlcal(params)
+            except SystemExit:
+                # argparse help/errors must not close the GUI or command loop.
+                return
+            message = mtl_cal(**options)
 
         elif cmd == "mtltrial":
             if len(params) > 1:
