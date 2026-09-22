@@ -28,7 +28,7 @@ from Lib.AMQ import AMQclass, UDPClientProtocol, TCPClient
 from ADC.adccli import handle_adc
 from GFA.gfacli import handle_gfa
 from FBP.fbpcli import handle_fbp
-from MTL.mtlcli import handle_mtl
+from MTL.mtlcli import handle_mtl, mtl_start, mtl_set
 from LAMP.lampcli import handle_lamp
 from SPECTRO.speccli import handle_spec
 from TCS.tcscli import handle_telcom
@@ -536,7 +536,7 @@ class MainWindow(QMainWindow):
             "adcpoweroff", "adcrotate1", "adcrotate2", "adcstop", "adcpark", "adcctrotate", "adccorotate"],
             "gfa": ["gfastatus", "gfagrab", "fdgrab"],
             "fbp": ["fbpstatus", "fbpmove", "fbpoffset"],
-            "mtl": ["mtlstatus", "mtlstart", "mtltest", "mtlcal", "mtltrial", "mtlresult", "mtlreset"],
+            "mtl": ["mtlstatus", "mtlstart", "mtlset", "mtltest", "mtlcal", "mtltrial", "mtlresult", "mtlreset"],
             "lamp": ["lampstatus", "arcon", "arcoff", "flaton", "flatoff","fiducialon","fiducialoff"],
             "spec": ["specstatus", "specinitial","illuon", "illuoff", "getobj", "getbias", "getflat","getar"],
             "tcs": ["tmradec", "start", "stop", "tcsint", "tcsreset", "tcsclose",
@@ -733,6 +733,16 @@ class MainWindow(QMainWindow):
 
                 # 2. 수신 로그 출력
                 self._log_received_message(inst, msg, status)
+
+                # A settings reply must not be consumed by a trial waiting on the shared queue.
+                if inst == 'MTL' and response_data.get('func') == 'mtlset' and process == 'Done':
+                    if status == 'success':
+                        self.mtlexp = float(response_data['exptime']) / 1_000_000.0
+                        self.mtlnum = int(response_data['nexposure'])
+                        self.scriptrun.MTL_set(
+                            self.mtlexp, self.mtlnum, self.ui.lineEdit_MTL_file.text()
+                        )
+                    return
 
                 # 3. 진행 중 메시지는 각 장비별 queue로 전달
                 if await self._handle_in_progress_response(response_data, inst, process):
@@ -1709,6 +1719,15 @@ class MainWindow(QMainWindow):
     # endregion ADC controls
 
     # region MTL controls
+    def _mtl_exposure_inputs(self):
+        exptime_text = self.ui.lineEdit_MTL_exptime.text().strip() or '1'
+        count_text = self.ui.lineEdit_MTL_expnum.text().strip() or '1'
+        exptime, count = float(exptime_text), int(count_text)
+        mtl_set(exptime, count)  # Validate before sending or starting a tile load.
+        self.ui.lineEdit_MTL_exptime.setText(exptime_text)
+        self.ui.lineEdit_MTL_expnum.setText(count_text)
+        return exptime, count
+
     @asyncSlot()
     async def MTL_test_button_clicked(self):
         if not self.check_connection():
@@ -1717,9 +1736,12 @@ class MainWindow(QMainWindow):
         if not self.check_syscheck():
             return
 
-        if not self.ui.lineEdit_MTL_exptime.text():
-            self.ui.lineEdit_MTL_exptime.setText('5')
-            
+        try:
+            self.mtlexp, self.nexposure = self._mtl_exposure_inputs()
+        except ValueError as error:
+            self.logging(f'Invalid MTL exposure settings: {error}', level='error')
+            return
+
         if not self.ui.lineEdit_MTL_file.text():
             self.ui.lineEdit_MTL_file.setText('test.fits')
             
@@ -1751,14 +1773,13 @@ class MainWindow(QMainWindow):
         if not self.check_syscheck():
             return
 
-        if not self.ui.lineEdit_MTL_exptime.text():
-            self.ui.lineEdit_MTL_exptime.setText('5')
-
-        self.mtlexp = float(self.ui.lineEdit_MTL_exptime.text())
-        self.mtlfile = str(self.ui.lineEdit_MTL_file.text())
-        self.mtlnum = float(self.ui.lineEdit_MTL_expnum.text())
-        self.logging(f'Set MTL exposure time to {self.mtlexp}', level='send')
-        self.scriptrun.MTL_set(self.mtlexp, self.mtlnum, self.mtlfile)
+        try:
+            exptime, nexposure = self._mtl_exposure_inputs()
+        except ValueError as error:
+            self.logging(f'Invalid MTL exposure settings: {error}', level='error')
+            return
+        self.logging(f'Request MTL exposure settings: {exptime:g} s, {nexposure} images', level='send')
+        await self.ICS_client.send_message('MTL', mtl_set(exptime, nexposure))
 
     # endregion MTL controls
 
@@ -2016,6 +2037,11 @@ class MainWindow(QMainWindow):
 
     @asyncSlot()
     async def load_tile(self):
+        try:
+            exptime, nexposure = self._mtl_exposure_inputs()
+        except ValueError as error:
+            self.logging(f'Invalid MTL exposure settings: {error}', level='error')
+            return
         self.ui.lineEdit_CProj.setText(f'{self.project}')
         self.ui.lineEdit_CTile.setText(f'{self.TileID}')
     #    self.logging('Sent Guide stars information to GFA',level='send')
@@ -2042,7 +2068,9 @@ class MainWindow(QMainWindow):
             return
 
         self.logging('Sent MTL run initialization command', level='send')
-        await handle_mtl("mtlstart", self.ICS_client)
+        await self.ICS_client.send_message(
+            'MTL', mtl_start(exptime=exptime, nexposure=nexposure)
+        )
         mtlstart_response = await self.response_queue.get()
 
         mtlstart_succeeded = (

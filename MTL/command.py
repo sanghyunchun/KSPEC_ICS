@@ -1,5 +1,6 @@
 import asyncio
 import json
+import math
 import os
 import time
 
@@ -64,6 +65,17 @@ def _require_run(context):
     return context.run
 
 
+def _exposure_settings(message):
+    # Wire/camera exposure time is in microseconds; default is one second.
+    exptime = _value(message, 'time', 1_000_000.0, float)
+    count = _value(message, 'nexposure', 1, float)
+    if not math.isfinite(exptime) or exptime <= 0:
+        raise ValueError('Exposure time must be finite and greater than zero')
+    if not math.isfinite(count) or count < 1 or not count.is_integer():
+        raise ValueError('Exposure count must be a positive integer')
+    return exptime, int(count)
+
+
 async def identify_execute(MTL_server, cmd, context):
     """MTL 명령을 실행하고 MetrologyRun의 상태를 다음 명령까지 유지한다."""
 
@@ -98,6 +110,7 @@ async def identify_execute(MTL_server, cmd, context):
                 return
 
             if func == "mtlstart":
+                exptime, nexposure = _exposure_settings(receive_msg)
                 config = _load_mtl_config()
                 target_file = _value(
                     receive_msg,
@@ -115,10 +128,10 @@ async def identify_execute(MTL_server, cmd, context):
                     tolerance=_value(receive_msg, "tolerance", 10.0, float),
                     metric=_value(receive_msg, "metric", "max", str),
                     max_trial=_value(receive_msg, "max_trial", 5, int),
-                    nexposure=_value(receive_msg, "nexposure", 1, int),
+                    nexposure=nexposure,
                     mode=_value(receive_msg, "mode", "Predict", str),
                     threshold=_value(receive_msg, "threshold", 3000.0, float),
-                    exptime=_value(receive_msg, "time", 0.1, float),
+                    exptime=exptime,
                     gain=_value(receive_msg, "gain", 10, float),
                     offset=_value(receive_msg, "offset", 30, float),
                     readmode=_value(receive_msg, "readmode", 1, int),
@@ -142,6 +155,18 @@ async def identify_execute(MTL_server, cmd, context):
                     nexposure=run.nexposure,
                     tolerance=run.tolerance,
                     metric=run.metric,
+                )
+                return
+
+            if func == "mtlset":
+                run = _require_run(context)
+                exptime, nexposure = _exposure_settings(receive_msg)
+                run.camera['exptime'] = exptime
+                run.nexposure = nexposure
+                await _send_response(
+                    MTL_server, func,
+                    f'MTL exposure settings updated: {exptime / 1_000_000:g} s, {nexposure} images (next trial).',
+                    exptime=exptime, nexposure=nexposure,
                 )
                 return
 

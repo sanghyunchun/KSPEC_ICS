@@ -1,5 +1,6 @@
 import argparse
 import json
+import math
 import shlex
 
 import Lib.mkmessage as mkmsg
@@ -34,6 +35,8 @@ def mtl_start(
     """MetrologyRun을 초기화하고 Trial 0 기준 JSON 생성을 요청한다."""
     data = {
         "message": "Initialize metrology run",
+        "time": seconds_to_microseconds(1.0),
+        "nexposure": 1,
     }
 
     if target_file is not None:
@@ -64,6 +67,18 @@ def mtl_test(exptime=None, nexposure=None, filename=None):
         data["file"] = filename
 
     return create_mtl_command("mtltest", **data)
+
+
+def mtl_set(exptime=1.0, nexposure=1):
+    """기존 run의 촬영 설정을 변경한다. exptime 입력 단위는 초다."""
+    exptime = float(exptime)
+    count = float(nexposure)
+    if not math.isfinite(exptime) or exptime <= 0:
+        raise ValueError('MTL exposure time must be finite and greater than zero')
+    if not math.isfinite(count) or count < 1 or not count.is_integer():
+        raise ValueError('MTL exposure count must be a positive integer')
+    return create_mtl_command('mtlset', time=seconds_to_microseconds(exptime),
+                              nexposure=int(count), message='Update MTL exposure settings')
 
 
 def mtl_cal(data_dir='./MTL/data/', head='test', mode='Raw', threshold=3e3,
@@ -166,6 +181,11 @@ async def handle_mtl(arg, ICS_client):
                 nexposure=nexposure,
                 exptime=exptime,
             )
+
+        elif cmd == "mtlset":
+            if len(params) != 2:
+                raise ValueError('Usage: mtlset exptime_seconds nexposure')
+            message = mtl_set(float(params[0]), int(params[1]))
 
         elif cmd == "mtltest":
             if len(params) not in (0, 2, 3):

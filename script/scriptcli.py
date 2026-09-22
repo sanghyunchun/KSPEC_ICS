@@ -549,7 +549,7 @@ class script():
                     print(f'Tile ID {self.TileID} was not found. Please enter a valid ID.')
 
         
-            tilemsg,guidemsg,objmsg,motionmsg1,motionmsg2=sciobs.loadtile(self.TileID)
+            tilemsg,objmsg,motionmsg1,motionmsg2=sciobs.loadtile(self.TileID)
             tile_data=json.loads(tilemsg)
             self.ra,self.dec=convert_to_sexagesimal(tile_data['ra'],tile_data['dec'])
 

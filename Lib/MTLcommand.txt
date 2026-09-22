@@ -1,5 +1,10 @@
 [Command]            [Usages (Type below)]
 mtltrial             mtltrial
+mtlset               mtlset exptime_seconds nexposure
+                     예: mtlset 2.5 3 (2.5초, 3장)
+                     mtlstart 이후 기존 run의 다음 trial부터 적용합니다.
+                     GUI MTL_set도 동일하게 서버 설정을 변경합니다.
+                     GUI 노출시간/횟수의 빈 값은 각각 1초/1장입니다.
 
 mtlcal : 기존 이미지로 metrology 계산 (mtlstart 필요 없음)
 
