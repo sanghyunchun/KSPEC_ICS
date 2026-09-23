@@ -12,6 +12,9 @@ async def zero_main( # pyright: ignore[reportGeneralTypeIssues]
     start_tolerance: float = 0.1,
     zero_tolerance: float = 0.1,
     timeout: float = 60.0,
+    *,
+    alpha_file: str,
+    beta_file: str,
 ):
 
     print("전체 포지셔너 1단계 -> 0도 이동 시작")
@@ -22,7 +25,7 @@ async def zero_main( # pyright: ignore[reportGeneralTypeIssues]
     # 1단계 실제 목표 위치 확인용
     # ========================================================
     try:
-        axis_points, total_steps = read_json( ALPHA_FILE, BETA_FILE )
+        axis_points, total_steps = read_json(alpha_file, beta_file)
 
     except FileNotFoundError as e:
         result = {

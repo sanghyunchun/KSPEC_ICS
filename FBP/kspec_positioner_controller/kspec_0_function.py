@@ -19,8 +19,6 @@ VELOCITY = 10.0
 ACC = 200.0
 DEC = 200.0
 
-# ALPHA_FILE = "config55_0005.alpha.json"
-# BETA_FILE = "config55_0005.beta.json"
 
 # 알파, 베타 경로 json 파일
 FBP_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -37,10 +35,11 @@ LOG_DIR = os.path.join(FBP_DIR, "Log")
 
 # POSITIONER_AXIS_MAP 불러오기
 LIB_DIR = os.path.join(FBP_DIR, "Lib")
-POSITIONER_AXIS_MAP_FILE = os.path.join(LIB_DIR, "positioner_axis_map.json")
+POSITIONER_AXIS_MAP_FILE = os.path.join(
+    os.path.dirname(os.path.dirname(FBP_DIR)), "Lib", "positioner_axis_map.json"
+)
 
-ALPHA_FILE = os.path.join(DATA_DIR, "ASPECS_2627_0005_alpha.path.json")
-BETA_FILE = os.path.join(DATA_DIR, "ASPECS_2627_0005_beta.path.json")
+# Motion JSON paths are supplied by the caller after loadmotion saves the tile.
 
 
 

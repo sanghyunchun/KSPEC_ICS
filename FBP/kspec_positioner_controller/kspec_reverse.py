@@ -19,12 +19,12 @@ import pyads
 
 from kspec_0_function import *
 
-async def reverse_main(plc_connections):
+async def reverse_main(plc_connections, alpha_file, beta_file):
 
     print("전체 포지셔너 역방향 구동 시작")
 
     try:
-        original_axis_points, original_total_steps = read_json(ALPHA_FILE, BETA_FILE)
+        original_axis_points, original_total_steps = read_json(alpha_file, beta_file)
 
         axis_points, total_steps = reverse_step_to_firststep(original_axis_points, max_points=3500)
 
@@ -1281,7 +1281,6 @@ async def reverse_main(plc_connections):
             )
 
             
-
 
 
 

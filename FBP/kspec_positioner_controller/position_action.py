@@ -26,8 +26,8 @@ def _sync_controller_globals() -> None:
     """
     코어의 파일 경로와 JSON 축 매핑을 구동 모듈에 동기화한다.
 
-    kspec_0_function.py가 controller 아래 data/Lib/Log 경로를 설정하고
-    Lib/positioner_axis_map.json을 로드한다. 래퍼는 이 설정을 그대로 사용한다.
+    kspec_0_function.py가 controller 아래 data/Log 경로를 설정하고
+    프로젝트 공용 Lib/positioner_axis_map.json을 로드한다. 래퍼는 이 설정을 그대로 사용한다.
     구동 모듈들은 from kspec_0_function import *를 사용하므로 코어에서
     설정이 교체된 경우에도 같은 경로와 매핑을 참조하도록 갱신한다.
     """
@@ -45,8 +45,6 @@ def _sync_controller_globals() -> None:
             "LIB_DIR",
             "POSITIONER_AXIS_MAP_FILE",
             "POSITIONER_AXIS_MAP",
-            "ALPHA_FILE",
-            "BETA_FILE",
         ):
             setattr(module, name, getattr(_core, name))
 
@@ -210,7 +208,7 @@ async def _run_with_plcs(
     return result or _error_result(f"{action.__name__} 실행 결과가 없습니다.")
 
 
-async def rotate_all() -> dict[str, Any]:
+async def rotate_all(alpha_file: str, beta_file: str) -> dict[str, Any]:
     """
     Lock되지 않은 모든 포지셔너 축을 target position까지 정방향으로 이동한다.
 
@@ -236,10 +234,10 @@ async def rotate_all() -> dict[str, Any]:
     Notes:
         result_*.json 파일은 코어의 LOG_DIR(controller/Log)에 저장된다.
     """
-    return await _run_with_plcs(_kspec_main.main)
+    return await _run_with_plcs(_kspec_main.main, alpha_file=alpha_file, beta_file=beta_file)
 
 
-async def reverse_all() -> dict[str, Any]:
+async def reverse_all(alpha_file: str, beta_file: str) -> dict[str, Any]:
     """
     전체 포지셔너를 target position에서 initial position 쪽으로 역방향 이동한다.
 
@@ -265,12 +263,15 @@ async def reverse_all() -> dict[str, Any]:
     Notes:
         result_*.json 파일은 코어의 LOG_DIR(controller/Log)에 저장된다.
     """
-    return await _run_with_plcs(_kspec_reverse.reverse_main)
+    return await _run_with_plcs(_kspec_reverse.reverse_main, alpha_file=alpha_file, beta_file=beta_file)
 
 
 async def reverse_from_stop_step(
     position_tolerance: float = 0.2,
     step_timeout: float = 300.0,
+    *,
+    alpha_file: str,
+    beta_file: str,
 ) -> dict[str, Any]:
     """
     Stop으로 중단된 구동을 Stop 기록 기준으로 initial 방향으로 복귀시킨다.
@@ -299,6 +300,8 @@ async def reverse_from_stop_step(
     """
     return await _run_with_plcs(
         _kspec_reverse_from_stop_step.reverse_from_stop_step,
+        alpha_file=alpha_file,
+        beta_file=beta_file,
         position_tolerance=position_tolerance,
         step_timeout=step_timeout,
     )

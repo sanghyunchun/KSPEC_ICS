@@ -5,7 +5,7 @@ import asyncio
 from PySide6.QtCore import *
 from PySide6.QtWidgets import (
         QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QMessageBox, QSizePolicy, QFileDialog, QListWidget,QListWidgetItem,
-        QDialog, QTextEdit
+        QDialog, QTextEdit, QLabel
         )
 from PySide6.QtGui import QMouseEvent, QGuiApplication, QTextCursor, QFont
 from ui_mainwindow import Ui_MainWindow
@@ -160,6 +160,10 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("K-SPEC ICS")
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        map_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Lib', 'positioner_axis_map.json')
+        with open(map_path, 'r', encoding='utf-8') as file:
+            self.positioner_axis_map = json.load(file)
+        self.reset_fbp_error_labels()
         self.scriptrun=script()
         self.ICS_client = None
 
@@ -1024,9 +1028,6 @@ class MainWindow(QMainWindow):
         missing_color=None,
         error_axis=None
     ):
-        if missing_color is None:
-            missing_color = normal_color
-
         if positions in (None, 'None'):
             positions = {}
 
@@ -1041,14 +1042,14 @@ class MainWindow(QMainWindow):
             self.logging('FBP position data is not a dictionary.', level='error')
             return
 
-        positions = dict(positions)
+        positions = {str(axis): data for axis, data in positions.items()}
 
         if error_axis is not None:
             axis_key = str(error_axis)
             axis_data = positions.get(axis_key)
             if not isinstance(axis_data, dict):
                 axis_data = {}
-            axis_data['error'] = True
+            axis_data = dict(axis_data, error=True)
             positions[axis_key] = axis_data
 
         def is_error(value):
@@ -1056,16 +1057,9 @@ class MainWindow(QMainWindow):
                 return value.strip().lower() in ('true', '1', 'yes', 'error')
             return bool(value)
 
-        positioner_axis_map = {
-            'A1': ('1', '2'),
-            'A2': ('3', '4'),
-            'A3': ('5', '6'),
-            'A4': ('7', '8'),
-            'A5': ('9', '10'),
-        }
-
-        for positioner, axes in positioner_axis_map.items():
-            label = getattr(self.ui, f'label_{positioner}', None)
+        for positioner, mapping in self.positioner_axis_map.items():
+            axes = [str(mapping[arm]['global_axis']) for arm in ('alpha', 'beta')]
+            label = getattr(self.ui, f'circle_{positioner}', None)
             if label is None:
                 continue
 
@@ -1082,16 +1076,17 @@ class MainWindow(QMainWindow):
 
             if has_error:
                 self.FPLabelStyle(label, 'red')
-            elif axis_entries and normal_color is not None:
+            elif len(axis_entries) == len(axes) and normal_color is not None:
                 self.FPLabelStyle(label, normal_color)
             elif not axis_entries and missing_color is not None:
                 self.FPLabelStyle(label, missing_color)
 
     def reset_fbp_error_labels(self):
-        for label_name in ('A1', 'A2', 'A3', 'A4', 'A5'):
-            label = getattr(self.ui, f'label_{label_name}', None)
-            if label is not None:
-                self.FPLabelStyle(label, 'black')
+        for name, label in vars(self.ui).items():
+            if name.startswith('circle_') and isinstance(label, QLabel):
+                positioner = name[len('circle_'):]
+                color = 'black' if positioner in self.positioner_axis_map else 'gray'
+                self.FPLabelStyle(label, color)
 
     def _handle_fbp_state(self, dict_data):
         if dict_data.get('inst') != 'FBP':
@@ -1131,13 +1126,27 @@ class MainWindow(QMainWindow):
             or fbp_data.get('stopped_positions')
         )
 
-        if status in ('error', 'fail') and fbp_data.get('error_axis') is not None:
+        if status in ('error', 'fail'):
             self.update_fbp_error_labels(
                 positions,
                 normal_color=None,
                 missing_color=None,
                 error_axis=fbp_data.get('error_axis')
             )
+            # Accept the current server's "intial" spelling as well as "initial".
+            if func in ('fbpinitial', 'fbpinitial_from_stop', 'fbpintial_from_stop'):
+                error_axes = fbp_data.get('error_axes', [])
+                if isinstance(error_axes, list):
+                    for axis_data in error_axes:
+                        if not isinstance(axis_data, dict):
+                            continue
+                        axis = axis_data.get('global_axis')
+                        if axis is not None:
+                            self.update_fbp_error_labels(
+                                normal_color=None,
+                                missing_color=None,
+                                error_axis=axis,
+                            )
             return
 
         if status in ('success', 'stopped') and (
@@ -1146,16 +1155,14 @@ class MainWindow(QMainWindow):
             self.update_fbp_error_labels(
                 positions,
                 normal_color='green',
-                missing_color='green'
+                missing_color=None
             )
             return
 
         if func == 'fbpmoveone' and status == 'success':
-            if self.fbp_state == 'initial':
-                self.reset_fbp_error_labels()
             positioner = fbp_data.get('positioner')
-            if positioner:
-                label = getattr(self.ui, f'label_{positioner}', None)
+            if positioner in self.positioner_axis_map:
+                label = getattr(self.ui, f'circle_{positioner}', None)
                 if label is not None:
                     color = 'black' if self.fbp_state == 'initial' else 'green'
                     self.FPLabelStyle(label, color)
@@ -1166,17 +1173,15 @@ class MainWindow(QMainWindow):
                 self.update_fbp_error_labels(
                     positions,
                     normal_color='black',
-                    missing_color='black'
+                    missing_color=None
                 )
-            else:
-                self.reset_fbp_error_labels()
             return
 
         if status == 'success' and self.fbp_state == 'assign':
             self.update_fbp_error_labels(
                 positions,
                 normal_color='green',
-                missing_color='green'
+                missing_color=None
             )
             return
 
@@ -1185,7 +1190,7 @@ class MainWindow(QMainWindow):
             self.update_fbp_error_labels(
                 positions,
                 normal_color=default_color,
-                missing_color=default_color
+                missing_color=None
             )
 
     @asyncSlot()

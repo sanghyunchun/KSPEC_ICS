@@ -13,6 +13,9 @@ async def reverse_from_stop_step( # pyright: ignore[reportGeneralTypeIssues]
     plc_connections,
     position_tolerance: float = 0.2,
     step_timeout: float = 300.0,
+    *,
+    alpha_file: str,
+    beta_file: str,
 ):
 
     print("reverse_from_stop_step() 시작")
@@ -21,7 +24,7 @@ async def reverse_from_stop_step( # pyright: ignore[reportGeneralTypeIssues]
     # 원본 JSON 읽기
     # ========================================================
     try:
-        axis_points, total_steps = read_json( ALPHA_FILE, BETA_FILE )
+        axis_points, total_steps = read_json(alpha_file, beta_file)
 
     except FileNotFoundError as e:
         result = {

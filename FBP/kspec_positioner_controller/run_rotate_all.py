@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -20,7 +21,11 @@ async def main() -> int:
     RabbitMQ나 GUI를 거치지 않고 같은 컴퓨터에서 전체 포지셔너 정방향
     구동을 실행하기 위한 수동 실행 스크립트이다.
     """
-    result = await position_action.rotate_all()
+    parser = argparse.ArgumentParser(description='Run positioners using the specified alpha/beta path JSON files.')
+    parser.add_argument('--alpha-file', required=True)
+    parser.add_argument('--beta-file', required=True)
+    args = parser.parse_args()
+    result = await position_action.rotate_all(args.alpha_file, args.beta_file)
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 

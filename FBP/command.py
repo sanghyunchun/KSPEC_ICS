@@ -7,6 +7,16 @@ import numpy as np
 import time
 import FBP.kspec_positioner_controller.position_action as FBP_action
 
+# The current tile is ready only after both loadmotion messages are saved.
+_motion_tile = None
+_motion_files = {}
+
+
+def loaded_motion_paths():
+    if set(_motion_files) != {'alpha', 'beta'}:
+        raise ValueError('Load both alpha and beta motion files for the tile first.')
+    return {'alpha_file': _motion_files['alpha'], 'beta_file': _motion_files['beta']}
+
 
 def load_config(config_path='./Lib/KSPEC.ini'):
     if not os.path.exists(config_path):
@@ -48,6 +58,14 @@ async def send_fbp_response(FBP_server, result=None, *, log=True, **updates):
 async def identify_execute(FBP_server,cmd):
     dict_data=json.loads(cmd)
     func=dict_data['func']
+
+    if func in ('fbpmoveall', 'fbpinitial', 'fbpinitial_from_stop'):
+        try:
+            motion_paths = loaded_motion_paths()
+        except ValueError as error:
+            await send_fbp_response(FBP_server, func=func, process='Done',
+                                    status='fail', message=str(error))
+            return
 
     if func == 'loadobj':
         ra=dict_data['ra']
@@ -159,7 +177,7 @@ async def identify_execute(FBP_server,cmd):
 
         # await asyncio.sleep(5)
 
-        result = await FBP_action.rotate_all()
+        result = await FBP_action.rotate_all(**motion_paths)
 
         if result.get('status') == 'success':
             fbp_state = 'assign'
@@ -241,7 +259,7 @@ async def identify_execute(FBP_server,cmd):
         comment = 'Positioners start to move to initial positions from assigned positions.'
         await send_fbp_response(FBP_server,message=comment,process='START',status='success',fbp_state='ING')
 
-        result = await FBP_action.reverse_all()
+        result = await FBP_action.reverse_all(**motion_paths)
 
 #        await asyncio.sleep(5)
 
@@ -261,7 +279,7 @@ async def identify_execute(FBP_server,cmd):
         comment = 'Positioners start to move to initial positions from stop positions.'
         await send_fbp_response(FBP_server,message=comment,process='START',status='success',fbp_state='ING')
 
-        result = await FBP_action.reverse_from_stop_step()
+        result = await FBP_action.reverse_from_stop_step(**motion_paths)
 
         if result.get('status') == 'success':
             fbp_state = 'initial'
@@ -336,10 +354,12 @@ def savedata(ra,dec,xp,yp,clss):
 
 
 def savemotion(dict_data):
+    global _motion_tile
     try:
         kspecinfo=load_config()
         fbpfilepath = kspecinfo['FBP']['fbpfilepath']
     except Exception as e:
+        _motion_files.clear()
         return 'fail', str(e)
 
     try:
@@ -350,14 +370,22 @@ def savemotion(dict_data):
         if not isinstance(project, str) or not project or os.path.basename(project) != project:
             raise ValueError('Invalid motion project name')
         tile_id=int(dict_data['tileid'])
-        file_path=os.path.join(fbpfilepath, f'{project}_2627_{tile_id:04d}_{arm}.path.json')
+        file_path=os.path.abspath(os.path.join(fbpfilepath, f'{project}_2627_{tile_id:04d}_{arm}.path.json'))
+        os.makedirs(fbpfilepath, exist_ok=True)
         with open(file_path, 'w') as f:
             json.dump(dict_data, f)
 
     except (KeyError, TypeError, ValueError) as e:
+        _motion_files.clear()
         return 'fail', f'Invalid motion data: {e}'
     except OSError as e:
+        _motion_files.clear()
         return 'fail', f"Failed to write file: {e}"
 
+    tile = (project, tile_id)
+    if tile != _motion_tile or arm in _motion_files:
+        _motion_files.clear()
+    _motion_tile = tile
+    _motion_files[arm] = file_path
     msg=f'Motion plan of {arm} is successfully saved to {file_path}.'
     return 'success', msg
