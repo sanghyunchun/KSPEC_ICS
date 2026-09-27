@@ -5,6 +5,9 @@ from Lib.AMQ import *
 import Lib.mkmessage as mkmsg
 import asyncio
 import json
+import math
+import shlex
+from pathlib import Path
 
 
 def create_fbp_command(func, **kwargs):
@@ -16,7 +19,37 @@ def create_fbp_command(func, **kwargs):
 #def fbp_zero() : return create_fbp_command('fbpzero',message='Move all positioners to zero position.')
 def fbp_moveone(positioner: str = None, motor : str = None, angle: float= 0) : 
     return create_fbp_command('fbpmoveone', positioner = positioner, motor = motor, angle = angle, message=f'Move fiber positioners {positioner} {motor} by {angle}.')
-def fbp_offset() : return create_fbp_command('fbpoffset',message='Offset fiber positioners to targets.')
+def fbp_offset(offset_file):
+    """MTL trial 각도 JSON을 읽어 FBP offset 명령으로 만든다."""
+    source_path = Path(offset_file).expanduser().resolve()
+    if not source_path.is_file():
+        raise FileNotFoundError(f'MTL trial JSON을 찾을 수 없습니다: {source_path}')
+
+    with source_path.open('r', encoding='utf-8') as file:
+        offsets = json.load(file)
+
+    if not isinstance(offsets, dict) or not offsets:
+        raise ValueError('MTL trial JSON은 비어 있지 않은 object 형식이어야 합니다.')
+
+    for key, value in offsets.items():
+        if not isinstance(key, str) or not key.endswith(('_a', '_b')):
+            raise ValueError(f'잘못된 MTL offset key입니다: {key}')
+        if isinstance(value, bool):
+            raise ValueError(f'{key} offset 각도는 숫자여야 합니다.')
+        try:
+            angle = float(value)
+        except (TypeError, ValueError) as error:
+            raise ValueError(f'{key} offset 각도는 숫자여야 합니다.') from error
+        if not math.isfinite(angle):
+            raise ValueError(f'{key} offset 각도는 유한한 값이어야 합니다.')
+
+    return create_fbp_command(
+        'fbpoffset',
+        source_file=str(source_path),
+        source_name=source_path.name,
+        offsets=offsets,
+        message=f'Offset fiber positioners using {source_path.name}.',
+    )
 def fbp_status(positioner: str = None) : 
     return create_fbp_command('fbpstatus',message='Show fiber positioner status.',positioner=positioner)
 def fbp_moveall(): return create_fbp_command('fbpmoveall', message = 'Move all positioners to target position.')
@@ -38,9 +71,15 @@ async def handle_fbp(arg, ICS_client):
     params = raw_params.split()
 
     command_map = {
-        'fbpoffset': fbp_offset, 'fbpmoveall': fbp_moveall,
+        'fbpmoveall': fbp_moveall,
         'fbpinitial': fbp_initial, 'fbpstop': fbp_stop, 'fbpinitial_from_stop': fbp_initial_from_stop
     }
+    if cmd == 'fbpoffset':
+        offset_args = shlex.split(raw_params)
+        if len(offset_args) != 1:
+            print('Error: Usage: fbpoffset <MTL trial JSON file>')
+            return False
+        command_map[cmd] = lambda: fbp_offset(offset_args[0])
     if cmd == 'fbpstatus':
         positioner = str(params[0])
         command_map[cmd] = lambda: fbp_status(positioner)
@@ -55,5 +94,12 @@ async def handle_fbp(arg, ICS_client):
         command_map[cmd] = lambda: fbp_lock(raw_params.strip())
 
     if cmd in command_map:
-        fbpmsg = command_map[cmd]()
+        try:
+            fbpmsg = command_map[cmd]()
+        except (OSError, json.JSONDecodeError, ValueError) as error:
+            print(f'Error: {error}')
+            return False
         await ICS_client.send_message("FBP", fbpmsg)
+        return True
+
+    return False

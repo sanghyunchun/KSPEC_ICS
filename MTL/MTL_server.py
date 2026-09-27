@@ -4,7 +4,7 @@ from Lib.AMQ import *
 import asyncio
 import aio_pika
 import json
-from MTL.command import MTLContext, identify_execute
+from MTL.command import MTLContext, identify_execute, _load_mtl_config
 
 
 
@@ -23,9 +23,10 @@ async def main():
     idname = kspecinfo['RabbitMQ']['idname']
     pwd = kspecinfo['RabbitMQ']['pwd']
 
-    data_path=kspecinfo['MTL']['mtlimagepath']
+    mtlconfig = _load_mtl_config()
+    data_path=mtlconfig['mtlimagepath']
     ensure_directory(data_path)
-    file_path=kspecinfo['MTL']['mtlfilepath']
+    file_path=mtlconfig['mtlfilepath']
     ensure_directory(file_path)
 
     print('MTL Server Started!!!')

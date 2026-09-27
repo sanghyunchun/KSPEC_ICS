@@ -81,7 +81,7 @@ def mtl_set(exptime=1.0, nexposure=1):
                               nexposure=int(count), message='Update MTL exposure settings')
 
 
-def mtl_cal(data_dir='./MTL/data/', head='test', mode='Raw', threshold=3e3,
+def mtl_cal(data_dir=None, head='test', mode='Raw', threshold=3e3,
             nwindow=40, nexposure=1, target_file=None, json_dir=None,
             target_name=None, itrial=1):
     """기존 이미지를 analysis.mtlcal의 인자로 분석한다 (촬영/run 초기화 없음)."""
@@ -98,7 +98,10 @@ def _parse_mtlcal(params):
         prog='mtlcal', allow_abbrev=False,
         description='Analyze {data_dir}/{head}{0..nexposure-1}.fits without mtlstart.',
     )
-    parser.add_argument('--data_dir', '--data-dir', default='./MTL/data/')
+    parser.add_argument(
+        '--data_dir', '--data-dir', default=None,
+        help='image directory (default: KSPEC.ini MTL.mtlimagepath)',
+    )
     parser.add_argument('--head', default='test')
     parser.add_argument('--mode', choices=('Raw', 'Predict'), default='Raw')
     parser.add_argument('--threshold', type=float, default=3e3)

@@ -33,9 +33,19 @@ def _value(message, key, default, cast=None):
     return cast(value) if cast is not None and value is not None else value
 
 
+def _expand_path(path):
+    """설정이나 명령에 들어온 ~ 경로를 서버 실행 계정의 절대경로로 바꾼다."""
+    return os.path.abspath(os.path.expanduser(path))
+
+
 def _load_mtl_config():
     with open("./Lib/KSPEC.ini", "r", encoding="utf-8") as file:
-        return json.load(file)["MTL"]
+        config = dict(json.load(file)["MTL"])
+
+    for key in ("mtlfilepath", "mtlimagepath"):
+        config[key] = _expand_path(config[key])
+
+    return config
 
 
 def _target_filename(data):
@@ -112,13 +122,19 @@ async def identify_execute(MTL_server, cmd, context):
             if func == "mtlstart":
                 exptime, nexposure = _exposure_settings(receive_msg)
                 config = _load_mtl_config()
-                target_file = _value(
-                    receive_msg,
-                    "target_file",
-                    context.target_file or os.path.join(config["mtlfilepath"], "object.info"),
+                target_file = _expand_path(
+                    _value(
+                        receive_msg,
+                        "target_file",
+                        context.target_file or os.path.join(config["mtlfilepath"], "object.info"),
+                    )
                 )
-                data_dir = _value(receive_msg, "data_dir", config["mtlimagepath"])
-                json_dir = _value(receive_msg, "json_dir", config["mtlfilepath"])
+                data_dir = _expand_path(
+                    _value(receive_msg, "data_dir", config["mtlimagepath"])
+                )
+                json_dir = _expand_path(
+                    _value(receive_msg, "json_dir", config["mtlfilepath"])
+                )
                 tile = _value(receive_msg, "tile", None)
 
                 run = MetrologyRun(
@@ -174,11 +190,13 @@ async def identify_execute(MTL_server, cmd, context):
                 config = _load_mtl_config()
                 exptime = _value(receive_msg, "time", 0.1, float)
                 nexposure = _value(receive_msg, "nexposure", 1, int)
-                data_dir = _value(
-                    receive_msg,
-                    "data_dir",
-                    config["mtlimagepath"],
-                    str,
+                data_dir = _expand_path(
+                    _value(
+                        receive_msg,
+                        "data_dir",
+                        config["mtlimagepath"],
+                        str,
+                    )
                 )
                 requested_file = _value(receive_msg, "file", "test.fits", str)
 
@@ -226,15 +244,24 @@ async def identify_execute(MTL_server, cmd, context):
                 return
 
             if func == "mtlcal":
+                config = _load_mtl_config()
+                default_target = context.target_file or os.path.join(
+                    config['mtlfilepath'], 'object.info'
+                )
+                json_dir = _value(receive_msg, 'json_dir', None, str)
                 options = {
-                    'data_dir': _value(receive_msg, 'data_dir', './MTL/data/', str),
+                    'data_dir': _expand_path(
+                        _value(receive_msg, 'data_dir', config['mtlimagepath'], str)
+                    ),
                     'head': _value(receive_msg, 'head', 'test', str),
                     'mode': _value(receive_msg, 'mode', 'Raw', str),
                     'threshold': _value(receive_msg, 'threshold', 3e3, float),
                     'nwindow': _value(receive_msg, 'nwindow', 40, int),
                     'nexposure': _value(receive_msg, 'nexposure', 1, int),
-                    'target_file': _value(receive_msg, 'target_file', None, str),
-                    'json_dir': _value(receive_msg, 'json_dir', None, str),
+                    'target_file': _expand_path(
+                        _value(receive_msg, 'target_file', default_target, str)
+                    ),
+                    'json_dir': _expand_path(json_dir) if json_dir is not None else None,
                     'target_name': _value(receive_msg, 'target_name', None, str),
                     'itrial': _value(receive_msg, 'itrial', 1, int),
                 }

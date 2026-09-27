@@ -237,6 +237,16 @@ async def rotate_all(alpha_file: str, beta_file: str) -> dict[str, Any]:
     return await _run_with_plcs(_kspec_main.main, alpha_file=alpha_file, beta_file=beta_file)
 
 
+async def rotate_offset_all(alpha_file: str, beta_file: str) -> dict[str, Any]:
+    """step 없는 offset JSON의 절대각으로 모든 비잠금 축을 이동한다."""
+    return await _run_with_plcs(
+        _kspec_main.main,
+        alpha_file=alpha_file,
+        beta_file=beta_file,
+        offset_mode=True,
+    )
+
+
 async def reverse_all(alpha_file: str, beta_file: str) -> dict[str, Any]:
     """
     전체 포지셔너를 target position에서 initial position 쪽으로 역방향 이동한다.
@@ -655,6 +665,7 @@ __all__ = [
     "reverse_all",
     "reverse_from_stop_step",
     "rotate_all",
+    "rotate_offset_all",
     "rotate_one",
     "show_status",
     "show_status_all",

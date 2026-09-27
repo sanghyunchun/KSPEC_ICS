@@ -5,7 +5,7 @@ from Lib.AMQ import *
 import Lib.mkmessage as mkmsg
 import asyncio
 import json
-import requests
+#import requests
 import xml.etree.ElementTree as ET
 
 """

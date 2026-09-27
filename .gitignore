@@ -1,9 +1,16 @@
 COMM_*.txt
 *.assign.txt
 *.log
+MTL/kspec_metrology/kspec_metrology/tmp/*.fits
 GFA/kspec_gfa_controller/src/img/cutout/
 GFA/kspec_gfa_controller/src/img/pointing_raw/
 GFA/kspec_gfa_controller/src/img/raw/
 GFA/Simul/kspec_gfa_controller/src}/kspec_gfa_controller/img/tempfiles/
 GFA/kspec_gfa_controller/src/kspec_gfa_controller/img/tempfiles/
 MTL/data/
+# Python cache
+__pycache__/
+*.pyc
+
+# Vim swap
+*.swp

@@ -8,12 +8,15 @@ import pyads
 
 from kspec_0_function import *
 
-async def main(plc_connections, alpha_file, beta_file):
+async def main(plc_connections, alpha_file, beta_file, offset_mode=False):
 
     print("전체 포지셔너 정방향 구동 시작")
 
     try:
-        axis_points, total_steps = read_json(alpha_file, beta_file)
+        if offset_mode:
+            axis_points, total_steps = read_offset_json(alpha_file, beta_file)
+        else:
+            axis_points, total_steps = read_json(alpha_file, beta_file)
 
     except FileNotFoundError as e:
         result = {

@@ -4,6 +4,7 @@ import redis
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import asyncio
 import math
+import shlex
 import numpy as np
 import pandas as pd
 from astropy.coordinates import Angle, SkyCoord
@@ -632,10 +633,24 @@ class script():
         # mtlstart에서 준비한 촬영 설정으로 노출부터 JSON 저장까지 실행한다.
         await handle_mtl('mtltrial',scriptrun.ICSclient)
         await scriptrun.response_queue.get()                                    # Start MTL trial message
-        await scriptrun.response_queue.get()                                    # Wait for MTL trial finish
+        mtltrial_response = await scriptrun.response_queue.get()                 # Wait for MTL trial finish
         await asyncio.sleep(2)
 
-        await handle_fbp('fbpoffset',scriptrun.ICSclient)
+        mtltrial_json = mtltrial_response.get('filename')
+        if (
+            mtltrial_response.get('status') != 'success'
+            or mtltrial_json in (None, '', 'None')
+        ):
+            logging('MTL trial failed or returned no JSON; FBP offset was not started.', level='error')
+            return
+
+        sent = await handle_fbp(
+            f'fbpoffset {shlex.quote(str(mtltrial_json))}',
+            scriptrun.ICSclient,
+        )
+        if not sent:
+            logging(f'Failed to read MTL trial JSON: {mtltrial_json}', level='error')
+            return
         await scriptrun.response_queue.get()                                    # Start offset message
         await scriptrun.response_queue.get()                                    # Wait for FBP offset finish
         await asyncio.sleep(2)

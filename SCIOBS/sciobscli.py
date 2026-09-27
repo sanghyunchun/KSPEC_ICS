@@ -9,6 +9,8 @@ import pandas as pd
 import json
 from astropy.coordinates import Angle
 import astropy.units as u
+from astropy.coordinates import EarthLocation, SkyCoord, AltAz
+from astropy.time import Time
 
 """
 Provide Sky position (RA, DEC) of Tile and target position to TCS computer,
@@ -79,10 +81,11 @@ class sciobscli:
         obj_fiberid,obj_xp,obj_yp,obj_ra,obj_dec,obj_class=np.loadtxt(
             assignfile,dtype=dtype,unpack=True,usecols=(0,1,2,6,7,4),ndmin=1)
 
+        zenith_angle = self.calculate_zenith_distance(self.ra, self.dec)
         message='Load Target Objects of Tile'
 
         dict_data = { "tile_id":tile_id, "project":self.project, "inst" : 'SCIOBS', "func" : 'loadobj', "ra":obj_ra.tolist(), "dec":obj_dec.tolist(),"xp":obj_xp.tolist(),
-                "yp":obj_yp.tolist(),"class":obj_class.tolist(),'message':message, 'process': 'Done'}
+                "yp":obj_yp.tolist(),"class":obj_class.tolist(),'message':message, 'process': 'Done', 'zenith_angle': zenith_angle}
 
         objdata=json.dumps(dict_data)
         return objdata
@@ -179,4 +182,30 @@ class sciobscli:
 
 #        return OBJmsg
         return TCSmsg,OBJmsg,motionmsg1,motionmsg2
+
+
+    def calculate_zenith_distance(self, ra, dec):
+        """Calculate the zenith distance for a given RA and DEC.
+
+        Args:
+            ra_obj (float): Right Ascension in degrees.
+            dec_obj (float): Declination in degrees.
+
+        Returns:
+            float: The zenith distance in degrees.
+        """
+
+        AAO_LOCATION = EarthLocation(lat=-31.27118, lon=149.06256, height=1165*u.m)
+        
+        #ra_obj = Angle(ra, unit=u.deg).degree
+        #dec_obj = Angle(dec, unit=u.deg).degree
+        object_coord = SkyCoord(ra=ra*u.deg, dec=dec*u.deg)
+        current_time = Time.now()
+        times = current_time + np.arange(0, 16) * u.minute
+        altaz_frame = AltAz(obstime=times, location=AAO_LOCATION)
+        altaz_coord = object_coord.transform_to(altaz_frame)
+        zenith_distance = 90. - altaz_coord.alt.degree
+    #    print(f'Current UT time: {current_time}')
+    #    print(f'Mean Zenith distance for 16 min. : {zenith_distance} degree')
+        return np.mean(zenith_distance)
        

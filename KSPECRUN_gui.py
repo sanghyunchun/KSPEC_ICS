@@ -1,6 +1,7 @@
 import sys
 import os
 import asyncio
+import shlex
 
 from PySide6.QtCore import *
 from PySide6.QtWidgets import (
@@ -186,6 +187,7 @@ class MainWindow(QMainWindow):
         self.adc = 0
         
         self.mtlexp = None
+        self.mtl_trial_json = None
         self.msglog_path = None
         self.ra = None
         self.dec = None
@@ -269,7 +271,7 @@ class MainWindow(QMainWindow):
 
         # Fiber assign
         self.ui.pushbtn_FBP_zero.setEnabled(False)
-        #    self.ui.pushbtn_FBP_offset.clicked.connect(self.FBP_offset_button_clicked)
+        self.ui.pushbtn_FBP_offset.clicked.connect(self.FBP_offset_button_clicked)
         self.ui.pushbtn_FBP_status.clicked.connect(self.FBP_Status_button_clicked)
         self.ui.pushbtn_FBP_rotate.clicked.connect(self.FBP_rotate_button_clicked)
 
@@ -290,7 +292,7 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_MTL_test.clicked.connect(self.MTL_test_button_clicked)
         self.ui.pushbtn_MTL_trial.clicked.connect(self.MTL_trial_button_clicked)
         self.ui.pushbtn_MTL_set.clicked.connect(self.MTL_set_button_clicked)
-        self.ui.pushbtn_MTL_reset.clicked.connect(self.MTL_set_button_clicked)
+        self.ui.pushbtn_MTL_reset.clicked.connect(self.MTL_reset_button_clicked)
 
 
         # Load Sequence
@@ -737,6 +739,17 @@ class MainWindow(QMainWindow):
 
                 # 2. 수신 로그 출력
                 self._log_received_message(inst, msg, status)
+
+                if (
+                    inst == 'MTL'
+                    and response_data.get('func') == 'mtltrial'
+                    and process == 'Done'
+                ):
+                    filename = response_data.get('filename')
+                    if status == 'success' and filename not in (None, '', 'None'):
+                        self.mtl_trial_json = str(filename)
+                    else:
+                        self.mtl_trial_json = None
 
                 # A settings reply must not be consumed by a trial waiting on the shared queue.
                 if inst == 'MTL' and response_data.get('func') == 'mtlset' and process == 'Done':
@@ -1324,8 +1337,28 @@ class MainWindow(QMainWindow):
             self.logging('Fiber positioners are not assigned to targets. Click first assign button', level='error')
             return
 
-        await handle_fbp('fbpoffset',self.ICS_client)
-        self.logging('Sent Fiber offset starts.', level='send')
+        if not self.mtl_trial_json:
+            self.logging(
+                'No successful MTL trial JSON is available. Run MTL Trial first.',
+                level='error',
+            )
+            return
+
+        sent = await handle_fbp(
+            f'fbpoffset {shlex.quote(self.mtl_trial_json)}',
+            self.ICS_client,
+        )
+        if not sent:
+            self.logging(
+                f'Failed to read MTL trial JSON: {self.mtl_trial_json}',
+                level='error',
+            )
+            return
+
+        self.logging(
+            f'Sent Fiber offset using {self.mtl_trial_json}.',
+            level='send',
+        )
 
     @asyncSlot()
     async def FBP_Status_button_clicked(self):
@@ -1767,6 +1800,7 @@ class MainWindow(QMainWindow):
         if not self.check_syscheck():
             return
 
+        self.mtl_trial_json = None
         self.logging('Sent MTL trial', level='send')
         await handle_mtl('mtltrial', self.ICS_client)
 
@@ -1785,6 +1819,18 @@ class MainWindow(QMainWindow):
             return
         self.logging(f'Request MTL exposure settings: {exptime:g} s, {nexposure} images', level='send')
         await self.ICS_client.send_message('MTL', mtl_set(exptime, nexposure))
+
+    @asyncSlot()
+    async def MTL_reset_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        self.mtl_trial_json = None
+        self.logging('Sent MTL run reset', level='send')
+        await handle_mtl('mtlreset', self.ICS_client)
 
     # endregion MTL controls
 
@@ -2042,6 +2088,7 @@ class MainWindow(QMainWindow):
 
     @asyncSlot()
     async def load_tile(self):
+        self.mtl_trial_json = None
         try:
             exptime, nexposure = self._mtl_exposure_inputs()
         except ValueError as error:
@@ -2148,9 +2195,9 @@ class MainWindow(QMainWindow):
         sciobs.obsdate=wild[-1].split('.')[0]
         self.project=wild[0]
         self.obsdate=wild[-1].split('.')[0]
-        print(self.project)
-        print(self.obsdate)
-        print(self.TileID)
+#        print(self.project)
+#        print(self.obsdate)
+#        print(self.TileID)
 #        print(self.ra)
 #        print(self.dec)
 

@@ -1,5 +1,6 @@
 import time
 import json
+import math
 import pyads
 import os
 import asyncio
@@ -209,6 +210,59 @@ def read_json(
         axis_points[beta_global_axis] = (beta_data[positioner])
 
     return axis_points, total_steps
+
+
+def read_offset_json(
+        alpha_filename: str,
+        beta_filename: str
+        ):
+    """step이 없는 alpha/beta offset JSON을 1-step 절대각 경로로 읽는다."""
+
+    with open(alpha_filename, "r", encoding="utf-8") as f:
+        alpha_data = json.load(f)
+    with open(beta_filename, "r", encoding="utf-8") as f:
+        beta_data = json.load(f)
+
+    if not isinstance(alpha_data, dict) or not isinstance(beta_data, dict):
+        raise ValueError("alpha/beta offset JSON은 object 형식이어야 합니다.")
+    if "step" in alpha_data or "step" in beta_data:
+        raise ValueError("offset JSON에는 step 데이터가 없어야 합니다.")
+
+    expected_positioners = set(POSITIONER_AXIS_MAP)
+    alpha_positioners = set(alpha_data)
+    beta_positioners = set(beta_data)
+    if alpha_positioners != expected_positioners:
+        raise ValueError(
+            "alpha offset positioner 구성이 축 매핑과 다릅니다. "
+            f"missing={sorted(expected_positioners - alpha_positioners)}, "
+            f"extra={sorted(alpha_positioners - expected_positioners)}"
+        )
+    if beta_positioners != expected_positioners:
+        raise ValueError(
+            "beta offset positioner 구성이 축 매핑과 다릅니다. "
+            f"missing={sorted(expected_positioners - beta_positioners)}, "
+            f"extra={sorted(beta_positioners - expected_positioners)}"
+        )
+
+    axis_points = {}
+    for positioner, positioner_info in POSITIONER_AXIS_MAP.items():
+        try:
+            alpha_angle = float(alpha_data[positioner])
+            beta_angle = float(beta_data[positioner])
+        except (TypeError, ValueError) as error:
+            raise ValueError(
+                f"{positioner} offset 각도가 숫자가 아닙니다."
+            ) from error
+
+        if not math.isfinite(alpha_angle) or not math.isfinite(beta_angle):
+            raise ValueError(f"{positioner} offset 각도가 유한한 값이 아닙니다.")
+
+        alpha_axis = positioner_info["alpha"]["global_axis"]
+        beta_axis = positioner_info["beta"]["global_axis"]
+        axis_points[alpha_axis] = [alpha_angle]
+        axis_points[beta_axis] = [beta_angle]
+
+    return axis_points, 1
 
 ##
 def get_plc_connection_info(
