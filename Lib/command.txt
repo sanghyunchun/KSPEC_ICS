@@ -22,6 +22,7 @@ gfaguide        : Start guiding process
 caloffset       : Calculate the offset between Tile center position and Telescope pointing position.
 
 [FBP]
+fbpstate        : Set GUI FBP state only. Usage: fbpstate <assign|stop|initial|normal>
 fbpstatus       : Show Fiber positioner status.
 fbpzero         : Rotate Fiber positioner to zero position.
 fbpmove         : Rotate specific Fiber positioner to specific position.

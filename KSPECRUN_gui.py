@@ -542,7 +542,7 @@ class MainWindow(QMainWindow):
             "adc": ["adcstatus", "adcactivate", "adcadjust", "adcconnect", "adcdisconnect", "adchome", "adczero",
             "adcpoweroff", "adcrotate1", "adcrotate2", "adcstop", "adcpark", "adcctrotate", "adccorotate"],
             "gfa": ["gfastatus", "gfagrab", "fdgrab"],
-            "fbp": ["fbpstatus", "fbpstepstatus", "fbpmove", "fbpoffset"],
+            "fbp": ["fbpstatus", "fbpstepstatus", "fbpstate", "fbpmove", "fbpoffset"],
             "mtl": ["mtlstatus", "mtlstart", "mtlset", "mtltest", "mtlcal", "mtltrial", "mtlresult", "mtlreset"],
             "lamp": ["lampstatus", "arcon", "arcoff", "flaton", "flatoff","fiducialon","fiducialoff"],
             "spec": ["specstatus", "specinitial","illuon", "illuoff", "getobj", "getbias", "getflat","getar"],
@@ -823,6 +823,21 @@ class MainWindow(QMainWindow):
         """
         category = category.lower()
 
+        parts = message.split()
+        if category == 'fbp' and parts and parts[0] == 'fbpoffset':
+            if not self._check_fbp_offset_state():
+                return
+
+        if category == 'fbp' and parts and parts[0] == 'fbpstate':
+            try:
+                if len(parts) != 2:
+                    raise ValueError('Usage: fbpstate <assign|stop|initial|normal>')
+                self.set_fbp_state(parts[1])
+            except ValueError as error:
+                self.logging(str(error), status='error', level='error',
+                             save=self.msglog_path is not None)
+            return
+
         general_handlers = {
             "adc": handle_adc, "gfa": handle_gfa, "fbp": handle_fbp,
             "mtl": handle_mtl, "lamp": handle_lamp,
@@ -1102,6 +1117,26 @@ class MainWindow(QMainWindow):
                 color = 'black' if positioner in self.positioner_axis_map else 'gray'
                 self.FPLabelStyle(label, color)
 
+    def set_fbp_state(self, state):
+        """GUI의 FBP 상태를 수동 지정한다. 잘못된 상태는 ValueError를 발생시킨다."""
+        if state not in ('assign', 'stop', 'initial', 'normal'):
+            raise ValueError(
+                f'Invalid FBP state: {state!r}. Allowed: assign, stop, initial, normal.'
+            )
+
+        previous_state = self.fbp_state
+        self.fbp_state = state
+        assigned = state in ('assign', 'stop')
+        for button in (self.ui.pushbtn_FBP_assign, self.ui.pushbtn_FBP_assign_2):
+            self._set_button_state(
+                button, 'FBP Assigned' if assigned else 'FBP Assign',
+                'green' if assigned else 'black', assigned,
+            )
+        self.logging(
+            f'GUI FBP state changed manually: {previous_state} -> {state}.',
+            level='receive', save=self.msglog_path is not None,
+        )
+
     def _handle_fbp_state(self, dict_data):
         if dict_data.get('inst') != 'FBP':
             return
@@ -1125,6 +1160,26 @@ class MainWindow(QMainWindow):
                             f'{json.dumps(step_state, ensure_ascii=False)}',
                             status=status, level='receive',
                         )
+            return
+
+        if func == 'fbpstatus' and process == 'Done' and status == 'success':
+            positioner = fbp_data.get('positioner', 'Unknown')
+            alpha = fbp_data.get('alpha', {})
+            beta = fbp_data.get('beta', {})
+            try:
+                alpha_angle = float(alpha['current_angle_degree'])
+                beta_angle = float(beta['current_angle_degree'])
+            except (KeyError, TypeError, ValueError):
+                self.logging(
+                    f'{positioner} current position angle is missing from the FBP status response.',
+                    status='error', level='error',
+                )
+            else:
+                self.logging(
+                    f'{positioner} current position: α = {alpha_angle:.3f}°, '
+                    f'β = {beta_angle:.3f}°.',
+                    status=status, level='receive',
+                )
             return
 
         # 이전 서버는 영점 확인 오류에도 zero를 보내므로 initial로 신뢰하지 않는다.
@@ -1338,6 +1393,15 @@ class MainWindow(QMainWindow):
         else:
             self.logging(f'This operation is only available when the positioners are in the assigned position. Current positioner status is {self.fbp_state}.', level='error')
 
+    def _check_fbp_offset_state(self):
+        if self.fbp_state == 'assign':
+            return True
+        self.logging(
+            f'FBP offset requires assign state. Current state: {self.fbp_state}.',
+            status='error', level='error', save=self.msglog_path is not None,
+        )
+        return False
+
     @asyncSlot()
     async def FBP_offset_button_clicked(self):
         if not self.check_connection():
@@ -1346,8 +1410,7 @@ class MainWindow(QMainWindow):
         if not self.check_syscheck():
             return
 
-        if self.fbp_state not in (None,"assign"):
-            self.logging('Fiber positioners are not assigned to targets. Click first assign button', level='error')
+        if not self._check_fbp_offset_state():
             return
 
         if not self.mtl_trial_json:
