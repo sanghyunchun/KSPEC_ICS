@@ -16492,7 +16492,7 @@
         <widget class="QLabel" name="label_FBP_lock">
          <property name="geometry">
           <rect>
-           <x>600</x>
+           <x>680</x>
            <y>670</y>
            <width>97</width>
            <height>23</height>
@@ -16514,7 +16514,7 @@
         <widget class="QLineEdit" name="lineEdit_FBP_lock">
          <property name="geometry">
           <rect>
-           <x>590</x>
+           <x>670</x>
            <y>696</y>
            <width>111</width>
            <height>30</height>
@@ -16573,7 +16573,7 @@
          </property>
          <property name="geometry">
           <rect>
-           <x>710</x>
+           <x>790</x>
            <y>696</y>
            <width>71</width>
            <height>30</height>
@@ -16601,7 +16601,7 @@
          </property>
          <property name="geometry">
           <rect>
-           <x>200</x>
+           <x>210</x>
            <y>730</y>
            <width>81</width>
            <height>30</height>
@@ -16629,7 +16629,7 @@
          </property>
          <property name="geometry">
           <rect>
-           <x>590</x>
+           <x>670</x>
            <y>730</y>
            <width>111</width>
            <height>30</height>
@@ -16654,7 +16654,7 @@
         <widget class="QLineEdit" name="lineEdit_FBP_angle">
          <property name="geometry">
           <rect>
-           <x>200</x>
+           <x>210</x>
            <y>696</y>
            <width>81</width>
            <height>30</height>
@@ -16682,7 +16682,7 @@
         <widget class="QLabel" name="label_Angle">
          <property name="geometry">
           <rect>
-           <x>210</x>
+           <x>220</x>
            <y>670</y>
            <width>61</width>
            <height>23</height>
@@ -16708,7 +16708,7 @@
         <widget class="QLabel" name="label_Angle_2">
          <property name="geometry">
           <rect>
-           <x>100</x>
+           <x>110</x>
            <y>670</y>
            <width>101</width>
            <height>23</height>
@@ -16721,7 +16721,7 @@
         <widget class="QLineEdit" name="lineEdit_FBP_number">
          <property name="geometry">
           <rect>
-           <x>100</x>
+           <x>110</x>
            <y>696</y>
            <width>91</width>
            <height>30</height>
@@ -16752,7 +16752,7 @@
          </property>
          <property name="geometry">
           <rect>
-           <x>100</x>
+           <x>110</x>
            <y>730</y>
            <width>91</width>
            <height>30</height>
@@ -16818,34 +16818,6 @@
           <string>Beta</string>
          </property>
         </widget>
-        <widget class="QPushButton" name="pushbtn_FBP_zero">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="geometry">
-          <rect>
-           <x>790</x>
-           <y>696</y>
-           <width>71</width>
-           <height>30</height>
-          </rect>
-         </property>
-         <property name="font">
-          <font>
-           <family>Arial</family>
-           <pointsize>14</pointsize>
-           <weight>75</weight>
-           <bold>true</bold>
-           <strikeout>false</strikeout>
-          </font>
-         </property>
-         <property name="toolTip">
-          <string/>
-         </property>
-         <property name="text">
-          <string>Zero</string>
-         </property>
-        </widget>
         <widget class="QPushButton" name="pushbtn_FBP_stop">
          <property name="enabled">
           <bool>true</bool>
@@ -16878,7 +16850,7 @@ STOP</string>
         <widget class="QLabel" name="label_clockwise">
          <property name="geometry">
           <rect>
-           <x>269</x>
+           <x>280</x>
            <y>670</y>
            <width>111</width>
            <height>23</height>
@@ -16900,7 +16872,7 @@ STOP</string>
         <widget class="QLabel" name="label_Load_tile">
          <property name="geometry">
           <rect>
-           <x>464</x>
+           <x>544</x>
            <y>670</y>
            <width>111</width>
            <height>23</height>
@@ -16913,11 +16885,39 @@ STOP</string>
         <widget class="QLineEdit" name="lineEdit">
          <property name="geometry">
           <rect>
-           <x>460</x>
+           <x>540</x>
            <y>696</y>
            <width>113</width>
            <height>30</height>
           </rect>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pushbtn_FBP_step_check">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="geometry">
+          <rect>
+           <x>540</x>
+           <y>730</y>
+           <width>111</width>
+           <height>30</height>
+          </rect>
+         </property>
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+           <strikeout>false</strikeout>
+          </font>
+         </property>
+         <property name="toolTip">
+          <string/>
+         </property>
+         <property name="text">
+          <string>Step Check</string>
          </property>
         </widget>
        </widget>

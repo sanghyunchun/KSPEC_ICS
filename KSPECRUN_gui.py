@@ -270,7 +270,7 @@ class MainWindow(QMainWindow):
 
 
         # Fiber assign
-        self.ui.pushbtn_FBP_zero.setEnabled(False)
+        #self.ui.pushbtn_FBP_zero.setEnabled(False)
         self.ui.pushbtn_FBP_offset.clicked.connect(self.FBP_offset_button_clicked)
         self.ui.pushbtn_FBP_status.clicked.connect(self.FBP_Status_button_clicked)
         self.ui.pushbtn_FBP_rotate.clicked.connect(self.FBP_rotate_button_clicked)
@@ -284,6 +284,7 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_FBP_stop.clicked.connect(self.FBP_stop_button_clicked)
 
         self.ui.pushbtn_FBP_lock.clicked.connect(self.FBP_lock_button_clicked)
+        self.ui.pushbtn_FBP_step_check.clicked.connect(self.FBP_step_check_button_clicked)
 
 
 
@@ -541,7 +542,7 @@ class MainWindow(QMainWindow):
             "adc": ["adcstatus", "adcactivate", "adcadjust", "adcconnect", "adcdisconnect", "adchome", "adczero",
             "adcpoweroff", "adcrotate1", "adcrotate2", "adcstop", "adcpark", "adcctrotate", "adccorotate"],
             "gfa": ["gfastatus", "gfagrab", "fdgrab"],
-            "fbp": ["fbpstatus", "fbpmove", "fbpoffset"],
+            "fbp": ["fbpstatus", "fbpstepstatus", "fbpmove", "fbpoffset"],
             "mtl": ["mtlstatus", "mtlstart", "mtlset", "mtltest", "mtlcal", "mtltrial", "mtlresult", "mtlreset"],
             "lamp": ["lampstatus", "arcon", "arcoff", "flaton", "flatoff","fiducialon","fiducialoff"],
             "spec": ["specstatus", "specinitial","illuon", "illuoff", "getobj", "getbias", "getflat","getar"],
@@ -1114,6 +1115,18 @@ class MainWindow(QMainWindow):
         status = dict_data.get('status', 'None')
         next_state = dict_data.get('fbp_state', 'None')
 
+        if func == 'fbpstepstatus':
+            if process == 'Done':
+                plcs = fbp_data.get('plcs', {})
+                if isinstance(plcs, dict):
+                    for plc_name, step_state in plcs.items():
+                        self.logging(
+                            f'{plc_name} Step/Stop (PLC internal steps): '
+                            f'{json.dumps(step_state, ensure_ascii=False)}',
+                            status=status, level='receive',
+                        )
+            return
+
         # 이전 서버는 영점 확인 오류에도 zero를 보내므로 initial로 신뢰하지 않는다.
         # 갱신된 서버가 영점 확인 성공 후 명시적으로 initial을 보낸다.
         if next_state == 'zero':
@@ -1279,14 +1292,14 @@ class MainWindow(QMainWindow):
             )
             return
 
-        if self.fbp_state in ('initial', 'manual'):
-            positioner_label = self.ui.lineEdit_FBP_number.text().strip()
-            await handle_fbp(f'fbpmoveone {positioner_label} {motor_name} {angle}', self.ICS_client)
-            self.logging(f'Sent Rotate Positioner {positioner_label} {motor_name} motor by {angle}.', level='send')
-            self.ui.lineEdit_FBP_number.clear()
-            self.ui.lineEdit_FBP_angle.clear()
-        else:
-            self.logging('Manual rotation is available in initial or manual state. Please move positioners to initial positions first.', level='error')
+        # if self.fbp_state in ('initial', 'manual'):
+        positioner_label = self.ui.lineEdit_FBP_number.text().strip()
+        await handle_fbp(f'fbpmoveone {positioner_label} {motor_name} {angle}', self.ICS_client)
+        self.logging(f'Sent Rotate Positioner {positioner_label} {motor_name} motor by {angle}.', level='send')
+        self.ui.lineEdit_FBP_number.clear()
+        self.ui.lineEdit_FBP_angle.clear()
+        # else:
+        #     self.logging('Manual rotation is available in initial or manual state. Please move positioners to initial positions first.', level='error')
 
     @asyncSlot()
     async def FBP_assign_button_clicked(self):
@@ -1359,6 +1372,17 @@ class MainWindow(QMainWindow):
             f'Sent Fiber offset using {self.mtl_trial_json}.',
             level='send',
         )
+
+    @asyncSlot()
+    async def FBP_step_check_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        sent = await handle_fbp('fbpstepstatus', self.ICS_client)
+        if sent:
+            self.logging('Sent PLC Step/Stop status request.', level='send')
+        else:
+            self.logging('Failed to send PLC Step/Stop status request.', level='error')
 
     @asyncSlot()
     async def FBP_Status_button_clicked(self):

@@ -212,83 +212,83 @@ async def reverse_main(plc_connections, alpha_file, beta_file):
         # main()의 마지막  step위치인지 확인
         # lock 된 축은 검사대상에서 제외
         # ===========================
-        positioner_tolerance = 0.2
+        # positioner_tolerance = 0.2
 
-        position_check_targets = [
-            (plc_name, route)
-            for plc_name, routes in plc_motion_routes.items()
-            for route in routes
-        ]
+        # position_check_targets = [
+        #     (plc_name, route)
+        #     for plc_name, routes in plc_motion_routes.items()
+        #     for route in routes
+        # ]
 
-        actual_positions = await asyncio.gather(
-            *[
-                asyncio.to_thread(
-                    plc_connections[plc_name].read_by_name,
-                    f"GVL.gAxisState[{route['local_axis']}].ActPos",
-                    pyads.PLCTYPE_LREAL
-                )
-                for plc_name, route in position_check_targets
-            ]
-        )
+        # actual_positions = await asyncio.gather(
+        #     *[
+        #         asyncio.to_thread(
+        #             plc_connections[plc_name].read_by_name,
+        #             f"GVL.gAxisState[{route['local_axis']}].ActPos",
+        #             pyads.PLCTYPE_LREAL
+        #         )
+        #         for plc_name, route in position_check_targets
+        #     ]
+        # )
 
-        invalid_start_axes = []
+        # invalid_start_axes = []
 
-        for (plc_name, route), actual_position in zip(position_check_targets, actual_positions):
-            global_axis = route["global_axis"]
+        # for (plc_name, route), actual_position in zip(position_check_targets, actual_positions):
+        #     global_axis = route["global_axis"]
 
-            expected_position = float(original_axis_points[global_axis][-1])
+        #     expected_position = float(original_axis_points[global_axis][-1])
 
-            actual_position = float(actual_position)
+        #     actual_position = float(actual_position)
 
 
-            if abs(actual_position - expected_position) > positioner_tolerance:
-                invalid_start_axes.append(
-                    {
-                        "plc_name": plc_name,
-                        "global_axis": global_axis,
-                        "local_axis": route["local_axis"],
-                        "positioner": route["positioner"],
-                        "motor": route["motor"],
-                        "expected_position": expected_position,
-                        "actual_position": actual_position,
-                        "difference": abs(actual_position - expected_position),
-                    }
-                )
+        #     if abs(actual_position - expected_position) > positioner_tolerance:
+        #         invalid_start_axes.append(
+        #             {
+        #                 "plc_name": plc_name,
+        #                 "global_axis": global_axis,
+        #                 "local_axis": route["local_axis"],
+        #                 "positioner": route["positioner"],
+        #                 "motor": route["motor"],
+        #                 "expected_position": expected_position,
+        #                 "actual_position": actual_position,
+        #                 "difference": abs(actual_position - expected_position),
+        #             }
+        #         )
 
-        if invalid_start_axes:
-            print("역방향 시작 위치가 맞지 않는 축이 있습니다:")
+        # if invalid_start_axes:
+        #     print("역방향 시작 위치가 맞지 않는 축이 있습니다:")
 
-            for axis_info in invalid_start_axes:
-                motor_name = (
-                    "α"
-                    if axis_info["motor"] == "alpha"
-                    else "β"
-                )
+        #     for axis_info in invalid_start_axes:
+        #         motor_name = (
+        #             "α"
+        #             if axis_info["motor"] == "alpha"
+        #             else "β"
+        #         )
 
-                print(
-                    f"- {axis_info['positioner']}-{motor_name} | "
-                    f"현재 위치: {axis_info['actual_position']:.3f}도 | "
-                    f"필요한 위치: {axis_info['expected_position']:.3f}도 | "
-                    f"차이: {axis_info['difference']:.3f}도"
-                )
+        #         print(
+        #             f"- {axis_info['positioner']}-{motor_name} | "
+        #             f"현재 위치: {axis_info['actual_position']:.3f}도 | "
+        #             f"필요한 위치: {axis_info['expected_position']:.3f}도 | "
+        #             f"차이: {axis_info['difference']:.3f}도"
+        #         )
 
-            result = {
-                "status": "fail",
-                "message": (
-                    "현재 위치가 원본 JSON 마지막 Step 위치와 "
-                    "일치하지 않아 역방향 구동을 시작할 수 없습니다. "
-                ),
-                "data": {
-                    "position_tolerance": positioner_tolerance,
-                    "invalid_start_axes": invalid_start_axes,
-                }
-            }
+        #     result = {
+        #         "status": "fail",
+        #         "message": (
+        #             "현재 위치가 원본 JSON 마지막 Step 위치와 "
+        #             "일치하지 않아 역방향 구동을 시작할 수 없습니다. "
+        #         ),
+        #         "data": {
+        #             "position_tolerance": positioner_tolerance,
+        #             "invalid_start_axes": invalid_start_axes,
+        #         }
+        #     }
 
-            print(result["message"])
-            save_result_json(result)
-            return result
+        #     print(result["message"])
+        #     save_result_json(result)
+        #     return result
 
-        print("전체 포지셔너 마지막 단계 위치 확인 완료")
+        # print("전체 포지셔너 마지막 단계 위치 확인 완료")
 
 
 

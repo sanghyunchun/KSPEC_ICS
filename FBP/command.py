@@ -90,6 +90,13 @@ async def identify_execute(FBP_server,cmd):
         print('\033[32m'+'[FBP]', comment+'\033[0m')
         await FBP_server.send_message('ICS',rsp)
 
+    if func == 'fbpstepstatus':
+        result = await FBP_action.show_step_status()
+        await send_fbp_response(
+            FBP_server, result, func=func, process='Done', fbp_state='None'
+        )
+        return
+
     if func == 'fbpstatus':
         positioner = dict_data['positioner']
         result = await FBP_action.show_status(axis=positioner)
@@ -152,6 +159,8 @@ async def identify_execute(FBP_server,cmd):
         fbp_state = 'manual'
         if result.get('status') == 'stopped':
             fbp_state = 'stop'
+        elif result.get('status') in ('error', 'fail'):
+            fbp_state = 'assign'
         elif result.get('status') == 'success':
             # 초기각은 alpha/beta 모두 0도이다. 전체 비잠금 축을 확인한다.
             check_zero = await FBP_action.check_all_zero_positions()
@@ -184,6 +193,8 @@ async def identify_execute(FBP_server,cmd):
             fbp_state = 'assign'
         elif result.get('status') == 'stopped':
             fbp_state = 'stop'
+        elif result.get('status') in ('error', 'fail'):
+            fbp_state = 'assign'
         else:
             fbp_state = 'None'
 
@@ -240,6 +251,8 @@ async def identify_execute(FBP_server,cmd):
             fbp_state = 'assign'
         elif result.get('status') == 'stopped':
             fbp_state = 'stop'
+        elif result.get('status') in ('error', 'fail'):
+            fbp_state = 'assign'
         else:
             fbp_state = 'None'
 
@@ -293,6 +306,8 @@ async def identify_execute(FBP_server,cmd):
             fbp_state = 'initial'
         elif result.get('status') == 'stopped':
             fbp_state = 'stop'
+        elif result.get('status') in ('error', 'fail'):
+            fbp_state = 'assign'
         else:
             fbp_state = 'None'
 
@@ -311,6 +326,8 @@ async def identify_execute(FBP_server,cmd):
             fbp_state = 'initial'
         elif result.get('status') == 'stopped':
             fbp_state = 'stop'
+        elif result.get('status') in ('error', 'fail'):
+            fbp_state = 'assign'
         else:
             fbp_state = 'None'
 

@@ -506,6 +506,72 @@ async def show_status_all() -> dict[str, Any]:
     return await _run_with_plcs(_core.show_status_all)
 
 
+def _read_step_status_one_plc(plc: Any) -> dict[str, Any]:
+    """PLC의 Step/Stop 변수만 읽고, 읽기 실패 시 나머지 값은 보존한다."""
+    tags = {
+        "stopped_valid": ("GVL.gStoppedValid", pyads.PLCTYPE_BOOL),
+        "stop_occurred": ("GVL.gStopOccurred", pyads.PLCTYPE_BOOL),
+        "stop_busy": ("GVL.gStopBusy", pyads.PLCTYPE_BOOL),
+        "stop_done": ("GVL.gStopDone", pyads.PLCTYPE_BOOL),
+        "last_completed_step": ("GVL.gStoppedLastCompletedStep", pyads.PLCTYPE_INT),
+        "target_step": ("GVL.gStoppedTargetStep", pyads.PLCTYPE_INT),
+        "stopped_total_points": ("GVL.gStoppedTotalPoints", pyads.PLCTYPE_INT),
+        "stopped_mode": ("GVL.gStoppedMotionMode", pyads.PLCTYPE_INT),
+        "completed_step": (_core.STEP_SYNC_COMPLETED_TAG, pyads.PLCTYPE_INT),
+        "allowed_step": (_core.STEP_SYNC_ALLOWED_TAG, pyads.PLCTYPE_INT),
+    }
+    values = {}
+    errors = {}
+    for name, (tag, plc_type) in tags.items():
+        try:
+            values[name] = plc.read_by_name(tag, plc_type)
+        except Exception as exc:
+            values[name] = None
+            errors[name] = {"tag": tag, "message": str(exc)}
+    return {**values, "read_errors": errors}
+
+
+async def _show_step_status(plc_connections: dict[str, Any]) -> dict[str, Any]:
+    snapshots = await asyncio.gather(
+        *[
+            asyncio.to_thread(_read_step_status_one_plc, plc)
+            for plc in plc_connections.values()
+        ]
+    )
+    plc_states = dict(zip(plc_connections, snapshots))
+    has_errors = any(state["read_errors"] for state in snapshots)
+    return {
+        "status": "error" if has_errors else "success",
+        "message": (
+            "일부 Step/Stop 변수를 읽지 못했습니다. read_errors를 확인하세요."
+            if has_errors else "PLC1, PLC2의 현재 Step과 Stop 기록을 조회했습니다."
+        ),
+        "data": {"plcs": plc_states},
+    }
+
+
+async def show_step_status() -> dict[str, Any]:
+    """PLC1/PLC2의 현재 Step과 저장된 Stop Step을 읽는다.
+
+    사용 예: result = await show_step_status()
+
+    data["plcs"]["PLC1" 또는 "PLC2"]에 다음 필드를 반환한다:
+      - completed_step, allowed_step: 현재 구동의 완료/허가 Step
+      - last_completed_step, target_step: 저장된 Stop의 완료/목표 Step
+      - stopped_total_points, stopped_mode: Stop 당시 경로 길이/구동 모드
+      - stopped_valid, stop_occurred, stop_busy, stop_done: Stop 기록 상태
+      - read_errors: 읽기 실패 필드와 ADS 태그/오류 내용 (실패 값은 None)
+
+    status는 조회 성공 여부이며 구동 성공/정지 여부가 아니다.
+    Step 번호는 PLC 내부 번호로, 역방향에서는 원본 경로 번호와 다르다.
+    Stop 기록은 stopped_valid 및 Stop 상태와 함께 해석해야 한다.
+    변수는 순차 조회하므로 구동 중에는 동일 시점의 스냅샷을 보장하지 않는다.
+    모션 변수 쓰기 및 결과 JSON 저장은 하지 않는다.
+    기존 공통 연결 관리에 따라 어느 한 PLC 연결이 실패하면 error를 반환한다.
+    """
+    return await _run_with_plcs(_show_step_status)
+
+
 async def _check_all_zero_positions(
     plc_connections: dict[str, Any],
     zero_tolerance: float = 0.1,
@@ -669,6 +735,7 @@ __all__ = [
     "rotate_one",
     "show_status",
     "show_status_all",
+    "show_step_status",
     "stop_all_positioner",
     "zero_main",
 ]

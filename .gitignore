@@ -8,6 +8,7 @@ GFA/kspec_gfa_controller/src/img/raw/
 GFA/Simul/kspec_gfa_controller/src}/kspec_gfa_controller/img/tempfiles/
 GFA/kspec_gfa_controller/src/kspec_gfa_controller/img/tempfiles/
 MTL/data/
+FBP/kspec_positioner_controller/Log/
 # Python cache
 __pycache__/
 *.pyc
