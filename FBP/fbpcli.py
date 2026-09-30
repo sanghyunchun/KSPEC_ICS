@@ -54,6 +54,11 @@ def fbp_status(positioner: str = None) :
     return create_fbp_command('fbpstatus',message='Show fiber positioner status.',positioner=positioner)
 def fbp_step_status():
     return create_fbp_command('fbpstepstatus', message='Show PLC motion steps and Stop records.')
+def fbp_activate():
+    return create_fbp_command(
+        'fbpactivate',
+        message='Activate TwinCAT configuration and start PLC runtimes.',
+    )
 def fbp_moveall(): return create_fbp_command('fbpmoveall', message = 'Move all positioners to target position.')
 def fbp_initial(): return create_fbp_command('fbpinitial', message = 'Move all positioners to initial position.')
 def fbp_stop(): return create_fbp_command('fbpstop', message = ' Stop current positioners moving.')
@@ -73,6 +78,7 @@ async def handle_fbp(arg, ICS_client):
     params = raw_params.split()
 
     command_map = {
+        'fbpactivate': fbp_activate,
         'fbpstepstatus': fbp_step_status,
         'fbpmoveall': fbp_moveall,
         'fbpinitial': fbp_initial, 'fbpstop': fbp_stop, 'fbpinitial_from_stop': fbp_initial_from_stop

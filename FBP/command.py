@@ -11,6 +11,7 @@ import FBP.kspec_positioner_controller.position_action as FBP_action
 # The current tile is ready only after both loadmotion messages are saved.
 _motion_tile = None
 _motion_files = {}
+_fbp_activate_lock = asyncio.Lock()
 
 
 def loaded_motion_paths():
@@ -92,6 +93,34 @@ async def identify_execute(FBP_server,cmd):
 
     if func == 'fbpstepstatus':
         result = await FBP_action.show_step_status()
+        await send_fbp_response(
+            FBP_server, result, func=func, process='Done', fbp_state='None'
+        )
+        return
+
+    if func == 'fbpactivate':
+        if _fbp_activate_lock.locked():
+            await send_fbp_response(
+                FBP_server,
+                func=func,
+                process='Done',
+                status='error',
+                message='TwinCAT Activate/Login/Play가 이미 진행 중입니다.',
+                fbp_state='None',
+            )
+            return
+
+        await send_fbp_response(
+            FBP_server,
+            func=func,
+            process='START',
+            status='success',
+            message='PLC1, PLC2의 TwinCAT Activate 및 PLC Login/Play를 시작합니다.',
+            fbp_state='None',
+        )
+        async with _fbp_activate_lock:
+            result = await FBP_action.activate_and_play_all_plcs()
+
         await send_fbp_response(
             FBP_server, result, func=func, process='Done', fbp_state='None'
         )

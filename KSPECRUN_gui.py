@@ -175,6 +175,9 @@ class MainWindow(QMainWindow):
         self.GFA_response_queue = asyncio.Queue()
         self.ADC_response_queue = asyncio.Queue()
         self.SPEC_response_queue = asyncio.Queue()
+        self._fbp_activate_lock = asyncio.Lock()
+        self._fbp_activate_waiter = None
+        self.fbp_runtime_initialized = False
 
         ### Observation Setting ###
         self.observer = None
@@ -233,6 +236,9 @@ class MainWindow(QMainWindow):
         #    self.ui.pushbtn_observer.clicked.connect(self.save_observer)
         self.ui.pushbtn_directory.clicked.connect(self.set_directory)
         self.ui.pushbtn_syscheck.clicked.connect(self.syscheck)
+        self.ui.pushbtn_TwinCat_restart.clicked.connect(
+            self.TwinCat_restart_button_clicked
+        )
 
 
         # GFA & Guiding
@@ -542,7 +548,7 @@ class MainWindow(QMainWindow):
             "adc": ["adcstatus", "adcactivate", "adcadjust", "adcconnect", "adcdisconnect", "adchome", "adczero",
             "adcpoweroff", "adcrotate1", "adcrotate2", "adcstop", "adcpark", "adcctrotate", "adccorotate"],
             "gfa": ["gfastatus", "gfagrab", "fdgrab"],
-            "fbp": ["fbpstatus", "fbpstepstatus", "fbpstate", "fbpmove", "fbpoffset"],
+            "fbp": ["fbpactivate", "fbpstatus", "fbpstepstatus", "fbpstate", "fbpmove", "fbpoffset"],
             "mtl": ["mtlstatus", "mtlstart", "mtlset", "mtltest", "mtlcal", "mtltrial", "mtlresult", "mtlreset"],
             "lamp": ["lampstatus", "arcon", "arcoff", "flaton", "flatoff","fiducialon","fiducialoff"],
             "spec": ["specstatus", "specinitial","illuon", "illuoff", "getobj", "getbias", "getflat","getar"],
@@ -740,6 +746,20 @@ class MainWindow(QMainWindow):
 
                 # 2. 수신 로그 출력
                 self._log_received_message(inst, msg, status)
+
+                # fbpactivate는 Sys check 또는 TwinCat restart 버튼이 완료 응답을
+                # 직접 기다린다. 공용 response_queue에 넣지 않아 다른 작업이
+                # 이 응답을 소비하는 일을 막는다.
+                activate_waiter = getattr(self, '_fbp_activate_waiter', None)
+                if (
+                    inst == 'FBP'
+                    and response_data.get('func') == 'fbpactivate'
+                    and process == 'Done'
+                    and activate_waiter is not None
+                    and not activate_waiter.done()
+                ):
+                    activate_waiter.set_result(response_data)
+                    return
 
                 if (
                     inst == 'MTL'
@@ -1273,6 +1293,80 @@ class MainWindow(QMainWindow):
                 normal_color=default_color,
                 missing_color=None
             )
+
+    async def _activate_fbp_runtime(self, requested_by: str) -> bool:
+        """FBP 서버에 fbpactivate를 보내고 완료 응답을 기다린다."""
+        if self._fbp_activate_lock.locked():
+            self.logging(
+                'TwinCAT Activate/Login/Play is already in progress.',
+                level='error',
+            )
+            return False
+
+        async with self._fbp_activate_lock:
+            loop = asyncio.get_running_loop()
+            waiter = loop.create_future()
+            self._fbp_activate_waiter = waiter
+
+            try:
+                sent = await handle_fbp('fbpactivate', self.ICS_client)
+                if not sent:
+                    self.logging(
+                        'Failed to send fbpactivate to the FBP server.',
+                        level='error',
+                    )
+                    return False
+
+                self.logging(
+                    f'{requested_by}: waiting for TwinCAT Activate/Login/Play.',
+                    level='send',
+                )
+                response = await asyncio.wait_for(waiter, timeout=45)
+            except asyncio.TimeoutError:
+                self.logging(
+                    'Timed out while waiting for the FBP Activate/Login/Play response.',
+                    level='error',
+                )
+                return False
+            finally:
+                if self._fbp_activate_waiter is waiter:
+                    self._fbp_activate_waiter = None
+
+        if response.get('status') != 'success':
+            self.fbp_runtime_initialized = False
+            self.logging(
+                response.get(
+                    'message',
+                    'TwinCAT Activate/Login/Play failed. Check PLC details in the FBP response.',
+                ),
+                level='error',
+            )
+            return False
+
+        self.fbp_runtime_initialized = True
+        return True
+
+    @asyncSlot()
+    async def TwinCat_restart_button_clicked(self):
+        """운영자 요청으로 TwinCAT Activate/Login/Play를 다시 실행한다."""
+        if not self.check_connection():
+            return
+
+        restart_button = self.ui.pushbtn_TwinCat_restart
+        restart_button.setEnabled(False)
+        try:
+            if await self._activate_fbp_runtime('TwinCat restart requested'):
+                self.logging(
+                    'TwinCAT Activate/Login/Play completed. Verify FBP state before moving positioners.',
+                    level='normal',
+                )
+            else:
+                self.logging(
+                    'TwinCAT restart failed; FBP motion must not be started.',
+                    level='error',
+                )
+        finally:
+            restart_button.setEnabled(True)
 
     @asyncSlot()
     async def FBP_stop_button_clicked(self):
@@ -2073,6 +2167,21 @@ class MainWindow(QMainWindow):
     async def syscheck(self):
         if not self.check_connection():
             return
+
+        # GUI를 새로 연결한 뒤 첫 Sys check에서만 FBP Runtime을 준비한다.
+        # 이후 Sys check는 기존처럼 각 장비의 상태를 조회하며 PLC를 재시작하지 않는다.
+        if not self.fbp_runtime_initialized:
+            self.logging(
+                'Preparing FBP TwinCAT and PLC Runtime before system check.',
+                level='normal',
+            )
+            if not await self._activate_fbp_runtime('Initial Sys check'):
+                self.dependencies = False
+                self.logging(
+                    'System check stopped because the FBP Runtime is not ready.',
+                    level='error',
+                )
+                return
 
         self.logging('System check start. Initialize dependencies',level='normal')
 

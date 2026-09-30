@@ -1,0 +1,691 @@
+[DUTs - ST_AxisCmd]
+TYPE ST_AxisCmd :
+STRUCT
+    Power       : BOOL;
+    Reset       : BOOL;
+	Active		: BOOL;                  // 20260708 
+    StartSpline : BOOL;                  // 연속 궤적 주행 스위치
+    TotalPoints : INT;                   // 실제 스텝 개수
+    Velocity    : LREAL;                 // 속도
+    Acc         : LREAL;                 // 가속도
+    Dec         : LREAL;                 // 감속도
+    TargetPos   : ARRAY[1..3500] OF LREAL; // 50개의 목표 좌표 배열
+END_STRUCT
+END_TYPE
+
+
+[DUTs - ST_AxisState]
+TYPE ST_AxisState :
+STRUCT
+    Done    : BOOL;
+    Error   : BOOL;
+    Busy    : BOOL;
+    Powered : BOOL;
+    Homed   : BOOL;
+    ActPos  : LREAL;
+END_STRUCT
+END_TYPE
+
+
+
+[GVL]
+
+
+{attribute 'qualified_only'}
+VAR_GLOBAL
+    gAxisCmd   : ARRAY[1..110] OF ST_AxisCmd;
+    gAxisState : ARRAY[1..110] OF ST_AxisState;
+
+
+    gAxisLocked : ARRAY[1..110] OF BOOL;
+
+    gStopAll   : BOOL;
+    gStopDec   : LREAL := 200.0;
+
+
+    gStopBusy  : BOOL;
+    gStopDone  : BOOL;
+    gStopOccurred : BOOL;
+
+    gCurrentTargetStep  : INT := 0;
+    gLastCompletedStep  : INT := 0;
+
+
+    gCompletedStep      : INT := 0;
+    gAllowedStep        : INT := 0;
+
+    gMotionSequence     : UDINT := 0;
+    gMotionModeCommand  : INT := 0;
+
+    gStoppedLastCompletedStep   : INT := 0;
+    gStoppedTargetStep          : INT := 0;
+    gStoppedTotalPoints         : INT := 0;
+    gStoppedState               : INT := 0;
+    gStoppedMotionMode          : INT := 0;
+    gStoppedMotionSequence      : UDINT := 0;
+    gStoppedValid               : BOOL := FALSE;
+
+    gClearStoppedInfo           : BOOL := FALSE;
+
+    gStoppedAxisSelected        : ARRAY[1..56] OF BOOL;
+    gStoppedAxisLocked          : ARRAY[1..56] OF BOOL;
+    gSystemReady                : BOOL := FALSE;
+END_VAR
+
+
+
+[POUs - MAIN - Top pannel]
+
+PROGRAM MAIN
+VAR
+    Axis        : ARRAY[1..110] OF AXIS_REF;
+    fbPower     : ARRAY[1..110] OF MC_Power;
+    fbReset     : ARRAY[1..110] OF MC_Reset;
+    fbMoveAbs   : ARRAY[1..110] OF MC_MoveAbsolute;
+    fbStop      : ARRAY[1..110] OF MC_STOP;
+
+
+    nGlobalState : INT := 0;
+    nGlobalIdx   : INT := 1;
+    bExecute     : ARRAY[1..110] OF BOOL;
+
+
+    bAllStart    : BOOL;
+    bAllDone     : BOOL;
+    bAllCleared  : BOOL;
+    bAnyError    : BOOL;
+
+    bAnyActive         : BOOL;
+    bAnyUnlockedActive : BOOL;
+    bAnyUnlockedAxis   : BOOL;
+
+    bAxisSelected      : ARRAY[1..110] OF BOOL;
+    nMotionTotalPoints : INT := 0;
+
+
+    bStepSyncActive     :BOOL := FALSE;
+
+    bStopExecute      : ARRAY[1..110] OF BOOL;
+    bStopAxisSelected : ARRAY[1..110] OF BOOL;
+    bAllStopDone      : BOOL;
+    bAllStopReleased  : BOOL;
+
+    i, idx       : INT;
+    nEcMasterDevState  AT %I* : UINT;
+    bEcWcState         AT %I* : BOOL;
+END_VAR
+
+
+
+[POUs - MAIN - Bottom pannel]
+// ==========================================
+// 1. EtherCAT 통신 안정화 상태 확인
+// ==========================================
+IF (nEcMasterDevState = 0) AND (bEcWcState = FALSE) THEN
+    GVL.gSystemReady := TRUE;
+ELSE
+    GVL.gSystemReady := FALSE;
+END_IF
+
+
+FOR i := 1 TO 56 DO
+    Axis[i].ReadStatus();
+
+    fbPower[i](
+        Axis := Axis[i],
+        Enable := GVL.gAxisCmd[i].Power,
+        Enable_Positive := GVL.gAxisCmd[i].Power,
+        Enable_Negative := GVL.gAxisCmd[i].Power,
+        Override := 100.0
+    );
+
+    fbReset[i](
+        Axis := Axis[i],
+        Execute := GVL.gAxisCmd[i].Reset
+    );
+END_FOR
+
+
+IF GVL.gClearStoppedInfo AND (nGlobalState = 0) THEN
+    GVL.gStoppedLastCompletedStep := 0;
+    GVL.gStoppedTargetStep := 0;
+    GVL.gStoppedTotalPoints := 0;
+    GVL.gStoppedState := 0;
+    GVL.gStoppedMotionMode := 0;
+    GVL.gStoppedMotionSequence := 0;
+    GVL.gStoppedValid := FALSE;
+
+    FOR i := 1 TO 56 DO
+        GVL.gStoppedAxisSelected[i] := FALSE;
+        GVL.gStoppedAxisLocked[i] := FALSE;
+    END_FOR
+
+    GVL.gClearStoppedInfo := FALSE;
+
+END_IF
+
+
+bAnyActive := FALSE;
+bAnyUnlockedActive := FALSE;
+bAnyUnlockedAxis := FALSE;
+
+FOR i := 1 TO 56 DO
+
+
+    IF NOT GVL.gAxisLocked[i] THEN
+        bAnyUnlockedAxis := TRUE;
+    END_IF
+
+
+    IF GVL.gAxisCmd[i].Active THEN
+        bAnyActive := TRUE;
+
+
+        IF NOT GVL.gAxisLocked[i] THEN
+            bAnyUnlockedActive := TRUE;
+        END_IF
+    END_IF
+
+END_FOR
+
+
+IF GVL.gStopAll
+AND (nGlobalState <> 90)
+AND (nGlobalState <> 91)
+AND (nGlobalState <> 92) THEN
+    GVL.gStopBusy := TRUE;
+    GVL.gStopDone := FALSE;
+
+
+    
+    IF nGlobalState <> 0 THEN
+
+        
+        
+        IF NOT (
+            (GVL.gMotionModeCommand = 5)
+            AND GVL.gStoppedValid
+            AND (GVL.gStoppedMotionMode <> 5)
+        ) THEN
+
+            GVL.gStoppedLastCompletedStep := GVL.gLastCompletedStep;
+            GVL.gStoppedTargetStep := GVL.gCurrentTargetStep;
+            GVL.gStoppedTotalPoints := nMotionTotalPoints;
+            GVL.gStoppedState := nGlobalState;
+            GVL.gStoppedMotionMode := GVL.gMotionModeCommand;
+            GVL.gStoppedMotionSequence := GVL.gMotionSequence;
+            GVL.gStoppedValid := TRUE;
+
+            FOR i := 1 TO 56 DO
+                GVL.gStoppedAxisSelected[i] := bAxisSelected[i];
+                GVL.gStoppedAxisLocked[i] := GVL.gAxisLocked[i];
+            END_FOR
+
+        END_IF
+
+    END_IF;
+
+    
+    FOR i := 1 TO 56 DO
+        bStopAxisSelected[i] := bAxisSelected[i] OR fbMoveAbs[i].Busy;
+    END_FOR
+
+
+
+    nGlobalState := 90;
+END_IF
+
+
+IF (nGlobalState = 0) AND NOT GVL.gStopAll THEN
+
+    bAllStart := FALSE;
+
+
+    IF bAnyActive THEN
+
+
+        bAllStart := bAnyUnlockedActive;
+
+
+        FOR i := 1 TO 56 DO
+
+            IF GVL.gAxisCmd[i].Active
+            AND NOT GVL.gAxisLocked[i] THEN
+
+                IF NOT GVL.gAxisCmd[i].StartSpline THEN
+                    bAllStart := FALSE;
+                END_IF
+
+            END_IF
+
+        END_FOR
+
+        IF bAllStart THEN
+
+            nGlobalIdx := 1;
+            nMotionTotalPoints := 0;
+
+
+            GVL.gCurrentTargetStep := 1;
+            GVL.gLastCompletedStep := 0;
+            GVL.gCompletedStep := 0;
+
+
+            bStepSyncActive := (GVL.gAllowedStep >= 1);
+
+
+            GVL.gMotionSequence := GVL.gMotionSequence + 1;
+
+
+            FOR i := 1 TO 56 DO
+
+                bAxisSelected[i] :=
+                    GVL.gAxisCmd[i].Active
+                    AND NOT GVL.gAxisLocked[i];
+
+
+                IF bAxisSelected[i]
+                AND (nMotionTotalPoints = 0) THEN
+
+                    nMotionTotalPoints :=
+                        GVL.gAxisCmd[i].TotalPoints;
+
+                END_IF
+
+            END_FOR
+
+            IF nMotionTotalPoints < 1 THEN
+                nMotionTotalPoints := 1;
+            END_IF
+
+
+            GVL.gStopDone := FALSE;
+            GVL.gStopOccurred := FALSE;
+
+
+            nGlobalState := 10;
+
+        END_IF
+
+
+    ELSE
+
+
+        bAllStart := bAnyUnlockedAxis;
+
+
+        FOR i := 1 TO 56 DO
+
+            IF NOT GVL.gAxisLocked[i] THEN
+
+                IF NOT GVL.gAxisCmd[i].StartSpline THEN
+                    bAllStart := FALSE;
+                END_IF
+
+            END_IF
+
+        END_FOR
+
+        IF bAllStart THEN
+
+            nGlobalIdx := 1;
+            nMotionTotalPoints := 0;
+
+            GVL.gCurrentTargetStep := 1;
+            GVL.gLastCompletedStep := 0;
+            GVL.gCompletedStep     := 0;
+
+
+            bStepSyncActive := (GVL.gAllowedStep >= 1);
+
+            GVL.gMotionSequence := GVL.gMotionSequence + 1;
+
+
+            FOR i := 1 TO 56 DO
+
+                bAxisSelected[i] :=
+                    NOT GVL.gAxisLocked[i];
+
+
+                IF bAxisSelected[i]
+                AND (nMotionTotalPoints = 0) THEN
+
+                    nMotionTotalPoints :=
+                        GVL.gAxisCmd[i].TotalPoints;
+
+                END_IF
+            END_FOR
+
+            IF nMotionTotalPoints < 1 THEN
+                nMotionTotalPoints := 1;
+            END_IF
+
+
+            GVL.gStopDone := FALSE;
+            GVL.gStopOccurred := FALSE;
+
+
+            nGlobalState := 10;
+        END_IF
+
+    END_IF
+END_IF
+
+
+CASE nGlobalState OF
+
+
+    0:
+        FOR i := 1 TO 56 DO
+            bExecute[i] := FALSE;
+            bStopExecute[i] := FALSE;
+        END_FOR
+
+
+    10:
+
+
+        GVL.gCurrentTargetStep := nGlobalIdx;
+        FOR i := 1 TO 56 DO
+            IF bAxisSelected[i] THEN
+                bExecute[i] := TRUE;
+            ELSE
+                bExecute[i] := FALSE;
+            END_IF
+
+            bStopExecute[i] := FALSE;
+        END_FOR
+
+        nGlobalState := 20;
+
+
+    20:
+        bAllDone := TRUE;
+        bAnyError := FALSE;
+
+        FOR i := 1 TO 56 DO
+            IF bAxisSelected[i] THEN
+
+                IF NOT fbMoveAbs[i].Done THEN
+                    bAllDone := FALSE;
+                END_IF
+
+                IF fbMoveAbs[i].Error OR Axis[i].Status.Error THEN
+                    bAnyError := TRUE;
+                END_IF
+
+            END_IF
+        END_FOR
+
+        IF bAnyError THEN
+
+            
+            
+            IF NOT (
+                (GVL.gMotionModeCommand = 5)
+                AND GVL.gStoppedValid
+                AND (GVL.gStoppedMotionMode <> 5)
+            ) THEN
+
+                GVL.gStoppedLastCompletedStep := GVL.gLastCompletedStep;
+                GVL.gStoppedTargetStep := GVL.gCurrentTargetStep;
+                GVL.gStoppedTotalPoints := nMotionTotalPoints;
+                GVL.gStoppedState := nGlobalState;
+                GVL.gStoppedMotionMode := GVL.gMotionModeCommand;
+                GVL.gStoppedMotionSequence := GVL.gMotionSequence;
+                GVL.gStoppedValid := TRUE;
+
+                FOR i := 1 TO 56 DO
+                    GVL.gStoppedAxisSelected[i] := bAxisSelected[i];
+                    GVL.gStoppedAxisLocked[i] := GVL.gAxisLocked[i];
+                END_FOR
+
+            END_IF
+
+            nGlobalState := 99;
+
+        ELSIF bAllDone THEN
+
+
+            GVL.gLastCompletedStep := nGlobalIdx;
+
+
+            GVL.gCompletedStep := nGlobalIdx;
+
+
+            FOR i := 1 TO 56 DO
+                bExecute[i] := FALSE;
+            END_FOR
+
+            nGlobalState := 30;
+        END_IF
+
+
+    30:
+        bAllCleared := TRUE;
+
+        FOR i := 1 TO 56 DO
+            IF bAxisSelected[i] THEN
+                IF fbMoveAbs[i].Done THEN
+                    bAllCleared := FALSE;
+                END_IF
+            END_IF
+        END_FOR
+
+        IF bAllCleared THEN
+
+            IF nGlobalIdx >= nMotionTotalPoints THEN
+                nGlobalState := 100;
+
+            ELSIF (NOT bStepSyncActive)
+            OR (GVL.gAllowedStep >= (nGlobalIdx +1)) THEN
+
+                nGlobalIdx := nGlobalIdx + 1;
+                nGlobalState := 10;
+            END_IF
+        END_IF
+
+
+    90:
+        GVL.gStopBusy := TRUE;
+        GVL.gStopDone := FALSE;
+
+        FOR i := 1 TO 56 DO
+
+
+            bExecute[i] := FALSE;
+
+
+            IF bStopAxisSelected[i] THEN
+                bStopExecute[i] := TRUE;
+            ELSE
+                bStopExecute[i] := FALSE;
+            END_IF
+
+        END_FOR
+
+        nGlobalState := 91;
+
+
+    91:
+        bAllStopDone := TRUE;
+        bAnyError := FALSE;
+
+        FOR i := 1 TO 56 DO
+
+            IF bStopAxisSelected[i] THEN
+
+
+                IF NOT fbStop[i].Done THEN
+                    bAllStopDone := FALSE;
+                END_IF
+
+
+                IF fbStop[i].Error OR Axis[i].Status.Error THEN
+                    bAnyError := TRUE;
+                END_IF
+
+            END_IF
+
+        END_FOR
+
+        IF bAnyError THEN
+            nGlobalState := 99;
+
+        ELSIF bAllStopDone THEN
+
+
+            FOR i := 1 TO 56 DO
+                bStopExecute[i] := FALSE;
+            END_FOR
+
+            nGlobalState := 92;
+        END_IF
+
+
+    92:
+        bAllStopReleased := TRUE;
+
+        FOR i := 1 TO 56 DO
+
+            IF bStopAxisSelected[i] THEN
+
+
+                IF fbStop[i].Busy THEN
+                    bAllStopReleased := FALSE;
+                END_IF
+
+            END_IF
+
+        END_FOR
+
+        IF bAllStopReleased THEN
+
+            FOR i := 1 TO 56 DO
+                bExecute[i] := FALSE;
+                bStopExecute[i] := FALSE;
+
+                bAxisSelected[i] := FALSE;
+                bStopAxisSelected[i] := FALSE;
+
+                GVL.gAxisCmd[i].StartSpline := FALSE;
+                GVL.gAxisCmd[i].Active := FALSE;
+            END_FOR
+
+            nMotionTotalPoints := 0;
+
+            GVL.gAllowedStep := 0;
+            bStepSyncActive := FALSE;
+
+
+            GVL.gStopBusy := FALSE;
+            GVL.gStopDone := TRUE;
+            GVL.gStopOccurred := TRUE;
+
+
+            GVL.gStopAll := FALSE;
+
+            nGlobalState := 0;
+        END_IF
+
+
+    100:
+        FOR i := 1 TO 56 DO
+            bExecute[i] := FALSE;
+            bAxisSelected[i] := FALSE;
+
+
+            bStopExecute[i] := FALSE;
+            bStopAxisSelected[i] := FALSE;
+
+
+            GVL.gAxisCmd[i].StartSpline := FALSE;
+            GVL.gAxisCmd[i].Active := FALSE;
+        END_FOR
+
+        nMotionTotalPoints := 0;
+
+        GVL.gAllowedStep := 0;
+        bStepSyncActive := FALSE;
+
+
+        GVL.gStopBusy := FALSE;
+        GVL.gStopDone := FALSE;
+
+
+        GVL.gCurrentTargetStep := 0;
+
+
+        nGlobalState := 0;
+
+
+    99:
+        FOR i := 1 TO 56 DO
+            bExecute[i] := FALSE;
+            bAxisSelected[i] := FALSE;
+
+            bStopExecute[i] := FALSE;
+            bStopAxisSelected[i] := FALSE;
+
+
+            GVL.gAxisCmd[i].StartSpline := FALSE;
+            GVL.gAxisCmd[i].Active := FALSE;
+        END_FOR
+
+        nMotionTotalPoints := 0;
+
+        GVL.gAllowedStep := 0;
+        bStepSyncActive := FALSE;
+
+
+        GVL.gStopBusy := FALSE;
+        GVL.gStopDone := FALSE;
+        GVL.gStopOccurred := FALSE;
+        GVL.gStopAll := FALSE;
+
+        nGlobalState := 0;
+
+END_CASE
+
+
+FOR i := 1 TO 56 DO
+
+
+    idx := nGlobalIdx;
+
+    IF idx < 1 THEN
+        idx := 1;
+    ELSIF idx > 3500 THEN
+        idx := 3500;
+    END_IF
+
+
+    fbMoveAbs[i](
+        Axis         := Axis[i],
+        Execute      := bExecute[i],
+        Position     := GVL.gAxisCmd[i].TargetPos[idx],
+        Velocity     := GVL.gAxisCmd[i].Velocity,
+        Acceleration := GVL.gAxisCmd[i].Acc,
+        Deceleration := GVL.gAxisCmd[i].Dec,
+        Jerk         := 0
+    );
+
+
+    fbStop[i](
+        Axis         := Axis[i],
+        Execute      := bStopExecute[i],
+        Deceleration := GVL.gStopDec,
+        Jerk         := 0
+    );
+
+
+    GVL.gAxisState[i].ActPos  := Axis[i].NcToPlc.ActPos;
+
+
+    GVL.gAxisState[i].Busy    := (bAxisSelected[i] AND (nGlobalState > 0)) OR fbMoveAbs[i].Busy OR fbStop[i].Busy;
+    GVL.gAxisState[i].Done    := (nGlobalState = 0) AND NOT GVL.gAxisCmd[i].StartSpline;
+    GVL.gAxisState[i].Powered := fbPower[i].Status;
+    GVL.gAxisState[i].Error   := Axis[i].Status.Error OR fbMoveAbs[i].Error OR fbStop[i].Error;
+    GVL.gAxisState[i].Homed   := Axis[i].Status.Homed;
+
+END_FOR

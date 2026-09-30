@@ -112,6 +112,150 @@ STEP_SYNC_ALLOWED_TAG = "GVL.gAllowedStep"
 # }
 # endregion
 
+def reset_and_play_one_plc_sync(plc_name: str, ams_net_id: str):
+    """
+    단일 PLC의 TwinCAT 시스템을 재시작(Activate)하고 PLC 런타임을 실행(Play)합니다.
+
+    각 단계의 결과를 반환한다. 호출자는 ``status == "success"``와
+    ``system_ready``가 모두 참인 경우에만 다음 모션 명령을 허용해야 한다.
+    """
+    print(f"[{plc_name}] TwinCAT Activate 및 PLC Play 초기화 시작 ({ams_net_id})...")
+    result = {
+        "plc_name": plc_name,
+        "ams_net_id": ams_net_id,
+        "system_activated": False,
+        "runtime_running": False,
+        "system_ready": False,
+        "errors": [],
+    }
+
+    # 1. System Service (Port 10000) 제어 - Activate Configuration
+    sys_conn = None
+    try:
+        sys_conn = pyads.Connection(ams_net_id, pyads.PORT_SYSTEMSERVICE)
+        sys_conn.open()
+
+        # Config 모드로 전환 (초기화)
+        sys_conn.write_control(pyads.ADSSTATE_CONFIG, 0, 0)
+        time.sleep(2) # 시스템이 Config 상태로 완전히 내려갈 때까지 대기
+
+        # Run 모드로 전환 (Activate Configuration)
+        sys_conn.write_control(pyads.ADSSTATE_RUN, 0, 0)
+        # 중요: 시스템 부팅 및 EtherCAT 드라이버 다축 통신 연결이 안정화될 충분한 시간 부여
+        time.sleep(5)
+        result["system_activated"] = True
+        print(f"[{plc_name}] TwinCAT 시스템 Run 모드 전환 완료 (Activate).")
+    except Exception as e:
+        result["errors"].append(f"TwinCAT Activate 실패: {e}")
+        print(f"[{plc_name}] 시스템 제어 중 에러 발생: {e}")
+    finally:
+        if sys_conn is not None:
+            try:
+                sys_conn.close()
+            except Exception as e:
+                result["errors"].append(f"System Service 연결 종료 실패: {e}")
+
+    if not result["system_activated"]:
+        result["status"] = "error"
+        result["message"] = f"[{plc_name}] TwinCAT Activate에 실패했습니다."
+        return result
+
+    # 2. PLC Runtime (Port 851) 제어 - Login and Play
+    plc_conn = None
+    try:
+        plc_conn = pyads.Connection(ams_net_id, pyads.PORT_TC3PLC1)
+        plc_conn.open()
+
+        # PLC 프로그램 실행
+        plc_conn.write_control(pyads.ADSSTATE_RUN, 0, 0)
+        result["runtime_running"] = True
+        print(f"[{plc_name}] PLC 런타임 정상 실행 완료 (Play).")
+
+        # === 스마트 폴링 대기 로직 적용 ===
+        time.sleep(1) # PLC 코드가 첫 사이클을 돌기 위한 최소 대기
+        is_ready = False
+        print(f"[{plc_name}] EtherCAT 하드웨어 통신 안정화 대기 중...")
+
+        for _ in range(30): # 최대 15초 대기 (0.5초 * 30회)
+            try:
+                is_ready = plc_conn.read_by_name("GVL.gSystemReady", pyads.PLCTYPE_BOOL)
+                if is_ready:
+                    print(f"[{plc_name}] 다축 EtherCAT 통신 연결 및 안정화 완료!")
+                    break
+            except pyads.ADSError:
+                pass # 부팅 직후 ADS 응답이 없을 수 있으므로 무시하고 재시도
+
+            time.sleep(0.5)
+
+        if not is_ready:
+            result["errors"].append("GVL.gSystemReady가 제한 시간 내 True가 되지 않았습니다.")
+            print(f"[{plc_name}] 경고: 시간 내에 EtherCAT 통신이 안정화되지 않았습니다.")
+        result["system_ready"] = bool(is_ready)
+    except Exception as e:
+        result["errors"].append(f"PLC Login/Play 실패: {e}")
+        print(f"[{plc_name}] PLC 실행 중 에러 발생: {e}")
+    finally:
+        if plc_conn is not None:
+            try:
+                plc_conn.close()
+            except Exception as e:
+                result["errors"].append(f"PLC Runtime 연결 종료 실패: {e}")
+
+    result["status"] = (
+        "success"
+        if result["runtime_running"] and result["system_ready"] and not result["errors"]
+        else "error"
+    )
+    result["message"] = (
+        f"[{plc_name}] TwinCAT Activate 및 PLC Login/Play를 완료했습니다."
+        if result["status"] == "success"
+        else f"[{plc_name}] TwinCAT Activate 또는 PLC Login/Play에 실패했습니다."
+    )
+    return result
+
+
+async def activate_and_play_all_plcs():
+    """
+    PLC1과 PLC2를 동시에 초기화합니다.
+    kspec_1_open.py의 open_plcs() 실행 전이나, 에러 발생 후 복구 루틴으로 활용 가능합니다.
+    """
+    plc_results = await asyncio.gather(
+        asyncio.to_thread(reset_and_play_one_plc_sync, "PLC1", PLC1_AMS_NET_ID),
+        asyncio.to_thread(reset_and_play_one_plc_sync, "PLC2", PLC2_AMS_NET_ID),
+        return_exceptions=True,
+    )
+    results = {}
+    for plc_name, plc_result in zip(("PLC1", "PLC2"), plc_results):
+        if isinstance(plc_result, Exception):
+            results[plc_name] = {
+                "plc_name": plc_name,
+                "status": "error",
+                "errors": [str(plc_result)],
+                "message": f"[{plc_name}] 원격 초기화 작업에서 예외가 발생했습니다.",
+            }
+        else:
+            results[plc_name] = plc_result
+
+    failed_plcs = [
+        plc_name
+        for plc_name, plc_result in results.items()
+        if plc_result.get("status") != "success"
+    ]
+    status = "success" if not failed_plcs else "error"
+    message = (
+        "모든 PLC의 Activate 및 Play 원격 명령이 완료되었습니다."
+        if status == "success"
+        else f"다음 PLC의 Activate/Login/Play에 실패했습니다: {', '.join(failed_plcs)}"
+    )
+    print(message)
+    return {
+        "status": status,
+        "message": message,
+        "data": {"plcs": results},
+    }
+
+
+
 def load_positioner_axis_map():
     """
     

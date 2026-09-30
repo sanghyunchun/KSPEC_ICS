@@ -208,6 +208,45 @@ async def _run_with_plcs(
     return result or _error_result(f"{action.__name__} 실행 결과가 없습니다.")
 
 
+async def activate_and_play_all_plcs() -> dict[str, Any]:
+    """원격 ADS 통신으로 PLC1/PLC2의 TwinCAT과 PLC Runtime을 재시작한다.
+
+    ``kspec_0_function.activate_and_play_all_plcs()``를 사용해 각 PLC에
+    다음 순서로 명령을 내린다.
+
+    1. TwinCAT System Service에 Config -> Run (Activate Configuration)
+    2. PLC Runtime에 Run (Login and Play)
+    3. ``GVL.gSystemReady``가 True가 될 때까지 대기
+
+    이 동작은 TwinCAT/PLC Runtime을 재시작하므로, 일반 모션 명령과 달리
+    ``_run_with_plcs()``로 PLC Runtime 연결을 미리 열지 않는다. 재시작 중
+    기존 연결이 끊기는 상황을 피하기 위해 코어 함수가 연결의 생성과 종료를
+    모두 담당한다.
+
+    Returns:
+        명령 처리 결과 dictionary. PLC별 Activate, Runtime Run,
+        ``GVL.gSystemReady`` 확인 결과는 ``data["plcs"]``에 포함된다.
+    """
+    try:
+        _sync_controller_globals()
+        result = await _core.activate_and_play_all_plcs()
+    except asyncio.CancelledError:
+        raise
+    except Exception as exc:
+        return _error_result(
+            f"원격 TwinCAT Activate 및 PLC Login/Play에 실패했습니다: {exc}",
+            plcs=["PLC1", "PLC2"],
+        )
+
+    if not isinstance(result, dict):
+        return _error_result(
+            "원격 TwinCAT Activate 및 PLC Login/Play 결과 형식이 올바르지 않습니다.",
+            returned_type=type(result).__name__,
+        )
+
+    return result
+
+
 async def rotate_all(alpha_file: str, beta_file: str) -> dict[str, Any]:
     """
     Lock되지 않은 모든 포지셔너 축을 target position까지 정방향으로 이동한다.
@@ -726,6 +765,7 @@ async def check_all_zero_positions(
 
 
 __all__ = [
+    "activate_and_play_all_plcs",
     "check_all_zero_positions",
     "positioner_lock",
     "reverse_all",

@@ -16872,7 +16872,7 @@ STOP</string>
         <widget class="QLabel" name="label_Load_tile">
          <property name="geometry">
           <rect>
-           <x>544</x>
+           <x>550</x>
            <y>670</y>
            <width>111</width>
            <height>23</height>
@@ -16918,6 +16918,35 @@ STOP</string>
          </property>
          <property name="text">
           <string>Step Check</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pushbtn_TwinCat_restart">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="geometry">
+          <rect>
+           <x>440</x>
+           <y>696</y>
+           <width>91</width>
+           <height>64</height>
+          </rect>
+         </property>
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+           <strikeout>false</strikeout>
+          </font>
+         </property>
+         <property name="toolTip">
+          <string/>
+         </property>
+         <property name="text">
+          <string>TwinCat 
+restart</string>
          </property>
         </widget>
        </widget>
