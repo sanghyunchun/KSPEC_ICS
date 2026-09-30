@@ -112,6 +112,25 @@ STEP_SYNC_ALLOWED_TAG = "GVL.gAllowedStep"
 # }
 # endregion
 
+def wait_for_system_state(connection, expected_state, timeout, description):
+    """System Service 상태 전환 완료를 확인한다."""
+    deadline = time.monotonic() + timeout
+    last_state = None
+    last_error = None
+    while time.monotonic() < deadline:
+        try:
+            last_state, _ = connection.read_state()
+            if last_state == expected_state:
+                return
+        except pyads.ADSError as error:
+            last_error = error  # TwinCAT 재시작 중 ADS 응답이 잠시 끊길 수 있다.
+        time.sleep(0.5)
+    raise TimeoutError(
+        f"{description} 상태로 {timeout}초 내 전환되지 않았습니다 "
+        f"(마지막 ADS state: {last_state}, 마지막 ADS 오류: {last_error})."
+    )
+
+
 def reset_and_play_one_plc_sync(plc_name: str, ams_net_id: str):
     """
     단일 PLC의 TwinCAT 시스템을 재시작(Activate)하고 PLC 런타임을 실행(Play)합니다.
@@ -135,34 +154,33 @@ def reset_and_play_one_plc_sync(plc_name: str, ams_net_id: str):
     try:
         sys_conn = pyads.Connection(ams_net_id, pyads.PORT_SYSTEMSERVICE)
         sys_conn.open()
+        sys_conn.set_timeout(20000)
 
         # System Service는 RECONFIG/RESET 명령으로 재구성 및 재시작한다.
-        sys_conn.write_control(
-            pyads.ADSSTATE_RECONFIG, 0, 0, pyads.PLCTYPE_BYTE
-        )
-        time.sleep(2) # 시스템이 Config 상태로 완전히 내려갈 때까지 대기
+        try:
+            sys_conn.write_control(
+                pyads.ADSSTATE_RECONFIG, 0, 0, pyads.PLCTYPE_BYTE
+            )
+        except pyads.ADSError as error:
+            if getattr(error, "err_code", None) != 1861:
+                raise
+            print(f"[{plc_name}] RECONFIG 응답 타임아웃; 실제 CONFIG 상태를 확인합니다.")
+        sys_conn.set_timeout(3000)
+        wait_for_system_state(sys_conn, pyads.ADSSTATE_CONFIG, 30, "TwinCAT CONFIG")
 
         # 저장된 TwinCAT 구성을 다시 시작한다.
         system_step = "RESET"
-        sys_conn.write_control(
-            pyads.ADSSTATE_RESET, 0, 0, pyads.PLCTYPE_BYTE
-        )
-        # RESET 응답은 Run 진입 완료를 보장하지 않는다.
-        deadline = time.monotonic() + 30
-        system_state = None
-        while time.monotonic() < deadline:
-            try:
-                system_state, _ = sys_conn.read_state()
-                if system_state == pyads.ADSSTATE_RUN:
-                    break
-            except pyads.ADSError:
-                pass  # 재시작 중 System Service가 잠시 응답하지 않을 수 있다.
-            time.sleep(0.5)
-        else:
-            raise TimeoutError(
-                f"TwinCAT System Service가 30초 내 RUN에 도달하지 않았습니다 "
-                f"(마지막 ADS state: {system_state})."
+        sys_conn.set_timeout(20000)
+        try:
+            sys_conn.write_control(
+                pyads.ADSSTATE_RESET, 0, 0, pyads.PLCTYPE_BYTE
             )
+        except pyads.ADSError as error:
+            if getattr(error, "err_code", None) != 1861:
+                raise
+            print(f"[{plc_name}] RESET 응답 타임아웃; 실제 RUN 상태를 확인합니다.")
+        sys_conn.set_timeout(3000)
+        wait_for_system_state(sys_conn, pyads.ADSSTATE_RUN, 45, "TwinCAT RUN")
         result["system_activated"] = True
         print(f"[{plc_name}] TwinCAT 시스템 Run 모드 전환 완료 (Activate).")
     except Exception as e:
