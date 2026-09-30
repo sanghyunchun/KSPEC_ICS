@@ -147,8 +147,22 @@ def reset_and_play_one_plc_sync(plc_name: str, ams_net_id: str):
         sys_conn.write_control(
             pyads.ADSSTATE_RESET, 0, 0, pyads.PLCTYPE_BYTE
         )
-        # 중요: 시스템 부팅 및 EtherCAT 드라이버 다축 통신 연결이 안정화될 충분한 시간 부여
-        time.sleep(5)
+        # RESET 응답은 Run 진입 완료를 보장하지 않는다.
+        deadline = time.monotonic() + 30
+        system_state = None
+        while time.monotonic() < deadline:
+            try:
+                system_state, _ = sys_conn.read_state()
+                if system_state == pyads.ADSSTATE_RUN:
+                    break
+            except pyads.ADSError:
+                pass  # 재시작 중 System Service가 잠시 응답하지 않을 수 있다.
+            time.sleep(0.5)
+        else:
+            raise TimeoutError(
+                f"TwinCAT System Service가 30초 내 RUN에 도달하지 않았습니다 "
+                f"(마지막 ADS state: {system_state})."
+            )
         result["system_activated"] = True
         print(f"[{plc_name}] TwinCAT 시스템 Run 모드 전환 완료 (Activate).")
     except Exception as e:
@@ -168,14 +182,33 @@ def reset_and_play_one_plc_sync(plc_name: str, ams_net_id: str):
 
     # 2. PLC Runtime (Port 851) 제어 - Login and Play
     plc_conn = None
+    plc_state = None
+    plc_step = "상태 조회"
     try:
         plc_conn = pyads.Connection(ams_net_id, pyads.PORT_TC3PLC1)
         plc_conn.open()
 
-        # PLC 프로그램 실행
-        plc_conn.write_control(
-            pyads.ADSSTATE_RUN, 0, 0, pyads.PLCTYPE_BYTE
-        )
+        # System Service가 RUN이어도 PLC Runtime은 아직 초기화 중일 수 있다.
+        deadline = time.monotonic() + 20
+        while time.monotonic() < deadline:
+            try:
+                plc_state, _ = plc_conn.read_state()
+                if plc_state in (pyads.ADSSTATE_STOP, pyads.ADSSTATE_RUN):
+                    break
+            except pyads.ADSError:
+                pass
+            time.sleep(0.5)
+        else:
+            raise TimeoutError(
+                f"PLC Runtime port 851이 20초 내 준비되지 않았습니다 "
+                f"(마지막 ADS state: {plc_state})."
+            )
+
+        if plc_state == pyads.ADSSTATE_STOP:
+            plc_step = "RUN 명령"
+            plc_conn.write_control(
+                pyads.ADSSTATE_RUN, 0, 0, pyads.PLCTYPE_BYTE
+            )
         result["runtime_running"] = True
         print(f"[{plc_name}] PLC 런타임 정상 실행 완료 (Play).")
 
@@ -200,7 +233,10 @@ def reset_and_play_one_plc_sync(plc_name: str, ams_net_id: str):
             print(f"[{plc_name}] 경고: 시간 내에 EtherCAT 통신이 안정화되지 않았습니다.")
         result["system_ready"] = bool(is_ready)
     except Exception as e:
-        result["errors"].append(f"PLC Login/Play 실패: {e}")
+        result["errors"].append(
+            f"PLC Runtime port 851 {plc_step} 실패 "
+            f"(마지막 ADS state: {plc_state}): {e}"
+        )
         print(f"[{plc_name}] PLC 실행 중 에러 발생: {e}")
     finally:
         if plc_conn is not None:

@@ -1329,7 +1329,7 @@ class MainWindow(QMainWindow):
                     level='send',
                 )
                 request_phase = 'waiting for the FBP response'
-                response = await asyncio.wait_for(waiter, timeout=45)
+                response = await asyncio.wait_for(waiter, timeout=90)
             except asyncio.TimeoutError:
                 self.logging(
                     f'Timed out while {request_phase}.',
