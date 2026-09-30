@@ -1334,11 +1334,16 @@ class MainWindow(QMainWindow):
 
         if response.get('status') != 'success':
             self.fbp_runtime_initialized = False
+            plc_errors = []
+            for plc_name, plc_result in response.get('data', {}).get('plcs', {}).items():
+                for error in plc_result.get('errors', []):
+                    plc_errors.append(f'{plc_name}: {error}')
+            detail = f" ({'; '.join(plc_errors)})" if plc_errors else ''
             self.logging(
                 response.get(
                     'message',
                     'TwinCAT Activate/Login/Play failed. Check PLC details in the FBP response.',
-                ),
+                ) + detail,
                 level='error',
             )
             return False

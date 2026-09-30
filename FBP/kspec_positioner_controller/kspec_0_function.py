@@ -131,26 +131,28 @@ def reset_and_play_one_plc_sync(plc_name: str, ams_net_id: str):
 
     # 1. System Service (Port 10000) 제어 - Activate Configuration
     sys_conn = None
+    system_step = "RECONFIG"
     try:
         sys_conn = pyads.Connection(ams_net_id, pyads.PORT_SYSTEMSERVICE)
         sys_conn.open()
 
-        # Config 모드로 전환 (초기화)
+        # System Service는 RECONFIG/RESET 명령으로 재구성 및 재시작한다.
         sys_conn.write_control(
-            pyads.ADSSTATE_CONFIG, 0, 0, pyads.PLCTYPE_BYTE
+            pyads.ADSSTATE_RECONFIG, 0, 0, pyads.PLCTYPE_BYTE
         )
         time.sleep(2) # 시스템이 Config 상태로 완전히 내려갈 때까지 대기
 
-        # Run 모드로 전환 (Activate Configuration)
+        # 저장된 TwinCAT 구성을 다시 시작한다.
+        system_step = "RESET"
         sys_conn.write_control(
-            pyads.ADSSTATE_RUN, 0, 0, pyads.PLCTYPE_BYTE
+            pyads.ADSSTATE_RESET, 0, 0, pyads.PLCTYPE_BYTE
         )
         # 중요: 시스템 부팅 및 EtherCAT 드라이버 다축 통신 연결이 안정화될 충분한 시간 부여
         time.sleep(5)
         result["system_activated"] = True
         print(f"[{plc_name}] TwinCAT 시스템 Run 모드 전환 완료 (Activate).")
     except Exception as e:
-        result["errors"].append(f"TwinCAT Activate 실패: {e}")
+        result["errors"].append(f"TwinCAT System Service port 10000 {system_step} 실패: {e}")
         print(f"[{plc_name}] 시스템 제어 중 에러 발생: {e}")
     finally:
         if sys_conn is not None:
