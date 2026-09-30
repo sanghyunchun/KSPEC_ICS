@@ -136,11 +136,15 @@ def reset_and_play_one_plc_sync(plc_name: str, ams_net_id: str):
         sys_conn.open()
 
         # Config 모드로 전환 (초기화)
-        sys_conn.write_control(pyads.ADSSTATE_CONFIG, 0, 0)
+        sys_conn.write_control(
+            pyads.ADSSTATE_CONFIG, 0, 0, pyads.PLCTYPE_BYTE
+        )
         time.sleep(2) # 시스템이 Config 상태로 완전히 내려갈 때까지 대기
 
         # Run 모드로 전환 (Activate Configuration)
-        sys_conn.write_control(pyads.ADSSTATE_RUN, 0, 0)
+        sys_conn.write_control(
+            pyads.ADSSTATE_RUN, 0, 0, pyads.PLCTYPE_BYTE
+        )
         # 중요: 시스템 부팅 및 EtherCAT 드라이버 다축 통신 연결이 안정화될 충분한 시간 부여
         time.sleep(5)
         result["system_activated"] = True
@@ -167,7 +171,9 @@ def reset_and_play_one_plc_sync(plc_name: str, ams_net_id: str):
         plc_conn.open()
 
         # PLC 프로그램 실행
-        plc_conn.write_control(pyads.ADSSTATE_RUN, 0, 0)
+        plc_conn.write_control(
+            pyads.ADSSTATE_RUN, 0, 0, pyads.PLCTYPE_BYTE
+        )
         result["runtime_running"] = True
         print(f"[{plc_name}] PLC 런타임 정상 실행 완료 (Play).")
 
