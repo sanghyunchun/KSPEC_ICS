@@ -419,7 +419,7 @@ class MainWindow(QMainWindow):
         self.ui.log1.moveCursor(QTextCursor.End)
         self.ui.log2.moveCursor(QTextCursor.End)
 
-        if save :
+        if save and self.msglog_path is not None:
             with open(self.msglog_path,'a') as f:
                 f.write(f'[{self.uttime}][ICS] {message}\n')
 
@@ -1307,9 +1307,16 @@ class MainWindow(QMainWindow):
             loop = asyncio.get_running_loop()
             waiter = loop.create_future()
             self._fbp_activate_waiter = waiter
+            request_phase = 'sending fbpactivate'
 
             try:
-                sent = await handle_fbp('fbpactivate', self.ICS_client)
+                self.logging(
+                    f'{requested_by}: sending fbpactivate to the FBP server.',
+                    level='send',
+                )
+                sent = await asyncio.wait_for(
+                    handle_fbp('fbpactivate', self.ICS_client), timeout=10
+                )
                 if not sent:
                     self.logging(
                         'Failed to send fbpactivate to the FBP server.',
@@ -1321,10 +1328,17 @@ class MainWindow(QMainWindow):
                     f'{requested_by}: waiting for TwinCAT Activate/Login/Play.',
                     level='send',
                 )
+                request_phase = 'waiting for the FBP response'
                 response = await asyncio.wait_for(waiter, timeout=45)
             except asyncio.TimeoutError:
                 self.logging(
-                    'Timed out while waiting for the FBP Activate/Login/Play response.',
+                    f'Timed out while {request_phase}.',
+                    level='error',
+                )
+                return False
+            except Exception as error:
+                self.logging(
+                    f'FBP Activate/Login/Play request failed: {error}',
                     level='error',
                 )
                 return False
@@ -2170,6 +2184,7 @@ class MainWindow(QMainWindow):
     # region Observation script workflow
     @asyncSlot()
     async def syscheck(self):
+        self.logging('Sys check button clicked.', level='normal', save=self.msglog_path is not None)
         if not self.check_connection():
             return
 
