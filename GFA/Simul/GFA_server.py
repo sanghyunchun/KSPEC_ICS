@@ -6,7 +6,7 @@ import asyncio
 import aio_pika
 import json
 from GFA.command import *
-from GFA.Simul.kspec_gfa_controller.src.kspec_gfa_controller.gfa_actions import GFAActions
+from GFA.Simul.simulation import create_simulated_actions
 #from GFA.endo_controller.endo_actions import endo_actions
 #import configparser as cp
 
@@ -22,7 +22,9 @@ async def main():
 
     print('GFA Sever Started!!!')
     GFA_server=AMQclass(ip_addr,idname,pwd,'GFA','ics.ex')
-    gfa_actions=GFAActions()
+    # The command and action layers are the production implementations.  Only
+    # the camera/environment are substituted by the simulation factory.
+    gfa_actions = create_simulated_actions()
     await GFA_server.connect()
 
     async def on_gfa_message(message: aio_pika.IncomingMessage):
