@@ -158,7 +158,7 @@ class script():
     def MTL_set(self,exptime, expnum, mtlfile):
         self.MTLexpT = exptime
         self.MTLexpN = expnum
-        self.MTLimgnmae = mtlfile
+        self.MTLimgname = mtlfile
     #    print(f'MTL exposure time is {self.MTLexpT}')
 
 
