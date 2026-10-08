@@ -37,7 +37,7 @@ def adc_zero(velocity):
     return create_adc_command('adczero', vel = velocity, message='Rotate ADC lens to zero position.')
 
 
-async def handle_adc(arg, ICS_client):
+async def handle_adc(arg, ICS_client, logging=None):
     """Handle ADC commands with error checking."""
     cmd, *params = arg.split()
 
@@ -110,6 +110,8 @@ async def handle_adc(arg, ICS_client):
     # Right command
     if cmd in command_map:
         adcmsg = command_map[cmd]()
+        if logging is not None:
+            logging(json.loads(adcmsg)['message'], level='send')
         await ICS_client.send_message("ADC", adcmsg)
     else:
         print(f"Error: '{cmd}' is not right command for ADC")

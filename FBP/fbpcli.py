@@ -67,7 +67,7 @@ def fbp_lock(positioner_list):
     return create_fbp_command('fbplock',positioners=positioner_list, message=f'Lock positioners {positioner_list}')
 
 
-async def handle_fbp(arg, ICS_client):
+async def handle_fbp(arg, ICS_client, logging=None):
     """Handle Fiber positioner commands."""
     parts = arg.strip().split(maxsplit=1)
     if not parts:
@@ -108,6 +108,8 @@ async def handle_fbp(arg, ICS_client):
         except (OSError, json.JSONDecodeError, ValueError) as error:
             print(f'Error: {error}')
             return False
+        if logging is not None:
+            logging(json.loads(fbpmsg)['message'], level='send')
         await ICS_client.send_message("FBP", fbpmsg)
         return True
 

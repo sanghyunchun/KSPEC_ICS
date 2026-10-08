@@ -141,7 +141,7 @@ def mtl_reset():
     )
 
 
-async def handle_mtl(arg, ICS_client):
+async def handle_mtl(arg, ICS_client, logging=None):
     """MTL CLI 명령을 검사하고 JSON 메시지로 변환해 서버에 전달한다."""
     try:
         parts = shlex.split(arg)
@@ -244,4 +244,6 @@ async def handle_mtl(arg, ICS_client):
         print(f"Error: {error}")
         return
 
+    if logging is not None:
+        logging(json.loads(message)['message'], level='send')
     await ICS_client.send_message("MTL", message)

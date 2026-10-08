@@ -1,6 +1,6 @@
 import os, sys
 import json
-#import redis
+import redis
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import asyncio
 import math
@@ -135,15 +135,15 @@ class script():
         self.obsdate = obsdate
         self.TileID = tileid
         self.object = object_name
-        self.ra = value1
-        self.dec = value2
+        self.ra = value1    # RA in sexagesimal
+        self.dec = value2   # DEC in sexagesimal
         self.obsnum = obsnum
         self.expT = expT
         print(f'{self.TileID}, {self.ra}, {self.dec}')
 
     def initialize_dependencies(self, ICSclient, send_udp_message, send_telcom_command,
             response_queue, GFA_response_queue, ADC_response_queue, SPEC_response_queue,
-            show_status, dir_name, obslog=None):
+            show_status, dir_name, obslog=None, lamp_state_callback=None):
         self.ICSclient = ICSclient
         self.send_udp_message = send_udp_message 
         self.send_telcom_command = send_telcom_command
@@ -154,6 +154,7 @@ class script():
         self.show_status = show_status
         self.dir_name = dir_name
         self.obslog = obslog
+        self.lamp_state_callback = lamp_state_callback
 
     def MTL_set(self,exptime, expnum, mtlfile):
         self.MTLexpT = exptime
@@ -236,31 +237,32 @@ class script():
 
         return spec_rsp
 
-    async def obs_initial(self,scriptrun,logging):
-        """Initialize all instruments."""
+    async def obs_initial(self, scriptrun, logging, *, include_fbp=True):
+        """Initialize instruments; GUI can defer FBP until Runtime is ready."""
         print('Start instruments intialization')
         await clear_queue(scriptrun.response_queue)
         await clear_queue(scriptrun.GFA_response_queue)
         await clear_queue(scriptrun.ADC_response_queue)
         await clear_queue(scriptrun.SPEC_response_queue)
-        await handle_gfa('gfastatus',scriptrun.ICSclient)
+        await handle_gfa('gfastatus',scriptrun.ICSclient, logging)
         await scriptrun.response_queue.get()
         await asyncio.sleep(2)
-        await handle_fbp('fbpstatus',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
-        await handle_mtl('mtlstatus',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
-        await asyncio.sleep(2)
-        await handle_adc('adcconnect',scriptrun.ICSclient)
+        if include_fbp:
+            await handle_fbp('fbpstatus',scriptrun.ICSclient, logging=logging)
+            await scriptrun.response_queue.get()
+        await handle_mtl('mtlstatus',scriptrun.ICSclient, logging=logging)
         await scriptrun.response_queue.get()
         await asyncio.sleep(2)
-        await handle_adc('adchome 1',scriptrun.ICSclient)
+        await handle_adc('adcconnect',scriptrun.ICSclient, logging=logging)
         await scriptrun.response_queue.get()
         await asyncio.sleep(2)
-        await handle_adc('adczero 4',scriptrun.ICSclient)
+        await handle_adc('adchome 1',scriptrun.ICSclient, logging=logging)
         await scriptrun.response_queue.get()
         await asyncio.sleep(2)
-        await handle_adc('adcstatus',scriptrun.ICSclient)
+        await handle_adc('adczero 4',scriptrun.ICSclient, logging=logging)
+        await scriptrun.response_queue.get()
+        await asyncio.sleep(2)
+        await handle_adc('adcstatus',scriptrun.ICSclient, logging=logging)
         await scriptrun.response_queue.get()
         await asyncio.sleep(2)
     #    await handle_spec(f'specinitial {self.dir_name}',scriptrun.ICSclient)
@@ -304,11 +306,10 @@ class script():
         )
 
         # Arc
-        if logging != None:
-            logging('Sent Arc on.',level='send')
-
-        await handle_lamp('arcon',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
+        await handle_lamp(
+            'arcon', scriptrun.ICSclient, logging=logging,
+            state_callback=getattr(scriptrun, 'lamp_state_callback', None),
+        )
         
         if logging != None:
             logging(f"Sent getarc {calinfo['Arc']['exptime']} {calinfo['Arc']['expnum']}.",level='send')
@@ -322,18 +323,16 @@ class script():
             logging=logging,
         )
 
-        if logging != None:
-            logging('Sent Arc off.',level='send')
-
-        await handle_lamp('arcoff',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
+        await handle_lamp(
+            'arcoff', scriptrun.ICSclient, logging=logging,
+            state_callback=getattr(scriptrun, 'lamp_state_callback', None),
+        )
 
         # Flat
-        if logging != None:
-            logging('Sent Flat on.', level='send')
-
-        await handle_lamp('flaton',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
+        await handle_lamp(
+            'flaton', scriptrun.ICSclient, logging=logging,
+            state_callback=getattr(scriptrun, 'lamp_state_callback', None),
+        )
     
         if logging != None:
             logging(f"Sent getflat {calinfo['Flat']['exptime']} {calinfo['Flat']['expnum']}.", level='send')
@@ -349,11 +348,10 @@ class script():
             logging=logging,
         )
         
-        if logging != None:
-            logging('Sent Flat off.', level='send')
-
-        await handle_lamp('flatoff',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
+        await handle_lamp(
+            'flatoff', scriptrun.ICSclient, logging=logging,
+            state_callback=getattr(scriptrun, 'lamp_state_callback', None),
+        )
         
         printing("All Calibration images were obtained.")
         self.scrpt_task = None
@@ -395,7 +393,7 @@ class script():
             decdms_t=bytes_to_sexagesimal(dec_bytes)                 ## Current Telescope pointing position
 #            print(rahms_t)
             logging(f'Current Telescope pointing position = (RA,DEC)=({rahms_t}, {decdms_t})', level='normal')
-            await handle_gfa(f'gfaguide {exptime} {expnum} {save} {rahms_t} {decdms_t}',scriptrun.ICSclient)
+            await handle_gfa(f'gfaguide {exptime} {expnum} {save} {rahms_t} {decdms_t}',scriptrun.ICSclient, logging=logging)
             while True:
                 try:
                     response_data = await asyncio.wait_for(scriptrun.GFA_response_queue.get(),timeout=300)
@@ -468,7 +466,7 @@ class script():
     async def autoguidestop(self,scriptrun,logging):
         """Stops the autoguiding process if it is running."""
         print("ddfdfd")
-        await handle_gfa("gfaguidestop", scriptrun.ICSclient)
+        await handle_gfa("gfaguidestop", scriptrun.ICSclient, logging=logging)
         print("Stopping autoguiding task...")
 
         if self.autoguide_task:
@@ -582,17 +580,9 @@ class script():
         
         await asyncio.sleep(2)
 
-    
-        printing(f'ADC Adjust Start')
-    #    message=f'adcadjust {self.ra} {self.dec}'
-    #    print(message)
-        message=f'adcadjust 02:34:56.44 -31:34:55.67'                           # Just for simulation. Remove or comment when real observation
-        await handle_adc(message,scriptrun.ICSclient)
-        await asyncio.sleep(2)
-  
-        printing(f'Fiber positioner Moving Start')
-        await handle_fbp('fbpmove',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
+        # printing(f'Fiber positioner Moving Start')
+        # await handle_fbp('fbpmove',scriptrun.ICSclient, logging=logging)
+        # await scriptrun.response_queue.get()
 
         messagetcs = 'KSPEC>TC ' + 'tmradec ' + self.ra +' '+ self.dec
         printing(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.')
@@ -601,6 +591,7 @@ class script():
         await asyncio.sleep(2)
 
         while True:
+            print('HIHIHI')
         #    r=redis.Redis(host='192.168.15.121',port=6379,decode_responses=True)     # Set IP address of KMTNet redis server
             r=redis.Redis(host='127.0.0.1',port=6379,decode_responses=True)     # For simulation. Remove or comment in real observation
 
@@ -614,7 +605,9 @@ class script():
             print('.',end=' ', flush=True)
             await asyncio.sleep(5)
 
-        await scriptrun.response_queue.get()                                    # Wait for Fiber movement finish
+        #await scriptrun.response_queue.get()                                    # Wait for Fiber movement finish
+
+        ### 이부분에 Cal Offset, Pointing 부분이 iteration으로 들어가야함. Pointing이 끝나면 Autoguiding
 
         await asyncio.sleep(3)
         printing(f'Autoguiding Start')
@@ -622,8 +615,10 @@ class script():
         await self.run_autoguide(scriptrun,self.GFAexpT,logging=logging)
         await asyncio.sleep(2)
 
-        await handle_lamp('fiducialon',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
+        await handle_lamp(
+            'fiducialon', scriptrun.ICSclient, logging=logging,
+            state_callback=getattr(scriptrun, 'lamp_state_callback', None),
+        )
         await asyncio.sleep(2)
                 
         await handle_spec('illuon',scriptrun.ICSclient)
@@ -631,78 +626,86 @@ class script():
         await asyncio.sleep(2)
 
         # mtlstart에서 준비한 촬영 설정으로 노출부터 JSON 저장까지 실행한다.
-        await handle_mtl('mtltrial',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()                                    # Start MTL trial message
-        mtltrial_response = await scriptrun.response_queue.get()                 # Wait for MTL trial finish
-        await asyncio.sleep(2)
+    #     await handle_mtl('mtltrial',scriptrun.ICSclient, logging=logging)
+    #     await scriptrun.response_queue.get()                                    # Start MTL trial message
+    #     mtltrial_response = await scriptrun.response_queue.get()                 # Wait for MTL trial finish
+    #     await asyncio.sleep(2)
 
-        mtltrial_json = mtltrial_response.get('filename')
-        if (
-            mtltrial_response.get('status') != 'success'
-            or mtltrial_json in (None, '', 'None')
-        ):
-            logging('MTL trial failed or returned no JSON; FBP offset was not started.', level='error')
-            return
+    #     mtltrial_json = mtltrial_response.get('filename')
+    #     if (
+    #         mtltrial_response.get('status') != 'success'
+    #         or mtltrial_json in (None, '', 'None')
+    #     ):
+    #         logging('MTL trial failed or returned no JSON; FBP offset was not started.', level='error')
+    #         return
 
-        sent = await handle_fbp(
-            f'fbpoffset {shlex.quote(str(mtltrial_json))}',
-            scriptrun.ICSclient,
-        )
-        if not sent:
-            logging(f'Failed to read MTL trial JSON: {mtltrial_json}', level='error')
-            return
-        await scriptrun.response_queue.get()                                    # Start offset message
-        await scriptrun.response_queue.get()                                    # Wait for FBP offset finish
-        await asyncio.sleep(2)
+    #     sent = await handle_fbp(
+    #         f'fbpoffset {shlex.quote(str(mtltrial_json))}',
+    #         scriptrun.ICSclient,
+    #         logging=logging,
+    #     )
+    #     if not sent:
+    #         logging(f'Failed to read MTL trial JSON: {mtltrial_json}', level='error')
+    #         return
+    #     await scriptrun.response_queue.get()                                    # Start offset message
+    #     await scriptrun.response_queue.get()                                    # Wait for FBP offset finish
+    #     await asyncio.sleep(2)
 
-        await handle_spec('illuoff',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()                                 
-        await asyncio.sleep(2)
+    #     await handle_spec('illuoff',scriptrun.ICSclient)
+    #     await scriptrun.response_queue.get()
+    #     await asyncio.sleep(2)
 
-        await handle_lamp('fiducialoff',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
-        await asyncio.sleep(2)
+    #     await handle_lamp('fiducialoff', scriptrun.ICSclient, logging=logging,
+    #                       state_callback=getattr(scriptrun, 'lamp_state_callback', None))
+    #     await asyncio.sleep(2)
+
+    #     printing(f'ADC Adjust Start')
+    # #    message=f'adcadjust {self.ra} {self.dec}'
+    # #    print(message)
+    #     message=f'adcadjust 02:34:56.44 -31:34:55.67'                           # Just for simulation. Remove or comment when real observation
+    #     await handle_adc(message,scriptrun.ICSclient, logging=logging)
+    #     await asyncio.sleep(2)
 
     
-    #    print(f'FHWM is {self.fwhm:.5f}.')                                     # Remove in real observation
+    # #    print(f'FHWM is {self.fwhm:.5f}.')                                     # Remove in real observation
   
-        obs_num=self.obsnum
-        printing(f'KSPEC starts {obs_num} exposures with {self.expT} seconds.')
+    #     obs_num=self.obsnum
+    #     printing(f'KSPEC starts {obs_num} exposures with {self.expT} seconds.')
         
-        for i in range(int(obs_num)):
-            await clear_queue(scriptrun.SPEC_response_queue)
-            fram=f'{i+1}/{obs_num}'
-            printing(f'**** {i+1}/{obs_num}: {self.expT} seconds exposure start. ****')
-            logging(f'**** {i+1}/{obs_num}: {self.expT} seconds exposure start. ****', level='receive')
-            spec_rsp = await self.send_spec_and_log(
-                f'getobj {self.expT} 1',
-                'Object',
-                self.expT,
-                fram,
-                scriptrun,
-                logging=logging,
-            )
-            if isinstance(spec_rsp, dict) and spec_rsp.get("filename") not in (None, "None"):
-                logging('Fits header and observation log updated', level='receive')
-                printing("Fits header and observation log updated")
+    #     for i in range(int(obs_num)):
+    #         await clear_queue(scriptrun.SPEC_response_queue)
+    #         fram=f'{i+1}/{obs_num}'
+    #         printing(f'**** {i+1}/{obs_num}: {self.expT} seconds exposure start. ****')
+    #         logging(f'**** {i+1}/{obs_num}: {self.expT} seconds exposure start. ****', level='receive')
+    #         spec_rsp = await self.send_spec_and_log(
+    #             f'getobj {self.expT} 1',
+    #             'Object',
+    #             self.expT,
+    #             fram,
+    #             scriptrun,
+    #             logging=logging,
+    #         )
+    #         if isinstance(spec_rsp, dict) and spec_rsp.get("filename") not in (None, "None"):
+    #             logging('Fits header and observation log updated', level='receive')
+    #             printing("Fits header and observation log updated")
 
 
-        printing('All exposures are completed.')
-        logging('All exposures are completed.',level='receive')
+    #     printing('All exposures are completed.')
+    #     logging('All exposures are completed.',level='receive')
 
-        await handle_adc('adcstop',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
+    #     await handle_adc('adcstop',scriptrun.ICSclient, logging=logging)
+    #     await scriptrun.response_queue.get()
     
-        await self.autoguidestop(scriptrun,logging)
-        await scriptrun.response_queue.get()
+    #     await self.autoguidestop(scriptrun,logging)
+    #     await scriptrun.response_queue.get()
 
-        await handle_adc('adczero 2',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
-        await scriptrun.response_queue.get()
+    #     await handle_adc('adczero 2',scriptrun.ICSclient, logging=logging)
+    #     await scriptrun.response_queue.get()
+    #     await scriptrun.response_queue.get()
 
-        await handle_fbp('fbpzero',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
-        await scriptrun.response_queue.get()
+    #     await handle_fbp('fbpzero',scriptrun.ICSclient, logging=logging)
+    #     await scriptrun.response_queue.get()
+    #     await scriptrun.response_queue.get()
         
 
         printing(f'###### Observation Script for Tile ID {self.TileID} END!!! ######')

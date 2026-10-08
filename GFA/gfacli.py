@@ -99,7 +99,7 @@ def gfa_caloffset(expt: float=1.0, expnum: int=1, save: bool=True, ra: str=None,
 #    return ra, dec
 
 
-async def handle_gfa(arg, ICS_client):
+async def handle_gfa(arg, ICS_client, logging=None):
     cmd, *params = arg.split()
     command_map = {
         'gfastatus': gfa_status,
@@ -158,6 +158,8 @@ async def handle_gfa(arg, ICS_client):
 
     if cmd in command_map:
         gfamsg = command_map[cmd]()
+        if logging is not None:
+            logging(json.loads(gfamsg)['message'], level='send')
         await ICS_client.send_message("GFA", gfamsg)
     else:
         print(f"Error: '{cmd}' is not right command for GFA.")

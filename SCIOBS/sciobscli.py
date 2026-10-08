@@ -172,7 +172,7 @@ class sciobscli:
         objinfo=self.load_target()
         OBJmsg=objinfo
 
-        print(OBJmsg)
+        #print(OBJmsg)
 
         motionmsg1,motionmsg2=self.load_motion()
 
