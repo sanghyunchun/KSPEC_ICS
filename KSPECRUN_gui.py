@@ -31,8 +31,6 @@ from GFA.gfacli import handle_gfa
 from FBP.fbpcli import handle_fbp
 from MTL.mtlcli import handle_mtl, mtl_start, mtl_set
 from LAMP.lampcli import handle_lamp
-import requests
-import xml.etree.ElementTree as ET
 from SPECTRO.speccli import handle_spec
 from TCS.tcscli import handle_telcom
 from script.scriptcli import handle_script
@@ -884,10 +882,7 @@ class MainWindow(QMainWindow):
             print(f"Unknown command category: {category}", flush=True)
             return
 
-        if category == 'lamp':
-            await handler(message, self.ICS_client, logging=self.logging,
-                          state_callback=self._handle_lamp_state)
-        elif category in ('mtl', 'adc', 'fbp', 'gfa'):
+        if category in ('mtl', 'adc', 'fbp', 'gfa'):
             await handler(message, self.ICS_client, logging=self.logging)
         else:
             await handler(message, self.ICS_client)
@@ -978,7 +973,6 @@ class MainWindow(QMainWindow):
         status = dict_data.get('status', 'error')
         subinst = dict_data.get('subinst', 'None')
         
-
         if process == 'Done':
             color_map = {'success': 'black','error': 'red', 'fail': 'black'}
         elif process in  ('ING', 'START'):
@@ -1031,7 +1025,7 @@ class MainWindow(QMainWindow):
             self._handle_gfa_state(inst, subinst, process)
         elif dict_data['inst'] == 'ADC':
             self._handle_adc_state(inst, process)
-        elif dict_data['inst'] == 'LAMP' and status == 'success':
+        elif dict_data['inst'] == 'LAMP':
             self._handle_lamp_state(inst, subinst, process)
 
     def _set_toggle_button(self, button, active):
@@ -1759,9 +1753,19 @@ class MainWindow(QMainWindow):
         if not self.ui.lineEdit_GFA_exptime.text():
             self.ui.lineEdit_GFA_exptime.setText('5')
 
-        self.gfaexpt = float(self.ui.lineEdit_GFA_exptime.text())
-        self.logging(f'Set GFA exposure time to {self.gfaexpt}', level='send')
-        self.scriptrun.GFA_set(self.gfaexpt)
+        if not self.ui.lineEdit_GFA_expnum.text():
+            self.ui.lineEdit_GFA_expnum.setText('1')
+
+        try:
+            exptime = float(self.ui.lineEdit_GFA_exptime.text())
+            expnum = int(self.ui.lineEdit_GFA_expnum.text())
+            self.scriptrun.GFA_set(exptime, expnum)
+        except ValueError as error:
+            self.logging(f'Invalid GFA exposure settings: {error}', level='error')
+            return
+
+        self.gfaexpt, self.gfaexpnum = exptime, expnum
+        self.logging(f'Set GFA exposure time to {exptime} s, exposure count to {expnum}.', level='send')
 
     @asyncSlot()
     async def caloffset_button_clicked(self):
@@ -2045,7 +2049,7 @@ class MainWindow(QMainWindow):
 
     # region LAMP controls
     def _handle_lamp_state(self, inst, subinst, process):
-        if inst != 'LAMP' or subinst not in ('FIDUCIAL', 'ARC', 'FLAT') or process not in ('ING', 'Done'):
+        if inst != 'LAMP':
             return
 
     # 서브 상태에 따라 제어
@@ -2062,15 +2066,6 @@ class MainWindow(QMainWindow):
         elif subinst == 'FLAT':
             apply('FLAT', 'flat_state', self.ui.pushbtn_Flat, self.ui.pushbtn_Flat_2)
 
-        # The common lamp indicator is ON while any confirmed lamp is ON.
-        lamp_on = any(getattr(self, name, False) for name in
-                      ('fiducial_state', 'arc_state', 'flat_state'))
-        color = 'green' if lamp_on else 'black'
-        for indicator in (self.ui.ok_status_lamp, self.ui.ok_status_lamp_2):
-            # Set directly: QWidgetLabelStyle preserves a previous red style,
-            # but a confirmed relay response must clear that stale error color.
-            indicator.setStyleSheet(f'color: {color};')
-
     @asyncSlot()
     async def _onoff_button_clicked(self, state_attr, btn1, btn2, command_on, command_off, label):
         if not self.check_connection():
@@ -2080,20 +2075,6 @@ class MainWindow(QMainWindow):
 #            return
         # call state and convert
         state = not getattr(self, state_attr, False)
-        command = command_on if state else command_off
-        try:
-            result = await handle_lamp(
-                command, self.ICS_client, logging=self.logging,
-                state_callback=self._handle_lamp_state,
-            )
-        except (requests.RequestException, ET.ParseError, ValueError):
-            # handle_lamp has already logged the failure. Restore Qt's toggled
-            # button to the last confirmed state.
-            previous_state = getattr(self, state_attr, False)
-            btn1.setChecked(previous_state)
-            btn2.setChecked(previous_state)
-            return
-        state = result == 1
         setattr(self, state_attr, state)
 
         # sync two button
@@ -2107,6 +2088,12 @@ class MainWindow(QMainWindow):
         btn1.setStyleSheet(style)
         btn2.setStyleSheet(style)
 
+        # command and logging
+        command = command_on if state else command_off
+        #if command in ('fiducialon', 'fiducialoff'):
+        result = await handle_lamp(command, self.ICS_client)
+        self.logging(f"Sent {label} {'ON' if state else 'OFF'}", level='send')
+        self.logging(f"{label} {'ON' if result == 1 else 'OFF'}", level='receive')
        
 
     @asyncSlot()
@@ -2218,8 +2205,7 @@ class MainWindow(QMainWindow):
         self.logging('System check start. Initialize dependencies',level='normal')
 
         self.scriptrun.initialize_dependencies(self.ICS_client, self.send_udp_message, self.send_telcom_command,
-            self.response_queue, self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue,
-            self.show_status, self.dir_name, lamp_state_callback=self._handle_lamp_state)
+            self.response_queue, self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue, self.show_status, self.dir_name)
 
         self.logging('Script dependencies delivered.',level='normal')
 

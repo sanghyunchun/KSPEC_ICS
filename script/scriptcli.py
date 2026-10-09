@@ -125,6 +125,7 @@ class script():
         self.expT = None
         self.MTLexpT = 5.    # default MTL exposure time
         self.GFAexpT = 5.    # default GFA exposure time
+        self.GFAexpN = 1    # default GFA exposure count
         self.MTLexpN = 1
         self.MTLimgname = None
         self.uttime = None
@@ -163,8 +164,14 @@ class script():
     #    print(f'MTL exposure time is {self.MTLexpT}')
 
 
-    def GFA_set(self,exptime):
+    def GFA_set(self, exptime, expnum=1):
+        exptime, count = float(exptime), float(expnum)
+        if not math.isfinite(exptime) or exptime <= 0:
+            raise ValueError('GFA exposure time must be finite and greater than zero.')
+        if not math.isfinite(count) or count < 1 or not count.is_integer():
+            raise ValueError('GFA exposure count must be a positive integer.')
         self.GFAexpT = exptime
+        self.GFAexpN = int(count)
 
     def current_uttime(self):
         now = datetime.now(timezone.utc)
@@ -581,7 +588,7 @@ class script():
         await asyncio.sleep(2)
 
         # printing(f'Fiber positioner Moving Start')
-        # await handle_fbp('fbpmove',scriptrun.ICSclient, logging=logging)
+        # await handle_fbp('fbpmoveall',scriptrun.ICSclient, logging=logging)
         # await scriptrun.response_queue.get()
 
         messagetcs = 'KSPEC>TC ' + 'tmradec ' + self.ra +' '+ self.dec
@@ -591,7 +598,7 @@ class script():
         await asyncio.sleep(2)
 
         while True:
-            print('HIHIHI')
+            print('Telescope is slewing......')
         #    r=redis.Redis(host='192.168.15.121',port=6379,decode_responses=True)     # Set IP address of KMTNet redis server
             r=redis.Redis(host='127.0.0.1',port=6379,decode_responses=True)     # For simulation. Remove or comment in real observation
 
@@ -605,25 +612,25 @@ class script():
             print('.',end=' ', flush=True)
             await asyncio.sleep(5)
 
-        #await scriptrun.response_queue.get()                                    # Wait for Fiber movement finish
+        # await scriptrun.response_queue.get()                                    # Wait for Fiber movement finish
 
         ### 이부분에 Cal Offset, Pointing 부분이 iteration으로 들어가야함. Pointing이 끝나면 Autoguiding
 
         await asyncio.sleep(3)
         printing(f'Autoguiding Start')
-        logging(f'GFA guiding. Expoture time is {self.GFAexpT}', level='receive')
-        await self.run_autoguide(scriptrun,self.GFAexpT,logging=logging)
+        logging(f'GFA guiding. Exposure time is {self.GFAexpT} s, exposure count is {self.GFAexpN}.', level='receive')
+        await self.run_autoguide(scriptrun, self.GFAexpT, self.GFAexpN, logging=logging)
         await asyncio.sleep(2)
 
-        await handle_lamp(
-            'fiducialon', scriptrun.ICSclient, logging=logging,
-            state_callback=getattr(scriptrun, 'lamp_state_callback', None),
-        )
-        await asyncio.sleep(2)
+        # await handle_lamp(
+        #     'fiducialon', scriptrun.ICSclient, logging=logging,
+        #     state_callback=getattr(scriptrun, 'lamp_state_callback', None),
+        # )
+        # await asyncio.sleep(2)
                 
-        await handle_spec('illuon',scriptrun.ICSclient)
-        await scriptrun.response_queue.get()
-        await asyncio.sleep(2)
+        # await handle_spec('illuon',scriptrun.ICSclient)
+        # await scriptrun.response_queue.get()
+        # await asyncio.sleep(2)
 
         # mtlstart에서 준비한 촬영 설정으로 노출부터 JSON 저장까지 실행한다.
     #     await handle_mtl('mtltrial',scriptrun.ICSclient, logging=logging)
