@@ -3,8 +3,8 @@
 fits_live_viewer.py
 
 Live GUI viewer for FITS images from 6 cameras, grouped by acquisition time.
-- Watches: <root>/<folder>/<YYYY-MM-DD>/
-- Filenames like: D20260126_T102110_40103667_exp5s.fits
+- Watches: <root>/raw/, or <root>/grab/<YYYY-MM-DD>/ with --date
+- Filenames like: D20260126_T102110_40103667_exp5s.fits or *_combined.fits
 - Displays 6 cameras at once
 - Prev/Next navigation
 - Auto-update (polling) for new images
@@ -51,7 +51,7 @@ STAR_PEAK_MAX = 4096.0
 
 
 FNAME_RE = re.compile(
-    r"^D(?P<date>\d{8})_T(?P<time>\d{6})_(?P<serial>\d+)_exp(?P<exp>[\d\.]+)s\.fits$"
+    r"^D(?P<date>\d{8})_T(?P<time>\d{6})_(?P<serial>\d+)_(?:exp[\d.]+s|combined)\.fits$"
 )
 
 
@@ -338,16 +338,18 @@ class FitsLiveViewer:
     def __init__(
         self,
         root_dir: str,
-        folder_name: str,
-        date_yyyymmdd: str,
+        date_yyyymmdd: Optional[str],
         camera_serials: List[str],
         poll_sec: float,
     ):
-        self.root_dir = root_dir
-        self.folder_name = folder_name
+        self.root_dir = os.path.abspath(os.path.expanduser(root_dir))
         self.date_yyyymmdd = date_yyyymmdd
-        self.date_folder = yyyymmdd_to_folder(date_yyyymmdd)
-        self.day_dir = os.path.join(self.root_dir, "raw", self.date_folder)
+        self.date_folder = yyyymmdd_to_folder(date_yyyymmdd) if date_yyyymmdd else None
+        self.day_dir = (
+            os.path.join(self.root_dir, "grab", self.date_folder)
+            if self.date_folder else os.path.join(self.root_dir, "raw")
+        )
+        self.source_label = f"grab/{self.date_folder}" if self.date_folder else "raw"
 
         self.camera_serials = camera_serials
         self.poll_sec = poll_sec
@@ -512,7 +514,7 @@ class FitsLiveViewer:
         if not all(p.is_file() for p in demo_files):
             return demo_groups
 
-        key = FrameKey(self.date_yyyymmdd, "000000")
+        key = FrameKey(self.date_yyyymmdd or time.strftime("%Y%m%d"), "000000")
         demo_groups[key] = {}
 
         for serial, path in zip(self.camera_serials, demo_files):
@@ -719,13 +721,13 @@ class FitsLiveViewer:
             if self.demo_active:
                 self.status_var.set("[DEMO] No actual FITS in watched directory.")
             else:
-                self.status_var.set(f"[raw/{self.date_folder}] No frames yet.")
+                self.status_var.set(f"[{self.source_label}] No frames yet.")
             return
 
         key = self.keys[self.idx] if 0 <= self.idx < len(self.keys) else self.keys[-1]
         lock_txt = "LOCKED" if self.reference_locked else "UNLOCKED"
 
-        prefix = "[DEMO] " if self.demo_active else f"[{self.folder_name}/{self.date_folder}] "
+        prefix = "[DEMO] " if self.demo_active else f"[{self.source_label}] "
 
         self.status_var.set(
             f"{prefix}"
@@ -738,7 +740,7 @@ class FitsLiveViewer:
         if self.demo_active:
             self.win.title("FITS Live Viewer - DEMO - K-SPEC")
         else:
-            self.win.title(f"FITS Live Viewer - {self.folder_name} - D{key.date} T{key.t}")
+            self.win.title(f"FITS Live Viewer - {self.source_label} - D{key.date} T{key.t}")
 
     def on_toggle_follow(self):
         self.follow_latest = bool(self.follow_var.get())
@@ -1076,8 +1078,8 @@ class FitsLiveViewer:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--root", default="../../DATA/GFADATA/img", help="GFA camera directory")
-    ap.add_argument("--date", required=True, help="YYYYMMDD, e.g. 20260126")
+    ap.add_argument("--root", default="~/work/DATA/GFADATA/img", help="GFA image directory")
+    ap.add_argument("--date", help="Read grab/YYYY-MM-DD instead of raw (YYYYMMDD)")
     ap.add_argument("--interval", type=float, default=2.0, help="Polling interval in seconds")
     ap.add_argument(
         "--cameras",
@@ -1091,8 +1093,7 @@ def main():
         raise SystemExit("Please provide exactly 6 camera serials in --cameras")
 
     viewer = FitsLiveViewer(
-        root_dir=os.path.abspath(args.root),
-        folder_name="raw",
+        root_dir=args.root,
         date_yyyymmdd=args.date,
         camera_serials=cams,
         poll_sec=args.interval,
