@@ -7,6 +7,7 @@ Live GUI viewer for FITS images from 6 cameras, grouped by acquisition time.
 - Filenames like: D20260126_T102110_40103667_exp5s.fits or *_combined.fits
 - Displays 6 cameras at once
 - Prev/Next navigation
+- Open a FITS file and display cameras within 4 seconds of its filename timestamp
 - Auto-update (polling) for new images
 - Locks one reference star per camera from the initial frame
 - Shows fixed-position cutouts to monitor guiding drift
@@ -31,7 +32,7 @@ from astropy.io import fits
 from astropy.visualization import ZScaleInterval
 
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
 
 import matplotlib
 matplotlib.use("TkAgg")
@@ -86,19 +87,23 @@ def parse_filename(name: str) -> Optional[Tuple[FrameKey, str]]:
     return key, serial
 
 
-def scan_groups(day_dir: str) -> Dict[FrameKey, Dict[str, str]]:
+def scan_groups(day_dir: str, selected_path: Optional[str] = None) -> Dict[FrameKey, Dict[str, str]]:
     """
     Returns:
       { FrameKey -> { serial -> filepath } }
 
     Files whose timestamps are within 4 seconds are grouped together.
+    When supplied, the selected file anchors its own group before other groups.
     """
     groups: Dict[FrameKey, Dict[str, str]] = {}
     if not os.path.isdir(day_dir):
         return groups
 
     threshold_sec = 4
-    group_keys: List[FrameKey] = []
+    selected = parse_filename(os.path.basename(selected_path)) if selected_path else None
+    selected_key = selected[0] if selected else None
+    group_keys: List[FrameKey] = [selected_key] if selected_key else []
+    selected_distances: Dict[str, int] = {}
 
     for fn in sorted(os.listdir(day_dir)):
         if not fn.endswith(".fits"):
@@ -123,7 +128,16 @@ def scan_groups(day_dir: str) -> Dict[FrameKey, Dict[str, str]]:
             matched_key = key
             group_keys.append(matched_key)
 
-        groups.setdefault(matched_key, {})[serial] = os.path.join(day_dir, fn)
+        path = os.path.join(day_dir, fn)
+        if matched_key == selected_key:
+            distance = abs(time_to_sec(selected_key.t) - t_sec)
+            # Prefer the selected file, then the closest exposure per camera.
+            if selected_path and os.path.abspath(path) == os.path.abspath(selected_path):
+                distance = -1
+            if serial in selected_distances and selected_distances[serial] <= distance:
+                continue
+            selected_distances[serial] = distance
+        groups.setdefault(matched_key, {})[serial] = path
 
     return groups
 
@@ -350,6 +364,7 @@ class FitsLiveViewer:
             if self.date_folder else os.path.join(self.root_dir, "raw")
         )
         self.source_label = f"grab/{self.date_folder}" if self.date_folder else "raw"
+        self.selected_path: Optional[str] = None
 
         self.camera_serials = camera_serials
         self.poll_sec = poll_sec
@@ -391,6 +406,9 @@ class FitsLiveViewer:
 
         btns = ttk.Frame(self.win, padding=8)
         btns.pack(side=tk.BOTTOM, fill=tk.X)
+
+        self.open_btn = ttk.Button(btns, text="Open…", command=self.on_open)
+        self.open_btn.pack(side=tk.LEFT, padx=(0, 8))
 
         self.prev_btn = ttk.Button(btns, text="◀ Prev", command=self.on_prev)
         self.prev_btn.pack(side=tk.LEFT)
@@ -614,7 +632,7 @@ class FitsLiveViewer:
         Rescan the watched directory only.
         Returns True if actual watched data changed.
         """
-        new_groups = scan_groups(self.day_dir)
+        new_groups = scan_groups(self.day_dir, self.selected_path)
         changed = (new_groups != self.actual_groups)
         self.actual_groups = self._copy_groups(new_groups)
         return changed
@@ -694,9 +712,19 @@ class FitsLiveViewer:
                 if self.demo_active:
                     self._activate_actual_mode()
                 elif changed:
+                    current_key = (
+                        self.keys[self.idx]
+                        if 0 <= self.idx < len(self.keys) else None
+                    )
                     self.groups = self._copy_groups(self.actual_groups)
                     self.keys = sorted_keys(self.groups)
-                    self.idx = len(self.keys) - 1 if self.keys else -1
+                    if self.follow_latest:
+                        self.idx = len(self.keys) - 1
+                    elif current_key in self.keys:
+                        self.idx = self.keys.index(current_key)
+                    else:
+                        # The displayed frame was removed; keep a nearby frame.
+                        self.idx = min(max(self.idx, 0), len(self.keys) - 1)
 
                     if not self.reference_locked and self.keys:
                         self._lock_reference_stars()
@@ -742,22 +770,77 @@ class FitsLiveViewer:
         else:
             self.win.title(f"FITS Live Viewer - {self.source_label} - D{key.date} T{key.t}")
 
-    def on_toggle_follow(self):
-        self.follow_latest = bool(self.follow_var.get())
-
-    def on_prev(self):
-        if not self.keys:
+    def on_open(self):
+        path = filedialog.askopenfilename(
+            parent=self.win,
+            title="Open GFA FITS image",
+            initialdir=self.day_dir,
+            filetypes=[("FITS images", "*.fits"), ("All files", "*")],
+        )
+        if not path:
             return
+
+        path = os.path.abspath(path)
+        parsed = parse_filename(os.path.basename(path))
+        if parsed is None:
+            messagebox.showerror(
+                "Unsupported filename",
+                "Expected DYYYYMMDD_THHMMSS_SERIAL_expNs.fits or "
+                "DYYYYMMDD_THHMMSS_SERIAL_combined.fits.",
+                parent=self.win,
+            )
+            return
+        key, serial = parsed
+        if serial not in self.camera_serials or read_fits_2d(path) is None:
+            messagebox.showerror(
+                "Cannot open image",
+                "Select a readable FITS image from one of the configured cameras.",
+                parent=self.win,
+            )
+            return
+
+        day_dir = os.path.dirname(path)
+        try:
+            groups = scan_groups(day_dir, path)
+        except OSError as e:
+            messagebox.showerror("Cannot read directory", str(e), parent=self.win)
+            return
+        if key not in groups:
+            messagebox.showerror("Cannot open image", "Selected image is no longer available.", parent=self.win)
+            return
+
+        self.day_dir = day_dir
+        self.selected_path = path
+        self.source_label = day_dir
+        self.demo_active = False
+        self.actual_groups = groups
+        self.groups = self._copy_groups(groups)
+        self.keys = sorted_keys(groups)
+        self.idx = self.keys.index(key)
         self.follow_latest = False
         self.follow_var.set(False)
+        self._reset_reference_state()
+        self._lock_reference_stars()
+        self._render_current()
+
+    def on_toggle_follow(self):
+        self.follow_latest = bool(self.follow_var.get())
+        if self.follow_latest:
+            self.on_latest()
+
+    def on_prev(self):
+        self.follow_latest = False
+        self.follow_var.set(False)
+        if not self.keys:
+            return
         self.idx = max(0, self.idx - 1)
         self._render_current()
 
     def on_next(self):
-        if not self.keys:
-            return
         self.follow_latest = False
         self.follow_var.set(False)
+        if not self.keys:
+            return
         self.idx = min(len(self.keys) - 1, self.idx + 1)
         self._render_current()
 
