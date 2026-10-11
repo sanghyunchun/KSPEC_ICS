@@ -599,11 +599,12 @@ class script():
 
         while True:
             print('Telescope is slewing......')
+            logging('Telescope is slewing.....', level='receive')
         #    r=redis.Redis(host='192.168.15.121',port=6379,decode_responses=True)     # Set IP address of KMTNet redis server
             r=redis.Redis(host='127.0.0.1',port=6379,decode_responses=True)     # For simulation. Remove or comment in real observation
 
             value=r.get('dome_error')
-            print(value)                                                        # Remove or comment in real observation
+        #    print(value)                                                        # Remove or comment in real observation
 
             if value != '0002':
                 print('Telescope slew finished')
@@ -616,11 +617,11 @@ class script():
 
         ### 이부분에 Cal Offset, Pointing 부분이 iteration으로 들어가야함. Pointing이 끝나면 Autoguiding
 
-        await asyncio.sleep(3)
-        printing(f'Autoguiding Start')
-        logging(f'GFA guiding. Exposure time is {self.GFAexpT} s, exposure count is {self.GFAexpN}.', level='receive')
-        await self.run_autoguide(scriptrun, self.GFAexpT, self.GFAexpN, logging=logging)
-        await asyncio.sleep(2)
+        # await asyncio.sleep(3)
+        # printing(f'Autoguiding Start')
+        # logging(f'GFA guiding. Exposure time is {self.GFAexpT} s, exposure count is {self.GFAexpN}.', level='receive')
+        # await self.run_autoguide(scriptrun, self.GFAexpT, self.GFAexpN, logging=logging)
+        # await asyncio.sleep(2)
 
         # await handle_lamp(
         #     'fiducialon', scriptrun.ICSclient, logging=logging,
