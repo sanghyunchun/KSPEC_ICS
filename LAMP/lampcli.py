@@ -49,10 +49,10 @@ async def handle_lamp(arg, ICS_client, logging=None):
 
 def parse_relay1state(xml_text):
     root = ET.fromstring(xml_text)
-    value = root.findtext("relay1state")
+    value = root.findtext("relay1")
 
     if value is None:
-        raise ValueError("relay1state not found in WebRelay response")
+        raise ValueError("relay1 not found in WebRelay response")
 
     return int(value)
 

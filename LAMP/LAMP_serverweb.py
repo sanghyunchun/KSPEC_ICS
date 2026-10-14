@@ -48,7 +48,7 @@ def xml_response() -> bytes:
     now = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
     body = f"""<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <datavalues>
-    <relay1state>{relay}</relay1state>
+    <relay1>{relay}</relay1>
     <relaystate>{relay}</relaystate>
     <timeutc>{now}</timeutc>
     <model>WebRelay Simulator</model>
