@@ -47,12 +47,12 @@ async def handle_lamp(arg, ICS_client, logging=None):
         await ICS_client.send_message("LAMP", lampmsg)
 """
 
-def parse_relay1state(xml_text):
+def parse_relay_state(xml_text, tag):
     root = ET.fromstring(xml_text)
-    value = root.findtext("relay1")
+    value = root.findtext(tag)
 
     if value is None:
-        raise ValueError("relay1 not found in WebRelay response")
+        raise ValueError(f"{tag} not found in WebRelay response")
 
     return int(value)
 
@@ -70,6 +70,11 @@ async def handle_lamp(arg, ICS_client, logging=None, state_callback=None):
         'FLAT': '192.0.2.1:8080',
         'ARC': '192.0.2.2:8080',
         'FIDUCIAL': '192.0.2.3:8080',
+    }
+    relay_protocols = {
+        'FLAT': ('relay1', 'relay1'),
+        'ARC': ('relay1', 'relay1'),
+        'FIDUCIAL': ('relay1state', 'relay1State'),
     }
 
 #    command_map = {
@@ -97,9 +102,10 @@ async def handle_lamp(arg, ICS_client, logging=None, state_callback=None):
 
     async def query_relay(lamp, expected_state=None):
         label = {'FLAT': 'Flat lamp', 'ARC': 'Arc lamp', 'FIDUCIAL': 'Fiducial LED'}[lamp]
+        response_tag, request_param = relay_protocols[lamp]
         url = f"http://{relay_ips[lamp]}/state.xml"
         if expected_state is not None:
-            url += f'?relay1={expected_state}'
+            url += f'?{request_param}={expected_state}'
         if logging is not None:
             action = 'status query' if expected_state is None else ('ON' if expected_state else 'OFF')
             logging(f'{label}: sending {action} to WebRelay.', level='send')
@@ -109,33 +115,33 @@ async def handle_lamp(arg, ICS_client, logging=None, state_callback=None):
             auth = (webrelay_user, webrelay_pass) if webrelay_user is not None else None
             r = await asyncio.to_thread(requests.get, url, auth=auth, timeout=3)
             r.raise_for_status()
-            relay1state = parse_relay1state(r.text)
-            if relay1state not in (0, 1):
-                raise ValueError(f'Invalid relay1state: {relay1state}')
+            relay_state = parse_relay_state(r.text, response_tag)
+            if relay_state not in (0, 1):
+                raise ValueError(f'Invalid {response_tag}: {relay_state}')
             if logging is not None:
                 logging(
-                    f'{label}: WebRelay response relay1state={relay1state} '
-                    f"({'ON' if relay1state else 'OFF'}).",
+                    f'{label}: WebRelay response {response_tag}={relay_state} '
+                    f"({'ON' if relay_state else 'OFF'}).",
                     level='receive',
                 )
-            if expected_state is not None and relay1state != expected_state:
-                raise ValueError(f'{label}: requested state {expected_state}, received {relay1state}')
+            if expected_state is not None and relay_state != expected_state:
+                raise ValueError(f'{label}: requested state {expected_state}, received {relay_state}')
         except (requests.RequestException, ET.ParseError, ValueError) as error:
             if logging is not None:
                 logging(f'{label}: WebRelay command failed: {error}', level='error')
             raise
-        return relay1state
+        return relay_state
 
     if cmd == 'lampstatus':
         return {lamp: await query_relay(lamp) for lamp in relay_ips}
 
     subinst = command_lamp[cmd]
-    relay1state = await query_relay(subinst, int(cmd.endswith('on')))
+    relay_state = await query_relay(subinst, int(cmd.endswith('on')))
 
     if state_callback is not None and cmd != 'lampstatus':
-        state_callback('LAMP', subinst, 'ING' if relay1state else 'Done')
+        state_callback('LAMP', subinst, 'ING' if relay_state else 'Done')
 
-    return relay1state
+    return relay_state
 
     #print(r.status_code)
     #print(r.text)
