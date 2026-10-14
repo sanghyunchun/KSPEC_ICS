@@ -99,7 +99,7 @@ async def handle_lamp(arg, ICS_client, logging=None, state_callback=None):
         label = {'FLAT': 'Flat lamp', 'ARC': 'Arc lamp', 'FIDUCIAL': 'Fiducial LED'}[lamp]
         url = f"http://{relay_ips[lamp]}/state.xml"
         if expected_state is not None:
-            url += f'?relayState={expected_state}'
+            url += f'?relay1={expected_state}'
         if logging is not None:
             action = 'status query' if expected_state is None else ('ON' if expected_state else 'OFF')
             logging(f'{label}: sending {action} to WebRelay.', level='send')

@@ -4,10 +4,8 @@ Simple WebRelay simulator for local GUI testing.
 
 Supported examples:
   GET /state.xml
-  GET /state.xml?relayState=1
-  GET /state.xml?relayState=0
-  GET /state.xml?relay1State=1
-  GET /state.xml?relay1State=0
+  GET /state.xml?relay1=1
+  GET /state.xml?relay1=0
   GET /relay1on
   GET /relay1off
 
@@ -18,7 +16,7 @@ Then set your GUI target to:
   127.0.0.1:8080
 
 So your existing GUI URL style will work:
-  http://127.0.0.1:8080/state.xml?relayState=1
+  http://127.0.0.1:8080/state.xml?relay1=1
 """
 
 from __future__ import annotations
@@ -88,8 +86,8 @@ def html_page(host: str, port: int) -> bytes:
     </p>
     <h3>GUI test target</h3>
     <p>Set your GUI WebRelay IP field to <code>{html.escape(host)}:{port}</code></p>
-    <p>Example ON URL: <code>{base}/state.xml?relayState=1</code></p>
-    <p>Example OFF URL: <code>{base}/state.xml?relayState=0</code></p>
+    <p>Example ON URL: <code>{base}/state.xml?relay1=1</code></p>
+    <p>Example OFF URL: <code>{base}/state.xml?relay1=0</code></p>
   </div>
 </body>
 </html>
@@ -111,11 +109,7 @@ class WebRelayHandler(BaseHTTPRequestHandler):
         self.wfile.write(content)
 
     def _set_relay_from_query(self, query: dict[str, list[str]]) -> bool:
-        desired = None
-        for key in ("relayState", "relay1State", "relay1state"):
-            if key in query and query[key]:
-                desired = query[key][0]
-                break
+        desired = query.get("relay1", [None])[0]
 
         if desired is None:
             return False
@@ -169,8 +163,8 @@ def main() -> None:
     httpd = ThreadingHTTPServer((args.host, args.port), WebRelayHandler)
     print(f"WebRelay simulator running at http://{args.host}:{args.port}")
     print(f"Test XML: http://{args.host}:{args.port}/state.xml")
-    print(f"Relay ON : http://{args.host}:{args.port}/state.xml?relayState=1")
-    print(f"Relay OFF: http://{args.host}:{args.port}/state.xml?relayState=0")
+    print(f"Relay ON : http://{args.host}:{args.port}/state.xml?relay1=1")
+    print(f"Relay OFF: http://{args.host}:{args.port}/state.xml?relay1=0")
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
