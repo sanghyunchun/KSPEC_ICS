@@ -67,7 +67,7 @@ async def handle_lamp(arg, ICS_client, logging=None, state_callback=None):
 
     # 수정요구
     relay_ips = {
-        'FLAT': '192.168.15.161:8064',
+        'FLAT': '192.168.15.161:8061',
         'ARC': '192.0.2.2:8080',
         'FIDUCIAL': '192.168.15.200:80',
     }
