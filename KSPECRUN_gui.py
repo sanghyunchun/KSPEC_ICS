@@ -2,6 +2,7 @@ import sys
 import os
 import asyncio
 import shlex
+from pathlib import Path
 
 from PySide6.QtCore import *
 from PySide6.QtWidgets import (
@@ -36,6 +37,9 @@ from TCS.tcscli import handle_telcom
 from script.scriptcli import handle_script
 from script.scriptcli import script
 from SCIOBS.sciobscli import sciobscli
+
+
+MTL_TRIAL_NFS_DIR = Path('/home/kspecics/work/DATA/MTLDATA/target')
 
 
 ### Canvas Setting ###
@@ -768,7 +772,7 @@ class MainWindow(QMainWindow):
                 ):
                     filename = response_data.get('filename')
                     if status == 'success' and filename not in (None, '', 'None'):
-                        self.mtl_trial_json = str(filename)
+                        self.mtl_trial_json = str(MTL_TRIAL_NFS_DIR / Path(str(filename)).name)
                     else:
                         self.mtl_trial_json = None
 
