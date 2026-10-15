@@ -5,6 +5,27 @@ from Lib.AMQ import *
 import Lib.mkmessage as mkmsg
 import asyncio
 import json
+import requests
+import xml.etree.ElementTree as ET
+
+
+ILLUMI_WEBRELAY_URL = 'http://192.168.15.201:80/state.xml'
+
+
+async def set_illumination(state):
+    """Set the back illumination relay and verify its reported state."""
+    response = await asyncio.to_thread(
+        requests.get, ILLUMI_WEBRELAY_URL,
+        params={'relay1': int(state)}, timeout=3,
+    )
+    response.raise_for_status()
+    value = ET.fromstring(response.text).findtext('relay1')
+    if value not in ('0', '1'):
+        raise ValueError(f'Invalid WebRelay relay1 response: {value!r}')
+    relay_state = int(value)
+    if relay_state != int(state):
+        raise ValueError(f'Back illumination requested {int(state)}, received {relay_state}')
+    return relay_state
 
 
 
@@ -16,10 +37,6 @@ def create_spec_command(func, **kwargs):
 
 
 def spec_status(): return create_spec_command('specstatus', message ='Show spectrograph status.')
-
-def illu_on(): return create_spec_command('illuon', message ='Turn on back-illumination light.')
-
-def illu_off(): return create_spec_command('illuoff', message ='Turn off back-illumination light.')
 
 def spec_initial(dir_name): return create_spec_command('specinitial', dirname=dir_name, message = f'Initialize Spectrograph')
 
@@ -41,10 +58,13 @@ async def handle_spec(arg, ICS_client, header=None):
     if header is None:
         header = {}
 
+    if cmd in ('illuon', 'illuoff'):
+        if params:
+            raise ValueError(f"'{cmd}' does not take parameters")
+        return await set_illumination(cmd == 'illuon')
+
     command_map = {
         'specstatus': spec_status,
-        'illuon' : illu_on,
-        'illuoff' : illu_off
     }
 
     print(header)

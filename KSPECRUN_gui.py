@@ -217,6 +217,8 @@ class MainWindow(QMainWindow):
         self.arc_state = False
         self.flat_state = False
         self.fiducial_state = False
+        self.illumi_state = False
+        self.illumi_busy = False
 #        self.fbp_restore = False
     
 
@@ -334,6 +336,11 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_Fiducial_2.setCheckable(True)
         self.ui.pushbtn_Fiducial.clicked.connect(self.fiducial_button_clicked)
         self.ui.pushbtn_Fiducial_2.clicked.connect(self.fiducial_button_clicked)
+
+        self.ui.pushbtn_illumi.setCheckable(True)
+        self.ui.pushbtn_illumi_2.setCheckable(True)
+        self.ui.pushbtn_illumi.clicked.connect(self.illumi_button_clicked)
+        self.ui.pushbtn_illumi_2.clicked.connect(self.illumi_button_clicked)
 
 
         # Telescope slew
@@ -2136,6 +2143,30 @@ class MainWindow(QMainWindow):
     # endregion LAMP controls
 
     # region Spectrograph controls
+    @asyncSlot()
+    async def illumi_button_clicked(self):
+        if self.illumi_busy:
+            return
+
+        desired_state = not self.illumi_state
+        buttons = (self.ui.pushbtn_illumi, self.ui.pushbtn_illumi_2)
+        self.illumi_busy = True
+        for button in buttons:
+            button.setEnabled(False)
+        command = 'illuon' if desired_state else 'illuoff'
+        self.logging(f"Back illumination: sending {'ON' if desired_state else 'OFF'} to WebRelay.", level='send')
+        try:
+            relay_state = await handle_spec(command, self.ICS_client)
+            self.illumi_state = bool(relay_state)
+            self.logging(f"Back illumination: WebRelay relay1={relay_state}.", level='receive')
+        except Exception as error:
+            self.logging(f'Back illumination WebRelay command failed: {error}', level='error')
+        finally:
+            for button in buttons:
+                self._set_toggle_button(button, self.illumi_state)
+                button.setEnabled(True)
+            self.illumi_busy = False
+
     @asyncSlot()
     async def exp_start_clicked(self):
         if not self.check_connection():
