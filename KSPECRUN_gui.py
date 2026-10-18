@@ -2481,7 +2481,9 @@ class MainWindow(QMainWindow):
    
 
     ### Real survey Observation ####    
-        self.tilemsg,self.objmsg,self.motionmsg1,self.motionmsg2=sciobs.loadtile(self.TileID)
+        self.tilemsg,self.objmsg,self.motionmsg1,self.motionmsg2=sciobs.loadtile(
+            self.TileID, invert_motion_angles=True
+        )
         self.ra, self.dec=self.convert_to_sexagesimal(sciobs.ra,sciobs.dec)
 
         self.scriptrun.configure_cordinate(

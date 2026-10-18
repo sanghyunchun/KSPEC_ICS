@@ -113,7 +113,7 @@ class sciobscli:
 
 
 # Load alpha/beta motion plans from the selected tile's path file.
-    def load_motion(self):
+    def load_motion(self, invert_angles=False):
         # Reload offsets so configuration changes apply to the next tile load.
         with open('./Lib/KSPEC.ini','r') as fs:
             motion_config=json.load(fs)['SCIOBS']
@@ -139,7 +139,9 @@ class sciobscli:
             motion=motion_alpha if arm == 'a' else motion_beta
             if fiberid in motion:
                 raise ValueError(f'Duplicate motion column: {column}')
-            motion[fiberid]=(angles[:,i]+offsets[arm]).tolist()
+            # GUI Deploy reverses the path angle before applying the arm offset.
+            path_angles=-angles[:,i] if invert_angles else angles[:,i]
+            motion[fiberid]=(path_angles+offsets[arm]).tolist()
 
         if motion_alpha.keys() != motion_beta.keys():
             raise ValueError(f'Alpha/beta fiber IDs do not match in {pathfile}')
@@ -160,7 +162,7 @@ class sciobscli:
         return motionmsg1,motionmsg2
 
 
-    def loadtile(self,tile_id):
+    def loadtile(self,tile_id, invert_motion_angles=False):
         self.tile_id=tile_id
 #        print(self.tile_id)
         tileinfo = self.load_tilepos()
@@ -174,7 +176,7 @@ class sciobscli:
 
         #print(OBJmsg)
 
-        motionmsg1,motionmsg2=self.load_motion()
+        motionmsg1,motionmsg2=self.load_motion(invert_angles=invert_motion_angles)
 
         obs_info={'filename': self.filename, 'OBS-date': self.obsdate, 'Tile-ID': self.tile_id, 'Tile-RA': self.ra, 'Tile-DEC': self.dec}
         with open(self.obsinfofile, 'w') as f:
