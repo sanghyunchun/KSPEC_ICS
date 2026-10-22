@@ -739,12 +739,12 @@
     "L6": {
         "plc": "PLC1",
         "alpha": {
-            "global_axis": 5,
-            "local_axis": 5
-        },
-        "beta": {
             "global_axis": 6,
             "local_axis": 6
+        },
+        "beta": {
+            "global_axis": 5,
+            "local_axis": 5
         }
     },
     "L7": {
