@@ -758,18 +758,14 @@ class MainWindow(QMainWindow):
                 # 2. 수신 로그 출력
                 self._log_received_message(inst, msg, status)
 
-                # fbpactivate는 Sys check 또는 TwinCat restart 버튼이 완료 응답을
-                # 직접 기다린다. 공용 response_queue에 넣지 않아 다른 작업이
-                # 이 응답을 소비하는 일을 막는다.
-                activate_waiter = getattr(self, '_fbp_activate_waiter', None)
-                if (
-                    inst == 'FBP'
-                    and response_data.get('func') == 'fbpactivate'
-                    and process == 'Done'
-                    and activate_waiter is not None
-                    and not activate_waiter.done()
-                ):
-                    activate_waiter.set_result(response_data)
+                if inst == 'FBP' and response_data.get('func') == 'fbpactivate':
+                    activate_waiter = getattr(self, '_fbp_activate_waiter', None)
+                    if (
+                        process == 'Done'
+                        and activate_waiter is not None
+                        and not activate_waiter.done()
+                    ):
+                        activate_waiter.set_result(response_data)
                     return
 
                 if (
@@ -2248,18 +2244,17 @@ class MainWindow(QMainWindow):
         # FBP 상태 조회는 Runtime 준비가 끝난 뒤 별도로 실행한다.
         await self.scriptrun.obs_initial(self.scriptrun, self.logging, include_fbp=False)
 
-        # 첫 Sys check에서만 FBP Runtime을 준비한다. 이후에는 상태만 조회한다.
-        # if not self.fbp_runtime_initialized:
-        #     self.logging(
-        #         'Other instrument initialization finished. Preparing FBP TwinCAT and PLC Runtime.',
-        #         level='normal',
-        #     )
-        #     if not await self._activate_fbp_runtime('Initial Sys check'):
-        #         self.logging(
-        #             'System check stopped because the FBP Runtime is not ready.',
-        #             level='error',
-        #         )
-        #         return
+        if not self.fbp_runtime_initialized:
+            self.logging(
+                'Other instrument initialization finished. Preparing FBP TwinCAT and PLC Runtime.',
+                level='normal',
+            )
+            if not await self._activate_fbp_runtime('Initial Sys check'):
+                self.logging(
+                    'System check stopped because the FBP Runtime is not ready.',
+                    level='error',
+                )
+                return
 
         # await handle_fbp('fbpstatus', self.ICS_client)
         # await self.response_queue.get()
