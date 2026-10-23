@@ -29,6 +29,13 @@ async def set_illumination(state):
 
 
 
+def spec_queue():
+    """Queue of the spectrograph server: 'SPEC' (main) or 'ISOPLANE' (KSPEC.ini SPEC.queue)."""
+    with open('./Lib/KSPEC.ini', 'r') as f:
+        kspecinfo = json.load(f)
+    return kspecinfo['SPEC'].get('queue', 'SPEC')
+
+
 def create_spec_command(func, **kwargs):
     """Helper function to create SPECTROGRAPH commands."""
     cmd_data = mkmsg.specmsg()
@@ -38,7 +45,9 @@ def create_spec_command(func, **kwargs):
 
 def spec_status(): return create_spec_command('specstatus', message ='Show spectrograph status.')
 
-def spec_initial(dir_name): return create_spec_command('specinitial', dirname=dir_name, message = f'Initialize Spectrograph')
+def spec_initial(dir_name, experiment=None):
+    extra = {'experiment': experiment} if experiment else {}
+    return create_spec_command('specinitial', dirname=dir_name, message = f'Initialize Spectrograph', **extra)
 
 def get_obj(exptime,nframe, header):
     return create_spec_command('getobj', time=exptime, numframe=nframe, header=header, message =f'Exposure {exptime} seconds for objects.')
@@ -58,10 +67,16 @@ async def handle_spec(arg, ICS_client, header=None):
     if header is None:
         header = {}
 
+    queue = spec_queue()
     if cmd in ('illuon', 'illuoff'):
         if params:
             raise ValueError(f"'{cmd}' does not take parameters")
-        return await set_illumination(cmd == 'illuon')
+        if queue == 'SPEC':
+            return await set_illumination(cmd == 'illuon')
+        # IsoPlane: the server moves the stage in the grating turret, interlocked with the
+        # grating; its reply arrives on the ICS queue. Return the requested state for the GUI.
+        await ICS_client.send_message(queue, create_spec_command(cmd, message=f'Back illumination {cmd[4:]}.'))
+        return int(cmd == 'illuon')
 
     command_map = {
         'specstatus': spec_status,
@@ -71,10 +86,10 @@ async def handle_spec(arg, ICS_client, header=None):
 
     print(params)
     if cmd == 'specinitial':
-        if len(params) != 1:
-            print("Error: 'specinitial' needs one paramerter, i.e. directory name. ex) 20250918")
+        if len(params) not in (1, 2):
+            print("Error: 'specinitial' needs a directory name and optionally a LightField experiment (IsoPlane). ex) 20250918")
             return
-        command_map[cmd] = lambda: spec_initial(str(params[0]))
+        command_map[cmd] = lambda: spec_initial(*map(str, params))
 
     if cmd == 'getobj':
         if len(params) != 2:
@@ -123,6 +138,6 @@ async def handle_spec(arg, ICS_client, header=None):
 
     if cmd in command_map:
         specmsg = command_map[cmd]()
-        await ICS_client.send_message("SPEC", specmsg)
+        await ICS_client.send_message(queue, specmsg)
     else:
         print(f"Error: '{cmd}' is not right command for SPECTROGRAPH.")
