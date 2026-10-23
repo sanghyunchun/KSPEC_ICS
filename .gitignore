@@ -15,3 +15,6 @@ __pycache__/
 
 # Vim swap
 *.swp
+
+# IsoPlane site settings (LightField path, COM port, stage depth)
+SPECTRO_ISOPLANE/isoplane_local.json

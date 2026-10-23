@@ -1,0 +1,18 @@
+{
+    "lightfield": {
+        "driver": "fake",
+        "root": "C:\\Program Files\\Princeton Instruments\\LightField",
+        "visible": true,
+        "experiment": null,
+        "time_scale": 1.0
+    },
+    "backillum": {
+        "port": "fake",
+        "in_depth_mm": 50.0,
+        "in_limit_mm": 50.0,
+        "speed_mm_s": 10.0,
+        "time_scale": 1.0
+    },
+    "datapath": "../DATA/RAWDATA/",
+    "sharepath": ""
+}

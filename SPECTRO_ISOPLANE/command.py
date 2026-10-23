@@ -1,0 +1,227 @@
+"""ISOPLANE server: the SPEC command set of the main spectrograph, run on the IsoPlane.
+
+Commands and replies follow ``SPECTRO/command.py`` (``inst='SPEC'``, ING progress replies, one
+final Done reply per command), so ``speccli.py``, the GUI, and ``scriptcli.py`` need no
+IsoPlane-specific code:
+
+    specinitial <night> [experiment]   night directory; optionally load a LightField experiment
+    specstatus                         camera, grating, and back-illumination state
+    getbias <n> / getflat <t> <n> / getarc <t> <n> / getobj <t> <n>
+    illuon / illuoff                   back-illumination stage in + light on / light off + out
+
+One process owns both LightField and the back-illumination Uno, because the stage is lowered
+into the grating-turret compartment. Every command except specstatus holds one lock, so an
+exposure, an experiment load (which may move the grating), and a stage move never overlap.
+Before anything that may move the grating or open the shutter, the Near switch is read from the
+hardware: the stage must be OUT and the light off.
+"""
+
+import asyncio
+import json
+import os
+import re
+import shutil
+
+import Lib.mkmessage as mkmsg
+from SPECTRO_ISOPLANE.backillum import make_backillum
+from SPECTRO_ISOPLANE.fitsio import append_cards, ics_cards
+from SPECTRO_ISOPLANE.lightfield import make_lightfield
+
+# func: (file-name tag, shutter closed)
+FRAME_TYPES = {
+    "getbias": ("bias", True),
+    "getflat": ("flat", False),
+    "getarc": ("arc", False),
+    "getobj": ("obj", False),
+}
+PROGRESS_EVERY_S = 10
+
+
+class InterlockError(RuntimeError):
+    pass
+
+
+class Isoplane:
+    def __init__(self, cfg, lightfield=None, backillum=None):
+        self.lf = lightfield if lightfield is not None else make_lightfield(cfg.get("lightfield", {}))
+        self.bl = backillum if backillum is not None else make_backillum(cfg.get("backillum"))
+        self.datapath = cfg.get("datapath", "../DATA/RAWDATA/")
+        self.sharepath = cfg.get("sharepath", "")
+        self.night = None
+        self.lock = asyncio.Lock()
+        self.busy = "idle"
+
+    # -------------------------------------------------- lifecycle
+    async def start(self):
+        await asyncio.to_thread(self.lf.connect)
+        if self.bl is None:
+            print("\033[33m[ISOPLANE] no back-illumination unit configured\033[0m", flush=True)
+            return
+        state = await asyncio.to_thread(self.bl.connect)
+        if state != "OUT":
+            print("\033[31m[ISOPLANE] back-illumination stage is not at Near: exposures and "
+                  "experiment loads are blocked until illuoff\033[0m", flush=True)
+
+    async def close(self):
+        if self.bl is not None:
+            await asyncio.to_thread(self.bl.close)  # light off
+        await asyncio.to_thread(self.lf.close)
+
+    # -------------------------------------------------- messaging
+    async def reply(self, server, func, message, process="Done", status="success", **extra):
+        data = mkmsg.specmsg()
+        data.update(func=func, message=message, process=process, status=status, **extra)
+        color = "\033[32m" if status == "success" else "\033[31m"
+        print(f"{color}[ISOPLANE] {message}\033[0m", flush=True)
+        await server.send_message("ICS", json.dumps(data))
+
+    async def handle(self, server, body):
+        d = json.loads(body)
+        func = d.get("func")
+        if func == "specstatus":
+            msg, details = await self.status()
+            await self.reply(server, func, msg, isoplane=details)
+            return
+        handlers = {
+            "specinitial": self.specinitial,
+            "illuon": self.illuon,
+            "illuoff": self.illuoff,
+            **{f: self.take_frames for f in FRAME_TYPES},
+        }
+        if func not in handlers:
+            await self.reply(server, str(func), f"Unknown command for ISOPLANE: {func}",
+                             status="error")
+            return
+        if self.lock.locked():
+            await self.reply(server, func, f"Waiting for {self.busy} to finish.", process="ING")
+        async with self.lock:
+            self.busy = func
+            try:
+                await handlers[func](server, d)
+            except Exception as e:
+                await self.reply(server, func, f"{func} failed: {e}", status="error")
+            finally:
+                self.busy = "idle"
+
+    # -------------------------------------------------- interlock
+    async def require_stage_out(self, what):
+        """Raise unless the stage reads OUT at the Near switch now and the light is off."""
+        if self.bl is None:
+            return
+        near = await asyncio.to_thread(self.bl.at_near)
+        if not near or self.bl.light:
+            raise InterlockError(
+                f"{what} refused: back-illumination stage is not OUT "
+                f"(state {self.bl.state}, light {self.bl.light}); send illuoff first"
+            )
+        self.bl.state = "OUT"
+
+    # -------------------------------------------------- commands
+    async def status(self):
+        lf = await asyncio.to_thread(self.lf.status)
+        bl = self.bl.status() if self.bl is not None else {"state": "NONE"}
+        details = {"night": self.night, "busy": self.busy, "lightfield": lf, "backillum": bl}
+        msg = (f"IsoPlane: {'busy (' + self.busy + ')' if self.busy != 'idle' else 'ready'}, "
+               f"night {self.night}, experiment {lf.get('experiment')}, grating "
+               f"{lf.get('grating')} at {lf.get('center_nm')} nm, back illumination "
+               f"{bl['state']}{' light ON' if bl.get('light') else ''}.")
+        return msg, details
+
+    async def specinitial(self, server, d):
+        night = str(d["dirname"])
+        os.makedirs(os.path.join(self.datapath, night), exist_ok=True)
+        self.night = night
+        experiment = d.get("experiment")
+        if experiment:
+            await self.require_stage_out("experiment load (may move the grating)")
+            await self.reply(server, "specinitial", f"Loading LightField experiment {experiment}.",
+                             process="ING")
+            await asyncio.to_thread(self.lf.load_experiment, experiment)
+        await self.reply(server, "specinitial",
+                         f"Initializing of IsoPlane is finished (night {night}"
+                         f"{', experiment ' + experiment if experiment else ''}).")
+
+    async def illuon(self, server, d):
+        if self.bl is None:
+            raise RuntimeError("no back-illumination unit configured")
+        lf = await asyncio.to_thread(self.lf.status)
+        if lf.get("running") or lf.get("updating"):
+            raise InterlockError("LightField is acquiring or updating (the grating may move)")
+        await self.reply(server, "illuon", "Back illumination: lowering the stage.", process="ING")
+        await asyncio.to_thread(self.bl.insert)
+        await asyncio.to_thread(self.bl.set_light, True)
+        await self.reply(server, "illuon", "Back illumination light on.")
+
+    async def illuoff(self, server, d):
+        if self.bl is None:
+            raise RuntimeError("no back-illumination unit configured")
+        await self.reply(server, "illuoff", "Back illumination: light off, raising the stage.",
+                         process="ING")
+        await asyncio.to_thread(self.bl.retract)
+        msg = "Back illumination light off, stage OUT."
+        if self.bl.last_error:
+            msg += f" Warning: {self.bl.last_error}"
+        await self.reply(server, "illuoff", msg)
+
+    async def take_frames(self, server, d):
+        func = d["func"]
+        kind, shutter_closed = FRAME_TYPES[func]
+        if self.night is None:
+            raise RuntimeError("no night directory: send specinitial <night> first")
+        n = int(d["numframe"])
+        exptime = 0.0 if func == "getbias" else float(d["time"])
+        header = d.get("header") or {}
+        await self.require_stage_out(func)
+
+        directory = os.path.join(self.datapath, self.night)
+        paths = []
+        for i in range(n):
+            basename = self.next_basename(directory, kind)
+            await self.reply(server, func, f"{kind} {i + 1}/{n}: {exptime:g} s exposure started.",
+                             process="ING")
+            frame = await self.with_progress(
+                server, func, exptime, self.lf.expose, exptime, shutter_closed, directory, basename
+            )
+            expnum = header.get("EXPNUM", "None") if n == 1 else f"{i + 1}/{n}"
+            cards = ics_cards(header, frame, func, expnum)
+            cards.append(("BILLUM", self.bl.state if self.bl else "NONE",
+                          "back-illumination stage state"))
+            await asyncio.to_thread(append_cards, frame.path, cards)
+            paths.append(await asyncio.to_thread(self.publish, frame.path))
+            await self.reply(server, func, f"{kind} {i + 1}/{n} saved: {paths[-1]}",
+                             process="ING")
+        await self.reply(server, func, f"{n} {kind} frame(s) obtained.", filename=paths[-1],
+                         filenames=paths)
+
+    # -------------------------------------------------- helpers
+    async def with_progress(self, server, func, exptime, fn, *args):
+        """Run a blocking exposure in a thread, sending the remaining time every 10 s."""
+        task = asyncio.ensure_future(asyncio.to_thread(fn, *args))
+        remaining = exptime
+        while True:
+            done, _ = await asyncio.wait({task}, timeout=PROGRESS_EVERY_S)
+            if done:
+                return task.result()
+            remaining -= PROGRESS_EVERY_S
+            if remaining > 0:
+                await self.reply(server, func, f"Remaining exposure time: {remaining:.0f} seconds.",
+                                 process="ING")
+
+    def next_basename(self, directory, kind):
+        """<night>_<seq>_<kind>, seq one above the highest in the night directory."""
+        pat = re.compile(rf"^{re.escape(self.night)}_(\d{{4}})_")
+        seqs = [int(m.group(1)) for f in os.listdir(directory) if (m := pat.match(f))]
+        return f"{self.night}_{max(seqs, default=0) + 1:04d}_{kind}"
+
+    def publish(self, path):
+        """Copy to the shared storage (if configured) and return the path the ICS should use."""
+        if not self.sharepath:
+            return path
+        dst_dir = os.path.join(self.sharepath, self.night)
+        os.makedirs(dst_dir, exist_ok=True)
+        dst = os.path.join(dst_dir, os.path.basename(path))
+        shutil.copy2(path, dst + ".part")
+        if os.path.getsize(dst + ".part") != os.path.getsize(path):
+            raise OSError(f"copy to {dst} is incomplete")
+        os.replace(dst + ".part", dst)
+        return dst
