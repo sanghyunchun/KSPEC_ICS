@@ -53,7 +53,7 @@ specinitial     : Initialize spectrograph.
 getobj          : Exposure spectrograph for object.
 getbias         : Get bias images.
 getflat         : Get flat images.
-getar           : Get arc images.
+getarc          : Get arc images.
             
 [TCS/AUX]
 pointing        : Slew telescope to new sky position calcuated by pointing offset.
