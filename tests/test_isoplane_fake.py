@@ -6,6 +6,8 @@ import asyncio
 import json
 import os
 import tempfile
+import threading
+import time
 import unittest
 import warnings
 from unittest.mock import AsyncMock, patch
@@ -19,6 +21,22 @@ from SPECTRO_ISOPLANE.lightfield import FakeLightField
 
 HEADER = {'OBSDATE': '20261101', 'OBSTYPE': 'Object', 'PROJID': 'P1', 'TileID': '0123',
           'RA': '10:00:00', 'DEC': '-30:00:00', 'EXPTIME': 5, 'EXPNUM': '1/1', 'FWHM': 1.2}
+
+
+class SingleCallLightField(FakeLightField):
+    """Like the real driver: one LightField call at a time, so status() waits for expose()."""
+
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self.call = threading.Lock()
+
+    def status(self):
+        with self.call:
+            return super().status()
+
+    def expose(self, *args):
+        with self.call:
+            return super().expose(*args)
 
 
 class FakeServer:
@@ -44,8 +62,8 @@ class IsoplaneFakeTest(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def make(self, start_mm=0.0, unit=True):
-        lf = FakeLightField(time_scale=0.001, shape=(1, 8, 10))
+    def make(self, start_mm=0.0, unit=True, lf=None):
+        lf = lf or FakeLightField(time_scale=0.001, shape=(1, 8, 10))
         bl = None
         if unit:
             bl = BackIllumination(FakeUno(time_scale=0.005, start_mm=start_mm),
@@ -107,20 +125,55 @@ class IsoplaneFakeTest(unittest.TestCase):
         self.assertEqual(refused['status'], 'error')
         self.assertEqual(ok['status'], 'success')
 
-    def test_commands_are_serialised(self):
+    def test_commands_refused_while_busy(self):
         iso = self.make()
 
         async def go():
             await iso.start()
             await iso.handle(self.server, body('specinitial', dirname='20261101'))
-            await asyncio.gather(iso.handle(self.server, body('illuon')),
-                                 iso.handle(self.server, body('getobj', time=5, numframe=1,
-                                                              header=HEADER)))
+            stage = asyncio.ensure_future(iso.handle(self.server, body('illuon')))
+            await asyncio.sleep(0)  # illuon holds the lock and is moving the stage
+            for b in (body('getobj', time=5, numframe=1, header=HEADER), body('illuoff'),
+                      body('specinitial', dirname='20261101', experiment='KSPEC_600_430')):
+                await iso.handle(self.server, b)
+            self.assertFalse(stage.done())  # all three were answered during the move
+            await stage
             iso.bl._stop_ping.set()
         asyncio.run(go())
-        waits = [m for _, m in self.server.sent if m['message'].startswith('Waiting for illuon')]
-        self.assertEqual(len(waits), 1)
-        self.assertEqual(self.server.done('getobj')[0]['status'], 'error')  # stage went IN first
+        for func in ('getobj', 'illuoff'):
+            self.assertEqual(self.server.done(func)[0]['message'],
+                             f'{func} refused: busy with illuon.')
+        self.assertEqual(self.server.done('specinitial')[1]['status'], 'error')
+        self.assertEqual(iso.lf.experiment, 'fake')  # the refused load never ran
+        self.assertEqual(self.server.done('illuon')[0]['status'], 'success')
+        self.assertFalse(any(m['message'].startswith('Waiting') for _, m in self.server.sent))
+
+    def test_specstatus_does_not_wait_for_exposure(self):
+        iso = self.make(lf=SingleCallLightField(time_scale=0.002, shape=(1, 8, 10)))
+
+        async def go():
+            await iso.start()
+            await iso.handle(self.server, body('specinitial', dirname='20261101'))
+            obj = asyncio.ensure_future(
+                iso.handle(self.server, body('getobj', time=200, numframe=1, header=HEADER)))
+            while not iso.lf.running:  # the 0.4 s exposure holds the LightField call lock
+                await asyncio.sleep(0.005)
+            t0 = time.time()
+            await iso.handle(self.server, body('specstatus'))
+            elapsed = time.time() - t0
+            self.assertFalse(obj.done())
+            await obj
+            await iso.handle(self.server, body('specstatus'))
+            iso.bl._stop_ping.set()
+            return elapsed
+        elapsed = asyncio.run(go())
+        self.assertLess(elapsed, 0.1)
+        during, after = self.server.done('specstatus')
+        self.assertTrue(during['message'].startswith('IsoPlane: busy (getobj)'))
+        self.assertIn('(as of ', during['message'])
+        self.assertEqual(during['isoplane']['lightfield']['grating'], '[500nm,600][0][0]')
+        self.assertTrue(after['message'].startswith('IsoPlane: ready'))
+        self.assertEqual(self.server.done('getobj')[0]['status'], 'success')
 
     def test_no_unit_and_no_night(self):
         iso = self.make(unit=False)

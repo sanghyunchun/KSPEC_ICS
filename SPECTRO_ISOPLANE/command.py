@@ -11,12 +11,17 @@ IsoPlane-specific code:
 
 One process owns both LightField and the back-illumination Uno, because the stage is lowered
 into the grating-turret compartment. Every command except specstatus holds one lock, so an
-exposure, an experiment load (which may move the grating), and a stage move never overlap.
-Before anything that may move the grating or open the shutter, the Near switch is read from the
-hardware: the stage must be OUT and the light off.
+exposure, an experiment load (which may move the grating), and a stage move never overlap. A
+command that arrives while another one runs is refused at once, not queued. Before anything
+that may move the grating or open the shutter, the Near switch is read from the hardware: the
+stage must be OUT and the light off.
+
+specstatus never waits: while a command runs, it reports the LightField state read before that
+command (LightField serves one call at a time, so asking it would wait for the exposure).
 """
 
 import asyncio
+import datetime as dt
 import json
 import os
 import re
@@ -50,10 +55,13 @@ class Isoplane:
         self.night = None
         self.lock = asyncio.Lock()
         self.busy = "idle"
+        self.lf_status = {}  # last LightField status, served while a command runs
+        self.lf_status_time = None
 
     # -------------------------------------------------- lifecycle
     async def start(self):
         await asyncio.to_thread(self.lf.connect)
+        await self.read_lf_status()
         if self.bl is None:
             print("\033[33m[ISOPLANE] no back-illumination unit configured\033[0m", flush=True)
             return
@@ -92,8 +100,10 @@ class Isoplane:
             await self.reply(server, str(func), f"Unknown command for ISOPLANE: {func}",
                              status="error")
             return
-        if self.lock.locked():
-            await self.reply(server, func, f"Waiting for {self.busy} to finish.", process="ING")
+        if self.lock.locked():  # no await since the check: the lock cannot change hands here
+            await self.reply(server, func, f"{func} refused: busy with {self.busy}.",
+                             status="error")
+            return
         async with self.lock:
             self.busy = func
             try:
@@ -117,13 +127,22 @@ class Isoplane:
         self.bl.state = "OUT"
 
     # -------------------------------------------------- commands
+    async def read_lf_status(self):
+        self.lf_status = await asyncio.to_thread(self.lf.status)
+        self.lf_status_time = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+        return self.lf_status
+
     async def status(self):
-        lf = await asyncio.to_thread(self.lf.status)
+        """Never waits on a running command: while busy, LightField is reported from cache."""
+        busy = self.busy != "idle"
+        lf = dict(self.lf_status) if busy else await self.read_lf_status()
         bl = self.bl.status() if self.bl is not None else {"state": "NONE"}
-        details = {"night": self.night, "busy": self.busy, "lightfield": lf, "backillum": bl}
-        msg = (f"IsoPlane: {'busy (' + self.busy + ')' if self.busy != 'idle' else 'ready'}, "
+        details = {"night": self.night, "busy": self.busy, "lightfield": lf,
+                   "lightfield_read_at": self.lf_status_time, "backillum": bl}
+        msg = (f"IsoPlane: {'busy (' + self.busy + ')' if busy else 'ready'}, "
                f"night {self.night}, experiment {lf.get('experiment')}, grating "
-               f"{lf.get('grating')} at {lf.get('center_nm')} nm, back illumination "
+               f"{lf.get('grating')} at {lf.get('center_nm')} nm"
+               f"{' (as of ' + str(self.lf_status_time) + ')' if busy else ''}, back illumination "
                f"{bl['state']}{' light ON' if bl.get('light') else ''}.")
         return msg, details
 
@@ -137,6 +156,7 @@ class Isoplane:
             await self.reply(server, "specinitial", f"Loading LightField experiment {experiment}.",
                              process="ING")
             await asyncio.to_thread(self.lf.load_experiment, experiment)
+            await self.read_lf_status()
         await self.reply(server, "specinitial",
                          f"Initializing of IsoPlane is finished (night {night}"
                          f"{', experiment ' + experiment if experiment else ''}).")
@@ -144,7 +164,7 @@ class Isoplane:
     async def illuon(self, server, d):
         if self.bl is None:
             raise RuntimeError("no back-illumination unit configured")
-        lf = await asyncio.to_thread(self.lf.status)
+        lf = await self.read_lf_status()
         if lf.get("running") or lf.get("updating"):
             raise InterlockError("LightField is acquiring or updating (the grating may move)")
         await self.reply(server, "illuon", "Back illumination: lowering the stage.", process="ING")
@@ -172,6 +192,7 @@ class Isoplane:
         exptime = 0.0 if func == "getbias" else float(d["time"])
         header = d.get("header") or {}
         await self.require_stage_out(func)
+        await self.read_lf_status()  # what specstatus reports during the exposures
 
         directory = os.path.join(self.datapath, self.night)
         paths = []

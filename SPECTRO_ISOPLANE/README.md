@@ -15,7 +15,10 @@ the GUI and the observing scripts work unchanged:
 
 ## Grating and stage interlock
 One process owns LightField and the Uno. Every command except `specstatus` takes one lock, so an
-exposure, an experiment load, and a stage move never overlap. Before an exposure or an
+exposure, an experiment load, and a stage move never overlap. A command that arrives while
+another one runs is refused at once (`<cmd> refused: busy with <running cmd>.`), not queued.
+`specstatus` always answers at once; while a command runs, it reports the LightField state read
+just before that command ("as of" time in the reply). Before an exposure or an
 experiment load, the stage Near switch is read from the hardware; the stage must be OUT and the
 light off, otherwise the command is refused. If the server starts with the stage away from
 Near, everything except `illuoff` is refused until `illuoff` brings it home.
