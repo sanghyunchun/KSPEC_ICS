@@ -47,7 +47,10 @@ class FakeServer:
         self.sent.append((key, json.loads(message)))
 
     def done(self, func):
-        return [m for _, m in self.sent if m['func'] == func and m['process'] == 'Done']
+        return self.replies(func, 'Done')
+
+    def replies(self, func, process):
+        return [m for _, m in self.sent if m['func'] == func and m['process'] == process]
 
 
 def body(func, **kw):
@@ -109,9 +112,9 @@ class IsoplaneFakeTest(unittest.TestCase):
                       body('getobj', time=5, numframe=1, header=HEADER))
         self.assertEqual(self.server.done('illuon')[0]['status'], 'success')
         first, second = self.server.done('getobj')
-        self.assertEqual(first['status'], 'error')
+        self.assertEqual(first['status'], 'fail')  # refused, nothing done
         self.assertIn('not OUT', first['message'])
-        self.assertEqual(self.server.done('specinitial')[1]['status'], 'error')
+        self.assertEqual(self.server.done('specinitial')[1]['status'], 'fail')
         self.assertEqual(iso.lf.experiment, 'fake')  # the grating was not touched
         self.assertEqual(second['status'], 'success')
         self.assertEqual(iso.bl.state, 'OUT')
@@ -122,7 +125,7 @@ class IsoplaneFakeTest(unittest.TestCase):
                       body('getbias', numframe=1, header=HEADER), body('illuoff'),
                       body('getbias', numframe=1, header=HEADER))
         refused, ok = self.server.done('getbias')
-        self.assertEqual(refused['status'], 'error')
+        self.assertEqual(refused['status'], 'fail')
         self.assertEqual(ok['status'], 'success')
 
     def test_commands_refused_while_busy(self):
@@ -143,7 +146,8 @@ class IsoplaneFakeTest(unittest.TestCase):
         for func in ('getobj', 'illuoff'):
             self.assertEqual(self.server.done(func)[0]['message'],
                              f'{func} refused: busy with illuon.')
-        self.assertEqual(self.server.done('specinitial')[1]['status'], 'error')
+            self.assertEqual(self.server.done(func)[0]['status'], 'fail')
+        self.assertEqual(self.server.done('specinitial')[1]['status'], 'fail')
         self.assertEqual(iso.lf.experiment, 'fake')  # the refused load never ran
         self.assertEqual(self.server.done('illuon')[0]['status'], 'success')
         self.assertFalse(any(m['message'].startswith('Waiting') for _, m in self.server.sent))
@@ -200,13 +204,17 @@ class IsoplaneFakeTest(unittest.TestCase):
                 await iso.handle(self.server, b)
             iso.bl._stop_ping.set()
         asyncio.run(go())
-        stop = self.server.done('specstop')[0]
+        # While a command runs, specstop answers ING: illuon's own Done is the one Done.
+        self.assertEqual(self.server.done('specstop'), [])
+        stop = self.server.replies('specstop', 'ING')[0]
         self.assertEqual(stop['status'], 'success')
         self.assertIn('during illuon', stop['message'])
         illuon_first, illuon_again = self.server.done('illuon')
+        self.assertEqual(illuon_first['status'], 'stopped')
         self.assertIn('stopped by specstop', illuon_first['message'])
         self.assertEqual(illuon_again['status'], 'error')  # position unknown: home first
         refused, ok = self.server.done('getobj')
+        self.assertEqual(refused['status'], 'fail')
         self.assertIn('not OUT', refused['message'])
         self.assertEqual(self.server.done('illuoff')[0]['status'], 'success')
         self.assertEqual(ok['status'], 'success')
@@ -228,10 +236,13 @@ class IsoplaneFakeTest(unittest.TestCase):
             await iso.handle(self.server, body('getbias', numframe=1, header=HEADER))
             iso.bl._stop_ping.set()
         asyncio.run(go())
-        self.assertIn('acquisition stopped', self.server.done('getobj')[0]['message'])
+        obj, = self.server.done('getobj')
+        self.assertEqual(obj['status'], 'stopped')
+        self.assertIn('acquisition stopped', obj['message'])
         raw = os.path.join(self.tmp.name, 'raw', '20261101')
         self.assertEqual([f for f in os.listdir(raw) if 'obj' in f], [])
-        self.assertEqual(self.server.done('specstop')[0]['status'], 'success')
+        self.assertEqual(self.server.done('specstop'), [])
+        self.assertEqual(self.server.replies('specstop', 'ING')[0]['status'], 'success')
         self.assertEqual(self.server.done('getbias')[0]['status'], 'success')
 
     def test_specstop_when_idle_does_not_block_next_command(self):
@@ -247,7 +258,7 @@ class IsoplaneFakeTest(unittest.TestCase):
         self.run_cmds(iso, body('getbias', numframe=1, header=HEADER), body('illuon'),
                       body('specstatus'))
         self.assertIn('specinitial', self.server.done('getbias')[0]['message'])
-        self.assertEqual(self.server.done('illuon')[0]['status'], 'error')
+        self.assertEqual(self.server.done('illuon')[0]['status'], 'fail')
         self.assertEqual(self.server.done('specstatus')[0]['isoplane']['backillum']['state'],
                          'NONE')
 

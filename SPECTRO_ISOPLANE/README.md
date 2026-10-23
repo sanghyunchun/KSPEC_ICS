@@ -14,6 +14,20 @@ the GUI and the observing scripts work unchanged:
 | `illuon` / `illuoff` | stage in + light on / light off + stage out |
 | `specstop` | emergency stop: stage, then light, then the acquisition (new command) |
 
+## Replies
+The ICS pairs replies with commands by their order, so every command gets exactly one `Done`
+reply and nothing else is sent as `Done`. Its `status` is:
+
+| status | meaning |
+|---|---|
+| `success` | done |
+| `fail` | refused, nothing was done: busy, interlock, no `specinitial`, no unit |
+| `error` | hardware or LightField failed |
+| `stopped` | interrupted by `specstop` |
+
+Progress replies are `ING`. So is the `specstop` reply while a command runs; that command then
+answers `Done`/`stopped`.
+
 ## Grating and stage interlock
 One process owns LightField and the Uno. Every command except `specstatus` takes one lock, so an
 exposure, an experiment load, and a stage move never overlap. A command that arrives while
@@ -26,9 +40,9 @@ Near, exposures, experiment loads, and `illuon` are refused until `illuoff` brin
 (`specstatus`, `specstop`, and `specinitial <night>` without an experiment still work).
 
 `specstop` does not wait for the lock. It stops the stage first, then switches the light off,
-then stops the LightField acquisition; the running command fails and an interrupted frame is not
-saved. The stage position is then unknown, so exposures, experiment loads, and `illuon` are
-refused until `illuoff` has homed the stage.
+then stops the LightField acquisition; the running command replies `stopped` and an interrupted
+frame is not saved. The stage position is then unknown, so exposures, experiment loads, and
+`illuon` are refused until `illuoff` has homed the stage.
 
 Changing the grating by hand in the LightField window bypasses this interlock: do it only with
 the stage OUT, or use `specinitial <night> <experiment>`.

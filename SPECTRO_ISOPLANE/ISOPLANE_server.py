@@ -31,7 +31,7 @@ async def main():
         async with message.process():
             try:
                 dict_data = json.loads(message.body)
-                print('\033[94m' + '[ISOPLANE] received: ' + dict_data['message'] + '\033[0m')
+                print('\033[94m' + '[ISOPLANE] received: ' + str(dict_data.get('message', dict_data.get('func'))) + '\033[0m')
                 await isoplane.handle(ISOPLANE_server, message.body)
             except Exception as e:
                 print(f"Error in on_isoplane_message: {e}", flush=True)

@@ -10,19 +10,26 @@ IsoPlane-specific code:
     illuon / illuoff                   back-illumination stage in + light on / light off + out
     specstop                           emergency stop: stage, then light, then LightField
 
+Replies. The ICS pairs replies with commands by their order, so every command gets exactly one
+Done reply, and nothing else is ever sent as Done. Its status is success; fail when the command
+was refused and nothing was done (busy, interlock, missing setup); error when the hardware or
+LightField failed; or stopped when specstop interrupted it. The specstop reply while a command
+runs is ING.
+
 One process owns both LightField and the back-illumination Uno, because the stage is lowered
-into the grating-turret compartment. Every command except specstatus holds one lock, so an
-exposure, an experiment load (which may move the grating), and a stage move never overlap. A
-command that arrives while another one runs is refused at once, not queued. Before anything
-that may move the grating or open the shutter, the Near switch is read from the hardware: the
-stage must be OUT and the light off.
+into the grating-turret compartment. Every command except specstatus and specstop holds one
+lock, so an exposure, an experiment load (which may move the grating), and a stage move never
+overlap. A command that arrives while another one runs is refused at once, not queued. Before
+anything that may move the grating or open the shutter, the Near switch is read from the
+hardware: the stage must be OUT and the light off.
 
 specstatus never waits: while a command runs, it reports the LightField state read before that
 command (LightField serves one call at a time, so asking it would wait for the exposure).
 
 specstop never waits either. It stops the stage, switches the light off, and stops the
-acquisition; the running command then fails. The stage position is unknown afterwards, so
-exposures, experiment loads, and illuon stay refused until illuoff has homed the stage.
+acquisition; the running command then replies stopped. The stage position is unknown
+afterwards, so exposures, experiment loads, and illuon stay refused until illuoff has homed the
+stage.
 """
 
 import asyncio
@@ -47,7 +54,11 @@ FRAME_TYPES = {
 PROGRESS_EVERY_S = 10
 
 
-class InterlockError(RuntimeError):
+class Refused(RuntimeError):
+    """The command was not carried out (reply status fail)."""
+
+
+class InterlockError(Refused):
     pass
 
 
@@ -60,6 +71,7 @@ class Isoplane:
         self.night = None
         self.lock = asyncio.Lock()
         self.busy = "idle"
+        self.stop_requested = False  # specstop arrived while self.busy ran
         self.lf_status = {}  # last LightField status, served while a command runs
         self.lf_status_time = None
 
@@ -110,23 +122,39 @@ class Isoplane:
             return
         if self.lock.locked():  # no await since the check: the lock cannot change hands here
             await self.reply(server, func, f"{func} refused: busy with {self.busy}.",
-                             status="error")
+                             status="fail")
             return
         async with self.lock:
             self.busy = func
+            self.stop_requested = False
             if self.bl is not None:  # a specstop holds until the next command starts
                 self.bl.clear_stop()
             self.lf.clear_stop()
             try:
                 await handlers[func](server, d)
             except Exception as e:
-                await self.reply(server, func, f"{func} failed: {e}", status="error")
+                if self.stop_requested:
+                    status, msg = "stopped", f"{func} stopped by specstop: {e}"
+                elif isinstance(e, Refused):
+                    status, msg = "fail", f"{func} refused: {e}"
+                else:
+                    status, msg = "error", f"{func} failed: {e}"
+                await self.reply(server, func, msg, status=status)
             finally:
                 self.busy = "idle"
+                self.stop_requested = False
 
     async def emergency_stop(self, server):
-        """Stage stop, then light off, then LightField stop; does not wait for the lock."""
-        interrupted, done, failed = self.busy, [], []
+        """Stage stop, then light off, then LightField stop; does not wait for the lock.
+
+        While a command runs, the reply is ING: that command's own Done (status stopped) is
+        the one reply the ICS waits for.
+        """
+        interrupted = self.busy
+        running = interrupted != "idle"
+        if running:
+            self.stop_requested = True
+        done, failed = [], []
         if self.bl is not None:
             try:
                 await asyncio.to_thread(self.bl.emergency_stop)
@@ -138,13 +166,18 @@ class Isoplane:
             done.append("acquisition stopped")
         except Exception as e:
             failed.append(f"LightField: {e}")
-        msg = f"Emergency stop ({'during ' + interrupted if interrupted != 'idle' else 'idle'}): "
+        msg = f"Emergency stop ({'during ' + interrupted if running else 'idle'}): "
         msg += "; ".join(done + failed) + "."
         if self.bl is not None:
             msg += " Stage position unknown: send illuoff to home it."
-        await self.reply(server, "specstop", msg, status="error" if failed else "success")
+        await self.reply(server, "specstop", msg, process="ING" if running else "Done",
+                         status="error" if failed else "success")
 
     # -------------------------------------------------- interlock
+    def require_unit(self):
+        if self.bl is None:
+            raise Refused("no back-illumination unit configured")
+
     async def require_stage_out(self, what):
         """Raise unless the stage reads OUT at the Near switch now and the light is off."""
         if self.bl is None:
@@ -152,7 +185,7 @@ class Isoplane:
         near = await asyncio.to_thread(self.bl.at_near)
         if not near or self.bl.light:
             raise InterlockError(
-                f"{what} refused: back-illumination stage is not OUT "
+                f"{what}: back-illumination stage is not OUT "
                 f"(state {self.bl.state}, light {self.bl.light}); send illuoff first"
             )
         self.bl.state = "OUT"
@@ -193,8 +226,7 @@ class Isoplane:
                          f"{', experiment ' + experiment if experiment else ''}).")
 
     async def illuon(self, server, d):
-        if self.bl is None:
-            raise RuntimeError("no back-illumination unit configured")
+        self.require_unit()
         lf = await self.read_lf_status()
         if lf.get("running") or lf.get("updating"):
             raise InterlockError("LightField is acquiring or updating (the grating may move)")
@@ -204,8 +236,7 @@ class Isoplane:
         await self.reply(server, "illuon", "Back illumination light on.")
 
     async def illuoff(self, server, d):
-        if self.bl is None:
-            raise RuntimeError("no back-illumination unit configured")
+        self.require_unit()
         await self.reply(server, "illuoff", "Back illumination: light off, raising the stage.",
                          process="ING")
         await asyncio.to_thread(self.bl.retract)
@@ -218,7 +249,7 @@ class Isoplane:
         func = d["func"]
         kind, shutter_closed = FRAME_TYPES[func]
         if self.night is None:
-            raise RuntimeError("no night directory: send specinitial <night> first")
+            raise Refused("no night directory: send specinitial <night> first")
         n = int(d["numframe"])
         exptime = 0.0 if func == "getbias" else float(d["time"])
         header = d.get("header") or {}
