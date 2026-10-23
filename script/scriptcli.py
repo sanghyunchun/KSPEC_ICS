@@ -21,12 +21,36 @@ from SPECTRO.speccli import handle_spec
 from SCIOBS.sciobscli import sciobscli
 import Lib.process as processes
 from Lib.make_spec_header import set_header_info
+from Lib.reply import wait_reply
 from TCS.tcscli import handle_telcom
+
+
+SPEC_FRAME_OVERHEAD_S = 180.     # readout, export and copy per frame, on top of the exposure
 
 
 def printing(message):
     """Utility function for consistent printinging."""
     print(f"\n\033[32m[ICS] {message}\033[0m\n",flush=True)
+
+
+def log_or_print(logging, message, level):
+    if logging is not None:
+        logging(message, level=level)
+    else:
+        printing(message)
+
+
+def spec_command_timeout(command):
+    """Seconds to wait for the Done reply of a getbias/getflat/getarc/getobj command."""
+    cmd, *params = command.split()
+    try:
+        if cmd == 'getbias':
+            exptime, nframe = 0., int(params[-1])
+        else:
+            exptime, nframe = float(params[0]), int(params[1])
+    except (IndexError, ValueError):
+        return SPEC_FRAME_OVERHEAD_S
+    return (exptime + SPEC_FRAME_OVERHEAD_S) * max(nframe, 1)
 
 
 #def convert_to_sexagesimal(ra_deg, dec_deg):
@@ -230,9 +254,13 @@ class script():
     ):
         header = self.make_spec_header(obstype, exptime, expnum)
         await handle_spec(command, scriptrun.ICSclient, header)
-        spec_rsp = await scriptrun.response_queue.get()
+        spec_rsp = await wait_reply(scriptrun.response_queue, 'SPEC', command.split()[0],
+                                    timeout=spec_command_timeout(command), logging=logging)
 
-        if isinstance(spec_rsp, dict) and spec_rsp.get("status") == "success":
+        if spec_rsp.get("status") != "success":
+            log_or_print(logging, f"{command} did not succeed ({spec_rsp.get('status')}): "
+                         f"{spec_rsp.get('message')}", 'error')
+        else:
             log_comment = comments or spec_rsp.get("filename") or spec_rsp.get("message", "")
             await self.add_obslog(
                 obstype,

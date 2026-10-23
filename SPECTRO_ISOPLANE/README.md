@@ -27,6 +27,8 @@ reply and nothing else is sent as `Done`. Its `status` is:
 
 Progress replies are `ING`. So is the `specstop` reply while a command runs; that command then
 answers `Done`/`stopped`.
+Scripts wait with `Lib.reply.wait_reply(queue, inst, func, timeout)`, which skips progress
+replies and `Done` replies of other commands (for example a `specstatus` sent from the GUI).
 
 ## Deadlines
 An exposure still running `lightfield.expose_timeout_s` (default 120 s) after its exposure time

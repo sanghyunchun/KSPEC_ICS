@@ -35,6 +35,7 @@ from LAMP.lampcli import handle_lamp
 from SPECTRO.speccli import handle_spec
 from TCS.tcscli import handle_telcom
 from script.scriptcli import handle_script
+from Lib.reply import wait_reply
 from script.scriptcli import script
 from SCIOBS.sciobscli import sciobscli
 
@@ -2366,7 +2367,8 @@ class MainWindow(QMainWindow):
 
         self.logging('Sent Target information to MTL',level='send')
         await self.ICS_client.send_message("MTL", self.objmsg)
-        loadobj_response = await self.response_queue.get()
+        loadobj_response = await wait_reply(self.response_queue, 'MTL', 'loadobj',
+                                            timeout=60, logging=self.logging)
 
         loadobj_succeeded = (
             loadobj_response.get('inst') == 'MTL'
@@ -2386,7 +2388,8 @@ class MainWindow(QMainWindow):
         await self.ICS_client.send_message(
             'MTL', mtl_start(exptime=exptime, nexposure=nexposure)
         )
-        mtlstart_response = await self.response_queue.get()
+        mtlstart_response = await wait_reply(self.response_queue, 'MTL', 'mtlstart',
+                                             timeout=300, logging=self.logging)
 
         mtlstart_succeeded = (
             mtlstart_response.get('inst') == 'MTL'
@@ -2407,7 +2410,8 @@ class MainWindow(QMainWindow):
         for arm, motionmsg in (('alpha', self.motionmsg1), ('beta', self.motionmsg2)):
             self.logging(f'Sent Motion plan of {arm} motor to FBP', level='send')
             await self.ICS_client.send_message("FBP", motionmsg)
-            response = await self.response_queue.get()
+            response = await wait_reply(self.response_queue, 'FBP', 'loadmotion',
+                                        timeout=60, logging=self.logging)
             if not (
                 response.get('inst') == 'FBP'
                 and response.get('func') == 'loadmotion'

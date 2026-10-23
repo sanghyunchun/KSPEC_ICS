@@ -280,6 +280,30 @@ class IsoplaneFakeTest(unittest.TestCase):
         self.assertIn('did not finish', obj['message'])
 
 
+class WaitReplyTest(unittest.TestCase):
+    def test_skips_progress_and_other_commands(self):
+        from Lib.reply import wait_reply
+
+        async def go():
+            q = asyncio.Queue()
+            for m in ({'inst': 'SPEC', 'func': 'getobj', 'process': 'ING'},
+                      {'inst': 'SPEC', 'func': 'specstatus', 'process': 'Done'},
+                      {'inst': 'MTL', 'func': 'mtlstatus', 'process': 'Done'},
+                      {'inst': 'SPEC', 'func': 'getobj', 'process': 'Done', 'status': 'success'},
+                      {'inst': 'SPEC', 'func': 'illuoff', 'process': 'Done'}):
+                q.put_nowait(m)
+            skipped = []
+            got = await wait_reply(q, 'SPEC', 'getobj', timeout=1,
+                                   logging=lambda msg, level: skipped.append(level))
+            late = await wait_reply(q, 'SPEC', 'getobj', timeout=0.05,
+                                    logging=lambda msg, level: skipped.append(level))
+            return got, late, skipped
+        got, late, skipped = asyncio.run(go())
+        self.assertEqual(got['status'], 'success')
+        self.assertEqual(late['status'], 'error')  # timed out, after skipping illuoff
+        self.assertEqual(skipped, ['warning', 'warning', 'warning', 'error'])
+
+
 class AppendCardsTest(unittest.TestCase):
     def test_lightfield_continue_cards_survive(self):
         cards = ["SIMPLE  =                    T", "BITPIX  =                   16",
