@@ -73,7 +73,9 @@ class IsoplaneFakeTest(unittest.TestCase):
                                   in_depth_mm=50, in_limit_mm=50, time_scale=bl_scale)
         cfg = {'datapath': os.path.join(self.tmp.name, 'raw'),
                'sharepath': os.path.join(self.tmp.name, 'share')}
-        return Isoplane(cfg, lightfield=lf, backillum=bl)
+        iso = Isoplane(cfg, lightfield=lf, backillum=bl)
+        iso.light_settle_s = 0.0
+        return iso
 
     def run_cmds(self, iso, *bodies, start=True):
         async def go():
@@ -261,6 +263,51 @@ class IsoplaneFakeTest(unittest.TestCase):
         self.assertEqual(self.server.done('illuon')[0]['status'], 'fail')
         self.assertEqual(self.server.done('specstatus')[0]['isoplane']['backillum']['state'],
                          'NONE')
+
+    def test_light_only_commands_keep_the_stage_in(self):
+        iso = self.make()
+        self.run_cmds(iso, body('specinitial', dirname='20261101'), body('illulighton'),
+                      body('illuon'), body('illulightoff'), body('illulighton'),
+                      body('illulightoff'), body('getobj', time=5, numframe=1, header=HEADER),
+                      body('illuoff'))
+        uno = iso.bl.link
+        refused, on = self.server.done('illulighton')
+        self.assertEqual(refused['status'], 'fail')  # stage OUT: light-only on is refused
+        self.assertIn('not IN', refused['message'])
+        self.assertEqual((on['status'], on['backillum']['state'], on['backillum']['light']),
+                         ('success', 'IN', True))
+        for off in self.server.done('illulightoff'):
+            self.assertEqual((off['status'], off['backillum']['state'], off['backillum']['light']),
+                             ('success', 'IN', False))
+        moves = [l for l in uno.log if l.startswith('MB 01100028')]  # speed write before a move
+        self.assertEqual(len(moves), 1 + 3)  # illuon: the move; illuoff: move, slow, reset
+        self.assertEqual(self.server.done('getobj')[0]['status'], 'fail')  # stage IN
+        self.assertEqual(iso.bl.state, 'OUT')
+        self.assertFalse(uno.light)
+
+    def test_light_switches_off_after_light_max_on_s(self):
+        iso = self.make()
+        iso.light_max_on_s = 0.05
+
+        async def go():
+            await iso.start()
+            await iso.handle(self.server, body('illuon'))
+            await iso.handle(self.server, body('specstatus'))
+            await asyncio.sleep(0.3)
+            await iso.handle(self.server, body('illulighton'))  # re-arms
+            await iso.handle(self.server, body('illulightoff'))  # cancels
+            await asyncio.sleep(0.3)
+            iso.bl._stop_ping.set()
+        asyncio.run(go())
+        auto = self.server.replies('illulightoff', 'ING')
+        self.assertEqual(len(auto), 1)  # only the first light-on timed out
+        self.assertIn('switched off after', auto[0]['message'])
+        self.assertEqual((auto[0]['backillum']['state'], auto[0]['backillum']['light']),
+                         ('IN', False))
+        self.assertEqual(len(self.server.done('illulightoff')), 1)  # auto-off is never Done
+        self.assertIn('auto_off_in_s', self.server.done('specstatus')[0]['isoplane']['backillum'])
+        self.assertEqual(iso.bl.state, 'IN')
+        self.assertFalse(iso.bl.link.light)
 
     def test_late_exposure_is_stopped_and_fails(self):
         iso = self.make(lf=FakeLightField(time_scale=1000, shape=(1, 8, 10)))

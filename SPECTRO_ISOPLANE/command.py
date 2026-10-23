@@ -8,13 +8,14 @@ IsoPlane-specific code:
     specstatus                         camera, grating, and back-illumination state
     getbias <n> / getflat <t> <n> / getarc <t> <n> / getobj <t> <n>
     illuon / illuoff                   back-illumination stage in + light on / light off + out
+    illulighton / illulightoff         light only; the stage does not move (on needs it IN)
     specstop                           emergency stop: stage, then light, then LightField
 
 Replies. The ICS pairs replies with commands by their order, so every command gets exactly one
 Done reply, and nothing else is ever sent as Done. Its status is success; fail when the command
 was refused and nothing was done (busy, interlock, missing setup); error when the hardware or
-LightField failed; or stopped when specstop interrupted it. The specstop reply while a command
-runs is ING.
+LightField failed; or stopped when specstop interrupted it. Messages the server sends on its
+own (light auto-off) and the specstop reply while a command runs are ING.
 
 One process owns both LightField and the back-illumination Uno, because the stage is lowered
 into the grating-turret compartment. Every command except specstatus and specstop holds one
@@ -31,6 +32,11 @@ acquisition; the running command then replies stopped. The stage position is unk
 afterwards, so exposures, experiment loads, and illuon stay refused until illuoff has homed the
 stage.
 
+Light auto-off: every light-on (illuon, illulighton) starts a timer, and the server switches
+the light off after ``backillum.light_max_on_s`` (default 300 s; 0 disables it) unless the light
+is switched on again. The stage stays where it is. The Uno's own 60 s watchdog only covers this
+server dying; the timer covers the ICS script dying with the light on in the turret.
+
 Deadlines: an exposure still running ``lightfield.expose_timeout_s`` (default 120 s) after its
 exposure time is stopped and fails; an experiment load fails after ``lightfield.load_timeout_s``
 (default 300 s). A hung LightField then still produces a Done reply.
@@ -42,6 +48,7 @@ import json
 import os
 import re
 import shutil
+import time
 
 import Lib.mkmessage as mkmsg
 from SPECTRO_ISOPLANE.backillum import make_backillum
@@ -56,6 +63,7 @@ FRAME_TYPES = {
     "getobj": ("obj", False),
 }
 PROGRESS_EVERY_S = 10
+AUTO_OFF = "light auto-off"  # self.busy while the timer switches the light off
 
 
 class Refused(RuntimeError):
@@ -69,6 +77,7 @@ class InterlockError(Refused):
 class Isoplane:
     def __init__(self, cfg, lightfield=None, backillum=None):
         lf_cfg = cfg.get("lightfield", {})
+        bl_cfg = cfg.get("backillum") or {}
         self.lf = lightfield if lightfield is not None else make_lightfield(lf_cfg)
         self.bl = backillum if backillum is not None else make_backillum(cfg.get("backillum"))
         self.datapath = cfg.get("datapath", "../DATA/RAWDATA/")
@@ -76,10 +85,14 @@ class Isoplane:
         self.expose_timeout_s = float(lf_cfg.get("expose_timeout_s", 120.0))
         self.load_timeout_s = float(lf_cfg.get("load_timeout_s", 300.0))
         self.stop_grace_s = 30.0  # wait for LightField after stopping a late exposure
+        self.light_settle_s = float(bl_cfg.get("light_settle_s", 1.0))
+        self.light_max_on_s = float(bl_cfg.get("light_max_on_s", 300.0))
         self.night = None
         self.lock = asyncio.Lock()
         self.busy = "idle"
         self.stop_requested = False  # specstop arrived while self.busy ran
+        self.light_timer = None
+        self.light_off_at = None  # time.monotonic() of the next auto-off
         self.lf_status = {}  # last LightField status, served while a command runs
         self.lf_status_time = None
 
@@ -96,6 +109,7 @@ class Isoplane:
                   "experiment loads are blocked until illuoff\033[0m", flush=True)
 
     async def close(self):
+        self.cancel_light_timer()
         if self.bl is not None:
             await asyncio.to_thread(self.bl.close)  # light off
         await asyncio.to_thread(self.lf.close)
@@ -122,6 +136,8 @@ class Isoplane:
             "specinitial": self.specinitial,
             "illuon": self.illuon,
             "illuoff": self.illuoff,
+            "illulighton": self.illulighton,
+            "illulightoff": self.illulightoff,
             **{f: self.take_frames for f in FRAME_TYPES},
         }
         if func not in handlers:
@@ -160,9 +176,10 @@ class Isoplane:
         the one reply the ICS waits for.
         """
         interrupted = self.busy
-        running = interrupted != "idle"
+        running = interrupted not in ("idle", AUTO_OFF)
         if running:
             self.stop_requested = True
+        self.cancel_light_timer()
         done, failed = [], []
         if self.bl is not None:
             try:
@@ -183,6 +200,10 @@ class Isoplane:
         await self.reply(server, "specstop", msg, process="ING" if running else "Done",
                          status="error" if failed else "success", **extra)
 
+    def check_stop(self):
+        if self.stop_requested:
+            raise RuntimeError("stopped by specstop")
+
     # -------------------------------------------------- interlock
     def require_unit(self):
         if self.bl is None:
@@ -200,6 +221,50 @@ class Isoplane:
             )
         self.bl.state = "OUT"
 
+    # -------------------------------------------------- light auto-off
+    def lease_note(self):
+        return f", auto-off in {self.light_max_on_s:g} s" if self.light_max_on_s > 0 else ""
+
+    def arm_light_timer(self, server):
+        self.cancel_light_timer()
+        if self.light_max_on_s > 0:
+            self.light_off_at = time.monotonic() + self.light_max_on_s
+            self.light_timer = asyncio.ensure_future(
+                self.light_auto_off(server, self.light_max_on_s))
+
+    def cancel_light_timer(self):
+        timer, self.light_timer, self.light_off_at = self.light_timer, None, None
+        if timer is not None and timer is not asyncio.current_task() and not timer.done():
+            timer.cancel()
+
+    async def light_auto_off(self, server, after):
+        await asyncio.sleep(after)
+        async with self.lock:  # a command holding the lock cancels or re-arms this timer
+            if self.light_timer is not asyncio.current_task():
+                return
+            self.light_timer = self.light_off_at = None
+            if self.bl is None or not self.bl.light:
+                return
+            self.busy = AUTO_OFF
+            try:
+                await asyncio.to_thread(self.bl.set_light, False)
+                await self.reply(server, "illulightoff",
+                                 f"Back illumination light switched off after {after:g} s on "
+                                 f"(light_max_on_s); stage stays {self.bl.state}.",
+                                 process="ING", backillum=self.bl.status())
+            except Exception as e:
+                await self.reply(server, "illulightoff",
+                                 f"Back illumination light auto-off failed: {e}",
+                                 process="ING", status="error", backillum=self.bl.status())
+            finally:
+                self.busy = "idle"
+
+    async def light_on(self, server):
+        await asyncio.to_thread(self.bl.set_light, True)
+        self.arm_light_timer(server)
+        await asyncio.sleep(self.light_settle_s)
+        self.check_stop()
+
     # -------------------------------------------------- commands
     async def read_lf_status(self):
         self.lf_status = await asyncio.to_thread(self.lf.status)
@@ -211,6 +276,8 @@ class Isoplane:
         busy = self.busy != "idle"
         lf = dict(self.lf_status) if busy else await self.read_lf_status()
         bl = self.bl.status() if self.bl is not None else {"state": "NONE"}
+        if self.light_off_at is not None:
+            bl["auto_off_in_s"] = round(max(0.0, self.light_off_at - time.monotonic()))
         details = {"night": self.night, "busy": self.busy, "lightfield": lf,
                    "lightfield_read_at": self.lf_status_time, "backillum": bl}
         msg = (f"IsoPlane: {'busy (' + self.busy + ')' if busy else 'ready'}, "
@@ -247,12 +314,13 @@ class Isoplane:
             raise InterlockError("LightField is acquiring or updating (the grating may move)")
         await self.reply(server, "illuon", "Back illumination: lowering the stage.", process="ING")
         await asyncio.to_thread(self.bl.insert)
-        await asyncio.to_thread(self.bl.set_light, True)
-        await self.reply(server, "illuon", "Back illumination stage IN, light on.",
+        await self.light_on(server)
+        await self.reply(server, "illuon", f"Back illumination stage IN, light on{self.lease_note()}.",
                          backillum=self.bl.status())
 
     async def illuoff(self, server, d):
         self.require_unit()
+        self.cancel_light_timer()
         await self.reply(server, "illuoff", "Back illumination: light off, raising the stage.",
                          process="ING")
         await asyncio.to_thread(self.bl.retract)
@@ -260,6 +328,25 @@ class Isoplane:
         if self.bl.last_error:
             msg += f" Warning: {self.bl.last_error}"
         await self.reply(server, "illuoff", msg, backillum=self.bl.status())
+
+    async def illulighton(self, server, d):
+        """Light on without moving the stage, e.g. between metrology trials."""
+        self.require_unit()
+        if self.bl.state != "IN":
+            raise InterlockError(f"the stage is {self.bl.state}, not IN: send illuon to lower it")
+        await self.light_on(server)
+        await self.reply(server, "illulighton",
+                         f"Back illumination light on, stage IN{self.lease_note()}.",
+                         backillum=self.bl.status())
+
+    async def illulightoff(self, server, d):
+        """Light off without moving the stage."""
+        self.require_unit()
+        self.cancel_light_timer()
+        await asyncio.to_thread(self.bl.set_light, False)
+        await self.reply(server, "illulightoff",
+                         f"Back illumination light off, stage {self.bl.state}.",
+                         backillum=self.bl.status())
 
     async def take_frames(self, server, d):
         func = d["func"]

@@ -32,6 +32,8 @@ async def set_illumination(state):
 ILLUMINATION_COMMANDS = {
     'illuon': 'Back illumination on (stage in, light on).',
     'illuoff': 'Back illumination off (light off, stage out).',
+    'illulighton': 'Back illumination light on (stage stays in).',
+    'illulightoff': 'Back illumination light off (stage stays in).',
 }
 
 
@@ -79,8 +81,9 @@ async def handle_spec(arg, ICS_client, header=None):
     if cmd in ILLUMINATION_COMMANDS:
         if params:
             raise ValueError(f"'{cmd}' does not take parameters")
-        light_on = cmd == 'illuon'
+        light_on = cmd in ('illuon', 'illulighton')
         if queue == 'SPEC':
+            # Main spectrograph: one WebRelay light, no stage, so the light-only pair is the same.
             return await set_illumination(light_on)
         # IsoPlane: the server moves the stage in the grating turret, interlocked with the
         # grating; its Done reply (func=cmd) arrives on the ICS queue. Return the requested

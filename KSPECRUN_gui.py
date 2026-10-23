@@ -219,6 +219,7 @@ class MainWindow(QMainWindow):
         self.flat_state = False
         self.fiducial_state = False
         self.illumi_state = False
+        self.illumi_stage = None      # IsoPlane stage state from the last SPEC reply (IN, OUT, ...)
         self.illumi_busy = False
         self._illumi_waiter = None    # (func, future) while the button waits for its reply
 #        self.fbp_restore = False
@@ -564,7 +565,7 @@ class MainWindow(QMainWindow):
             "fbp": ["fbpactivate", "fbpstatus", "fbpstepstatus", "fbpstate", "fbpmove", "fbpoffset"],
             "mtl": ["mtlstatus", "mtlstart", "mtlset", "mtltest", "mtlcal", "mtltrial", "mtlresult", "mtlreset"],
             "lamp": ["lampstatus", "arcon", "arcoff", "flaton", "flatoff","fiducialon","fiducialoff"],
-            "spec": ["specstatus", "specstop", "specinitial","illuon", "illuoff", "getobj", "getbias", "getflat","getarc"],
+            "spec": ["specstatus", "specstop", "specinitial","illuon", "illuoff", "illulighton", "illulightoff", "getobj", "getbias", "getflat","getarc"],
             "tcs": ["tmradec", "start", "stop", "tcsint", "tcsreset", "tcsclose",
             "tcsarc", "tcsstatus", "tstat", "traw", "tsync", "tcmd",
             "treg", "tmradec", "tmr", "tmobject", "tmo", "tmelaz",
@@ -760,7 +761,7 @@ class MainWindow(QMainWindow):
                 # 2. 수신 로그 출력
                 self._log_received_message(inst, msg, status)
 
-                # IsoPlane replies carry the back-illumination state.
+                # IsoPlane replies carry the back-illumination state (also the light auto-off).
                 backillum = response_data.get('backillum')
                 if inst == 'SPEC' and isinstance(backillum, dict):
                     self._sync_illumi_state(backillum)
@@ -2164,6 +2165,7 @@ class MainWindow(QMainWindow):
     def _sync_illumi_state(self, backillum):
         """Follow the IsoPlane back-illumination state reported in a SPEC reply."""
         self.illumi_state = bool(backillum.get('light'))
+        self.illumi_stage = backillum.get('state')
         if not self.illumi_busy:
             for button in (self.ui.pushbtn_illumi, self.ui.pushbtn_illumi_2):
                 self._set_toggle_button(button, self.illumi_state)
@@ -2188,7 +2190,7 @@ class MainWindow(QMainWindow):
             if self._illumi_waiter is not None and self._illumi_waiter[1] is waiter:
                 self._illumi_waiter = None
         if not isinstance(response.get('backillum'), dict) and response.get('status') == 'success':
-            self.illumi_state = command == 'illuon'
+            self.illumi_state = command in ('illuon', 'illulighton')
 
     @asyncSlot()
     async def illumi_button_clicked(self):
@@ -2200,14 +2202,20 @@ class MainWindow(QMainWindow):
         self.illumi_busy = True
         for button in buttons:
             button.setEnabled(False)
-        command = 'illuon' if desired_state else 'illuoff'
         try:
             if spec_queue() == 'SPEC':
+                command = 'illuon' if desired_state else 'illuoff'
                 self.logging(f"Back illumination: sending {'ON' if desired_state else 'OFF'} to WebRelay.", level='send')
                 relay_state = await handle_spec(command, self.ICS_client)
                 self.illumi_state = bool(relay_state)
                 self.logging(f"Back illumination: WebRelay relay1={relay_state}.", level='receive')
             else:
+                # IsoPlane: with the stage already IN (light switched off between metrology
+                # trials), ON switches only the light; OFF always raises the stage.
+                if desired_state:
+                    command = 'illulighton' if self.illumi_stage == 'IN' else 'illuon'
+                else:
+                    command = 'illuoff'
                 await self._send_isoplane_illumination(command)
         except Exception as error:
             self.logging(f'Back illumination command failed: {error}', level='error')

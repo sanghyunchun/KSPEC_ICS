@@ -13,7 +13,9 @@
         "in_depth_mm": 50.0,
         "in_limit_mm": 50.0,
         "speed_mm_s": 10.0,
-        "time_scale": 1.0
+        "time_scale": 1.0,
+        "light_settle_s": 1.0,
+        "light_max_on_s": 300.0
     },
     "datapath": "../DATA/RAWDATA/",
     "sharepath": ""

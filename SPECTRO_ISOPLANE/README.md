@@ -12,6 +12,7 @@ the GUI and the observing scripts work unchanged:
 | `getbias <n>` | n frames, shutter closed, 0 s |
 | `getflat <t> <n>`, `getarc <t> <n>`, `getobj <t> <n>` | n frames of t s |
 | `illuon` / `illuoff` | stage in + light on / light off + stage out |
+| `illulighton` / `illulightoff` | light only, the stage does not move; on needs the stage IN (new) |
 | `specstop` | emergency stop: stage, then light, then the acquisition (new command) |
 
 ## Replies
@@ -25,11 +26,18 @@ reply and nothing else is sent as `Done`. Its `status` is:
 | `error` | hardware or LightField failed (also an exposure past its deadline) |
 | `stopped` | interrupted by `specstop` |
 
-Progress replies are `ING`. So is the `specstop` reply while a command runs; that command then
-answers `Done`/`stopped`. Replies of the illumination commands carry `backillum` (`state`,
-`light`), which the GUI button follows.
+Progress replies are `ING`. So are the replies the server sends unasked (light auto-off) and the
+`specstop` reply while a command runs; that command then answers `Done`/`stopped`. Replies of the
+illumination commands carry `backillum` (`state`, `light`), which the GUI button follows.
 Scripts wait with `Lib.reply.wait_reply(queue, inst, func, timeout)`, which skips progress
 replies and `Done` replies of other commands (for example a `specstatus` sent from the GUI).
+
+## Metrology (light only between trials)
+Every light-on starts a timer: the server switches the light off after
+`backillum.light_max_on_s` (default 300 s, 0 disables) and sends an `ING` reply; the stage stays
+IN. This covers the ICS script dying with the light on in the turret (the Uno watchdog only
+covers this server dying). `backillum.light_settle_s` (default 1 s) is waited after a light-on
+before the reply.
 
 ## Deadlines
 An exposure still running `lightfield.expose_timeout_s` (default 120 s) after its exposure time
@@ -77,7 +85,7 @@ to `<sharepath>/<night>/` when `sharepath` is set; the reply carries the shared 
 1. Copy `isoplane_local.example.json` to `isoplane_local.json` (gitignored) and edit it:
    `lightfield.driver` (`fake` or `lightfield`), the LightField `root`, the Uno `port`
    (`fake`, `COM5`, ...), the stage `in_depth_mm` / `in_limit_mm`, `datapath`, `sharepath`,
-   and optionally the timeouts above.
+   and optionally the timeouts and light settings above.
    Leave out `backillum` (or set it to `null`) when no unit is installed.
 2. In `Lib/KSPEC.ini` set `SPEC.queue` to `ISOPLANE` on the ICS side, and the broker
    `RabbitMQ.ip_addr` on the LightField PC.
