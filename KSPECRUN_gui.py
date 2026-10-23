@@ -166,6 +166,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("K-SPEC ICS")
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        self.ui.pushbtn_FBP_lock.setToolTip('Lock additional IDs; an empty field clears only additional locks.')
         map_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Lib', 'positioner_axis_map.json')
         with open(map_path, 'r', encoding='utf-8') as file:
             self.positioner_axis_map = json.load(file)
@@ -1459,10 +1460,10 @@ class MainWindow(QMainWindow):
 
         if positioner_text:
             await handle_fbp(f'fbplock {positioner_text}', self.ICS_client, logging=self.logging)
-            self.logging(f'Sent Lock Positioners {positioner_text}', level='send')
+            self.logging(f'Sent additional Lock Positioners {positioner_text}', level='send')
         else:
             await handle_fbp('fbplock', self.ICS_client, logging=self.logging)
-            self.logging('Sent Unlock All Positioners', level='send')
+            self.logging('Sent clear additional locks; default locks remain active.', level='send')
 
     @asyncSlot()
     async def FBP_rotate_button_clicked(self):

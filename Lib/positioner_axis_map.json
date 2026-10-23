@@ -164,7 +164,7 @@
             "local_axis": 52
         }
     },
-    "F3": {
+    "F2": {
         "plc": "PLC2",
         "alpha": {
             "global_axis": 120,
@@ -175,7 +175,7 @@
             "local_axis": 43
         }
     },
-    "F4": {
+    "F3": {
         "plc": "PLC2",
         "alpha": {
             "global_axis": 122,
@@ -186,7 +186,7 @@
             "local_axis": 45
         }
     },
-    "F5": {
+    "F4": {
         "plc": "PLC1",
         "alpha": {
             "global_axis": 61,
@@ -197,7 +197,7 @@
             "local_axis": 62
         }
     },
-    "F6": {
+    "F5": {
         "plc": "PLC1",
         "alpha": {
             "global_axis": 59,
@@ -208,7 +208,7 @@
             "local_axis": 60
         }
     },
-    "F7": {
+    "F6": {
         "plc": "PLC1",
         "alpha": {
             "global_axis": 57,
@@ -219,7 +219,7 @@
             "local_axis": 58
         }
     },
-    "F8": {
+    "F7": {
         "plc": "PLC1",
         "alpha": {
             "global_axis": 55,
@@ -230,7 +230,7 @@
             "local_axis": 56
         }
     },
-    "F9": {
+    "F8": {
         "plc": "PLC1",
         "alpha": {
             "global_axis": 53,
@@ -241,7 +241,7 @@
             "local_axis": 54
         }
     },
-    "F10": {
+    "F9": {
         "plc": "PLC2",
         "alpha": {
             "global_axis": 130,
@@ -252,7 +252,7 @@
             "local_axis": 53
         }
     },
-    "F11": {
+    "F10": {
         "plc": "PLC2",
         "alpha": {
             "global_axis": 132,

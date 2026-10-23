@@ -71,3 +71,18 @@ Waiting for message from client......
 
 Check for error messagees, and ensure that the phrase
 "waiting for message from client...." appears as the end.
+
+### FBP default locks
+
+Set `Lib/fbp_default_locks.json` on the FBP server to the positioner IDs that must
+always remain locked, for example `{"positioners": ["C4", "D2"]}`. The checked-in
+file starts with an empty list; fill it with the actual IDs before operating the
+instrument. The FBP server validates these IDs against `Lib/positioner_axis_map.json`
+and applies them after PLC readiness is confirmed at server startup and after each
+successful `fbpactivate`. If validation or PLC lock verification fails, FBP motion is
+refused until activation succeeds.
+
+The GUI Lock field specifies additional temporary locks. Sending IDs replaces the
+additional set; pressing Lock with an empty field clears only those additional locks.
+Default locks remain in effect. Additional locks survive `fbpactivate` in the same
+FBP server process, but are cleared when the server process restarts.

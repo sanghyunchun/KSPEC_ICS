@@ -247,6 +247,24 @@ async def activate_and_play_all_plcs() -> dict[str, Any]:
     return result
 
 
+async def check_plcs_ready() -> dict[str, Any]:
+    plc_connections = None
+    try:
+        plc_connections = await _open_command_plcs()
+        ready = await asyncio.gather(*[
+            asyncio.to_thread(plc.read_by_name, 'GVL.gSystemReady', pyads.PLCTYPE_BOOL)
+            for plc in plc_connections.values()
+        ])
+        if not all(ready):
+            return _error_result('PLC runtime is not ready.', ready=dict(zip(plc_connections, ready)))
+        return {'status': 'success', 'message': 'PLC1 and PLC2 are ready.'}
+    except Exception as error:
+        return _error_result(f'Cannot verify PLC readiness: {error}')
+    finally:
+        if plc_connections:
+            await _close_plcs(plc_connections)
+
+
 async def rotate_all(alpha_file: str, beta_file: str) -> dict[str, Any]:
     """
     Lock되지 않은 모든 포지셔너 축을 target position까지 정방향으로 이동한다.

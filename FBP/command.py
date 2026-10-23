@@ -7,11 +7,45 @@ import numpy as np
 import time
 from pathlib import Path
 import FBP.kspec_positioner_controller.position_action as FBP_action
+from FBP.lock_policy import load_default_locks, normalize_positioners
 
 # The current tile is ready only after both loadmotion messages are saved.
 _motion_tile = None
 _motion_files = {}
 _fbp_activate_lock = asyncio.Lock()
+_fbp_operation_lock = asyncio.Lock()
+_default_locks = set()
+_extra_locks = set()
+_available_positioners = set()
+_locks_ready = False
+
+
+async def initialize_locks():
+    global _default_locks, _available_positioners, _locks_ready
+    _locks_ready = False
+    try:
+        defaults, available = load_default_locks()
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        return {'status': 'error', 'message': f'Default lock configuration failed: {error}'}
+    _default_locks, _available_positioners = defaults, available
+    readiness = await FBP_action.check_plcs_ready()
+    if readiness.get('status') != 'success':
+        return readiness
+    return await apply_locks()
+
+
+async def apply_locks():
+    global _locks_ready
+    _locks_ready = False
+    effective = sorted(_default_locks | _extra_locks)
+    if effective:
+        result = await FBP_action.positioner_lock(effective)
+        if result.get('status') != 'success':
+            return result
+    _locks_ready = True
+    return {'status': 'success', 'message': 'FBP locks applied and verified.',
+            'data': {'default_locks': sorted(_default_locks),
+                     'extra_locks': sorted(_extra_locks), 'locked_positioners': effective}}
 
 
 def loaded_motion_paths():
@@ -57,7 +91,23 @@ async def send_fbp_response(FBP_server, result=None, *, log=True, **updates):
     await FBP_server.send_message('ICS', rsp)
     return reply_data
 
-async def identify_execute(FBP_server,cmd):
+async def identify_execute(FBP_server, cmd):
+    func = json.loads(cmd)['func']
+    protected = {'fbpactivate', 'fbplock', 'fbpmoveone', 'fbpmoveall', 'fbpoffset',
+                 'fbpinitial', 'fbpinitial_from_stop'}
+    if func in protected:
+        if _fbp_operation_lock.locked():
+            await send_fbp_response(FBP_server, func=func, process='Done', status='fail',
+                                    message='Another FBP lock, activation, or motion is in progress.')
+            return
+        async with _fbp_operation_lock:
+            await _identify_execute(FBP_server, cmd)
+    else:
+        await _identify_execute(FBP_server, cmd)
+
+
+async def _identify_execute(FBP_server,cmd):
+    global _extra_locks, _locks_ready
     dict_data=json.loads(cmd)
     func=dict_data['func']
 
@@ -68,6 +118,11 @@ async def identify_execute(FBP_server,cmd):
             await send_fbp_response(FBP_server, func=func, process='Done',
                                     status='fail', message=str(error))
             return
+
+    if func in ('fbpmoveone', 'fbpmoveall', 'fbpoffset', 'fbpinitial', 'fbpinitial_from_stop') and not _locks_ready:
+        await send_fbp_response(FBP_server, func=func, process='Done', status='fail',
+                                message='FBP default locks are not verified; activate the PLC runtime first.')
+        return
 
     if func == 'loadobj':
         ra=dict_data['ra']
@@ -99,6 +154,13 @@ async def identify_execute(FBP_server,cmd):
         return
 
     if func == 'fbpactivate':
+        try:
+            load_default_locks()
+        except (OSError, ValueError, json.JSONDecodeError) as error:
+            _locks_ready = False
+            await send_fbp_response(FBP_server, func=func, process='Done', status='error',
+                                    message=f'Default lock configuration failed: {error}')
+            return
         if _fbp_activate_lock.locked():
             await send_fbp_response(
                 FBP_server,
@@ -119,7 +181,16 @@ async def identify_execute(FBP_server,cmd):
             fbp_state='None',
         )
         async with _fbp_activate_lock:
+            _locks_ready = False
             result = await FBP_action.activate_and_play_all_plcs()
+            if result.get('status') == 'success':
+                lock_result = await initialize_locks()
+                result.setdefault('data', {})['locks'] = lock_result.get('data', {})
+                if lock_result.get('status') != 'success':
+                    result['status'] = 'error'
+                    result['message'] = f"PLC runtime started, but default locks failed: {lock_result['message']}"
+                else:
+                    result['message'] += ' Default locks applied and verified.'
 
         await send_fbp_response(
             FBP_server, result, func=func, process='Done', fbp_state='None'
@@ -137,6 +208,10 @@ async def identify_execute(FBP_server,cmd):
         )
 
     if func == 'fbplock':
+        if not _locks_ready:
+            await send_fbp_response(FBP_server, func=func, process='Done', status='fail',
+                                    message='FBP default locks are not verified; activate the PLC runtime first.')
+            return
         positioner_text = dict_data.get('positioners', '')
 
         if isinstance(positioner_text, list):
@@ -153,8 +228,19 @@ async def identify_execute(FBP_server,cmd):
                 if item.strip()
             ]
 
-    #    print(positioner_list)
-        result = await FBP_action.positioner_lock(positioner_list)
+        try:
+            proposed_extra = normalize_positioners(positioner_list, _available_positioners)
+        except ValueError as error:
+            result = {'status': 'fail', 'message': str(error)}
+        else:
+            result = await FBP_action.positioner_lock(sorted(_default_locks | proposed_extra))
+            if result.get('status') == 'success':
+                _extra_locks = proposed_extra - _default_locks
+                _locks_ready = True
+                result.setdefault('data', {}).update(
+                    default_locks=sorted(_default_locks), extra_locks=sorted(_extra_locks))
+            else:
+                _locks_ready = False
 
         await send_fbp_response(
             FBP_server, result, func='fbplock',process = 'Done', fbp_state = 'None')

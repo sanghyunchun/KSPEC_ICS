@@ -270,6 +270,10 @@ if __name__ == "__main__":
         from SPECTRO import SPEC_server
         asyncio.run(SPEC_server.main())
 
+    if sys.argv[1] == 'SPECISO':
+        from SPECTRO_ISOPLANE import ISOPLANE_server
+        asyncio.run(ISOPLANE_server.main())
+
     if sys.argv[1] == 'LAMP':
         from LAMP import LAMP_server
         asyncio.run(LAMP_server.main())

@@ -18,6 +18,8 @@ async def main():
     print('FBP Server Started!!!')
     FBP_server=AMQclass(ip_addr,idname,pwd,'FBP','ics.ex')  # Check queue name
     await FBP_server.connect()
+    lock_result = await initialize_locks()
+    print(f"[FBP] Initial lock state: {lock_result['message']}", flush=True)
 
     async def on_fbp_message(message: aio_pika.IncomingMessage):
         async with message.process():
