@@ -44,6 +44,33 @@ IN. This covers the ICS script dying with the light on in the turret (the Uno wa
 covers this server dying). `backillum.light_settle_s` (default 1 s) is waited after a light-on
 before the reply.
 
+## Setups and camera mode
+Grating, centre wavelength and camera mode come from saved LightField experiments, one per
+setup. `experiments` in `isoplane_local.json` lists the ones `specinitial` may load (`null`:
+any). `camera` holds the mode the reduction is calibrated for. Before every exposure the server
+reads the camera state and refuses the exposure (`fail`) when a value differs. A mode changed
+by hand in the LightField window therefore never reaches the data. `specinitial` and
+`specstatus` report the differences (`camera_problems`).
+
+| key | 2026 run | LightField setting (experiment path) |
+|---|---|---|
+| `adc_speed_mhz` | 0.1 (2 until 2026-01-23) | `Adc/Speed` |
+| `adc_gain` / `adc_quality` | High / LowNoise | `Adc/AnalogGain`, `Adc/Quality` |
+| `temp_setpoint_c` / `temp_status` | -55 / Locked | `Sensor/Temperature/SetPoint`, `Status` |
+| `sensor_rows` / `physical_rows` | 1330 / 1300 (1300 / 1300 until 2026-02-02) | `Sensor/Layout/ActiveArea/Height`, `Sensor/Information/ActiveArea/Height` |
+| `roi_selection` | FullSensor | `ReadoutControl/RegionsOfInterest/Selection` |
+
+Overscan: from 2026-02-03 the layout read 1330 rows of the 1300-row sensor. LightField reads
+the extra rows last, so they follow the sensor rows.
+- **Measured bias rows:** in raw orientation the last sensor row, row 1300, also sits at the
+  bias level in every frame, both 1300- and 1330-row readouts. In a 600 s dark of 2026-02-04,
+  rows 1295–1299 read 651 ADU, while rows 1300–1330 read 621 ADU with an r.m.s. of 4.1 ADU
+  (4.6 e⁻). So a 1330-row readout has 31 bias rows, as the kspecdr commissioning batch assumes.
+- **Header cards:** `lightfield.sensor_bias_rows` (1 on this camera) counts such rows at the end
+  of the sensor. For a full-sensor readout the server writes `DATASEC = '[1:1340,1:1299]'` and
+  `BIASSEC = '[1:1340,1300:1330]'` (raw orientation).
+- The 8-pixel left and right margins of the sensor are not read.
+
 ## Deadlines
 An exposure still running `lightfield.expose_timeout_s` (default 120 s) after its exposure time
 is stopped and fails with `error`; an experiment load fails after `lightfield.load_timeout_s`
@@ -90,7 +117,8 @@ to `<sharepath>/<night>/` when `sharepath` is set; the reply carries the shared 
 1. Copy `isoplane_local.example.json` to `isoplane_local.json` (gitignored) and edit it:
    `lightfield.driver` (`fake` or `lightfield`), the LightField `root`, the Uno `port`
    (`fake`, `COM5`, ...), the stage `in_depth_mm` / `in_limit_mm`, `datapath`, `sharepath`,
-   and optionally the timeouts and light settings above.
+   the `camera` mode and `experiments` list, and optionally the timeouts and light settings
+   above. `lightfield.shape` and `overscan_rows` shape the fake frames only.
    Leave out `backillum` (or set it to `null`) when no unit is installed.
 2. In `Lib/KSPEC.ini` set `SPEC.queue` to `ISOPLANE` on the ICS side, and the broker
    `RabbitMQ.ip_addr` on the LightField PC.

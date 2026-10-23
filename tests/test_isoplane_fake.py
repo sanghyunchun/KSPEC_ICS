@@ -66,14 +66,14 @@ class IsoplaneFakeTest(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def make(self, start_mm=0.0, unit=True, lf=None, bl_scale=0.005):
+    def make(self, start_mm=0.0, unit=True, lf=None, bl_scale=0.005, **cfg_extra):
         lf = lf or FakeLightField(time_scale=0.001, shape=(1, 8, 10))
         bl = None
         if unit:
             bl = BackIllumination(FakeUno(time_scale=bl_scale, start_mm=start_mm),
                                   in_depth_mm=50, in_limit_mm=50, time_scale=bl_scale)
         cfg = {'datapath': os.path.join(self.tmp.name, 'raw'),
-               'sharepath': os.path.join(self.tmp.name, 'share')}
+               'sharepath': os.path.join(self.tmp.name, 'share'), **cfg_extra}
         iso = Isoplane(cfg, lightfield=lf, backillum=bl)
         iso.light_settle_s = 0.0
         return iso
@@ -318,6 +318,64 @@ class IsoplaneFakeTest(unittest.TestCase):
         self.assertIn('auto_off_in_s', self.server.done('specstatus')[0]['isoplane']['backillum'])
         self.assertEqual(iso.bl.state, 'IN')
         self.assertFalse(iso.bl.link.light)
+
+    def test_exposure_refused_outside_the_configured_camera_mode(self):
+        lf = FakeLightField(time_scale=0.001, shape=(1, 8, 10), camera={'adc_speed_mhz': '2'})
+        camera = {'adc_speed_mhz': 0.1, 'adc_gain': 'High', 'temp_status': 'Locked'}
+        iso = self.make(lf=lf, camera=camera)
+
+        async def go():
+            await iso.start()
+            await iso.handle(self.server, body('specinitial', dirname='20261101'))
+            await iso.handle(self.server, body('getbias', numframe=1, header=HEADER))
+            lf.camera.update(adc_speed_mhz='0.1', temp_status='Unlocked')
+            await iso.handle(self.server, body('getbias', numframe=1, header=HEADER))
+            lf.camera['temp_status'] = 'Locked'
+            await iso.handle(self.server, body('specstatus'))
+            await iso.handle(self.server, body('getbias', numframe=1, header=HEADER))
+            iso.bl._stop_ping.set()
+        asyncio.run(go())
+        init, = self.server.done('specinitial')
+        self.assertEqual(init['status'], 'success')  # loading is allowed; it warns
+        self.assertEqual(init['camera_problems'], ['adc_speed_mhz 2 (expected 0.1)'])
+        speed, lock, ok = self.server.done('getbias')
+        self.assertEqual(speed['status'], 'fail')
+        self.assertIn('adc_speed_mhz 2 (expected 0.1)', speed['message'])
+        self.assertIn('temp_status Unlocked (expected Locked)', lock['message'])
+        self.assertEqual(ok['status'], 'success')
+        status, = self.server.done('specstatus')
+        self.assertEqual(status['isoplane']['camera_problems'], [])
+        self.assertIn('ADC 0.1 MHz High/LowNoise', status['message'])
+        raw = os.path.join(self.tmp.name, 'raw', '20261101')
+        self.assertEqual(len(os.listdir(raw)), 1)  # nothing was exposed when refused
+
+    def test_specinitial_loads_only_configured_experiments(self):
+        iso = self.make(experiments=['KSPEC_150_620'])
+        self.run_cmds(iso, body('specinitial', dirname='20261101', experiment='KSPEC_600_430'),
+                      body('specinitial', dirname='20261101', experiment='KSPEC_150_620'))
+        refused, ok = self.server.done('specinitial')
+        self.assertEqual(refused['status'], 'fail')
+        self.assertIn('not one of the configured setups (KSPEC_150_620)', refused['message'])
+        self.assertEqual(ok['status'], 'success')
+        self.assertEqual(iso.lf.experiment, 'KSPEC_150_620')
+
+    def test_overscan_rows_are_marked_in_the_header(self):
+        # 10 rows read of a 7-row sensor; with sensor_bias_rows=1 the last sensor row is a
+        # bias row too (as on the 2026 PIXIS: 1330 read, 1300 sensor, bias rows 1300-1330)
+        for overscan, bias_rows, sections in ((3, 0, ('[1:8,1:7]', '[1:8,8:10]')),
+                                              (3, 1, ('[1:8,1:6]', '[1:8,7:10]')),
+                                              (0, 1, ('[1:8,1:9]', '[1:8,10:10]')),
+                                              (0, 0, None)):
+            self.server = FakeServer()
+            lf = FakeLightField(time_scale=0.001, shape=(1, 10, 8), overscan_rows=overscan)
+            iso = self.make(lf=lf, lightfield={'sensor_bias_rows': bias_rows})
+            self.run_cmds(iso, body('specinitial', dirname=f'2026110{overscan}{bias_rows}'),
+                          body('getbias', numframe=1, header=HEADER))
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                h = fits.getheader(self.server.done('getbias')[0]['filename'])
+            got = (h['DATASEC'], h['BIASSEC']) if 'BIASSEC' in h else None
+            self.assertEqual(got, sections, (overscan, bias_rows))
 
     def test_late_exposure_is_stopped_and_fails(self):
         iso = self.make(lf=FakeLightField(time_scale=1000, shape=(1, 8, 10)))

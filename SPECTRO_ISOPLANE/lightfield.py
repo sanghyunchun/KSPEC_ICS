@@ -6,7 +6,9 @@ the server can be developed and tested anywhere.
 
 Setting names marked "confirm with probe" are inferred from the January 2026 headers (a header
 key ``PI CAMERA SHUTTERTIMING EXPOSURETIME`` is the setting ``CameraSettings.
-ShutterTimingExposureTime``). ``probe_lightfield.py`` lists the real names on the LightField PC.
+ShutterTimingExposureTime``) and the saved experiment (``.lfe``: ``Devices/Cameras/Camera/Adc/
+Speed`` is ``CameraSettings.AdcSpeed``). ``probe_lightfield.py`` lists the real names on the
+LightField PC.
 """
 
 import datetime as dt
@@ -16,6 +18,23 @@ import time
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
+
+
+# status key: CameraSettings member, i.e. the .lfe path under Devices/Cameras/Camera
+# (confirm with probe). The 2026 run used Adc 0.1 MHz / High / LowNoise at -55 C, full sensor;
+# from 2026-02-03 the layout read 1330 rows of the 1300-row sensor: the last 30 are overscan.
+CAMERA_STATUS = {
+    "adc_speed_mhz": "AdcSpeed",
+    "adc_gain": "AdcAnalogGain",
+    "adc_quality": "AdcQuality",
+    "temp_setpoint_c": "SensorTemperatureSetPoint",
+    "sensor_temp_c": "SensorTemperatureReading",
+    "temp_status": "SensorTemperatureStatus",
+    "sensor_cols": "SensorLayoutActiveAreaWidth",
+    "sensor_rows": "SensorLayoutActiveAreaHeight",
+    "physical_rows": "SensorInformationActiveAreaHeight",
+    "roi_selection": "ReadoutControlRegionsOfInterestSelection",
+}
 
 
 @dataclass
@@ -33,7 +52,8 @@ class LightFieldBase(ABC):
 
     @abstractmethod
     def status(self):
-        """dict with at least ready, running, experiment, grating, center_nm."""
+        """dict with at least ready, running, experiment, grating, center_nm, and the
+        CAMERA_STATUS keys (values as strings; "None" when the setting is unknown)."""
 
     @abstractmethod
     def load_experiment(self, name):
@@ -61,10 +81,14 @@ def _utc(t):
 
 
 class FakeLightField(LightFieldBase):
-    """Writes small LightField-like FITS frames; the exposure waits exptime * time_scale."""
+    """Writes small LightField-like FITS frames; the exposure waits exptime * time_scale.
+
+    The last ``overscan_rows`` rows of ``shape`` stand for overscan rows read past the sensor;
+    ``camera`` overrides the reported CAMERA_STATUS values.
+    """
 
     def __init__(self, time_scale=1.0, shape=(1, 1300, 1340), grating="[500nm,600][0][0]",
-                 center_nm=430.0):
+                 center_nm=430.0, overscan_rows=0, camera=None):
         self.scale = time_scale
         self.shape = tuple(shape)
         self.experiment = "fake"
@@ -72,14 +96,23 @@ class FakeLightField(LightFieldBase):
         self.center_nm = center_nm
         self.running = False
         self._stop = threading.Event()
+        self.camera = {"adc_speed_mhz": "0.1", "adc_gain": "High", "adc_quality": "LowNoise",
+                       "temp_setpoint_c": "-55", "sensor_temp_c": "-55", "temp_status": "Locked",
+                       "sensor_cols": str(self.shape[-1]), "sensor_rows": str(self.shape[-2]),
+                       "physical_rows": str(self.shape[-2] - overscan_rows),
+                       "roi_selection": "FullSensor"}
+        self.camera.update({k: str(v) for k, v in (camera or {}).items()})
 
     def connect(self):
         pass
 
+    def setup(self):
+        return {"experiment": self.experiment, "grating": self.grating,
+                "center_nm": self.center_nm, **self.camera}
+
     def status(self):
         return {"ready": not self.running, "running": self.running, "driver": "fake",
-                "experiment": self.experiment, "grating": self.grating,
-                "center_nm": self.center_nm}
+                **self.setup()}
 
     def load_experiment(self, name):
         self.experiment = name
@@ -116,9 +149,7 @@ class FakeLightField(LightFieldBase):
             hdr["HIERARCH PI SPECTROMETER GRATING CENTERWAVELENGTH"] = f"{self.center_nm:g}"
             data = np.full(self.shape, 600, dtype=np.uint16)
             fits.PrimaryHDU(data, hdr).writeto(path)
-            return Frame(path, _utc(t0), _utc(t1),
-                         {"experiment": self.experiment, "grating": self.grating,
-                          "center_nm": self.center_nm})
+            return Frame(path, _utc(t0), _utc(t1), self.setup())
         finally:
             self.running = False
 
@@ -184,10 +215,11 @@ class LightField(LightFieldBase):
         out = {"ready": bool(exp.IsReadyToRun), "running": bool(exp.IsRunning),
                "updating": bool(exp.IsUpdating), "driver": "lightfield",
                "experiment": str(exp.Name)}
-        for key, name in (("grating", spec.GratingSelected),  # confirm with probe
-                          ("center_nm", spec.GratingCenterWavelength),
-                          ("sensor_temp_c", cam.SensorTemperatureReading)):
-            out[key] = str(exp.GetValue(name)) if exp.Exists(name) else "None"
+        names = {"grating": spec.GratingSelected,  # confirm with probe
+                 "center_nm": spec.GratingCenterWavelength}
+        names.update({key: getattr(cam, member, None) for key, member in CAMERA_STATUS.items()})
+        for key, name in names.items():
+            out[key] = str(exp.GetValue(name)) if name is not None and exp.Exists(name) else "None"
         return out
 
     def load_experiment(self, name):
@@ -281,6 +313,7 @@ def make_lightfield(cfg):
     """Build the driver from the ``lightfield`` block of isoplane_local.json."""
     if cfg.get("driver", "fake") == "fake":
         return FakeLightField(time_scale=float(cfg.get("time_scale", 1.0)),
-                              shape=cfg.get("shape", (1, 1300, 1340)))
+                              shape=cfg.get("shape", (1, 1300, 1340)),
+                              overscan_rows=int(cfg.get("overscan_rows", 0)))
     return LightField(cfg["root"], visible=bool(cfg.get("visible", True)),
                       experiment=cfg.get("experiment"))

@@ -40,6 +40,13 @@ server dying; the timer covers the ICS script dying with the light on in the tur
 Deadlines: an exposure still running ``lightfield.expose_timeout_s`` (default 120 s) after its
 exposure time is stopped and fails; an experiment load fails after ``lightfield.load_timeout_s``
 (default 300 s). A hung LightField then still produces a Done reply.
+
+Setups: ``experiments`` (a list of saved LightField experiments) limits what specinitial may
+load; without it any experiment loads. ``camera`` holds the camera mode the reduction is
+calibrated for (ADC speed, gain and quality, temperature lock, readout rows, ROI): every
+exposure reads the camera state first and is refused when any value differs, so a mode changed
+by hand in the LightField window never reaches the data. specinitial and specstatus report the
+differences.
 """
 
 import asyncio
@@ -74,6 +81,20 @@ class InterlockError(Refused):
     pass
 
 
+def camera_problems(expected, lf):
+    """['<key> <value> (expected <value>)', ...] for every configured camera value that differs."""
+    out = []
+    for key, want in expected.items():
+        got = lf.get(key, "None")
+        try:
+            same = float(got) == float(want)
+        except (TypeError, ValueError):
+            same = str(got).strip().lower() == str(want).strip().lower()
+        if not same:
+            out.append(f"{key} {got} (expected {want})")
+    return out
+
+
 class Isoplane:
     def __init__(self, cfg, lightfield=None, backillum=None):
         lf_cfg = cfg.get("lightfield", {})
@@ -85,8 +106,11 @@ class Isoplane:
         self.expose_timeout_s = float(lf_cfg.get("expose_timeout_s", 120.0))
         self.load_timeout_s = float(lf_cfg.get("load_timeout_s", 300.0))
         self.stop_grace_s = 30.0  # wait for LightField after stopping a late exposure
+        self.sensor_bias_rows = int(lf_cfg.get("sensor_bias_rows", 0))  # see fitsio.overscan_cards
         self.light_settle_s = float(bl_cfg.get("light_settle_s", 1.0))
         self.light_max_on_s = float(bl_cfg.get("light_max_on_s", 300.0))
+        self.camera = dict(cfg.get("camera") or {})  # expected camera mode; empty: no check
+        self.experiments = cfg.get("experiments")  # allowed experiments; None: any
         self.night = None
         self.lock = asyncio.Lock()
         self.busy = "idle"
@@ -278,13 +302,19 @@ class Isoplane:
         bl = self.bl.status() if self.bl is not None else {"state": "NONE"}
         if self.light_off_at is not None:
             bl["auto_off_in_s"] = round(max(0.0, self.light_off_at - time.monotonic()))
+        problems = camera_problems(self.camera, lf)
         details = {"night": self.night, "busy": self.busy, "lightfield": lf,
-                   "lightfield_read_at": self.lf_status_time, "backillum": bl}
+                   "lightfield_read_at": self.lf_status_time, "backillum": bl,
+                   "camera_problems": problems}
         msg = (f"IsoPlane: {'busy (' + self.busy + ')' if busy else 'ready'}, "
                f"night {self.night}, experiment {lf.get('experiment')}, grating "
-               f"{lf.get('grating')} at {lf.get('center_nm')} nm"
+               f"{lf.get('grating')} at {lf.get('center_nm')} nm, ADC {lf.get('adc_speed_mhz')} MHz "
+               f"{lf.get('adc_gain')}/{lf.get('adc_quality')}, {lf.get('sensor_temp_c')} C "
+               f"{lf.get('temp_status')}"
                f"{' (as of ' + str(self.lf_status_time) + ')' if busy else ''}, back illumination "
                f"{bl['state']}{' light ON' if bl.get('light') else ''}.")
+        if problems:
+            msg += " Camera not in the configured mode: " + "; ".join(problems) + "."
         return msg, details
 
     async def specinitial(self, server, d):
@@ -292,6 +322,9 @@ class Isoplane:
         os.makedirs(os.path.join(self.datapath, night), exist_ok=True)
         self.night = night
         experiment = d.get("experiment")
+        if experiment and self.experiments is not None and experiment not in self.experiments:
+            raise Refused(f"experiment {experiment} is not one of the configured setups "
+                          f"({', '.join(self.experiments) or 'none'})")
         if experiment:
             await self.require_stage_out("experiment load (may move the grating)")
             await self.reply(server, "specinitial", f"Loading LightField experiment {experiment}.",
@@ -302,10 +335,13 @@ class Isoplane:
             except asyncio.TimeoutError:
                 raise TimeoutError(f"LightField did not load {experiment} within "
                                    f"{self.load_timeout_s:g} s") from None
-            await self.read_lf_status()
-        await self.reply(server, "specinitial",
-                         f"Initializing of IsoPlane is finished (night {night}"
-                         f"{', experiment ' + experiment if experiment else ''}).")
+        problems = camera_problems(self.camera, await self.read_lf_status())
+        msg = (f"Initializing of IsoPlane is finished (night {night}"
+               f"{', experiment ' + experiment if experiment else ''}).")
+        if problems:
+            msg += (" Warning: exposures will be refused, camera not in the configured mode: "
+                    + "; ".join(problems) + ".")
+        await self.reply(server, "specinitial", msg, camera_problems=problems)
 
     async def illuon(self, server, d):
         self.require_unit()
@@ -357,7 +393,10 @@ class Isoplane:
         exptime = 0.0 if func == "getbias" else float(d["time"])
         header = d.get("header") or {}
         await self.require_stage_out(func)
-        await self.read_lf_status()  # what specstatus reports during the exposures
+        lf = await self.read_lf_status()  # also what specstatus reports during the exposures
+        problems = camera_problems(self.camera, lf)
+        if problems:
+            raise Refused("camera is not in the configured mode: " + "; ".join(problems))
 
         directory = os.path.join(self.datapath, self.night)
         paths = []
@@ -369,7 +408,7 @@ class Isoplane:
                 server, func, exptime, self.lf.expose, exptime, shutter_closed, directory, basename
             )
             expnum = header.get("EXPNUM", "None") if n == 1 else f"{i + 1}/{n}"
-            cards = ics_cards(header, frame, func, expnum)
+            cards = ics_cards(header, frame, func, expnum, self.sensor_bias_rows)
             cards.append(("BILLUM", self.bl.state if self.bl else "NONE",
                           "back-illumination stage state"))
             await asyncio.to_thread(append_cards, frame.path, cards)

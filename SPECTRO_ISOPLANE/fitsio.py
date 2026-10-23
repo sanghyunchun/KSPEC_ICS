@@ -52,7 +52,7 @@ def append_cards(path, cards):
     os.replace(tmp, path)
 
 
-def ics_cards(header, frame, func, expnum):
+def ics_cards(header, frame, func, expnum, sensor_bias_rows=0):
     """Cards from the ICS header dict (``Lib/make_spec_header.py``) and the frame time stamps.
 
     The ICS EXPTIME (seconds) goes to EXPREQ: LightField's own EXPTIME (milliseconds) stays.
@@ -74,4 +74,31 @@ def ics_cards(header, frame, func, expnum):
         ("SPECBACK", "ISOPLANE", "spectrograph backend"),
         ("LFEXPER", str(frame.setup.get("experiment", "None")), "LightField experiment"),
     ]
-    return cards
+    return cards + overscan_cards(frame.setup, sensor_bias_rows)
+
+
+def _int(value):
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return None
+
+
+def overscan_cards(setup, sensor_bias_rows=0):
+    """DATASEC/BIASSEC (raw orientation, 1-based) for a full-sensor readout.
+
+    LightField reads rows beyond the sensor height last, so they follow the sensor rows.
+    ``sensor_bias_rows`` more rows at the end of the sensor also read at the bias level: one
+    on the 2026 PIXIS (row 1300 sits at the overscan level in every frame), so a 1330-row
+    readout has 31 bias rows.
+    """
+    cols, rows, phys = (_int(setup.get(k)) for k in ("sensor_cols", "sensor_rows", "physical_rows"))
+    if not (cols and rows and phys) or setup.get("roi_selection") != "FullSensor":
+        return []
+    first_bias = min(phys, rows) - sensor_bias_rows + 1
+    if first_bias > rows:
+        return []
+    return [
+        ("DATASEC", f"[1:{cols},1:{first_bias - 1}]", "light-sensitive rows (raw orientation)"),
+        ("BIASSEC", f"[1:{cols},{first_bias}:{rows}]", "rows at the bias level (overscan)"),
+    ]
