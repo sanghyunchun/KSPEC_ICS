@@ -340,9 +340,14 @@ class BackIllumination:
                 "warnings": list(self.link.warnings[-5:])}
 
     def close(self):
+        """Light off and close the port. Without the keep-alive the Uno watchdog fires 60 s later
+        and sends its WDTFRAME: at rest (OUT, motor released) that becomes the release frame, so
+        the expiry does not re-energise the motor; in any other state it stays stop-and-hold."""
         self._stop_ping.set()
         try:
             self.link.cmd("L OFF")
+            if self.state == "OUT":
+                self.link.cmd("WDTFRAME " + RELEASE.hex().upper())
         finally:
             self.link.close()
 

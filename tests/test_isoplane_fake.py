@@ -15,7 +15,7 @@ from unittest.mock import AsyncMock, patch
 
 from astropy.io import fits
 
-from SPECTRO_ISOPLANE.backillum import STOP_HOLD, BackIllumination, FakeUno
+from SPECTRO_ISOPLANE.backillum import RELEASE, STOP_HOLD, BackIllumination, FakeUno
 from SPECTRO_ISOPLANE.command import Isoplane
 from SPECTRO_ISOPLANE.fitsio import append_cards
 from SPECTRO_ISOPLANE.lightfield import FakeLightField
@@ -264,6 +264,15 @@ class IsoplaneFakeTest(unittest.TestCase):
         self.assertEqual(self.server.done('illuon')[0]['status'], 'fail')
         self.assertEqual(self.server.done('specstatus')[0]['isoplane']['backillum']['state'],
                          'NONE')
+
+    def test_close_leaves_release_frame_only_at_rest(self):
+        for cmds, frame in (((body('illuon'), body('illuoff')), RELEASE),
+                            ((body('illuon'),), STOP_HOLD)):
+            iso = self.make()
+            self.run_cmds(iso, *cmds)
+            asyncio.run(iso.close())
+            last = [l for l in iso.bl.link.log if l.startswith('WDTFRAME ')][-1]
+            self.assertEqual(last, 'WDTFRAME ' + frame.hex().upper())
 
     def test_light_only_commands_keep_the_stage_in(self):
         iso = self.make()
