@@ -333,8 +333,8 @@ class script():
             logging(f"Sent getbias {calinfo['Bias']['exptime']} {calinfo['Bias']['expnum']}.", level='send')
 
         await self.send_spec_and_log(
-            f"getbias {calinfo['Bias']['exptime']} {calinfo['Bias']['expnum']}",
-            'Flat',
+            f"getbias {calinfo['Bias']['expnum']}",
+            'Bias',
             calinfo['Bias']['exptime'],
             calinfo['Bias']['expnum'],
             scriptrun,
