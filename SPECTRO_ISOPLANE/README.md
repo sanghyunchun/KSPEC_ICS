@@ -12,6 +12,7 @@ the GUI and the observing scripts work unchanged:
 | `getbias <n>` | n frames, shutter closed, 0 s |
 | `getflat <t> <n>`, `getarc <t> <n>`, `getobj <t> <n>` | n frames of t s |
 | `illuon` / `illuoff` | stage in + light on / light off + stage out |
+| `specstop` | emergency stop: stage, then light, then the acquisition (new command) |
 
 ## Grating and stage interlock
 One process owns LightField and the Uno. Every command except `specstatus` takes one lock, so an
@@ -21,7 +22,13 @@ another one runs is refused at once (`<cmd> refused: busy with <running cmd>.`),
 just before that command ("as of" time in the reply). Before an exposure or an
 experiment load, the stage Near switch is read from the hardware; the stage must be OUT and the
 light off, otherwise the command is refused. If the server starts with the stage away from
-Near, everything except `illuoff` is refused until `illuoff` brings it home.
+Near, exposures, experiment loads, and `illuon` are refused until `illuoff` brings it home
+(`specstatus`, `specstop`, and `specinitial <night>` without an experiment still work).
+
+`specstop` does not wait for the lock. It stops the stage first, then switches the light off,
+then stops the LightField acquisition; the running command fails and an interrupted frame is not
+saved. The stage position is then unknown, so exposures, experiment loads, and `illuon` are
+refused until `illuoff` has homed the stage.
 
 Changing the grating by hand in the LightField window bypasses this interlock: do it only with
 the stage OUT, or use `specinitial <night> <experiment>`.

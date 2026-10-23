@@ -14,7 +14,7 @@ from unittest.mock import AsyncMock, patch
 
 from astropy.io import fits
 
-from SPECTRO_ISOPLANE.backillum import BackIllumination, FakeUno
+from SPECTRO_ISOPLANE.backillum import STOP_HOLD, BackIllumination, FakeUno
 from SPECTRO_ISOPLANE.command import Isoplane
 from SPECTRO_ISOPLANE.fitsio import append_cards
 from SPECTRO_ISOPLANE.lightfield import FakeLightField
@@ -62,12 +62,12 @@ class IsoplaneFakeTest(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def make(self, start_mm=0.0, unit=True, lf=None):
+    def make(self, start_mm=0.0, unit=True, lf=None, bl_scale=0.005):
         lf = lf or FakeLightField(time_scale=0.001, shape=(1, 8, 10))
         bl = None
         if unit:
-            bl = BackIllumination(FakeUno(time_scale=0.005, start_mm=start_mm),
-                                  in_depth_mm=50, in_limit_mm=50, time_scale=0.005)
+            bl = BackIllumination(FakeUno(time_scale=bl_scale, start_mm=start_mm),
+                                  in_depth_mm=50, in_limit_mm=50, time_scale=bl_scale)
         cfg = {'datapath': os.path.join(self.tmp.name, 'raw'),
                'sharepath': os.path.join(self.tmp.name, 'share')}
         return Isoplane(cfg, lightfield=lf, backillum=bl)
@@ -175,6 +175,73 @@ class IsoplaneFakeTest(unittest.TestCase):
         self.assertTrue(after['message'].startswith('IsoPlane: ready'))
         self.assertEqual(self.server.done('getobj')[0]['status'], 'success')
 
+    def test_specstop_during_illuon_stops_stage_before_light(self):
+        iso = self.make(bl_scale=0.05)  # the 50 mm move takes 0.25 s
+        uno = iso.bl.link
+        stop_line = 'MB ' + STOP_HOLD.hex().upper()
+
+        async def go():
+            await iso.start()
+            await iso.handle(self.server, body('specinitial', dirname='20261101'))
+            stage = asyncio.ensure_future(iso.handle(self.server, body('illuon')))
+            while uno.position() < 5.0:
+                await asyncio.sleep(0.005)
+            n0 = len(uno.log)
+            await iso.handle(self.server, body('specstop'))
+            await stage  # the stop wakes illuon at once, which then fails
+            stopped_at = uno.position()
+            await asyncio.sleep(0.1)
+            self.assertEqual(uno.position(), stopped_at)
+            self.assertLess(stopped_at, 50.0)  # stopped mid-move: specstop did not wait
+            stop_lines = [l for l in uno.log[n0:] if l in (stop_line, 'L OFF')]
+            self.assertEqual(stop_lines[:2], [stop_line, 'L OFF'])
+            for b in (body('getobj', time=5, numframe=1, header=HEADER), body('illuon'),
+                      body('illuoff'), body('getobj', time=5, numframe=1, header=HEADER)):
+                await iso.handle(self.server, b)
+            iso.bl._stop_ping.set()
+        asyncio.run(go())
+        stop = self.server.done('specstop')[0]
+        self.assertEqual(stop['status'], 'success')
+        self.assertIn('during illuon', stop['message'])
+        illuon_first, illuon_again = self.server.done('illuon')
+        self.assertIn('stopped by specstop', illuon_first['message'])
+        self.assertEqual(illuon_again['status'], 'error')  # position unknown: home first
+        refused, ok = self.server.done('getobj')
+        self.assertIn('not OUT', refused['message'])
+        self.assertEqual(self.server.done('illuoff')[0]['status'], 'success')
+        self.assertEqual(ok['status'], 'success')
+        self.assertFalse(uno.light)
+
+    def test_specstop_during_exposure(self):
+        iso = self.make(lf=SingleCallLightField(time_scale=0.002, shape=(1, 8, 10)))
+
+        async def go():
+            await iso.start()
+            await iso.handle(self.server, body('specinitial', dirname='20261101'))
+            obj = asyncio.ensure_future(
+                iso.handle(self.server, body('getobj', time=200, numframe=2, header=HEADER)))
+            while not iso.lf.running:
+                await asyncio.sleep(0.005)
+            await iso.handle(self.server, body('specstop'))
+            await obj
+            await iso.handle(self.server, body('illuoff'))
+            await iso.handle(self.server, body('getbias', numframe=1, header=HEADER))
+            iso.bl._stop_ping.set()
+        asyncio.run(go())
+        self.assertIn('acquisition stopped', self.server.done('getobj')[0]['message'])
+        raw = os.path.join(self.tmp.name, 'raw', '20261101')
+        self.assertEqual([f for f in os.listdir(raw) if 'obj' in f], [])
+        self.assertEqual(self.server.done('specstop')[0]['status'], 'success')
+        self.assertEqual(self.server.done('getbias')[0]['status'], 'success')
+
+    def test_specstop_when_idle_does_not_block_next_command(self):
+        iso = self.make(unit=False)
+        self.run_cmds(iso, body('specinitial', dirname='20261101'), body('specstop'),
+                      body('getbias', numframe=1, header=HEADER))
+        self.assertEqual(self.server.done('specstop')[0]['message'],
+                         'Emergency stop (idle): acquisition stopped.')
+        self.assertEqual(self.server.done('getbias')[0]['status'], 'success')
+
     def test_no_unit_and_no_night(self):
         iso = self.make(unit=False)
         self.run_cmds(iso, body('getbias', numframe=1, header=HEADER), body('illuon'),
@@ -219,10 +286,13 @@ class SpecCliRoutingTest(unittest.TestCase):
             state = asyncio.run(speccli.handle_spec('illuon', client))
             asyncio.run(speccli.handle_spec('getarc 3 2', client, {}))
             asyncio.run(speccli.handle_spec('specinitial 20261101 KSPEC_600_430', client))
+            asyncio.run(speccli.handle_spec('specstop', client))
         relay.assert_not_awaited()
         self.assertEqual(state, 1)
         keys = [c.args[0] for c in client.send_message.await_args_list]
-        self.assertEqual(keys, ['ISOPLANE'] * 3)
+        self.assertEqual(keys, ['ISOPLANE'] * 4)
+        self.assertEqual(json.loads(client.send_message.await_args_list[3].args[1])['func'],
+                         'specstop')
         init = json.loads(client.send_message.await_args_list[2].args[1])
         self.assertEqual(init['experiment'], 'KSPEC_600_430')
 

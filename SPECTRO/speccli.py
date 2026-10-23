@@ -45,6 +45,8 @@ def create_spec_command(func, **kwargs):
 
 def spec_status(): return create_spec_command('specstatus', message ='Show spectrograph status.')
 
+def spec_stop(): return create_spec_command('specstop', message ='Emergency stop of the spectrograph.')
+
 def spec_initial(dir_name, experiment=None):
     extra = {'experiment': experiment} if experiment else {}
     return create_spec_command('specinitial', dirname=dir_name, message = f'Initialize Spectrograph', **extra)
@@ -80,6 +82,7 @@ async def handle_spec(arg, ICS_client, header=None):
 
     command_map = {
         'specstatus': spec_status,
+        'specstop': spec_stop,
     }
 
     print(header)

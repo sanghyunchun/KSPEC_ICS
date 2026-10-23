@@ -8,6 +8,7 @@ IsoPlane-specific code:
     specstatus                         camera, grating, and back-illumination state
     getbias <n> / getflat <t> <n> / getarc <t> <n> / getobj <t> <n>
     illuon / illuoff                   back-illumination stage in + light on / light off + out
+    specstop                           emergency stop: stage, then light, then LightField
 
 One process owns both LightField and the back-illumination Uno, because the stage is lowered
 into the grating-turret compartment. Every command except specstatus holds one lock, so an
@@ -18,6 +19,10 @@ stage must be OUT and the light off.
 
 specstatus never waits: while a command runs, it reports the LightField state read before that
 command (LightField serves one call at a time, so asking it would wait for the exposure).
+
+specstop never waits either. It stops the stage, switches the light off, and stops the
+acquisition; the running command then fails. The stage position is unknown afterwards, so
+exposures, experiment loads, and illuon stay refused until illuoff has homed the stage.
 """
 
 import asyncio
@@ -90,6 +95,9 @@ class Isoplane:
             msg, details = await self.status()
             await self.reply(server, func, msg, isoplane=details)
             return
+        if func == "specstop":
+            await self.emergency_stop(server)
+            return
         handlers = {
             "specinitial": self.specinitial,
             "illuon": self.illuon,
@@ -106,12 +114,35 @@ class Isoplane:
             return
         async with self.lock:
             self.busy = func
+            if self.bl is not None:  # a specstop holds until the next command starts
+                self.bl.clear_stop()
+            self.lf.clear_stop()
             try:
                 await handlers[func](server, d)
             except Exception as e:
                 await self.reply(server, func, f"{func} failed: {e}", status="error")
             finally:
                 self.busy = "idle"
+
+    async def emergency_stop(self, server):
+        """Stage stop, then light off, then LightField stop; does not wait for the lock."""
+        interrupted, done, failed = self.busy, [], []
+        if self.bl is not None:
+            try:
+                await asyncio.to_thread(self.bl.emergency_stop)
+                done.append("stage stopped, light off")
+            except Exception as e:
+                failed.append(f"back illumination: {e}")
+        try:
+            await asyncio.to_thread(self.lf.stop)
+            done.append("acquisition stopped")
+        except Exception as e:
+            failed.append(f"LightField: {e}")
+        msg = f"Emergency stop ({'during ' + interrupted if interrupted != 'idle' else 'idle'}): "
+        msg += "; ".join(done + failed) + "."
+        if self.bl is not None:
+            msg += " Stage position unknown: send illuoff to home it."
+        await self.reply(server, "specstop", msg, status="error" if failed else "success")
 
     # -------------------------------------------------- interlock
     async def require_stage_out(self, what):

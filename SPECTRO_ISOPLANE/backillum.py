@@ -14,6 +14,8 @@ Operating rules (ported from kspec-backlight ``elec/host/bl_cycle.py``):
 - The motor is released at rest (the lead screw is not back-drivable).
 - The Uno switches the light off (and sends a stop frame) if no command arrives for 60 s, so the
   host pings it from a keep-alive thread.
+- ``emergency_stop`` (from any thread) stops the stage first, then switches the light off, and
+  blocks every further motion or light-on until ``clear_stop``.
 """
 
 import threading
@@ -182,9 +184,12 @@ class BackIllumination:
         self.last_error = None
         self._stop_ping = threading.Event()
         self._ping_thread = None
+        self._abort = threading.Event()
 
     # -------------------------------------------------- low level
     def _cmd(self, line):
+        if self._abort.is_set():
+            raise BackIllumError("stopped by specstop")
         r = self.link.cmd(line)
         if not r.startswith("OK"):
             raise BackIllumError(f"Uno replied {r!r} to {line!r}")
@@ -195,7 +200,8 @@ class BackIllumination:
         return self._cmd("MB " + pdu.hex().upper())
 
     def _sleep(self, sec):
-        time.sleep(sec * self.scale)
+        if self._abort.wait(sec * self.scale):
+            raise BackIllumError("stopped by specstop")
 
     def limits(self):
         """(near, far) pressed, read from the SBC input register 0x002E (pressed = 0)."""
@@ -212,7 +218,7 @@ class BackIllumination:
         while time.time() - t < tmax * self.scale:
             if self.at_near():
                 return (time.time() - t) / self.scale
-            time.sleep(0.05 * self.scale)
+            self._sleep(0.05)
         return None
 
     def _move(self, mm, far, speed):
@@ -304,14 +310,30 @@ class BackIllumination:
             raise
 
     def abort(self):
-        """Light off, stage stopped and held; position unknown until the next retract."""
-        for line in ("L OFF", "MB " + STOP_HOLD.hex().upper()):
+        """Stage stopped and held, then light off; position unknown until the next retract."""
+        for line in ("MB " + STOP_HOLD.hex().upper(), "L OFF"):
             try:
                 self.link.cmd(line)
             except Exception:
                 pass
         self.light = False
         self.state = "UNKNOWN"
+
+    def emergency_stop(self):
+        """Stop the stage, then the light, from any thread; later moves raise until clear_stop.
+
+        Returns the Uno replies; raises if either line was not acknowledged.
+        """
+        self._abort.set()
+        replies = [self.link.cmd("MB " + STOP_HOLD.hex().upper()), self.link.cmd("L OFF")]
+        self.light = False
+        self.state = "UNKNOWN"
+        if not all(r.startswith("OK") for r in replies):
+            raise BackIllumError(f"Uno replies to the stop: {replies}")
+        return replies
+
+    def clear_stop(self):
+        self._abort.clear()
 
     def status(self):
         return {"state": self.state, "light": self.light, "last_error": self.last_error,

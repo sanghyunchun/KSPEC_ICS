@@ -46,7 +46,11 @@ class LightFieldBase(ABC):
         Blocks until the file is written."""
 
     def stop(self):
-        """Abort a running acquisition (best effort)."""
+        """Abort a running acquisition (best effort, from any thread); expose() then raises
+        until clear_stop()."""
+
+    def clear_stop(self):
+        pass
 
     def close(self):
         pass
@@ -83,6 +87,9 @@ class FakeLightField(LightFieldBase):
     def stop(self):
         self._stop.set()
 
+    def clear_stop(self):
+        self._stop.clear()
+
     def expose(self, exptime_s, shutter_closed, directory, basename):
         import numpy as np
         from astropy.io import fits
@@ -91,8 +98,9 @@ class FakeLightField(LightFieldBase):
         path = os.path.join(directory, basename + ".fits")
         if os.path.exists(path):
             raise FileExistsError(path)
+        if self._stop.is_set():
+            raise RuntimeError("acquisition stopped")
         self.running = True
-        self._stop.clear()
         try:
             t0 = time.time()
             if self._stop.wait(exptime_s * self.scale):
@@ -125,6 +133,7 @@ class LightField(LightFieldBase):
         self.default_experiment = experiment
         self._pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="lightfield")
         self._auto = self._app = self._exp = None
+        self._stopped = threading.Event()
 
     def _call(self, fn, *args):
         return self._pool.submit(fn, *args).result()
@@ -191,9 +200,13 @@ class LightField(LightFieldBase):
             time.sleep(0.2)
 
     def stop(self):
+        self._stopped.set()
         exp = self._exp  # Stop must not wait behind a running expose() on the worker thread
         if exp is not None and exp.IsRunning:
-            exp.Stop()
+            exp.Stop()  # called off the worker thread: confirm with probe (cross_thread_read)
+
+    def clear_stop(self):
+        self._stopped.clear()
 
     def expose(self, exptime_s, shutter_closed, directory, basename):
         return self._call(self._expose, exptime_s, shutter_closed, directory, basename)
@@ -224,12 +237,16 @@ class LightField(LightFieldBase):
             (expset.OnlineExportOutputOptionsExportedFilesOnly, False),  # keep the SPE
         ):
             exp.SetValue(name, value)
+        if self._stopped.is_set():
+            raise RuntimeError("acquisition stopped")
         if not exp.IsReadyToRun:
             raise RuntimeError("LightField is not ready to run")
         exp.Acquire()
         time.sleep(0.5)
         while exp.IsRunning:
             time.sleep(0.1)
+        if self._stopped.is_set():
+            raise RuntimeError("acquisition stopped")
 
         files = [str(f) for f in self._app.FileManager.GetRecentlyAcquiredFileNames()]
         fits_path = os.path.join(directory, basename + ".fits")

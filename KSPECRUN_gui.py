@@ -562,7 +562,7 @@ class MainWindow(QMainWindow):
             "fbp": ["fbpactivate", "fbpstatus", "fbpstepstatus", "fbpstate", "fbpmove", "fbpoffset"],
             "mtl": ["mtlstatus", "mtlstart", "mtlset", "mtltest", "mtlcal", "mtltrial", "mtlresult", "mtlreset"],
             "lamp": ["lampstatus", "arcon", "arcoff", "flaton", "flatoff","fiducialon","fiducialoff"],
-            "spec": ["specstatus", "specinitial","illuon", "illuoff", "getobj", "getbias", "getflat","getarc"],
+            "spec": ["specstatus", "specstop", "specinitial","illuon", "illuoff", "getobj", "getbias", "getflat","getarc"],
             "tcs": ["tmradec", "start", "stop", "tcsint", "tcsreset", "tcsclose",
             "tcsarc", "tcsstatus", "tstat", "traw", "tsync", "tcmd",
             "treg", "tmradec", "tmr", "tmobject", "tmo", "tmelaz",
