@@ -494,6 +494,8 @@ class MainWindow(QMainWindow):
             file_path = "./Lib/LAMPcommand.txt"
         elif instrument == 'MTL?':
             file_path = "./Lib/MTLcommand.txt"
+        elif instrument == 'FBP?':
+            file_path = "./Lib/FBPcommand.txt"
 
         try:
             with open(file_path, "r", encoding="utf-8") as f:

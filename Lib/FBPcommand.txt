@@ -1,0 +1,5 @@
+[Command]             [Usages (Type below without {})]
+fbpstate              fbpstate initial
+                      fbpstate assign
+                      fbpstate stop
+                      fbpstate normal
