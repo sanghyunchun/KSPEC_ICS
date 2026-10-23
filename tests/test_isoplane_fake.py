@@ -10,6 +10,7 @@ import threading
 import time
 import unittest
 import warnings
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 from astropy.io import fits
@@ -325,6 +326,67 @@ class IsoplaneFakeTest(unittest.TestCase):
         obj, = self.server.done('getobj')
         self.assertEqual(obj['status'], 'error')
         self.assertIn('did not finish', obj['message'])
+
+
+class MetrologyLoopTest(unittest.TestCase):
+    """script.handle_metrology with the instrument clients replaced by queue fakes."""
+
+    def setUp(self):
+        try:
+            from script import scriptcli
+        except Exception as e:  # redis, pandas, ... exist on the ICS PC
+            self.skipTest(f'script.scriptcli cannot be imported here: {e}')
+        self.cli = scriptcli
+
+    def run_loop(self, trials, mtl_status='success'):
+        cli, sent, trials = self.cli, [], iter(trials)
+
+        async def go():
+            q = asyncio.Queue()
+            run = SimpleNamespace(ICSclient=None, response_queue=q, lamp_state_callback=None)
+
+            async def spec(cmd, client, header=None):
+                sent.append(cmd)
+                q.put_nowait({'inst': 'SPEC', 'func': cmd, 'process': 'Done', 'status': 'success'})
+                return 1
+
+            async def mtl(cmd, client, logging=None):
+                sent.append(cmd)
+                q.put_nowait({'inst': 'MTL', 'func': 'mtltrial', 'process': 'ING'})
+                q.put_nowait({'inst': 'MTL', 'func': 'mtltrial', 'process': 'Done',
+                              'status': mtl_status, 'filename': '/mtl/T_MetrologyTrial_1.json',
+                              **next(trials)})
+
+            async def fbp(cmd, client, logging=None):
+                sent.append(cmd.split()[0])
+                q.put_nowait({'inst': 'FBP', 'func': 'fbpoffset', 'process': 'START'})
+                q.put_nowait({'inst': 'FBP', 'func': 'fbpoffset', 'process': 'Done',
+                              'status': 'success'})
+                return True
+
+            async def lamp(cmd, client, logging=None, state_callback=None):
+                sent.append(cmd)
+
+            with patch.object(cli, 'handle_spec', spec), patch.object(cli, 'handle_mtl', mtl), \
+                    patch.object(cli, 'handle_fbp', fbp), patch.object(cli, 'handle_lamp', lamp), \
+                    patch.object(cli, 'spec_queue', return_value='ISOPLANE'), \
+                    patch.object(cli, 'mtl_json_on_ics', side_effect=lambda f: f):
+                return await cli.script().handle_metrology(run, None)
+        return asyncio.run(go()), sent
+
+    def test_light_only_on_during_trials(self):
+        converged, sent = self.run_loop([{'converged': False, 'should_continue': True},
+                                         {'converged': True, 'should_continue': False}])
+        self.assertTrue(converged)
+        self.assertEqual(sent, ['fiducialon', 'illuon', 'mtltrial', 'illulightoff', 'fbpoffset',
+                                'illulighton', 'mtltrial', 'illulightoff', 'illuoff',
+                                'fiducialoff'])
+
+    def test_failed_trial_still_retracts(self):
+        converged, sent = self.run_loop([{}], mtl_status='fail')
+        self.assertFalse(converged)
+        self.assertEqual(sent, ['fiducialon', 'illuon', 'mtltrial', 'illulightoff', 'illuoff',
+                                'fiducialoff'])
 
 
 class WaitReplyTest(unittest.TestCase):

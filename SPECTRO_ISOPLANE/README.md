@@ -33,6 +33,11 @@ Scripts wait with `Lib.reply.wait_reply(queue, inst, func, timeout)`, which skip
 replies and `Done` replies of other commands (for example a `specstatus` sent from the GUI).
 
 ## Metrology (light only between trials)
+`runmtl` (script, after `loadtile`) keeps the stage IN for the whole loop and switches only the
+light: `fiducialon`, `illuon`, then `mtltrial` with the light on, `illulightoff`, `fbpoffset`,
+`illulighton`, ... until the MTL run converges or reaches `max_trial`, then `illuoff` and
+`fiducialoff`, also after a failed step. The stage moves twice per tile, not twice per trial.
+
 Every light-on starts a timer: the server switches the light off after
 `backillum.light_max_on_s` (default 300 s, 0 disables) and sends an `ING` reply; the stage stays
 IN. This covers the ICS script dying with the light on in the turret (the Uno watchdog only

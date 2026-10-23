@@ -17,7 +17,7 @@ from MTL.mtlcli import handle_mtl
 from FBP.fbpcli import handle_fbp
 from ADC.adccli import handle_adc
 from LAMP.lampcli import handle_lamp
-from SPECTRO.speccli import handle_spec
+from SPECTRO.speccli import handle_spec, spec_queue
 from SCIOBS.sciobscli import sciobscli
 import Lib.process as processes
 from Lib.make_spec_header import set_header_info
@@ -27,6 +27,9 @@ from TCS.tcscli import handle_telcom
 
 SPEC_FRAME_OVERHEAD_S = 180.     # readout, export and copy per frame, on top of the exposure
 ILLUMINATION_TIMEOUT_S = 120.    # IsoPlane stage move (~15-20 s) and light switching
+MTL_TRIAL_TIMEOUT_S = 600.
+FBP_OFFSET_TIMEOUT_S = 600.
+MAX_MTL_TRIALS = 20              # backstop only: the MTL run stops at its own max_trial
 
 
 def printing(message):
@@ -52,6 +55,13 @@ def spec_command_timeout(command):
     except (IndexError, ValueError):
         return SPEC_FRAME_OVERHEAD_S
     return (exptime + SPEC_FRAME_OVERHEAD_S) * max(nframe, 1)
+
+
+def mtl_json_on_ics(filename):
+    """The MTL server's trial JSON as this ICS sees it (shared KSPEC.ini MTL.mtlfilepath)."""
+    with open('./Lib/KSPEC.ini', 'r') as f:
+        mtlfilepath = json.load(f)['MTL']['mtlfilepath']
+    return os.path.join(os.path.expanduser(mtlfilepath), os.path.basename(str(filename)))
 
 
 #def convert_to_sexagesimal(ra_deg, dec_deg):
@@ -397,6 +407,99 @@ class script():
             scriptrun.show_status('SPEC','normal')
             logging('Run Calibration Task finished', level='normal')
 
+    async def spec_illumination(self, cmd, scriptrun, logging=None):
+        """illuon / illuoff / illulighton / illulightoff; True when the reply says success."""
+        try:
+            await handle_spec(cmd, scriptrun.ICSclient)
+        except Exception as error:   # WebRelay (main spectrograph) answers synchronously
+            log_or_print(logging, f'{cmd} failed: {error}', 'error')
+            return False
+        if spec_queue() == 'SPEC':
+            return True
+        rsp = await wait_reply(scriptrun.response_queue, 'SPEC', cmd,
+                               timeout=ILLUMINATION_TIMEOUT_S, logging=logging)
+        ok = rsp.get('status') == 'success'
+        log_or_print(logging, f"{cmd}: {rsp.get('message')}", 'receive' if ok else 'error')
+        return ok
+
+    async def run_metrology(self, scriptrun, logging):
+        """Starts the metrology loop asynchronously."""
+        self.script_task = asyncio.create_task(self.handle_metrology(scriptrun, logging))
+
+    async def handle_metrology(self, scriptrun, logging):
+        """Metrology iterations for a tile whose MTL run is initialized (loadtile, mtlstart).
+
+        The back-illumination stage stays IN for the whole loop; the light is on only while
+        the MTL camera exposes, and off while the positioners move:
+
+            fiducialon, illuon
+            repeat: [illulighton] mtltrial, illulightoff, stop if converged, fbpoffset
+            illuoff, fiducialoff
+
+        illuoff and fiducialoff run also when a step fails. Returns True when converged.
+        """
+        await clear_queue(scriptrun.response_queue)
+        lamp_callback = getattr(scriptrun, 'lamp_state_callback', None)
+        log_or_print(logging, '###### Metrology loop starts ######', 'comment')
+        try:
+            await handle_lamp('fiducialon', scriptrun.ICSclient, logging=logging,
+                              state_callback=lamp_callback)
+        except Exception as error:
+            log_or_print(logging, f'fiducialon failed: {error}; metrology not started.', 'error')
+            return False
+        converged = False
+        try:
+            if not await self.spec_illumination('illuon', scriptrun, logging):
+                return False
+            light_on = True
+            for _ in range(MAX_MTL_TRIALS):
+                if not light_on:
+                    if not await self.spec_illumination('illulighton', scriptrun, logging):
+                        return False
+                    light_on = True
+
+                await handle_mtl('mtltrial', scriptrun.ICSclient, logging=logging)
+                trial = await wait_reply(scriptrun.response_queue, 'MTL', 'mtltrial',
+                                         timeout=MTL_TRIAL_TIMEOUT_S, logging=logging)
+                if not await self.spec_illumination('illulightoff', scriptrun, logging):
+                    return False
+                light_on = False
+
+                if trial.get('status') != 'success':
+                    log_or_print(logging, f"MTL trial failed: {trial.get('message')}", 'error')
+                    return False
+                log_or_print(logging, f"MTL trial {trial.get('itrial')}: error max "
+                             f"{trial.get('err_max')}, median {trial.get('err_median')}.",
+                             'receive')
+                if trial.get('converged'):
+                    converged = True
+                    break
+                if not trial.get('should_continue'):
+                    log_or_print(logging, 'Metrology did not converge within max_trial.',
+                                 'warning')
+                    break
+
+                trial_json = mtl_json_on_ics(trial.get('filename'))
+                sent = await handle_fbp(f'fbpoffset {shlex.quote(trial_json)}',
+                                        scriptrun.ICSclient, logging=logging)
+                if not sent:
+                    log_or_print(logging, f'Could not send fbpoffset with {trial_json}.', 'error')
+                    return False
+                moved = await wait_reply(scriptrun.response_queue, 'FBP', 'fbpoffset',
+                                         timeout=FBP_OFFSET_TIMEOUT_S, logging=logging)
+                if moved.get('status') != 'success':
+                    log_or_print(logging, f"fbpoffset failed: {moved.get('message')}", 'error')
+                    return False
+            return converged
+        finally:
+            await self.spec_illumination('illuoff', scriptrun, logging)
+            try:
+                await handle_lamp('fiducialoff', scriptrun.ICSclient, logging=logging,
+                                  state_callback=lamp_callback)
+            except Exception as error:
+                log_or_print(logging, f'fiducialoff failed: {error}', 'error')
+            log_or_print(logging, f'###### Metrology loop finished (converged: {converged}) ######',
+                         'comment')
 
     async def run_autoguide(self, scriptrun, exptime: float = 5.0, expnum: int = 1, save: bool = False, logging = None):
         """Starts the autoguiding process asynchronously."""
@@ -652,49 +755,11 @@ class script():
         # await self.run_autoguide(scriptrun, self.GFAexpT, self.GFAexpN, logging=logging)
         # await asyncio.sleep(2)
 
-        # await handle_lamp(
-        #     'fiducialon', scriptrun.ICSclient, logging=logging,
-        #     state_callback=getattr(scriptrun, 'lamp_state_callback', None),
-        # )
-        # await asyncio.sleep(2)
-                
-        # await handle_spec('illuon',scriptrun.ICSclient)
-        # await scriptrun.response_queue.get()
-        # await asyncio.sleep(2)
-
-        # mtlstart에서 준비한 촬영 설정으로 노출부터 JSON 저장까지 실행한다.
-    #     await handle_mtl('mtltrial',scriptrun.ICSclient, logging=logging)
-    #     await scriptrun.response_queue.get()                                    # Start MTL trial message
-    #     mtltrial_response = await scriptrun.response_queue.get()                 # Wait for MTL trial finish
-    #     await asyncio.sleep(2)
-
-    #     mtltrial_json = mtltrial_response.get('filename')
-    #     if (
-    #         mtltrial_response.get('status') != 'success'
-    #         or mtltrial_json in (None, '', 'None')
-    #     ):
-    #         logging('MTL trial failed or returned no JSON; FBP offset was not started.', level='error')
+        # Metrology iterations: fiducials and back illumination on, mtltrial / fbpoffset until
+        # converged, back illumination and fiducials off (handle_metrology).
+    #     if not await self.handle_metrology(scriptrun, logging):
+    #         logging('Metrology did not converge; observation stopped.', level='error')
     #         return
-
-    #     sent = await handle_fbp(
-    #         f'fbpoffset {shlex.quote(str(mtltrial_json))}',
-    #         scriptrun.ICSclient,
-    #         logging=logging,
-    #     )
-    #     if not sent:
-    #         logging(f'Failed to read MTL trial JSON: {mtltrial_json}', level='error')
-    #         return
-    #     await scriptrun.response_queue.get()                                    # Start offset message
-    #     await scriptrun.response_queue.get()                                    # Wait for FBP offset finish
-    #     await asyncio.sleep(2)
-
-    #     await handle_spec('illuoff',scriptrun.ICSclient)
-    #     await scriptrun.response_queue.get()
-    #     await asyncio.sleep(2)
-
-    #     await handle_lamp('fiducialoff', scriptrun.ICSclient, logging=logging,
-    #                       state_callback=getattr(scriptrun, 'lamp_state_callback', None))
-    #     await asyncio.sleep(2)
 
     #     printing(f'ADC Adjust Start')
     # #    message=f'adcadjust {self.ra} {self.dec}'
@@ -759,7 +824,8 @@ async def handle_script(arg, scriptrun=None, logging=None):
     cmd, *params = arg.split()
 
     command_map = {
-            'obsinitial': scriptrun.obs_initial, 'runcalib': scriptrun.run_calib, 'runobs': scriptrun.run_obs
+            'obsinitial': scriptrun.obs_initial, 'runcalib': scriptrun.run_calib, 'runobs': scriptrun.run_obs,
+            'runmtl': scriptrun.run_metrology
     }
 
     if cmd in command_map:

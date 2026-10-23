@@ -109,4 +109,6 @@ runcalib        : Start script to obtain calibration images.
 obsinitial      : Initialize the observation.
 autoguide       : Start autoguiding process using gfaguide.
 autoguidestop   : Stop running autoguiding process using gfaguidestop.
-runobs          : Start whole sequence for observing Tile 
+runobs          : Start whole sequence for observing Tile
+runmtl          : Metrology loop after loadtile: illuon, then mtltrial (light on) and fbpoffset
+                  (light off) until converged, then illuoff.
