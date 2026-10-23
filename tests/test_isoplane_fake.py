@@ -262,6 +262,23 @@ class IsoplaneFakeTest(unittest.TestCase):
         self.assertEqual(self.server.done('specstatus')[0]['isoplane']['backillum']['state'],
                          'NONE')
 
+    def test_late_exposure_is_stopped_and_fails(self):
+        iso = self.make(lf=FakeLightField(time_scale=1000, shape=(1, 8, 10)))
+        iso.expose_timeout_s = 0.05  # a 0.01 s exposure that would take 10 s
+
+        async def go():
+            await iso.start()
+            await iso.handle(self.server, body('specinitial', dirname='20261101'))
+            t0 = time.time()
+            await iso.handle(self.server, body('getobj', time=0.01, numframe=1, header=HEADER))
+            iso.bl._stop_ping.set()
+            return time.time() - t0
+        elapsed = asyncio.run(go())
+        self.assertLess(elapsed, 2.0)
+        obj, = self.server.done('getobj')
+        self.assertEqual(obj['status'], 'error')
+        self.assertIn('did not finish', obj['message'])
+
 
 class AppendCardsTest(unittest.TestCase):
     def test_lightfield_continue_cards_survive(self):

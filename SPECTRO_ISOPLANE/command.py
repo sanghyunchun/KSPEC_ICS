@@ -30,6 +30,10 @@ specstop never waits either. It stops the stage, switches the light off, and sto
 acquisition; the running command then replies stopped. The stage position is unknown
 afterwards, so exposures, experiment loads, and illuon stay refused until illuoff has homed the
 stage.
+
+Deadlines: an exposure still running ``lightfield.expose_timeout_s`` (default 120 s) after its
+exposure time is stopped and fails; an experiment load fails after ``lightfield.load_timeout_s``
+(default 300 s). A hung LightField then still produces a Done reply.
 """
 
 import asyncio
@@ -64,10 +68,14 @@ class InterlockError(Refused):
 
 class Isoplane:
     def __init__(self, cfg, lightfield=None, backillum=None):
-        self.lf = lightfield if lightfield is not None else make_lightfield(cfg.get("lightfield", {}))
+        lf_cfg = cfg.get("lightfield", {})
+        self.lf = lightfield if lightfield is not None else make_lightfield(lf_cfg)
         self.bl = backillum if backillum is not None else make_backillum(cfg.get("backillum"))
         self.datapath = cfg.get("datapath", "../DATA/RAWDATA/")
         self.sharepath = cfg.get("sharepath", "")
+        self.expose_timeout_s = float(lf_cfg.get("expose_timeout_s", 120.0))
+        self.load_timeout_s = float(lf_cfg.get("load_timeout_s", 300.0))
+        self.stop_grace_s = 30.0  # wait for LightField after stopping a late exposure
         self.night = None
         self.lock = asyncio.Lock()
         self.busy = "idle"
@@ -219,7 +227,12 @@ class Isoplane:
             await self.require_stage_out("experiment load (may move the grating)")
             await self.reply(server, "specinitial", f"Loading LightField experiment {experiment}.",
                              process="ING")
-            await asyncio.to_thread(self.lf.load_experiment, experiment)
+            try:
+                await asyncio.wait_for(asyncio.to_thread(self.lf.load_experiment, experiment),
+                                       self.load_timeout_s)
+            except asyncio.TimeoutError:
+                raise TimeoutError(f"LightField did not load {experiment} within "
+                                   f"{self.load_timeout_s:g} s") from None
             await self.read_lf_status()
         await self.reply(server, "specinitial",
                          f"Initializing of IsoPlane is finished (night {night}"
@@ -278,17 +291,34 @@ class Isoplane:
 
     # -------------------------------------------------- helpers
     async def with_progress(self, server, func, exptime, fn, *args):
-        """Run a blocking exposure in a thread, sending the remaining time every 10 s."""
+        """Run a blocking exposure in a thread, sending the remaining time every 10 s.
+
+        An exposure still running expose_timeout_s after its exposure time is stopped; it then
+        fails, also when LightField does not return within stop_grace_s of the stop.
+        """
+        loop = asyncio.get_running_loop()
         task = asyncio.ensure_future(asyncio.to_thread(fn, *args))
-        remaining = exptime
+        t0 = loop.time()
+        deadline = t0 + exptime + self.expose_timeout_s
         while True:
-            done, _ = await asyncio.wait({task}, timeout=PROGRESS_EVERY_S)
+            wait = min(PROGRESS_EVERY_S, max(0.0, deadline - loop.time()))
+            done, _ = await asyncio.wait({task}, timeout=wait)
             if done:
                 return task.result()
-            remaining -= PROGRESS_EVERY_S
+            if loop.time() >= deadline:
+                break
+            remaining = exptime - (loop.time() - t0)
             if remaining > 0:
                 await self.reply(server, func, f"Remaining exposure time: {remaining:.0f} seconds.",
                                  process="ING")
+        await asyncio.to_thread(self.lf.stop)
+        done, _ = await asyncio.wait({task}, timeout=self.stop_grace_s)
+        task.add_done_callback(lambda t: t.cancelled() or t.exception())  # result is dropped
+        raise TimeoutError(
+            f"LightField did not finish the {exptime:g} s exposure within "
+            f"{self.expose_timeout_s:g} s of its end; acquisition stopped"
+            f"{'' if done else ' (LightField still not responding)'}"
+        )
 
     def next_basename(self, directory, kind):
         """<night>_<seq>_<kind>, seq one above the highest in the night directory."""

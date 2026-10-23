@@ -22,11 +22,16 @@ reply and nothing else is sent as `Done`. Its `status` is:
 |---|---|
 | `success` | done |
 | `fail` | refused, nothing was done: busy, interlock, no `specinitial`, no unit |
-| `error` | hardware or LightField failed |
+| `error` | hardware or LightField failed (also an exposure past its deadline) |
 | `stopped` | interrupted by `specstop` |
 
 Progress replies are `ING`. So is the `specstop` reply while a command runs; that command then
 answers `Done`/`stopped`.
+
+## Deadlines
+An exposure still running `lightfield.expose_timeout_s` (default 120 s) after its exposure time
+is stopped and fails with `error`; an experiment load fails after `lightfield.load_timeout_s`
+(default 300 s). A hung LightField therefore still produces a `Done` reply.
 
 ## Grating and stage interlock
 One process owns LightField and the Uno. Every command except `specstatus` takes one lock, so an
@@ -68,7 +73,8 @@ to `<sharepath>/<night>/` when `sharepath` is set; the reply carries the shared 
 ## Setup
 1. Copy `isoplane_local.example.json` to `isoplane_local.json` (gitignored) and edit it:
    `lightfield.driver` (`fake` or `lightfield`), the LightField `root`, the Uno `port`
-   (`fake`, `COM5`, ...), the stage `in_depth_mm` / `in_limit_mm`, `datapath`, `sharepath`.
+   (`fake`, `COM5`, ...), the stage `in_depth_mm` / `in_limit_mm`, `datapath`, `sharepath`,
+   and optionally the timeouts above.
    Leave out `backillum` (or set it to `null`) when no unit is installed.
 2. In `Lib/KSPEC.ini` set `SPEC.queue` to `ISOPLANE` on the ICS side, and the broker
    `RabbitMQ.ip_addr` on the LightField PC.
