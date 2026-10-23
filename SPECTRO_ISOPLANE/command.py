@@ -81,6 +81,14 @@ class InterlockError(Refused):
     pass
 
 
+def setup_summary(lf):
+    """One line for the message log: the setup the next frames will be taken with."""
+    return (f"experiment {lf.get('experiment')}, grating {lf.get('grating')} at "
+            f"{lf.get('center_nm')} nm, ADC {lf.get('adc_speed_mhz')} MHz "
+            f"{lf.get('adc_gain')}/{lf.get('adc_quality')}, {lf.get('sensor_temp_c')} C "
+            f"{lf.get('temp_status')}")
+
+
 def camera_problems(expected, lf):
     """['<key> <value> (expected <value>)', ...] for every configured camera value that differs."""
     out = []
@@ -307,10 +315,7 @@ class Isoplane:
                    "lightfield_read_at": self.lf_status_time, "backillum": bl,
                    "camera_problems": problems}
         msg = (f"IsoPlane: {'busy (' + self.busy + ')' if busy else 'ready'}, "
-               f"night {self.night}, experiment {lf.get('experiment')}, grating "
-               f"{lf.get('grating')} at {lf.get('center_nm')} nm, ADC {lf.get('adc_speed_mhz')} MHz "
-               f"{lf.get('adc_gain')}/{lf.get('adc_quality')}, {lf.get('sensor_temp_c')} C "
-               f"{lf.get('temp_status')}"
+               f"night {self.night}, {setup_summary(lf)}"
                f"{' (as of ' + str(self.lf_status_time) + ')' if busy else ''}, back illumination "
                f"{bl['state']}{' light ON' if bl.get('light') else ''}.")
         if problems:
@@ -335,9 +340,9 @@ class Isoplane:
             except asyncio.TimeoutError:
                 raise TimeoutError(f"LightField did not load {experiment} within "
                                    f"{self.load_timeout_s:g} s") from None
-        problems = camera_problems(self.camera, await self.read_lf_status())
-        msg = (f"Initializing of IsoPlane is finished (night {night}"
-               f"{', experiment ' + experiment if experiment else ''}).")
+        lf = await self.read_lf_status()
+        problems = camera_problems(self.camera, lf)
+        msg = f"Initializing of IsoPlane is finished (night {night}). Setup: {setup_summary(lf)}."
         if problems:
             msg += (" Warning: exposures will be refused, camera not in the configured mode: "
                     + "; ".join(problems) + ".")

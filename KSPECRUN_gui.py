@@ -695,13 +695,25 @@ class MainWindow(QMainWindow):
         if status == "error":
             log_level = "error"
 
-        elif status == "fail":
+        elif status in ("fail", "stopped"):
             log_level = "warning"
 
         else:
             log_level = "receive"
 
         self.logging(log_msg, status, level=log_level)
+
+    def _log_spec_camera_problems(self, response_data):
+        """Warn when the IsoPlane camera is not in its configured mode (exposures get refused).
+
+        specinitial reports it on a success reply, so the reply line alone is not highlighted.
+        """
+        problems = response_data.get('camera_problems')
+        if problems is None and isinstance(response_data.get('isoplane'), dict):
+            problems = response_data['isoplane'].get('camera_problems')
+        if problems:
+            self.logging('Spectrograph camera not in the configured mode, exposures will be '
+                         'refused: ' + '; '.join(map(str, problems)), level='warning')
 
     async def _handle_in_progress_response(self, response_data, inst, process):
         queue_map = {
@@ -761,10 +773,13 @@ class MainWindow(QMainWindow):
                 # 2. 수신 로그 출력
                 self._log_received_message(inst, msg, status)
 
-                # IsoPlane replies carry the back-illumination state (also the light auto-off).
+                # IsoPlane replies carry the back-illumination state (also the light auto-off)
+                # and, from specinitial and specstatus, the camera-mode check.
                 backillum = response_data.get('backillum')
                 if inst == 'SPEC' and isinstance(backillum, dict):
                     self._sync_illumi_state(backillum)
+                if inst == 'SPEC':
+                    self._log_spec_camera_problems(response_data)
 
                 # The illumination button waits for its own reply; a script's reply falls through.
                 if (

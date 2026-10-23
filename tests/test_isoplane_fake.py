@@ -338,6 +338,8 @@ class IsoplaneFakeTest(unittest.TestCase):
         init, = self.server.done('specinitial')
         self.assertEqual(init['status'], 'success')  # loading is allowed; it warns
         self.assertEqual(init['camera_problems'], ['adc_speed_mhz 2 (expected 0.1)'])
+        self.assertIn('Setup: experiment fake, grating [500nm,600][0][0] at 430.0 nm, '
+                      'ADC 2 MHz High/LowNoise, -55 C Locked.', init['message'])
         speed, lock, ok = self.server.done('getbias')
         self.assertEqual(speed['status'], 'fail')
         self.assertIn('adc_speed_mhz 2 (expected 0.1)', speed['message'])
