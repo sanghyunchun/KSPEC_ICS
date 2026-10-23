@@ -821,10 +821,13 @@ class MainWindow(QMainWindow):
                 if await self._handle_gfa_guiding_terminal_response(response_data, inst, process, status, msg):
                     return
 
-                # 5. SPEC image 처리
-                if inst == "SPEC" and response_data.get("filename") != "None":
-                    self.show_spec(response_data)
+                # 5. SPEC image 처리: queue first, so a display failure cannot lose the reply
+                if inst == "SPEC" and response_data.get("filename") not in (None, "None"):
                     await self.response_queue.put(response_data)
+                    try:
+                        self.show_spec(response_data)
+                    except Exception as error:
+                        self.logging(f'Could not display the SPEC frame: {error}', level='warning')
                     return
 
                 # 6. FBP 처리
@@ -2257,22 +2260,36 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logging(f'Observation log update failed: {e}', level='error')
 
+    def _spec_frame_path(self, filename):
+        """Local path of a frame named in a SPEC reply: as given, else under SPEC.specimagepath.
+
+        The IsoPlane server runs on the LightField PC, so its path (e.g. a Windows share) may
+        not exist here; the frame is then looked up as <specimagepath>/<night>/<file>.
+        """
+        if filename in (None, '', 'None'):
+            return None
+        if os.path.exists(str(filename)):
+            return str(filename)
+        parts = str(filename).replace('\\', '/').split('/')
+        with open('./Lib/KSPEC.ini', 'r') as f:
+            imagepath = json.load(f)['SPEC']['specimagepath']
+        local = os.path.join(imagepath, *parts[-2:])
+        return local if os.path.exists(local) else None
+
     def show_spec(self, spec_response):
-    #    self.fwhm=response_data['fwhm']
-        spec_canvas = [self.canvas_B, self.canvas_R]
+        """Display the last frame named in a SPEC reply, if this machine can read it."""
+        path = self._spec_frame_path(spec_response.get('filename'))
+        if path is None:
+            self.logging(f"SPEC frame is not readable here: {spec_response.get('filename')}", level='warning')
+            return
 
-        ### Simulation Start ####
-        with fits.open('/media/shyunc/DATA/KSpec/DATA/RAWDATA/20260304/26030210001.fits') as hdul:
-            data=hdul[0].data
-
-        self.S_zmin, self.S_zmax = zs.zscale(data)
-        self.canvas_B.imshows(data[0][540:740,:],vmin=self.S_zmin,vmax=self.S_zmax,cmap='gray',origin='lower',aspect='auto')
-
-        with fits.open('/media/shyunc/DATA/KSpec/DATA/RAWDATA/20260304/26030220001.fits') as hdul:
-            data=hdul[0].data
+        with fits.open(path) as hdul:
+            data = np.asarray(hdul[0].data, dtype=float)
+        while data.ndim > 2:   # LightField frames are (1, ny, nx)
+            data = data[0]
 
         self.S_zmin, self.S_zmax = zs.zscale(data)
-        self.canvas_R.imshows(data[0][540:740,:],vmin=self.S_zmin,vmax=self.S_zmax,cmap='gray',origin='lower',aspect='auto')
+        self.canvas_B.imshows(data,vmin=self.S_zmin,vmax=self.S_zmax,cmap='gray',origin='lower',aspect='auto')
 
     # endregion Spectrograph controls
 
