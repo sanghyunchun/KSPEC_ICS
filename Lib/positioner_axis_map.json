@@ -662,12 +662,12 @@
     "K4": {
         "plc": "PLC2",
         "alpha": {
-            "global_axis": 85,
-            "local_axis": 9
+            "global_axis": 83,
+            "local_axis": 7
         },
         "beta": {
-            "global_axis": 86,
-            "local_axis": 10
+            "global_axis": 84,
+            "local_axis": 8
         }
     },
     "K5": {
@@ -717,12 +717,12 @@
     "L3": {
         "plc": "PLC2",
         "alpha": {
-            "global_axis": 83,
-            "local_axis": 7
+            "global_axis": 85,
+            "local_axis": 9
         },
         "beta": {
-            "global_axis": 84,
-            "local_axis": 8
+            "global_axis": 86,
+            "local_axis": 10
         }
     },
     "L5": {
