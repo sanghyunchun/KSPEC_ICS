@@ -32,9 +32,9 @@ from GFA.gfacli import handle_gfa
 from FBP.fbpcli import handle_fbp
 from MTL.mtlcli import handle_mtl, mtl_start, mtl_set
 from LAMP.lampcli import handle_lamp
-from SPECTRO.speccli import handle_spec
+from SPECTRO.speccli import handle_spec, spec_queue, ILLUMINATION_COMMANDS
 from TCS.tcscli import handle_telcom
-from script.scriptcli import handle_script
+from script.scriptcli import handle_script, ILLUMINATION_TIMEOUT_S
 from Lib.reply import wait_reply
 from script.scriptcli import script
 from SCIOBS.sciobscli import sciobscli
@@ -220,6 +220,7 @@ class MainWindow(QMainWindow):
         self.fiducial_state = False
         self.illumi_state = False
         self.illumi_busy = False
+        self._illumi_waiter = None    # (func, future) while the button waits for its reply
 #        self.fbp_restore = False
     
 
@@ -758,6 +759,23 @@ class MainWindow(QMainWindow):
 
                 # 2. 수신 로그 출력
                 self._log_received_message(inst, msg, status)
+
+                # IsoPlane replies carry the back-illumination state.
+                backillum = response_data.get('backillum')
+                if inst == 'SPEC' and isinstance(backillum, dict):
+                    self._sync_illumi_state(backillum)
+
+                # The illumination button waits for its own reply; a script's reply falls through.
+                if (
+                    inst == 'SPEC'
+                    and process == 'Done'
+                    and response_data.get('func') in ILLUMINATION_COMMANDS
+                    and self._illumi_waiter is not None
+                    and self._illumi_waiter[0] == response_data.get('func')
+                    and not self._illumi_waiter[1].done()
+                ):
+                    self._illumi_waiter[1].set_result(response_data)
+                    return
 
                 if inst == 'FBP' and response_data.get('func') == 'fbpactivate':
                     activate_waiter = getattr(self, '_fbp_activate_waiter', None)
@@ -2140,6 +2158,35 @@ class MainWindow(QMainWindow):
     # endregion LAMP controls
 
     # region Spectrograph controls
+    def _sync_illumi_state(self, backillum):
+        """Follow the IsoPlane back-illumination state reported in a SPEC reply."""
+        self.illumi_state = bool(backillum.get('light'))
+        if not self.illumi_busy:
+            for button in (self.ui.pushbtn_illumi, self.ui.pushbtn_illumi_2):
+                self._set_toggle_button(button, self.illumi_state)
+
+    async def _send_isoplane_illumination(self, command):
+        """Send an illumination command to the IsoPlane server and wait for its Done reply.
+
+        The reply is taken out of the shared response queue by on_ics_message, so it cannot be
+        mistaken later for the reply of another command.
+        """
+        waiter = asyncio.get_running_loop().create_future()
+        self._illumi_waiter = (command, waiter)
+        try:
+            self.logging(f'Back illumination: sending {command} to the IsoPlane server.', level='send')
+            await handle_spec(command, self.ICS_client)
+            response = await asyncio.wait_for(waiter, timeout=ILLUMINATION_TIMEOUT_S)
+        except asyncio.TimeoutError:
+            self.logging(f'No reply to {command} within {ILLUMINATION_TIMEOUT_S:g} s; '
+                         'back illumination state unknown (send specstatus).', level='error')
+            return
+        finally:
+            if self._illumi_waiter is not None and self._illumi_waiter[1] is waiter:
+                self._illumi_waiter = None
+        if not isinstance(response.get('backillum'), dict) and response.get('status') == 'success':
+            self.illumi_state = command == 'illuon'
+
     @asyncSlot()
     async def illumi_button_clicked(self):
         if self.illumi_busy:
@@ -2151,13 +2198,16 @@ class MainWindow(QMainWindow):
         for button in buttons:
             button.setEnabled(False)
         command = 'illuon' if desired_state else 'illuoff'
-        self.logging(f"Back illumination: sending {'ON' if desired_state else 'OFF'} to WebRelay.", level='send')
         try:
-            relay_state = await handle_spec(command, self.ICS_client)
-            self.illumi_state = bool(relay_state)
-            self.logging(f"Back illumination: WebRelay relay1={relay_state}.", level='receive')
+            if spec_queue() == 'SPEC':
+                self.logging(f"Back illumination: sending {'ON' if desired_state else 'OFF'} to WebRelay.", level='send')
+                relay_state = await handle_spec(command, self.ICS_client)
+                self.illumi_state = bool(relay_state)
+                self.logging(f"Back illumination: WebRelay relay1={relay_state}.", level='receive')
+            else:
+                await self._send_isoplane_illumination(command)
         except Exception as error:
-            self.logging(f'Back illumination WebRelay command failed: {error}', level='error')
+            self.logging(f'Back illumination command failed: {error}', level='error')
         finally:
             for button in buttons:
                 self._set_toggle_button(button, self.illumi_state)

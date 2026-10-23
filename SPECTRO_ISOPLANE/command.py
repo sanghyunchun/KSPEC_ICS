@@ -147,7 +147,8 @@ class Isoplane:
                     status, msg = "fail", f"{func} refused: {e}"
                 else:
                     status, msg = "error", f"{func} failed: {e}"
-                await self.reply(server, func, msg, status=status)
+                extra = {"backillum": self.bl.status()} if self.bl is not None else {}
+                await self.reply(server, func, msg, status=status, **extra)
             finally:
                 self.busy = "idle"
                 self.stop_requested = False
@@ -178,8 +179,9 @@ class Isoplane:
         msg += "; ".join(done + failed) + "."
         if self.bl is not None:
             msg += " Stage position unknown: send illuoff to home it."
+        extra = {"backillum": self.bl.status()} if self.bl is not None else {}
         await self.reply(server, "specstop", msg, process="ING" if running else "Done",
-                         status="error" if failed else "success")
+                         status="error" if failed else "success", **extra)
 
     # -------------------------------------------------- interlock
     def require_unit(self):
@@ -246,7 +248,8 @@ class Isoplane:
         await self.reply(server, "illuon", "Back illumination: lowering the stage.", process="ING")
         await asyncio.to_thread(self.bl.insert)
         await asyncio.to_thread(self.bl.set_light, True)
-        await self.reply(server, "illuon", "Back illumination light on.")
+        await self.reply(server, "illuon", "Back illumination stage IN, light on.",
+                         backillum=self.bl.status())
 
     async def illuoff(self, server, d):
         self.require_unit()
@@ -256,7 +259,7 @@ class Isoplane:
         msg = "Back illumination light off, stage OUT."
         if self.bl.last_error:
             msg += f" Warning: {self.bl.last_error}"
-        await self.reply(server, "illuoff", msg)
+        await self.reply(server, "illuoff", msg, backillum=self.bl.status())
 
     async def take_frames(self, server, d):
         func = d["func"]

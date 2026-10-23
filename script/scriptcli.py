@@ -26,6 +26,7 @@ from TCS.tcscli import handle_telcom
 
 
 SPEC_FRAME_OVERHEAD_S = 180.     # readout, export and copy per frame, on top of the exposure
+ILLUMINATION_TIMEOUT_S = 120.    # IsoPlane stage move (~15-20 s) and light switching
 
 
 def printing(message):

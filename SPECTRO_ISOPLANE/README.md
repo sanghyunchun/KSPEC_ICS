@@ -26,7 +26,8 @@ reply and nothing else is sent as `Done`. Its `status` is:
 | `stopped` | interrupted by `specstop` |
 
 Progress replies are `ING`. So is the `specstop` reply while a command runs; that command then
-answers `Done`/`stopped`.
+answers `Done`/`stopped`. Replies of the illumination commands carry `backillum` (`state`,
+`light`), which the GUI button follows.
 Scripts wait with `Lib.reply.wait_reply(queue, inst, func, timeout)`, which skips progress
 replies and `Done` replies of other commands (for example a `specstatus` sent from the GUI).
 

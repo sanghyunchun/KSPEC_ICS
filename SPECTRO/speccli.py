@@ -29,6 +29,12 @@ async def set_illumination(state):
 
 
 
+ILLUMINATION_COMMANDS = {
+    'illuon': 'Back illumination on (stage in, light on).',
+    'illuoff': 'Back illumination off (light off, stage out).',
+}
+
+
 def spec_queue():
     """Queue of the spectrograph server: 'SPEC' (main) or 'ISOPLANE' (KSPEC.ini SPEC.queue)."""
     with open('./Lib/KSPEC.ini', 'r') as f:
@@ -70,15 +76,17 @@ async def handle_spec(arg, ICS_client, header=None):
         header = {}
 
     queue = spec_queue()
-    if cmd in ('illuon', 'illuoff'):
+    if cmd in ILLUMINATION_COMMANDS:
         if params:
             raise ValueError(f"'{cmd}' does not take parameters")
+        light_on = cmd == 'illuon'
         if queue == 'SPEC':
-            return await set_illumination(cmd == 'illuon')
+            return await set_illumination(light_on)
         # IsoPlane: the server moves the stage in the grating turret, interlocked with the
-        # grating; its reply arrives on the ICS queue. Return the requested state for the GUI.
-        await ICS_client.send_message(queue, create_spec_command(cmd, message=f'Back illumination {cmd[4:]}.'))
-        return int(cmd == 'illuon')
+        # grating; its Done reply (func=cmd) arrives on the ICS queue. Return the requested
+        # state; callers that need the outcome wait for that reply.
+        await ICS_client.send_message(queue, create_spec_command(cmd, message=ILLUMINATION_COMMANDS[cmd]))
+        return int(light_on)
 
     command_map = {
         'specstatus': spec_status,
