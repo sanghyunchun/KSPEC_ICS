@@ -1,0 +1,36 @@
+{
+    "lightfield": {
+        "driver": "fake",
+        "root": "C:\\Program Files\\Princeton Instruments\\LightField",
+        "visible": true,
+        "experiment": null,
+        "time_scale": 1.0,
+        "shape": [1, 1330, 1340],
+        "overscan_rows": 30,
+        "sensor_bias_rows": 1,
+        "expose_timeout_s": 120.0,
+        "load_timeout_s": 300.0
+    },
+    "camera": {
+        "adc_speed_mhz": 0.1,
+        "adc_gain": "High",
+        "adc_quality": "LowNoise",
+        "temp_setpoint_c": -55,
+        "temp_status": "Locked",
+        "sensor_rows": 1330,
+        "physical_rows": 1300,
+        "roi_selection": "FullSensor"
+    },
+    "experiments": null,
+    "backillum": {
+        "port": "fake",
+        "in_depth_mm": 50.0,
+        "in_limit_mm": 50.0,
+        "speed_mm_s": 10.0,
+        "time_scale": 1.0,
+        "light_settle_s": 1.0,
+        "light_max_on_s": 300.0
+    },
+    "datapath": "../DATA/RAWDATA/",
+    "sharepath": ""
+}

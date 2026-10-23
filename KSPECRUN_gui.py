@@ -32,9 +32,10 @@ from GFA.gfacli import handle_gfa
 from FBP.fbpcli import handle_fbp
 from MTL.mtlcli import handle_mtl, mtl_start, mtl_set
 from LAMP.lampcli import handle_lamp
-from SPECTRO.speccli import handle_spec
+from SPECTRO.speccli import handle_spec, spec_queue, ILLUMINATION_COMMANDS
 from TCS.tcscli import handle_telcom
-from script.scriptcli import handle_script
+from script.scriptcli import handle_script, ILLUMINATION_TIMEOUT_S
+from Lib.reply import wait_reply
 from script.scriptcli import script
 from SCIOBS.sciobscli import sciobscli
 
@@ -218,7 +219,9 @@ class MainWindow(QMainWindow):
         self.flat_state = False
         self.fiducial_state = False
         self.illumi_state = False
+        self.illumi_stage = None      # IsoPlane stage state from the last SPEC reply (IN, OUT, ...)
         self.illumi_busy = False
+        self._illumi_waiter = None    # (func, future) while the button waits for its reply
 #        self.fbp_restore = False
     
 
@@ -564,7 +567,7 @@ class MainWindow(QMainWindow):
             "fbp": ["fbpactivate", "fbpstatus", "fbpstepstatus", "fbpstate", "fbpmove", "fbpoffset"],
             "mtl": ["mtlstatus", "mtlstart", "mtlset", "mtltest", "mtlcal", "mtltrial", "mtlresult", "mtlreset"],
             "lamp": ["lampstatus", "arcon", "arcoff", "flaton", "flatoff","fiducialon","fiducialoff"],
-            "spec": ["specstatus", "specinitial","illuon", "illuoff", "getobj", "getbias", "getflat","getar"],
+            "spec": ["specstatus", "specstop", "specinitial","illuon", "illuoff", "illulighton", "illulightoff", "getobj", "getbias", "getflat","getarc"],
             "tcs": ["tmradec", "start", "stop", "tcsint", "tcsreset", "tcsclose",
             "tcsarc", "tcsstatus", "tstat", "traw", "tsync", "tcmd",
             "treg", "tmradec", "tmr", "tmobject", "tmo", "tmelaz",
@@ -576,7 +579,7 @@ class MainWindow(QMainWindow):
 
             "telcom": ["getall", "getra", "getdec", "getha", "getel", "getaz", "getsecz", "mvstow", "mvelaz", "mvstop", "mvra", "mvdec", "track", "stepra", "stepdec"],
             "utils": ["?","obsstatus","loadtile","setdir", "ADC?", "GFA?", "LAMP?", "MTL?", "FBP?", "SPEC?"],
-            "script": ["runcalib", "obsinitial", "autoguide", "autoguidestop", "runobs"]
+            "script": ["runcalib", "obsinitial", "autoguide", "autoguidestop", "runobs", "runmtl"]
             }
 
     def load_config(self):
@@ -694,13 +697,25 @@ class MainWindow(QMainWindow):
         if status == "error":
             log_level = "error"
 
-        elif status == "fail":
+        elif status in ("fail", "stopped"):
             log_level = "warning"
 
         else:
             log_level = "receive"
 
         self.logging(log_msg, status, level=log_level)
+
+    def _log_spec_camera_problems(self, response_data):
+        """Warn when the IsoPlane camera is not in its configured mode (exposures get refused).
+
+        specinitial reports it on a success reply, so the reply line alone is not highlighted.
+        """
+        problems = response_data.get('camera_problems')
+        if problems is None and isinstance(response_data.get('isoplane'), dict):
+            problems = response_data['isoplane'].get('camera_problems')
+        if problems:
+            self.logging('Spectrograph camera not in the configured mode, exposures will be '
+                         'refused: ' + '; '.join(map(str, problems)), level='warning')
 
     async def _handle_in_progress_response(self, response_data, inst, process):
         queue_map = {
@@ -760,6 +775,26 @@ class MainWindow(QMainWindow):
                 # 2. 수신 로그 출력
                 self._log_received_message(inst, msg, status)
 
+                # IsoPlane replies carry the back-illumination state (also the light auto-off)
+                # and, from specinitial and specstatus, the camera-mode check.
+                backillum = response_data.get('backillum')
+                if inst == 'SPEC' and isinstance(backillum, dict):
+                    self._sync_illumi_state(backillum)
+                if inst == 'SPEC':
+                    self._log_spec_camera_problems(response_data)
+
+                # The illumination button waits for its own reply; a script's reply falls through.
+                if (
+                    inst == 'SPEC'
+                    and process == 'Done'
+                    and response_data.get('func') in ILLUMINATION_COMMANDS
+                    and self._illumi_waiter is not None
+                    and self._illumi_waiter[0] == response_data.get('func')
+                    and not self._illumi_waiter[1].done()
+                ):
+                    self._illumi_waiter[1].set_result(response_data)
+                    return
+
                 if inst == 'FBP' and response_data.get('func') == 'fbpactivate':
                     activate_waiter = getattr(self, '_fbp_activate_waiter', None)
                     if (
@@ -804,10 +839,13 @@ class MainWindow(QMainWindow):
                 if await self._handle_gfa_guiding_terminal_response(response_data, inst, process, status, msg):
                     return
 
-                # 5. SPEC image 처리
-                if inst == "SPEC" and response_data.get("filename") != "None":
-                    self.show_spec(response_data)
+                # 5. SPEC image 처리: queue first, so a display failure cannot lose the reply
+                if inst == "SPEC" and response_data.get("filename") not in (None, "None"):
                     await self.response_queue.put(response_data)
+                    try:
+                        self.show_spec(response_data)
+                    except Exception as error:
+                        self.logging(f'Could not display the SPEC frame: {error}', level='warning')
                     return
 
                 # 6. FBP 처리
@@ -2141,6 +2179,36 @@ class MainWindow(QMainWindow):
     # endregion LAMP controls
 
     # region Spectrograph controls
+    def _sync_illumi_state(self, backillum):
+        """Follow the IsoPlane back-illumination state reported in a SPEC reply."""
+        self.illumi_state = bool(backillum.get('light'))
+        self.illumi_stage = backillum.get('state')
+        if not self.illumi_busy:
+            for button in (self.ui.pushbtn_illumi, self.ui.pushbtn_illumi_2):
+                self._set_toggle_button(button, self.illumi_state)
+
+    async def _send_isoplane_illumination(self, command):
+        """Send an illumination command to the IsoPlane server and wait for its Done reply.
+
+        The reply is taken out of the shared response queue by on_ics_message, so it cannot be
+        mistaken later for the reply of another command.
+        """
+        waiter = asyncio.get_running_loop().create_future()
+        self._illumi_waiter = (command, waiter)
+        try:
+            self.logging(f'Back illumination: sending {command} to the IsoPlane server.', level='send')
+            await handle_spec(command, self.ICS_client)
+            response = await asyncio.wait_for(waiter, timeout=ILLUMINATION_TIMEOUT_S)
+        except asyncio.TimeoutError:
+            self.logging(f'No reply to {command} within {ILLUMINATION_TIMEOUT_S:g} s; '
+                         'back illumination state unknown (send specstatus).', level='error')
+            return
+        finally:
+            if self._illumi_waiter is not None and self._illumi_waiter[1] is waiter:
+                self._illumi_waiter = None
+        if not isinstance(response.get('backillum'), dict) and response.get('status') == 'success':
+            self.illumi_state = command in ('illuon', 'illulighton')
+
     @asyncSlot()
     async def illumi_button_clicked(self):
         if self.illumi_busy:
@@ -2151,14 +2219,23 @@ class MainWindow(QMainWindow):
         self.illumi_busy = True
         for button in buttons:
             button.setEnabled(False)
-        command = 'illuon' if desired_state else 'illuoff'
-        self.logging(f"Back illumination: sending {'ON' if desired_state else 'OFF'} to WebRelay.", level='send')
         try:
-            relay_state = await handle_spec(command, self.ICS_client)
-            self.illumi_state = bool(relay_state)
-            self.logging(f"Back illumination: WebRelay relay1={relay_state}.", level='receive')
+            if spec_queue() == 'SPEC':
+                command = 'illuon' if desired_state else 'illuoff'
+                self.logging(f"Back illumination: sending {'ON' if desired_state else 'OFF'} to WebRelay.", level='send')
+                relay_state = await handle_spec(command, self.ICS_client)
+                self.illumi_state = bool(relay_state)
+                self.logging(f"Back illumination: WebRelay relay1={relay_state}.", level='receive')
+            else:
+                # IsoPlane: with the stage already IN (light switched off between metrology
+                # trials), ON switches only the light; OFF always raises the stage.
+                if desired_state:
+                    command = 'illulighton' if self.illumi_stage == 'IN' else 'illuon'
+                else:
+                    command = 'illuoff'
+                await self._send_isoplane_illumination(command)
         except Exception as error:
-            self.logging(f'Back illumination WebRelay command failed: {error}', level='error')
+            self.logging(f'Back illumination command failed: {error}', level='error')
         finally:
             for button in buttons:
                 self._set_toggle_button(button, self.illumi_state)
@@ -2208,22 +2285,36 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logging(f'Observation log update failed: {e}', level='error')
 
+    def _spec_frame_path(self, filename):
+        """Local path of a frame named in a SPEC reply: as given, else under SPEC.specimagepath.
+
+        The IsoPlane server runs on the LightField PC, so its path (e.g. a Windows share) may
+        not exist here; the frame is then looked up as <specimagepath>/<night>/<file>.
+        """
+        if filename in (None, '', 'None'):
+            return None
+        if os.path.exists(str(filename)):
+            return str(filename)
+        parts = str(filename).replace('\\', '/').split('/')
+        with open('./Lib/KSPEC.ini', 'r') as f:
+            imagepath = json.load(f)['SPEC']['specimagepath']
+        local = os.path.join(imagepath, *parts[-2:])
+        return local if os.path.exists(local) else None
+
     def show_spec(self, spec_response):
-    #    self.fwhm=response_data['fwhm']
-        spec_canvas = [self.canvas_B, self.canvas_R]
+        """Display the last frame named in a SPEC reply, if this machine can read it."""
+        path = self._spec_frame_path(spec_response.get('filename'))
+        if path is None:
+            self.logging(f"SPEC frame is not readable here: {spec_response.get('filename')}", level='warning')
+            return
 
-        ### Simulation Start ####
-        with fits.open('/media/shyunc/DATA/KSpec/DATA/RAWDATA/20260304/26030210001.fits') as hdul:
-            data=hdul[0].data
-
-        self.S_zmin, self.S_zmax = zs.zscale(data)
-        self.canvas_B.imshows(data[0][540:740,:],vmin=self.S_zmin,vmax=self.S_zmax,cmap='gray',origin='lower',aspect='auto')
-
-        with fits.open('/media/shyunc/DATA/KSpec/DATA/RAWDATA/20260304/26030220001.fits') as hdul:
-            data=hdul[0].data
+        with fits.open(path) as hdul:
+            data = np.asarray(hdul[0].data, dtype=float)
+        while data.ndim > 2:   # LightField frames are (1, ny, nx)
+            data = data[0]
 
         self.S_zmin, self.S_zmax = zs.zscale(data)
-        self.canvas_R.imshows(data[0][540:740,:],vmin=self.S_zmin,vmax=self.S_zmax,cmap='gray',origin='lower',aspect='auto')
+        self.canvas_B.imshows(data,vmin=self.S_zmin,vmax=self.S_zmax,cmap='gray',origin='lower',aspect='auto')
 
     # endregion Spectrograph controls
 
@@ -2368,7 +2459,8 @@ class MainWindow(QMainWindow):
 
         self.logging('Sent Target information to MTL',level='send')
         await self.ICS_client.send_message("MTL", self.objmsg)
-        loadobj_response = await self.response_queue.get()
+        loadobj_response = await wait_reply(self.response_queue, 'MTL', 'loadobj',
+                                            timeout=60, logging=self.logging)
 
         loadobj_succeeded = (
             loadobj_response.get('inst') == 'MTL'
@@ -2388,7 +2480,8 @@ class MainWindow(QMainWindow):
         await self.ICS_client.send_message(
             'MTL', mtl_start(exptime=exptime, nexposure=nexposure)
         )
-        mtlstart_response = await self.response_queue.get()
+        mtlstart_response = await wait_reply(self.response_queue, 'MTL', 'mtlstart',
+                                             timeout=300, logging=self.logging)
 
         mtlstart_succeeded = (
             mtlstart_response.get('inst') == 'MTL'
@@ -2409,7 +2502,8 @@ class MainWindow(QMainWindow):
         for arm, motionmsg in (('alpha', self.motionmsg1), ('beta', self.motionmsg2)):
             self.logging(f'Sent Motion plan of {arm} motor to FBP', level='send')
             await self.ICS_client.send_message("FBP", motionmsg)
-            response = await self.response_queue.get()
+            response = await wait_reply(self.response_queue, 'FBP', 'loadmotion',
+                                        timeout=60, logging=self.logging)
             if not (
                 response.get('inst') == 'FBP'
                 and response.get('func') == 'loadmotion'

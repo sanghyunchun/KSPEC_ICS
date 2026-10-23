@@ -49,11 +49,14 @@ illuoff         : Turn off back-illumination lamp.
             
 [SPEC] 
 specstatus      : Show spectrograph status.
+specstop        : Emergency stop (IsoPlane): back-illumination stage, then light, then exposure.
+illulighton     : Back-illumination light on; the IsoPlane stage must already be IN (illuon).
+illulightoff    : Back-illumination light off; the IsoPlane stage stays where it is.
 specinitial     : Initialize spectrograph.
 getobj          : Exposure spectrograph for object.
 getbias         : Get bias images.
 getflat         : Get flat images.
-getar           : Get arc images.
+getarc          : Get arc images.
             
 [TCS/AUX]
 pointing        : Slew telescope to new sky position calcuated by pointing offset.
@@ -106,4 +109,6 @@ runcalib        : Start script to obtain calibration images.
 obsinitial      : Initialize the observation.
 autoguide       : Start autoguiding process using gfaguide.
 autoguidestop   : Stop running autoguiding process using gfaguidestop.
-runobs          : Start whole sequence for observing Tile 
+runobs          : Start whole sequence for observing Tile
+runmtl          : Metrology loop after loadtile: illuon, then mtltrial (light on) and fbpoffset
+                  (light off) until converged, then illuoff.

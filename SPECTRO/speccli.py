@@ -29,6 +29,21 @@ async def set_illumination(state):
 
 
 
+ILLUMINATION_COMMANDS = {
+    'illuon': 'Back illumination on (stage in, light on).',
+    'illuoff': 'Back illumination off (light off, stage out).',
+    'illulighton': 'Back illumination light on (stage stays in).',
+    'illulightoff': 'Back illumination light off (stage stays in).',
+}
+
+
+def spec_queue():
+    """Queue of the spectrograph server: 'SPEC' (main) or 'ISOPLANE' (KSPEC.ini SPEC.queue)."""
+    with open('./Lib/KSPEC.ini', 'r') as f:
+        kspecinfo = json.load(f)
+    return kspecinfo['SPEC'].get('queue', 'SPEC')
+
+
 def create_spec_command(func, **kwargs):
     """Helper function to create SPECTROGRAPH commands."""
     cmd_data = mkmsg.specmsg()
@@ -38,7 +53,11 @@ def create_spec_command(func, **kwargs):
 
 def spec_status(): return create_spec_command('specstatus', message ='Show spectrograph status.')
 
-def spec_initial(dir_name): return create_spec_command('specinitial', dirname=dir_name, message = f'Initialize Spectrograph')
+def spec_stop(): return create_spec_command('specstop', message ='Emergency stop of the spectrograph.')
+
+def spec_initial(dir_name, experiment=None):
+    extra = {'experiment': experiment} if experiment else {}
+    return create_spec_command('specinitial', dirname=dir_name, message = f'Initialize Spectrograph', **extra)
 
 def get_obj(exptime,nframe, header):
     return create_spec_command('getobj', time=exptime, numframe=nframe, header=header, message =f'Exposure {exptime} seconds for objects.')
@@ -58,23 +77,33 @@ async def handle_spec(arg, ICS_client, header=None):
     if header is None:
         header = {}
 
-    if cmd in ('illuon', 'illuoff'):
+    queue = spec_queue()
+    if cmd in ILLUMINATION_COMMANDS:
         if params:
             raise ValueError(f"'{cmd}' does not take parameters")
-        return await set_illumination(cmd == 'illuon')
+        light_on = cmd in ('illuon', 'illulighton')
+        if queue == 'SPEC':
+            # Main spectrograph: one WebRelay light, no stage, so the light-only pair is the same.
+            return await set_illumination(light_on)
+        # IsoPlane: the server moves the stage in the grating turret, interlocked with the
+        # grating; its Done reply (func=cmd) arrives on the ICS queue. Return the requested
+        # state; callers that need the outcome wait for that reply.
+        await ICS_client.send_message(queue, create_spec_command(cmd, message=ILLUMINATION_COMMANDS[cmd]))
+        return int(light_on)
 
     command_map = {
         'specstatus': spec_status,
+        'specstop': spec_stop,
     }
 
     print(header)
 
     print(params)
     if cmd == 'specinitial':
-        if len(params) != 1:
-            print("Error: 'specinitial' needs one paramerter, i.e. directory name. ex) 20250918")
+        if len(params) not in (1, 2):
+            print("Error: 'specinitial' needs a directory name and optionally a LightField experiment (IsoPlane). ex) 20250918")
             return
-        command_map[cmd] = lambda: spec_initial(str(params[0]))
+        command_map[cmd] = lambda: spec_initial(*map(str, params))
 
     if cmd == 'getobj':
         if len(params) != 2:
@@ -123,6 +152,6 @@ async def handle_spec(arg, ICS_client, header=None):
 
     if cmd in command_map:
         specmsg = command_map[cmd]()
-        await ICS_client.send_message("SPEC", specmsg)
+        await ICS_client.send_message(queue, specmsg)
     else:
         print(f"Error: '{cmd}' is not right command for SPECTROGRAPH.")
