@@ -107,6 +107,7 @@ obsstatus       : Show observation/Project information.
             
 [script] 
 runcalib        : Start script to obtain calibration images.
+rundark         : Darks by exposure-time group (Calibinfo.json "Dark"); run before and after the night.
 obsinitial      : Initialize the observation.
 autoguide       : Start autoguiding process using gfaguide.
 autoguidestop   : Stop running autoguiding process using gfaguidestop.

@@ -473,8 +473,8 @@ class MetrologyLoopTest(unittest.TestCase):
                                 'fiducialoff'])
 
 
-class CalibDarkTest(unittest.TestCase):
-    """script.handle_calib: the dark step runs only when Calibinfo.json asks for it."""
+class DarkSequenceTest(unittest.TestCase):
+    """script.handle_dark (rundark) and handle_calib with the instrument clients faked."""
 
     def setUp(self):
         try:
@@ -483,7 +483,7 @@ class CalibDarkTest(unittest.TestCase):
             self.skipTest(f'script.scriptcli cannot be imported here: {e}')
         self.cli = scriptcli
 
-    def run_calib(self, calinfo):
+    def run_script(self, method, calinfo, fail=()):
         cli, sent = self.cli, []
 
         async def go():
@@ -495,25 +495,40 @@ class CalibDarkTest(unittest.TestCase):
             async def spec(cmd, client, header=None):
                 sent.append((cmd, (header or {}).get('OBSTYPE')))
                 q.put_nowait({'inst': 'SPEC', 'func': cmd.split()[0], 'process': 'Done',
-                              'status': 'success'})
+                              'status': 'error' if cmd in fail else 'success'})
 
             async def lamp(cmd, client, logging=None, state_callback=None):
                 sent.append((cmd, None))
 
             with patch.object(cli, 'handle_spec', spec), patch.object(cli, 'handle_lamp', lamp), \
                     patch.object(cli.json, 'load', return_value=calinfo):
-                await cli.script().handle_calib(run, None)
+                await getattr(cli.script(), method)(run, None)
         asyncio.run(go())
         return sent
 
-    def test_dark_after_the_lamps_only_when_requested(self):
-        base = {'Bias': {'exptime': 0, 'expnum': 2}, 'Arc': {'exptime': 5, 'expnum': 1},
-                'Flat': {'exptime': 3, 'expnum': 1}}
-        sent = self.run_calib({**base, 'Dark': {'exptime': 600, 'expnum': 0}})
-        self.assertNotIn('getdark', [c.split()[0] for c, _ in sent])
-        sent = self.run_calib({**base, 'Dark': {'exptime': 600, 'expnum': 3}})
-        self.assertEqual(sent[-2:], [('flatoff', None), ('getdark 600 3', 'Dark')])
-        self.assertEqual(sent[0], ('getbias 2', 'Bias'))
+    def test_rundark_takes_the_groups_in_order_with_the_lamps_off(self):
+        sent = self.run_script('handle_dark', {'Dark': [{'exptime': 300, 'expnum': 5},
+                                                        {'exptime': 1800, 'expnum': 0},
+                                                        {'exptime': 900, 'expnum': 2}]})
+        self.assertEqual(sent, [('arcoff', None), ('flatoff', None),
+                                ('getdark 300 5', 'Dark'), ('getdark 900 2', 'Dark')])
+
+    def test_rundark_stops_after_a_failed_group(self):
+        sent = self.run_script('handle_dark', {'Dark': [{'exptime': 300, 'expnum': 5},
+                                                        {'exptime': 1800, 'expnum': 5}]},
+                               fail=('getdark 300 5',))
+        self.assertEqual([c for c, _ in sent if c.startswith('getdark')], ['getdark 300 5'])
+
+    def test_rundark_without_groups_takes_nothing(self):
+        self.assertEqual(self.run_script('handle_dark', {'Bias': {'exptime': 0, 'expnum': 1}}), [])
+
+    def test_runcalib_takes_no_darks(self):
+        calinfo = {'Bias': {'exptime': 0, 'expnum': 2}, 'Arc': {'exptime': 5, 'expnum': 1},
+                   'Flat': {'exptime': 3, 'expnum': 1},
+                   'Dark': [{'exptime': 300, 'expnum': 5}]}
+        sent = self.run_script('handle_calib', calinfo)
+        self.assertEqual([c.split()[0] for c, o in sent if o],
+                         ['getbias', 'getarc', 'getflat'])
 
 
 class WaitReplyTest(unittest.TestCase):
