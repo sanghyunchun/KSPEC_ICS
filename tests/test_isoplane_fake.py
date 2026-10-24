@@ -506,6 +506,20 @@ class AppendCardsTest(unittest.TestCase):
                 append_cards(path, [('TILEID', 'x', '')])
 
 
+class ExistingFrameTest(unittest.TestCase):
+    def test_existing_fits_or_spe_refused(self):
+        # LightField writes '<name> - (2).fits' instead of failing, so a name on disk is refused
+        lf = FakeLightField(time_scale=0.0, shape=(1, 4, 4))
+        with tempfile.TemporaryDirectory() as d:
+            for ext in ('.fits', '.spe'):
+                path = os.path.join(d, 'n_0001_obj' + ext)
+                open(path, 'wb').close()
+                with self.assertRaises(FileExistsError):
+                    lf.expose(0.0, False, d, 'n_0001_obj')
+                os.remove(path)
+            self.assertTrue(os.path.exists(lf.expose(0.0, False, d, 'n_0001_obj').path))
+
+
 class SpecCliRoutingTest(unittest.TestCase):
     def test_isoplane_queue_routes_illumination_and_frames(self):
         from SPECTRO import speccli

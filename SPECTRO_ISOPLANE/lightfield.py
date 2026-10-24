@@ -80,6 +80,15 @@ def _utc(t):
     return dt.datetime.fromtimestamp(t, dt.timezone.utc).isoformat(timespec="milliseconds")
 
 
+def check_new_frame(directory, basename):
+    """Refuse a frame name already on disk. LightField does not fail on an existing file: it
+    writes ``<basename> - (2).fits``, and the server would then read the old file."""
+    for ext in (".fits", ".spe"):
+        path = os.path.join(directory, basename + ext)
+        if os.path.exists(path):
+            raise FileExistsError(path)
+
+
 class FakeLightField(LightFieldBase):
     """Writes small LightField-like FITS frames; the exposure waits exptime * time_scale.
 
@@ -129,8 +138,7 @@ class FakeLightField(LightFieldBase):
 
         os.makedirs(directory, exist_ok=True)
         path = os.path.join(directory, basename + ".fits")
-        if os.path.exists(path):
-            raise FileExistsError(path)
+        check_new_frame(directory, basename)
         if self._stop.is_set():
             raise RuntimeError("acquisition stopped")
         self.running = True
@@ -244,8 +252,9 @@ class LightField(LightFieldBase):
         return self._call(self._expose, exptime_s, shutter_closed, directory, basename)
 
     def _expose(self, exptime_s, shutter_closed, directory, basename):
-        from PrincetonInstruments.LightField.AddIns import ShutterTimingMode, TimeStamps
-        from System import Enum
+        from PrincetonInstruments.LightField.AddIns import (ExportFileType, ShutterTimingMode,
+                                                            TimeStamps)
+        from System import Enum, Int64
         from System.IO import FileAccess
 
         import clr
@@ -253,21 +262,30 @@ class LightField(LightFieldBase):
         cam, expset, _ = self._settings()
         exp = self._exp
         os.makedirs(directory, exist_ok=True)
+        check_new_frame(directory, basename)
         stamps = Enum.ToObject(clr.GetClrType(TimeStamps),
                                int(TimeStamps.ExposureStarted) | int(TimeStamps.ExposureEnded))
+        # Everything the frame depends on is set here, not taken from the saved experiment or
+        # the LightField window: one frame per Acquire (EXPNUM, time stamps of frame 0), a FITS
+        # export with the experiment information (the PI cards the reduction reads), and the SPE.
         for name, value in (
             (cam.ShutterTimingExposureTime, float(exptime_s * 1000.0)),
             (cam.ShutterTimingMode,  # confirm with probe
              ShutterTimingMode.AlwaysClosed if shutter_closed else ShutterTimingMode.Normal),
             (cam.AcquisitionTimeStampingStamps, stamps),
-            (expset.FileNameGenerationDirectory, directory),  # confirm with probe (all below)
+            (expset.AcquisitionFramesToStore, Int64(1)),  # confirm with probe (all below)
+            (expset.FileNameGenerationDirectory, directory),
             (expset.FileNameGenerationBaseFileName, basename),
             (expset.FileNameGenerationAttachDate, False),
             (expset.FileNameGenerationAttachTime, False),
             (expset.FileNameGenerationAttachIncrement, False),
             (expset.OnlineExportEnabled, True),
+            (expset.OnlineExportFormat, ExportFileType.Fits),
+            (expset.OnlineExportFormatOptionsIncludeExperimentInformation, True),
             (expset.OnlineExportOutputOptionsExportedFilesOnly, False),  # keep the SPE
         ):
+            if not exp.Exists(name):
+                raise RuntimeError(f"LightField has no setting {name}")
             exp.SetValue(name, value)
         if self._stopped.is_set():
             raise RuntimeError("acquisition stopped")

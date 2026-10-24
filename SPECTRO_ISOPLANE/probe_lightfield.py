@@ -133,11 +133,13 @@ def dump_settings(exp):
 
 
 def enum_names():
-    from PrincetonInstruments.LightField.AddIns import ShutterTimingMode, TimeStamps
+    from PrincetonInstruments.LightField.AddIns import (ExportFileType, ShutterTimingMode,
+                                                        TimeStamps)
     from System import Enum
 
     out = {}
-    for label, e in (("TimeStamps", TimeStamps), ("ShutterTimingMode", ShutterTimingMode)):
+    for label, e in (("TimeStamps", TimeStamps), ("ShutterTimingMode", ShutterTimingMode),
+                     ("ExportFileType", ExportFileType)):
         import clr
 
         out[label] = [str(n) for n in Enum.GetNames(clr.GetClrType(e))]
@@ -176,7 +178,8 @@ def flags(enum_type, *members):
 
 def acquire_one(app, exp, exptime_ms, outdir):
     from PrincetonInstruments.LightField.AddIns import (CameraSettings, ExperimentSettings,
-                                                        TimeStamps)
+                                                        ExportFileType, TimeStamps)
+    from System import Int64
     from System.IO import FileAccess
 
     os.makedirs(outdir, exist_ok=True)
@@ -184,6 +187,10 @@ def acquire_one(app, exp, exptime_ms, outdir):
     exp.SetValue(CameraSettings.ShutterTimingExposureTime, float(exptime_ms))
     exp.SetValue(CameraSettings.AcquisitionTimeStampingStamps,
                  flags(TimeStamps, TimeStamps.ExposureStarted, TimeStamps.ExposureEnded))
+    # the server's per-frame settings (lightfield.LightField._expose)
+    exp.SetValue(ExperimentSettings.AcquisitionFramesToStore, Int64(1))
+    exp.SetValue(ExperimentSettings.OnlineExportFormat, ExportFileType.Fits)
+    exp.SetValue(ExperimentSettings.OnlineExportFormatOptionsIncludeExperimentInformation, True)
     exp.SetValue(ExperimentSettings.FileNameGenerationDirectory, outdir)
     exp.SetValue(ExperimentSettings.FileNameGenerationBaseFileName, base)
     exp.SetValue(ExperimentSettings.FileNameGenerationAttachDate, False)

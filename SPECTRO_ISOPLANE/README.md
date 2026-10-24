@@ -52,6 +52,12 @@ reads the camera state and refuses the exposure (`fail`) when a value differs. A
 by hand in the LightField window therefore never reaches the data. `specinitial` and
 `specstatus` report the differences (`camera_problems`).
 
+The per-frame settings do not come from the experiment: before every exposure the server sets
+the exposure time, shutter, time stamps (exposure started and ended), one frame per
+acquisition, the file name, and the FITS export with the experiment information (the PI cards
+the reduction reads) next to the SPE. A frame name already on disk is refused (`error`):
+LightField would write `<name> - (2).fits` instead, and the old file would be read.
+
 | key | 2026 run | LightField setting (experiment path) |
 |---|---|---|
 | `adc_speed_mhz` | 0.1 (2 until 2026-01-23) | `Adc/Speed` |
