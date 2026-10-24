@@ -85,7 +85,7 @@ meaningful. Numbers are written as numbers.
 | card | type | source | meaning |
 |---|---|---|---|
 | `OBSTYPE` | str | header `OBSTYPE` | `Bias`, `Dark`, `Flat`, `Arc`, `Object`; without one, the frame type of the command |
-| `ICSFUNC` | str | command | `getbias`, `getflat`, `getarc`, `getobj` |
+| `ICSFUNC` | str | command | `getbias`, `getdark`, `getflat`, `getarc`, `getobj` |
 | `OBSDATE` | str | header | observing night (directory name) |
 | `PROJID`, `TILEID`, `OBJECT` | str | header | project, tile, object name |
 | `TILERA`, `TILEDEC` | str | header `RA`, `DEC` | planned tile centre (sexagesimal), not the telescope position |
