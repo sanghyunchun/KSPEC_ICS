@@ -32,7 +32,7 @@ from GFA.gfacli import handle_gfa
 from FBP.fbpcli import handle_fbp
 from MTL.mtlcli import handle_mtl, mtl_start, mtl_set
 from LAMP.lampcli import handle_lamp
-from SPECTRO.speccli import handle_spec, spec_queue, ILLUMINATION_COMMANDS
+from SPECTRO.speccli import handle_spec, spec_queue, ILLUMINATION_COMMANDS, frame_command
 from TCS.tcscli import handle_telcom
 from script.scriptcli import handle_script, ILLUMINATION_TIMEOUT_S
 from Lib.reply import wait_reply
@@ -166,6 +166,8 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("K-SPEC ICS")
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        if self.ui.obstype.findText('Dark') < 0:   # not in KSPECGUI2.ui yet
+            self.ui.obstype.addItem('Dark')
         self.ui.pushbtn_FBP_lock.setToolTip('Lock additional IDs; an empty field clears only additional locks.')
         map_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Lib', 'positioner_axis_map.json')
         with open(map_path, 'r', encoding='utf-8') as file:
@@ -568,7 +570,7 @@ class MainWindow(QMainWindow):
             "fbp": ["fbpactivate", "fbpstatus", "fbpstepstatus", "fbpstate", "fbpmove", "fbpoffset"],
             "mtl": ["mtlstatus", "mtlstart", "mtlset", "mtltest", "mtlcal", "mtltrial", "mtlresult", "mtlreset"],
             "lamp": ["lampstatus", "arcon", "arcoff", "flaton", "flatoff","fiducialon","fiducialoff"],
-            "spec": ["specstatus", "specstop", "specinitial","illuon", "illuoff", "illulighton", "illulightoff", "getobj", "getbias", "getflat","getarc"],
+            "spec": ["specstatus", "specstop", "specinitial","illuon", "illuoff", "illulighton", "illulightoff", "getobj", "getbias", "getdark", "getflat","getarc"],
             "tcs": ["tmradec", "start", "stop", "tcsint", "tcsreset", "tcsclose",
             "tcsarc", "tcsstatus", "tstat", "traw", "tsync", "tcmd",
             "treg", "tmradec", "tmr", "tmobject", "tmo", "tmelaz",
@@ -2253,16 +2255,20 @@ class MainWindow(QMainWindow):
         self.expT = self.ui.lineEdit_exp_time_2.text()
         self.expnum = self.ui.lineEdit_n_exp_2.text()
 
-        header=set_header_info(obsdate = self.dir_name, obstype = self.obstype, TileID = self.TileID, obsra = self.ra,
-            obsdec = self.dec, exptime = self.expT, expnum = self.expnum, projID = self.project, fwhm=self.fwhm)
-
-        if self.obstype == 'Bias':
-            await handle_spec(f'getobj {self.expT} {self.expnum}',self.ICS_client, header)    #### Need to change for bias
-        else:
-            await handle_spec(f'getobj {self.expT} {self.expnum}',self.ICS_client, header)
+        try:   # Bias -> getbias, Dark -> getdark, ...: each frame type has its own command
+            command = frame_command(self.obstype, self.expT, self.expnum)
+        except ValueError as e:
+            self.logging(f'Exposure not started: {e}', level='error')
+            return
 
         if self.object in (None, '', 'None'):
             self.object = self.TileID
+
+        header=set_header_info(obsdate = self.dir_name, obstype = self.obstype, TileID = self.TileID, obsra = self.ra,
+            obsdec = self.dec, exptime = self.expT, expnum = self.expnum, projID = self.project, fwhm=self.fwhm)
+        header['OBJECT'] = self.object
+
+        await handle_spec(command, self.ICS_client, header)
         
         cmt = ''
     

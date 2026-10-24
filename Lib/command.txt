@@ -55,6 +55,7 @@ illulightoff    : Back-illumination light off; the IsoPlane stage stays where it
 specinitial     : Initialize spectrograph.
 getobj          : Exposure spectrograph for object.
 getbias         : Get bias images.
+getdark         : Get dark images (shutter closed).
 getflat         : Get flat images.
 getarc          : Get arc images.
             

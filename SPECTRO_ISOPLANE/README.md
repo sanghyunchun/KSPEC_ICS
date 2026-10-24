@@ -10,6 +10,7 @@ the GUI and the observing scripts work unchanged:
 | `specinitial <night> [experiment]` | night directory; optionally load a saved LightField experiment (may move the grating) |
 | `specstatus` | camera, grating, and stage state |
 | `getbias <n>` | n frames, shutter closed, 0 s |
+| `getdark <t> <n>` | n frames of t s, shutter closed (new) |
 | `getflat <t> <n>`, `getarc <t> <n>`, `getobj <t> <n>` | n frames of t s |
 | `illuon` / `illuoff` | stage in + light on / light off + stage out |
 | `illulighton` / `illulightoff` | light only, the stage does not move; on needs the stage IN (new) |
@@ -110,7 +111,7 @@ without a command (firmware watchdog). The stage stays where it is: restart the 
 - `probe_lightfield.py`: run once on the LightField PC; reports setting names, devices, and
   whether one acquisition with time stamps works.
 
-Frames are named `<night>_<seq>_<bias|flat|arc|obj>.fits` in `<datapath>/<night>/` and copied
+Frames are named `<night>_<seq>_<bias|dark|flat|arc|obj>.fits` in `<datapath>/<night>/` and copied
 to `<sharepath>/<night>/` when `sharepath` is set; the reply carries the shared path.
 
 ## Setup

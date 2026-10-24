@@ -45,7 +45,7 @@ def log_or_print(logging, message, level):
 
 
 def spec_command_timeout(command):
-    """Seconds to wait for the Done reply of a getbias/getflat/getarc/getobj command."""
+    """Seconds to wait for the Done reply of a getbias/getdark/getflat/getarc/getobj command."""
     cmd, *params = command.split()
     try:
         if cmd == 'getbias':
@@ -398,6 +398,20 @@ class script():
             'flatoff', scriptrun.ICSclient, logging=logging,
             state_callback=getattr(scriptrun, 'lamp_state_callback', None),
         )
+
+        # Dark: only when Calibinfo.json asks for it (Dark.expnum > 0); the lamps are off now
+        dark = calinfo.get('Dark') or {}
+        if int(dark.get('expnum', 0)) > 0:
+            if logging != None:
+                logging(f"Sent getdark {dark['exptime']} {dark['expnum']}.", level='send')
+            await self.send_spec_and_log(
+                f"getdark {dark['exptime']} {dark['expnum']}",
+                'Dark',
+                dark['exptime'],
+                dark['expnum'],
+                scriptrun,
+                logging=logging,
+            )
         
         printing("All Calibration images were obtained.")
         self.scrpt_task = None

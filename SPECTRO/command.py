@@ -37,6 +37,21 @@ async def identify_execute(SPEC_server,cmd):
         print('\033[32m'+'[SPEC]', comment+'\033[0m')
         await SPEC_server.send_message('ICS',rsp)
 
+    if func == 'getdark':
+        reply_data=mkmsg.specmsg()
+        comment = 'Dark exposure starts.'
+        reply_data.update(message=comment,process='ING',status='success')
+        rsp=json.dumps(reply_data)
+        await SPEC_server.send_message('ICS',rsp)
+        exptime=dict_data['time']
+        numframe=dict_data['numframe']
+        comment=get_dark(exptime,numframe)
+        reply_data=mkmsg.specmsg()
+        reply_data.update(message=comment,process='Done',status='success')
+        rsp=json.dumps(reply_data)
+        print('\033[32m'+'[SPEC]', comment+'\033[0m')
+        await SPEC_server.send_message('ICS',rsp)
+
     if func == 'getflat':
         reply_data=mkmsg.specmsg()
         comment = 'Flat exposure starts.'
@@ -187,6 +202,11 @@ def spec_status():
 def get_bias(nframe):
     time.sleep(5)
     msg=f'Bias exposure finished. {nframe} Bias Frames are obtained.'
+    return msg
+
+def get_dark(exptime,nframe):
+    msg=f'Dark exposure {exptime} seconds finished. {nframe} Dark Frames are obtained.'
+    time.sleep(exptime)
     return msg
 
 def get_flat(exptime,nframe):
