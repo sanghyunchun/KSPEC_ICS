@@ -11,6 +11,9 @@ from astropy.coordinates import Angle
 import astropy.units as u
 from astropy.coordinates import EarthLocation, SkyCoord, AltAz
 from astropy.time import Time
+from astropy.utils import iers
+
+iers.conf.auto_download = False
 
 """
 Provide Sky position (RA, DEC) of Tile and target position to TCS computer,
