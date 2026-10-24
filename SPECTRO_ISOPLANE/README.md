@@ -76,6 +76,37 @@ An exposure still running `lightfield.expose_timeout_s` (default 120 s) after it
 is stopped and fails with `error`; an experiment load fails after `lightfield.load_timeout_s`
 (default 300 s). A hung LightField therefore still produces a `Done` reply.
 
+## Header cards
+Every frame gets these cards after LightField's own (`fitsio.ics_cards`). They come from the
+header dict of the frame command (`Lib/make_spec_header.set_header_info`) and from the server.
+A value the ICS does not know (None) leaves its card out, so a card that is present is
+meaningful. Numbers are written as numbers.
+
+| card | type | source | meaning |
+|---|---|---|---|
+| `OBSTYPE` | str | header `OBSTYPE` | `Bias`, `Dark`, `Flat`, `Arc`, `Object`; without one, the frame type of the command |
+| `ICSFUNC` | str | command | `getbias`, `getflat`, `getarc`, `getobj` |
+| `OBSDATE` | str | header | observing night (directory name) |
+| `PROJID`, `TILEID`, `OBJECT` | str | header | project, tile, object name |
+| `TILERA`, `TILEDEC` | str | header `RA`, `DEC` | planned tile centre (sexagesimal), not the telescope position |
+| `EXPREQ` | float | header `EXPTIME` | [s] requested exposure time (LightField `EXPTIME` stays, in ms) |
+| `EXPNUM` | int | header `EXPNUM` + frame | number of this frame in the sequence: header `EXPNUM` (first frame, default 1) + its index in the command |
+| `NEXP` | int | header `NEXP` | frames in the sequence (default: frames of this command) |
+| `FWHM` | float | header | [arcsec] GFA seeing; left out when unknown (the scripts' 9.99) |
+| `OBSERVAT`, `SITELAT`, `SITELONG`, `SITEELEV` | str, float | `KSPEC.ini` `SITE` | observatory; [deg] latitude (N +), longitude (E +); [m] elevation |
+| `UTSTART`, `UTEND` | str | SPE time stamps | exposure start and end, ISO 8601 UTC (ms); left out when LightField gives no stamp |
+| `SPECBACK`, `LFEXPER` | str | server | `ISOPLANE`; LightField experiment (= setup) |
+| `DATASEC`, `BIASSEC` | str | camera layout | see above |
+| `BILLUM` | str | back illumination | stage state |
+
+Other subsystems (TCS, lamps, tile configuration) add cards through the header dict's `CARDS`
+list, `[[key, value, comment], ...]` (`set_header_info(extra_cards=...)`). Each key must be a
+FITS keyword that neither LightField nor the cards above use. Values must be str, int, float or
+bool. The server checks them before the exposure and refuses the command (`fail`) when a card is
+invalid, so a bad card never costs a frame.
+
+LightField's own cards are untouched; note that its `DATE-OBS` is the end of the exposure.
+
 ## Grating and stage interlock
 One process owns LightField and the Uno. Every command except `specstatus` takes one lock, so an
 exposure, an experiment load, and a stage move never overlap. A command that arrives while
@@ -104,9 +135,8 @@ without a command (firmware watchdog). The stage stays where it is: restart the 
 - `command.py`: the commands, the lock, and the interlock.
 - `lightfield.py`: `LightField` (pythonnet, Windows) and `FakeLightField`.
 - `backillum.py`: Uno link, stage operations, `FakeUno`.
-- `fitsio.py`: adds the ICS cards (OBSTYPE, TILEID, UTSTART/UTEND, ...) to the LightField FITS.
-  LightField's own cards are kept byte for byte; its EXPTIME stays in ms and the ICS request
-  goes to EXPREQ.
+- `fitsio.py`: adds the ICS cards ("Header cards" above) to the LightField FITS. LightField's
+  own cards are kept byte for byte; its EXPTIME stays in ms and the ICS request goes to EXPREQ.
 - `probe_lightfield.py`: run once on the LightField PC; reports setting names, devices, and
   whether one acquisition with time stamps works.
 

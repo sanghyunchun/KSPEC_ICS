@@ -59,7 +59,7 @@ import time
 
 import Lib.mkmessage as mkmsg
 from SPECTRO_ISOPLANE.backillum import make_backillum
-from SPECTRO_ISOPLANE.fitsio import append_cards, ics_cards
+from SPECTRO_ISOPLANE.fitsio import append_cards, extra_cards, ics_cards
 from SPECTRO_ISOPLANE.lightfield import make_lightfield
 
 # func: (file-name tag, shutter closed)
@@ -397,6 +397,10 @@ class Isoplane:
         n = int(d["numframe"])
         exptime = 0.0 if func == "getbias" else float(d["time"])
         header = d.get("header") or {}
+        try:
+            extra_cards(header)  # an invalid card must not cost the exposure
+        except ValueError as e:
+            raise Refused(f"header: {e}") from None
         await self.require_stage_out(func)
         lf = await self.read_lf_status()  # also what specstatus reports during the exposures
         problems = camera_problems(self.camera, lf)
@@ -412,8 +416,7 @@ class Isoplane:
             frame = await self.with_progress(
                 server, func, exptime, self.lf.expose, exptime, shutter_closed, directory, basename
             )
-            expnum = header.get("EXPNUM", "None") if n == 1 else f"{i + 1}/{n}"
-            cards = ics_cards(header, frame, func, expnum, self.sensor_bias_rows)
+            cards = ics_cards(header, frame, func, i, n, self.sensor_bias_rows)
             cards.append(("BILLUM", self.bl.state if self.bl else "NONE",
                           "back-illumination stage state"))
             await asyncio.to_thread(append_cards, frame.path, cards)

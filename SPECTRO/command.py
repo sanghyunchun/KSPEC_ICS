@@ -159,7 +159,11 @@ async def create_fits_image(exptime, header_info, shape: tuple = (100, 100), dat
     hdu = fits.PrimaryHDU(data)
     filepath, filename = get_next_filename()
 #    print(filepath+filename)
+    header_info = dict(header_info or {})
+    extra = header_info.pop('CARDS', None) or []   # (key, value, comment) from other subsystems
     hdu.header.update(header_info)
+    for card in extra:
+        hdu.header[str(card[0])] = tuple(card[1:3])
     
     hdul = fits.HDUList([hdu])
     hdul.writeto(filepath+filename, overwrite=True)

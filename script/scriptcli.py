@@ -223,6 +223,7 @@ class script():
             expnum=expnum,
             projID=self.project,
             fwhm=self.fwhm if self.fwhm is not None else 9.99,
+            object_name=self.object,
         )
 
     async def add_obslog(self, obstype, exptime, expnum, comments="", logging=None):
