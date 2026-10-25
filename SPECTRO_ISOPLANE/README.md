@@ -53,6 +53,12 @@ reads the camera state and refuses the exposure (`fail`) when a value differs. A
 by hand in the LightField window therefore never reaches the data. `specinitial` and
 `specstatus` report the differences (`camera_problems`).
 
+The per-frame settings do not come from the experiment: before every exposure the server sets
+the exposure time, shutter, time stamps (exposure started and ended), one frame per
+acquisition, the file name, and the FITS export with the experiment information (the PI cards
+the reduction reads) next to the SPE. A frame name already on disk is refused (`error`):
+LightField would write `<name> - (2).fits` instead, and the old file would be read.
+
 | key | 2026 run | LightField setting (experiment path) |
 |---|---|---|
 | `adc_speed_mhz` | 0.1 (2 until 2026-01-23) | `Adc/Speed` |
@@ -135,6 +141,8 @@ without a command (firmware watchdog). The stage stays where it is: restart the 
 - `ISOPLANE_server.py`: RabbitMQ consumer on queue `ISOPLANE`.
 - `command.py`: the commands, the lock, and the interlock.
 - `lightfield.py`: `LightField` (pythonnet, Windows) and `FakeLightField`.
+- `netcall.py`: runs every LightField call on a .NET thread while Python waits without the GIL.
+  A direct call can deadlock: `Automation()` never returned (LightField 6.15, pythonnet 3.2).
 - `backillum.py`: Uno link, stage operations, `FakeUno`.
 - `fitsio.py`: adds the ICS cards ("Header cards" above) to the LightField FITS. LightField's
   own cards are kept byte for byte; its EXPTIME stays in ms and the ICS request goes to EXPREQ.
@@ -155,6 +163,13 @@ to `<sharepath>/<night>/` when `sharepath` is set; the reply carries the shared 
    `RabbitMQ.ip_addr` on the LightField PC.
 3. On the LightField PC: `pip install pythonnet pyserial aio-pika astropy numpy`, then
    `python SPECTRO_ISOPLANE/probe_lightfield.py` and check the report.
+   LightField runs in a child `AddInProcess.exe`. If the server or the probe is killed while
+   LightField starts, that child can stay behind and break every later start (IPC "pipe has
+   been ended", or a hang); end it, or reboot when it cannot be ended.
+   Read or set a LightField setting only after `Exists`: `GetValue`/`SetValue` of a missing
+   setting crashes LightField itself ("LightField has stopped working"; answer Cancel).
+   Saved experiments are looked up in `<LightField working directory>\Experiments`
+   (LightField Options): keep the working directory fixed rather than per night.
 4. Start the server from the repository root: `python SPECTRO_ISOPLANE/ISOPLANE_server.py`.
 
 Tests with the fakes: `python -m unittest tests.test_isoplane_fake`.

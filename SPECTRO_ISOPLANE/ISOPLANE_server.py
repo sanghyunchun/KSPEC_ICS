@@ -21,11 +21,19 @@ async def main():
         cfg = json.load(f)
 
     isoplane = Isoplane(cfg)
-    await isoplane.start()
+    try:
+        await isoplane.start()
+        print('ISOPLANE Server Started!!!')
+        ISOPLANE_server=AMQclass(ip_addr,idname,pwd,'ISOPLANE','ics.ex')
+        await ISOPLANE_server.connect()
+        await serve(isoplane, ISOPLANE_server)
+    finally:
+        # back-illumination light off, and LightField disposed: a LightField left running in
+        # its AddInProcess.exe blocks every later start
+        await isoplane.close()
 
-    print('ISOPLANE Server Started!!!')
-    ISOPLANE_server=AMQclass(ip_addr,idname,pwd,'ISOPLANE','ics.ex')
-    await ISOPLANE_server.connect()
+
+async def serve(isoplane, ISOPLANE_server):
 
     async def on_isoplane_message(message: aio_pika.IncomingMessage):
         async with message.process():
@@ -38,13 +46,10 @@ async def main():
 
         print('Waiting for message from client......')
 
-    try:
-        await ISOPLANE_server.define_consumer('ISOPLANE',on_isoplane_message)
-        print('Waiting for message from client......')
-        while True:
-            await asyncio.sleep(1)
-    finally:
-        await isoplane.close()   # back-illumination light off before exit
+    await ISOPLANE_server.define_consumer('ISOPLANE',on_isoplane_message)
+    print('Waiting for message from client......')
+    while True:
+        await asyncio.sleep(1)
 
 
 if __name__ == "__main__":
