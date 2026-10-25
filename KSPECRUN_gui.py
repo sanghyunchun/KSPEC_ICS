@@ -820,7 +820,7 @@ class MainWindow(QMainWindow):
                 # A settings reply must not be consumed by a trial waiting on the shared queue.
                 if inst == 'MTL' and response_data.get('func') == 'mtlset' and process == 'Done':
                     if status == 'success':
-                        self.mtlexp = float(response_data['exptime']) / 1_000_000.0
+                        self.mtlexp = float(response_data['exptime']) / 1_000.0
                         self.mtlnum = int(response_data['nexposure'])
                         self.scriptrun.MTL_set(
                             self.mtlexp, self.mtlnum, self.ui.lineEdit_MTL_file.text()
