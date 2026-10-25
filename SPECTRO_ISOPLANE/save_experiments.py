@@ -51,8 +51,9 @@ def stage_out(port):
         link.close()
 
 
-def wait_updated(exp):
-    t0 = time.time()
+def wait_updated(exp, t0):
+    """Wait until LightField is no longer updating; seconds since t0. SetValue of the grating
+    already blocks during the move (2 s for the centre, 40 s for a turret change)."""
     time.sleep(0.5)
     while netcall.get(exp, "IsUpdating"):
         if time.time() - t0 > MOVE_TIMEOUT_S:
@@ -111,9 +112,10 @@ def main():
             (ExperimentSettings.OnlineExportOutputOptionsExportedFilesOnly, False),
         )
         for name, grating, centre in setups:
+            t0 = time.time()
             netcall.call(exp, "SetValue", SpectrometerSettings.GratingSelected, grating)
             netcall.call(exp, "SetValue", SpectrometerSettings.GratingCenterWavelength, centre)
-            took = wait_updated(exp)
+            took = wait_updated(exp, t0)
             got_g = str(netcall.call(exp, "GetValue", SpectrometerSettings.GratingSelected))
             got_c = float(str(netcall.call(exp, "GetValue",
                                            SpectrometerSettings.GratingCenterWavelength)))
