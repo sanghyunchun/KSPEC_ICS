@@ -270,24 +270,33 @@ target 파일(object.info) 에 `xp`/`yp` 대신 각도를 적어도 된다: `{"a
 
 ### 켜져 있지만 무시할 점 (sky fiber, 고장난 positioner)
 
-홀 ID 만 알면 된다. 위치 정보는 필요 없다.
+홀 ID 만 알면 된다. 2026-10-25 에 설치표(Positioner mapping_20261012)로 확정한 값이
+패키지 기본값이다.
 
 ```python
-# analysis/fiber_config.py
-FIBER_FIXED = ['C6']                                     # 빛은 나오지만 고장나 움직이지 않는 positioner
-SKY_FIBERS  = ['A6', 'B7', 'B8', 'G0', 'H1', 'I0', 'N7', 'N8', 'O6']   # sky fiber 홀 (표에서 -9)
+# analysis/fiber_config.py (기본값)
+FIBER_FIXED = ['C6', 'E2', 'E4', 'E5', 'E6', 'E7', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7',
+               'G7', 'H8', 'H9', 'H10', 'H11', 'I9', 'I10', 'J6', 'J7', 'J8', 'J9', 'J10',
+               'K5', 'K6', 'K7', 'K9']                    # 빛은 나오지만 고장나 움직이지 않는 positioner (28)
+SKY_FIBERS  = ['A6', 'B7', 'B8', 'G0', 'H1', 'I0', 'N7', 'N8', 'O6']   # sky fiber 홀 (표에서 -9) (9)
 ```
-(환경변수 `KSPEC_FIBER_FIXED`, `KSPEC_SKY_FIBERS` 로도 된다.)
+(환경변수 `KSPEC_FIBER_FIXED`, `KSPEC_SKY_FIBERS` 로 바꿀 수 있다.) 켜진 점 기대 수 =
+73 − 끊어진 1 + sky 9 = 81, 매칭하는 fiber = 73 − 1 − 28 = 44.
 
 - `FIBER_FIXED` 의 positioner 는 object.info 와 json 에 그대로 들어 있되(순서 유지) 목표
   매칭에서 빠진다 (오차 NaN, 회전량 0). 이미지에서는 켜져 있다고 보고 검출 개수에 센다.
-- 두 목록의 홀 중심에서 arm 길이 + 1 mm 안에 있으면서, 살아 있는 fiber 의 목표에서 3 mm
-  (`max_dist`) 보다 먼 검출을 그 점으로 보고 fiber 후보에서 뺀다. 나머지 fiber 는 목표와
-  검출을 거리 합이 최소가 되게 일대일로 붙인다(할당 문제). 목표에서 3 mm 넘게 떨어진 매칭은
-  ID 와 함께 경고가 난다.
-- 자리를 정확히 아는 점은 `analysis/Fixed_Spots.txt` (`name X Y`, 1.5 mm) 로 적어도 된다.
-- 남는 위험: 고정된 점이 어떤 살아 있는 fiber 의 목표 3 mm 안에 있고 그 fiber 의 진짜 spot
-  보다 가까울 때. 첫 trial 에서 fiber 가 목표에서 mm 단위로 벗어나 있으면 생길 수 있으므로
+- 매칭은 살아 있는 fiber 의 목표와 검출을 거리 합이 최소가 되게 일대일로 붙인다(할당 문제).
+  목표에서 9 mm (`3*max_dist`) 안에 검출이 없는 fiber 는 이번 trial 에 못 잰 것으로 두고
+  (NaN, 회전량 0) 경고한다. 할당하고 남은 검출 가운데 고정/sky 홀 중심에서 arm 길이 + 1 mm 안의
+  것을 그 점으로 본다. 목표에서 3 mm 넘게 떨어진 매칭은 ID 와 함께 경고가 난다 (그 검출이
+  고정/sky 홀 범위 안이면 그것도 적힌다).
+- **첫 trial 뒤에 고정 점 자리를 파일로 적어 두는 것이 좋다.** 고정 positioner 와 sky fiber 는
+  움직이지 않으므로 `lab.find_fixed_spots(res, out_path=cfg.FIXED_SPOTS_PATH)` 로
+  `analysis/Fixed_Spots.txt` (`name X Y`) 를 만들면 그 자리 1.5 mm 안의 검출은 fiber 후보에서
+  바로 빠지고, 살아 있는 fiber 가 목표에서 몇 mm 벗어나 있어도 고정 점과 헷갈리지 않는다
+  (`Calibration_Run.ipynb` 2b 절). 파일을 패키지 밖에 두면 `KSPEC_FIXED_SPOTS` 로 가리킨다.
+- 파일이 없을 때 남는 위험: 고정된 점이 어떤 살아 있는 fiber 의 목표에 그 fiber 의 진짜 spot
+  보다 가까울 때 (첫 trial 에서 fiber 가 목표에서 mm 단위로 벗어나 있으면 생길 수 있다).
   `fiber - target` 이 큰 fiber 의 경고를 확인한다.
 
 ### 끊어진 fiber
@@ -299,7 +308,7 @@ fiber 가 끊어져 불이 안 들어오면 표와 target 파일, json key 순�
 가장 간단한 방법은 `analysis/fiber_config.py` 의 한 줄이다.
 
 ```python
-FIBER_EXCLUDE = ['C4', 'D2']                  # 끊어진 fiber 의 홀 ID
+FIBER_EXCLUDE = ['G4']                        # 끊어진 fiber 의 홀 ID (2026-10-25 기본값)
 ```
 
 코드를 안 고치려면 환경변수로도 된다 (환경변수가 있으면 그것이 우선).
@@ -346,17 +355,14 @@ INFO Fiber table /경로/Fiber_Configuration_phase1.txt: 51 positioners + 30 fid
 
 ### arm 길이
 
-측정값이 없는 positioner는 설계값 `DEFAULT_ARM = (5.2, 11.6)` mm 를 쓴다.
-측정된 것만 `ARM_OVERRIDES` 에 ID별로 적어 주면 그 값이 우선한다.
+기본은 실측값이다 (`use_measured` 기본 on). `analysis/Positioner_Map.txt` 에 어느 홀에 몇 번
+positioner 가 꽂혔는지(2026-10-12 설치표) 적혀 있고, `analysis/Positioner_Arm_Table.txt` 의
+그 번호 행(final_alpha, final_beta)이 arm1, arm2 가 된다. 73 개 모두 측정값이 있다.
+positioner 를 바꿔 꽂으면 `Positioner_Map.txt` 의 번호만 고친다. 우선순위는
+설계값 < Positioner_Map + Arm_Table < `Measured_Geometry.txt` 의 arm 열 (손으로 적는 최종 보정).
 
-```python
-DEFAULT_ARM = (5.2, 11.6)
-
-ARM_OVERRIDES = {
-    "B5": (5.13, 11.35),
-    "C2": (5.29, 11.36),
-}
-```
+설계값은 `DEFAULT_ARM = (5.2, 11.6)` mm 이고, `use_measured=False` (또는 `KSPEC_USE_MEASURED=0`)
+이면 그것을 쓴다 (`ARM_OVERRIDES` 에 ID 별로 적은 값이 있으면 그 값).
 
 ### Fiducial 핀홀 위치
 

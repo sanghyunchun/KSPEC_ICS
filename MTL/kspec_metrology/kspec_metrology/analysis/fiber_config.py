@@ -204,6 +204,7 @@ def measured_geometry(path=None):
 #   C5     42
 #
 # 맵이 없거나 홀이 적혀 있지 않으면 그 positioner는 설계값을 쓴다.
+# 2026-10-25 부터 설치표(Positioner_Map.txt) 가 패키지에 들어 있어 기본으로 실측 arm 을 쓴다.
 # 둘 다 use_measured 스위치 아래에서만 쓰인다.
 POSITIONER_ARM_TABLE_ENV = 'KSPEC_POSITIONER_ARM_TABLE'
 POSITIONER_MAP_ENV = 'KSPEC_POSITIONER_MAP'
@@ -329,7 +330,8 @@ FIDUCIAL_EXCLUDE = ()
 # 위치 오차는 NaN, 회전량은 0 으로 나온다 (누적 각도는 직전 값 유지).
 #   환경변수 : KSPEC_FIBER_EXCLUDE="C4,D2"
 #   파일     : 아래 FIBER_EXCLUDE = [...] 한 줄 (또는 import 뒤 fiber_config.FIBER_EXCLUDE = [...])
-FIBER_EXCLUDE = []                       # <- 끊어진 fiber 의 홀 ID 를 여기에 적는다. 예: ['C4', 'D2']
+# 2026-10-25 확정 (설치표 Positioner mapping_20261012): G4 는 끊어져서 빛이 안 나온다.
+FIBER_EXCLUDE = ['G4']                   # <- 끊어진 fiber 의 홀 ID
 
 FIBER_EXCLUDE_ENV = 'KSPEC_FIBER_EXCLUDE'
 if os.environ.get(FIBER_EXCLUDE_ENV, '').strip():      # 환경변수가 있으면 그것이 우선
@@ -344,8 +346,12 @@ if os.environ.get(FIBER_EXCLUDE_ENV, '').strip():      # 환경변수가 있으�
 # 둘 다 "그 홀 중심에서 arm 길이 안에 있으면서 살아 있는 fiber 의 목표 근처는 아닌" 검출을
 # 그 점으로 보고 fiber 매칭에서 뺀다. 자리를 정확히 아는 경우는 아래 Fixed_Spots 파일.
 #   환경변수 : KSPEC_FIBER_FIXED="C6"   KSPEC_SKY_FIBERS="A6,B7,B8,G0,H1,I0,N7,N8,O6"
-FIBER_FIXED = []                         # <- 고장나 고정된 positioner 홀 ID. 예: ['C6']
-SKY_FIBERS = []                          # <- sky fiber 홀 ID (표에서 -9 인 홀). 예: ['A6', 'B7', 'B8', ...]
+# 2026-10-25 확정 (설치표 Positioner mapping_20261012 의 주황색 행 28 개 + sky 9 홀).
+# 켜진 점 기대 수 = 73 - len(FIBER_EXCLUDE) + len(SKY_FIBERS) = 81, 매칭하는 fiber = 44.
+FIBER_FIXED = ['C6', 'E2', 'E4', 'E5', 'E6', 'E7', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7',
+               'G7', 'H8', 'H9', 'H10', 'H11', 'I9', 'I10', 'J6', 'J7', 'J8', 'J9', 'J10',
+               'K5', 'K6', 'K7', 'K9']   # <- 고장나 고정된 positioner 홀 ID
+SKY_FIBERS = ['A6', 'B7', 'B8', 'G0', 'H1', 'I0', 'N7', 'N8', 'O6']   # <- sky fiber 홀 ID (표에서 -9 인 홀)
 for _env, _name in (('KSPEC_FIBER_FIXED', 'FIBER_FIXED'), ('KSPEC_SKY_FIBERS', 'SKY_FIBERS')):
     if os.environ.get(_env, '').strip():
         globals()[_name] = [t.strip() for t in os.environ[_env].replace(';', ',').split(',') if t.strip()]

@@ -513,13 +513,14 @@ def _all_hole_ids(nfib, fid_flag):
 
 
 def measure_fibers(head, x, y, nfib, coeff, data_dir, nexposure, max_dist=None, n_extra=0,
-                   exclude=None, mode='Raw', **pk):
+                   exclude=None, mode='Raw', leftover=None, **pk):
     """fiber 노출에서 peak 을 찾아 (fiducial 로 맞춘) 변환으로 focal 좌표로 옮기고
     목표 위치에 가장 가까운 것을 그 fiber 로 본다. x, y 는 fiber + fiducial 전체
     목표 (fiducial 은 그 자리의 검출을 fiber 로 잘못 잡지 않게 하려고 넣는다).
 
     exclude : (xchip, ychip) 이미 아는 fiducial 의 칩 좌표. 주면 그 자리를 지우고 찾는다.
     mode : 'Raw' (검출 뒤 매칭) 또는 'Predict' (coeff 로 예측한 자리의 창 안에서만 잰다, 매칭 없음).
+    leftover : dict 를 주면 목표에 할당되지 않은 검출(xf, yf, xobs, yobs, near_fixed)을 채워 준다 (Raw).
 
     반환: xfocal, yfocal (x, y 순서), dist (매칭 거리 [mm]), (xobs, yobs) (같은 순서의 칩 좌표)
     """
@@ -567,42 +568,69 @@ def measure_fibers(head, x, y, nfib, coeff, data_dir, nexposure, max_dist=None, 
         keep &= dfix > cfg.FIXED_SPOT_TOL
         log.info("Fixed spots (%s): %d detection(s) removed from the fiber candidates",
                  os.path.basename(cfg.FIXED_SPOTS_PATH), int((dfix <= cfg.FIXED_SPOT_TOL).sum()))
-    holes = cfg.lit_unmatched_holes()
-    if len(holes):
-        # 자리는 모르고 홀만 아는 고정 점 (FIBER_FIXED, SKY_FIBERS): 그 홀 중심에서 arm 길이 안에
-        # 있으면서 살아 있는 fiber 의 목표에서 max_dist 보다 먼 검출을 그 점으로 본다
-        a1, a2 = cfg.arm_lengths()
-        reach = float((a1 + a2).max()) + 1.0
-        dh, _ = cKDTree(holes).query(np.column_stack((xf, yf)))
-        dt, _ = cKDTree(np.column_stack((x[:nfib], y[:nfib]))).query(np.column_stack((xf, yf)))
-        stuck = (dh < reach) & (dt > max_dist)
-        keep &= ~stuck
-        log.info("Lit but unmatched holes (%d fixed positioner(s), %d sky fiber(s)): %d detection(s) "
-                 "taken as theirs and removed", len(cfg.FIBER_FIXED), len(cfg.SKY_FIBERS), int(stuck.sum()))
+    kidx = np.where(keep)[0]; xf0, yf0, xo0, yo0 = xf, yf, xobs, yobs       # 전체 검출 (leftover 용)
     xobs, yobs, xf, yf = xobs[keep], yobs[keep], xf[keep], yf[keep]
     # 목표 <-> 검출 할당: 한 검출은 한 목표에만 (거리 합 최소). 너무 먼 짝은 큰 비용으로 막는다.
+    # 자리를 모르는 고정 점(FIBER_FIXED, SKY_FIBERS)은 먼저 지우지 않는다: 살아 있는 fiber 가 목표에서
+    # 몇 mm 벗어나 있으면 그 점이 이웃 고정 홀의 arm 범위에도 들어가므로, 지우면 그 fiber 를 잃는다.
+    # 대신 할당하고 남은 검출을 고정 홀 것으로 본다 (아래). 자리를 아는 고정 점은 Fixed_Spots.txt 로.
     D = np.hypot(x[:, None] - xf[None, :], y[:, None] - yf[None, :])
     C = np.where(D > 3*max_dist, 1e6 + D, D)
     # fiducial 자리를 지운 이미지(exclude)라면 fiducial 목표는 할당에서 뺀다 (fiber 검출을 가져가지 않게);
     # 그 행은 아래에서 가장 가까운 검출로 채우지만 결과에는 쓰이지 않는다 (mtlcal 이 fiducial 노출 값으로 덮는다)
     nrow = nfib if exclude is not None else x.size
-    rows, cols = linear_sum_assignment(C[:nrow])
-    j = np.zeros(x.size, dtype=int); dist = np.full(x.size, np.inf)
+    rows, cols = linear_sum_assignment(C[:nrow]) if xf.size else (np.array([], int), np.array([], int))
+    j = np.full(x.size, -1, dtype=int); dist = np.full(x.size, np.nan)
     j[rows] = cols; dist[rows] = D[rows, cols]
-    unassigned = np.setdiff1d(np.arange(x.size), rows)
-    for i in unassigned:                                 # 검출이 모자라면 가장 가까운 것 (경고 대상)
-        j[i] = int(np.argmin(D[i])); dist[i] = D[i, j[i]]
-    far = np.where(dist[:nfib] > max_dist)[0]
+    ids = list(cfg.fiber_ids())
+    alive = [i for i, d in zip(ids, cfg.dead_mask()) if not d]
+    # fiber: 검출이 모자라거나 3*max_dist 보다 먼 짝은 이번 trial 에 못 잰 것으로 (NaN; mtlcal 이 회전 0 으로 둔다)
+    lost = np.array([k < nfib and (j[k] < 0 or dist[k] > 3*max_dist) for k in range(x.size)])
+    if lost.any():
+        log.warning("%d fiber(s) with no detection within %.1f mm of the target: %s -- left unmeasured "
+                    "this trial (NaN); if the fiber is dark add it to FIBER_EXCLUDE, if it is stuck to FIBER_FIXED",
+                    int(lost.sum()), 3*max_dist,
+                    ", ".join(f"{alive[k]}" + (f" (nearest {D[k].min():.1f} mm)" if xf.size else "")
+                              for k in np.where(lost)[0]))
+        j[lost] = -1; dist[lost] = np.nan
+    for i in np.setdiff1d(np.arange(nfib, x.size), rows):   # fiducial 행 (단일 이미지일 때만 쓰임): 가장 가까운 것
+        if xf.size:
+            j[i] = int(np.argmin(D[i])); dist[i] = D[i, j[i]]
+    # 할당하고 남은 검출 (Fixed_Spots 로 지운 것 포함): 고정 positioner / sky 홀의 arm 범위 안이면 그 점으로 본다 (기록만)
+    holes = cfg.lit_unmatched_holes()
+    used = set(int(kidx[j[k]]) for k in range(nrow) if j[k] >= 0)   # 할당된 행만 (fiducial 행의 임시 채움은 제외)
+    left = np.array([k for k in range(xf0.size) if k not in used], dtype=int)
+    near_fixed0 = np.zeros(xf0.size, bool)
+    if len(holes) and xf0.size:
+        a1, a2 = cfg.arm_lengths()
+        reach = float((a1 + a2).max()) + 1.0
+        dh, _ = cKDTree(holes).query(np.column_stack((xf0, yf0)))
+        near_fixed0 = dh < reach
+        n_stuck = int(near_fixed0[left].sum()) if left.size else 0
+        log.info("Lit but unmatched holes (%d fixed positioner(s), %d sky fiber(s)): %d leftover detection(s) "
+                 "within arm reach taken as theirs, %d leftover elsewhere",
+                 len(cfg.FIBER_FIXED), len(cfg.SKY_FIBERS), n_stuck, int(left.size) - n_stuck)
+    elif left.size:
+        log.info("%d detection(s) not assigned to any target", int(left.size))
+    near_fixed = near_fixed0[kidx]
+    if leftover is not None:                                # lab.find_fixed_spots 용: 남은 검출의 초점면 좌표
+        leftover.update(xf=xf0[left], yf=yf0[left], xobs=xo0[left], yobs=yo0[left], near_fixed=near_fixed0[left])
+    far = np.where(np.nan_to_num(dist[:nfib], nan=0.) > max_dist)[0]
     if far.size:
-        ids = list(cfg.fiber_ids())
-        alive = [i for i, d in zip(ids, cfg.dead_mask()) if not d]
-        log.warning("%d fiber(s) matched farther than %.1f mm from the target: %s -- "
-                    "the fiber may be unlit (add to FIBER_EXCLUDE) or the matched spot may be "
-                    "another fiber / sky fiber", far.size, max_dist,
-                    ", ".join(f"{alive[i]} ({dist[i]:.1f} mm)" for i in far))
+        log.warning("%d fiber(s) matched farther than %.1f mm from the target: %s -- a large positioner error, "
+                    "or the spot may be a stuck positioner's / sky fiber's (write Fixed_Spots.txt with "
+                    "lab.find_fixed_spots to make this unambiguous)", far.size, max_dist,
+                    ", ".join(f"{alive[i]} ({dist[i]:.1f} mm" + (", within reach of a fixed/sky hole)"
+                              if near_fixed[j[i]] else ")") for i in far))
     log.info("Fiber image (%s): %d peaks; fiber-target distance median %.1f um, max %.1f um",
-             head, xobs.size, np.median(dist[:nfib])*1e3, dist[:nfib].max()*1e3)
-    return xf[j], yf[j], dist, (xobs[j], yobs[j])
+             head, xobs.size, np.nanmedian(dist[:nfib])*1e3, np.nanmax(dist[:nfib])*1e3)
+    if xf.size == 0:
+        nanv = np.full(x.size, np.nan)
+        return nanv, nanv.copy(), dist, (nanv.copy(), nanv.copy())
+    jj = np.where(j >= 0, j, 0)
+    xr, yr, xor, yor = xf[jj].copy(), yf[jj].copy(), xobs[jj].copy(), yobs[jj].copy()
+    xr[j < 0] = np.nan; yr[j < 0] = np.nan; xor[j < 0] = np.nan; yor[j < 0] = np.nan
+    return xr, yr, dist, (xor, yor)
 
 
 def mtlcal(data_dir='./MTL/data/'

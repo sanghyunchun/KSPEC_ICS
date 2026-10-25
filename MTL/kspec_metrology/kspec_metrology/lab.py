@@ -282,8 +282,10 @@ def _inspect(data_dir, head, fid_heads, target_file, nexposure=1, fid_nexposure=
              threshold=3e3, nwindow=40, niter_recenter=0, finder='sep', finder_opts=None,
              background='crop', background_opts=None, magnification=None, model='full',
              sat_level=65000., fid_min_peak=0., n_extra=0, use_measured=None,
-             apply_pinhole_offset=False, cross_exclude=True, min_dist=40, fid_fallback_fiber=True, n=8):
-    """mtlcal 과 같은 설정으로 단계별로 다시 분석하며 그림을 그린다. json 은 건드리지 않는다."""
+             apply_pinhole_offset=False, cross_exclude=True, min_dist=40, fid_fallback_fiber=True, n=8,
+             leftover=None):
+    """mtlcal 과 같은 설정으로 단계별로 다시 분석하며 그림을 그린다. json 은 건드리지 않는다.
+    leftover: dict 를 주면 fiber 목표에 할당되지 않은 검출을 채워 준다 (measure_fibers 참고; 노출 분리 때만)."""
     from kspec_metrology.analysis.mtlcal import (load_configuration, measure_fiducials,
                                                  measure_fibers)
     xo, yo, x, y, fid_flag, nfib = load_configuration(
@@ -317,7 +319,7 @@ def _inspect(data_dir, head, fid_heads, target_file, nexposure=1, fid_nexposure=
             np.arange(int(fid_flag.sum())), th, ox, oy, model=model, m_init=magnification)
         xfocal, yfocal, dist, (xobs, yobs) = measure_fibers(
             head, x, y, nfib, coeff, data_dir, nexposure, n_extra=n_extra,
-            exclude=(xo_f, yo_f) if cross_exclude else None, **pk)
+            exclude=(xo_f, yo_f) if cross_exclude else None, leftover=leftover, **pk)
         if cross_exclude:                       # fiber 자리를 지우고 fiducial 을 다시 (mtlcal 과 같다)
             xo_f, yo_f, choice, th, (ox, oy) = measure_fiducials(
                 heads_all, x, y, fid_flag, data_dir, fid_nexposure, set_nexposure=nexp_all, fallback=fb_all,
@@ -328,7 +330,7 @@ def _inspect(data_dir, head, fid_heads, target_file, nexposure=1, fid_nexposure=
                 np.arange(int(fid_flag.sum())), th, ox, oy, model=model, m_init=magnification)
             xfocal, yfocal, dist, (xobs, yobs) = measure_fibers(
                 head, x, y, nfib, coeff, data_dir, nexposure, n_extra=n_extra,
-                exclude=(xo_f, yo_f), **pk)
+                exclude=(xo_f, yo_f), leftover=leftover, **pk)
         xfocal[fid_flag], yfocal[fid_flag] = xf, yf
         # fiber 는 fiber 노출의 매칭 결과, fiducial 은 fiducial 노출에서 잰 자리(주황; 이 이미지에서는 쓰지 않음)
         show_detections(im, np.r_[xobs[:nfib], xo_f], np.r_[yobs[:nfib], yo_f], labels=ids, flag=fid_flag, n=n,
@@ -1006,6 +1008,73 @@ def measure(target_file, fiber_image, fid_images=(), out_dir='./lab_out', tile='
 def show_steps(res, n=8):
     """measure 의 결과를 단계별 그림으로: fiducial 검출(세트별), fiber 매칭, 초점면 잔차."""
     return _inspect(res['data_dir'], res['head'], res['fid_heads'], res['target_file'], n=n, **res['params'])
+
+
+def find_fixed_spots(res, out_path=None, show=False):
+    """고정 positioner(FIBER_FIXED) 와 sky fiber(SKY_FIBERS) 의 실제 자리를 재서 Fixed_Spots.txt 형식으로 적는다.
+
+    measure 의 결과 res 와 같은 설정으로 다시 분석해, 살아 있는 fiber 목표에 할당되지 않은 검출을
+    고정/sky 홀에 (홀 중심에서 arm 길이 안, 거리 합 최소로) 배정한다. 고정 positioner 와 sky fiber 는
+    움직이지 않으므로 한 번 적어 두면 이후 매칭에서 그 자리(반지름 FIXED_SPOT_TOL = 1.5 mm)의 검출은
+    바로 빠지고, 살아 있는 fiber 가 목표에서 몇 mm 벗어나 있어도 고정 점과 헷갈리지 않는다.
+
+    out_path : 적을 파일. 패키지 기본 경로는 cfg.FIXED_SPOTS_PATH (analysis/Fixed_Spots.txt);
+               다른 곳에 두면 KSPEC_FIXED_SPOTS 환경변수로 가리킨다. None 이면 적지 않는다.
+    반환 DataFrame: hole, x_mm, y_mm (초점면), hole_dist_mm (홀 중심에서 거리), u, v (픽셀), status
+      status = 'found' (파일에 적음) / 'not found' (범위 안에 남은 검출이 없음) / 'extra' (어느 홀에도 못 붙은 검출)"""
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    from scipy.optimize import linear_sum_assignment
+    if not res.get('fid_heads'):
+        raise ValueError("find_fixed_spots 는 fiducial 노출을 따로 준 측정(fid_images)에서만 쓸 수 있다")
+    lo = {}
+    _inspect(res['data_dir'], res['head'], res['fid_heads'], res['target_file'], n=8, leftover=lo, **res['params'])
+    if not show:
+        plt.close('all')
+    names = list(cfg.FIBER_FIXED) + list(cfg.SKY_FIBERS)
+    rows = []
+    if names and lo.get('xf') is not None and lo['xf'].size:
+        hx = cfg.hole_xy(names)
+        a1, a2 = cfg.arm_lengths(); reach = float((a1 + a2).max()) + 1.0
+        D = np.hypot(hx[:, 0][:, None] - lo['xf'][None, :], hx[:, 1][:, None] - lo['yf'][None, :])
+        C = np.where(D > reach, 1e6 + D, D)
+        ri, ci = linear_sum_assignment(C)
+        got = {}
+        for i, k in zip(ri, ci):
+            if D[i, k] <= reach:
+                got[i] = k
+        for i, h in enumerate(names):
+            if i in got:
+                k = got[i]
+                u, v = chip2pix(np.array([lo['xobs'][k]]), np.array([lo['yobs'][k]]), load_frames(res['data_dir'], res['head'], 1).shape)
+                rows.append(dict(hole=h, x_mm=float(lo['xf'][k]), y_mm=float(lo['yf'][k]), hole_dist_mm=float(D[i, k]),
+                                 u=float(u[0]), v=float(v[0]), status='found'))
+            else:
+                rows.append(dict(hole=h, x_mm=np.nan, y_mm=np.nan, hole_dist_mm=np.nan, u=np.nan, v=np.nan, status='not found'))
+        for k in range(lo['xf'].size):
+            if k not in got.values():
+                rows.append(dict(hole='?', x_mm=float(lo['xf'][k]), y_mm=float(lo['yf'][k]), hole_dist_mm=float(D[:, k].min()),
+                                 u=np.nan, v=np.nan, status='extra'))
+    else:
+        rows = [dict(hole=h, x_mm=np.nan, y_mm=np.nan, hole_dist_mm=np.nan, u=np.nan, v=np.nan, status='not found') for h in names]
+    T = pd.DataFrame(rows, columns=['hole', 'x_mm', 'y_mm', 'hole_dist_mm', 'u', 'v', 'status'])
+    nf = int((T.status == 'found').sum()); nn = int((T.status == 'not found').sum()); ne = int((T.status == 'extra').sum())
+    print(f"fixed/sky spots: {nf}/{len(names)} found, {nn} not found" + (f": {', '.join(T.hole[T.status == 'not found'])}" if nn else '')
+          + (f"; {ne} extra detection(s) not near any fixed/sky hole" if ne else ''))
+    if out_path is not None:
+        with open(out_path, 'w') as f:
+            f.write("# 켜져 있지만 fiber 매칭에서 뺄 점들의 초점면 좌표 [mm] (plate 중심 기준).\n"
+                    f"# lab.find_fixed_spots 가 적음: {os.path.basename(res['head'])} (trial {res['itrial']}), "
+                    f"{len(cfg.FIBER_FIXED)} fixed positioner(s) + {len(cfg.SKY_FIBERS)} sky fiber(s)\n"
+                    "# 'name X Y' 세 칸, '#' 뒤는 주석. 이 거리(FIXED_SPOT_TOL = 1.5 mm) 안의 검출은 fiber 후보에서 뺀다.\n"
+                    "# positioner 를 갈거나 다시 움직이게 되면 그 줄을 지우고 FIBER_FIXED 에서도 뺀다.\n"
+                    "#\n# name     X          Y\n")
+            for _, r in T[T.status == 'found'].iterrows():
+                f.write(f"{r.hole:<6} {r.x_mm:10.4f} {r.y_mm:10.4f}\n")
+            for _, r in T[T.status == 'not found'].iterrows():
+                f.write(f"# {r.hole:<6} not found in this image\n")
+        print(f"written: {out_path}")
+    return T
 
 
 def history(out_dir, tile):
