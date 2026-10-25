@@ -316,7 +316,7 @@ class LightField(LightFieldBase):
             ds = netcall.call(fm, "OpenFile", spe[0], FileAccess.Read)
             try:
                 origin = netcall.get(ds, "TimeStampOrigin")
-                md = netcall.call(ds, "GetFrameMetadata", 0)
+                md = netcall.call(ds, "GetFrameMetaData", 0)
                 started = netcall.get(md, "ExposureStarted")
                 if origin is not None and started is not None:
                     frame.ut_start = _net_utc(origin, started)

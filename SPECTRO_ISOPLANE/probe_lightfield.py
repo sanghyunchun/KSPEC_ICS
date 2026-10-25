@@ -206,7 +206,7 @@ def acquire_one(app, exp, exptime_ms, outdir, open_shutter=False):
     if spe:
         ds = netcall.call(fm, "OpenFile", spe[0], FileAccess.Read)
         try:
-            md = netcall.call(ds, "GetFrameMetadata", 0)
+            md = netcall.call(ds, "GetFrameMetaData", 0)
             out["time_stamp_origin"] = str(netcall.get(ds, "TimeStampOrigin"))
             out["exposure_started"] = str(netcall.get(md, "ExposureStarted"))
             out["exposure_ended"] = str(netcall.get(md, "ExposureEnded"))
