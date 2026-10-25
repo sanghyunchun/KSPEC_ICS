@@ -338,7 +338,7 @@ class IsoplaneFakeTest(unittest.TestCase):
             self.assertEqual((off['status'], off['backillum']['state'], off['backillum']['light']),
                              ('success', 'IN', False))
         moves = [l for l in uno.log if l.startswith('MB 01100028')]  # speed write before a move
-        self.assertEqual(len(moves), 1 + 3)  # illuon: the move; illuoff: move, slow, reset
+        self.assertEqual(len(moves), 1 + 4)  # illuon: the move; illuoff: move, slow, seat, reset
         self.assertEqual(self.server.done('getobj')[0]['status'], 'fail')  # stage IN
         self.assertEqual(iso.bl.state, 'OUT')
         self.assertFalse(uno.light)
