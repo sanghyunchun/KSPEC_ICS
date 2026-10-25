@@ -170,7 +170,7 @@ def estimate_fwhm_arcsec(data: np.ndarray) -> Optional[Tuple[float, float, float
     if data.ndim != 2:
         return None
 
-    img = np.array(data, dtype=np.float64, copy=False)
+    img = np.asarray(data, dtype=np.float64)
 
     if not np.isfinite(img).any():
         return None
@@ -323,7 +323,7 @@ def centroid_in_cutout(img: np.ndarray) -> Optional[Tuple[float, float]]:
     if img.ndim != 2:
         return None
 
-    arr = np.array(img, dtype=np.float64, copy=False)
+    arr = np.asarray(img, dtype=np.float64)
     finite = arr[np.isfinite(arr)]
     if finite.size < 20:
         return None
