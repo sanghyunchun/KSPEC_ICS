@@ -1,0 +1,120 @@
+# 실측 기하 (plate 중심 기준)
+#
+# positioner 는 회전 중심, fiducial 은 핀홀 위치를 적는다. arm 길이는
+# positioner 만 해당한다. 아직 안 잰 값은 '-' 로 두면 그 항목만 설계값을 쓴다.
+# '#' 뒤는 주석, 빈 줄은 무시, 줄 순서는 상관없다.
+#
+# 켜는 방법:  KSPEC_USE_MEASURED=1   또는   mtlcal(..., use_measured=True)
+# 이 파일 경로는 KSPEC_MEASURED_GEOMETRY 로 바꿀 수 있다.
+#
+# 주의: 실측 위치를 적은 fiducial 에는 핀홀 오프셋을 따로 더하지 않는다.
+#       arm 길이는 Positioner_Arm_Table + Positioner_Map 이 먼저 적용되고,
+#       여기 적은 값이 그보다 우선한다 (손으로 하는 최종 보정).
+#
+# ID            X          Y    arm1    arm2   (주석은 현재 설계값)
+# --------------------------------------------------------------
+# fiducial X, Y: pinhole positions measured 2026-10-17 (Fiducial_Pinhole_261017.txt, Plate_Pinhole_261017.ipynb)
+#
+  A7         66.5186   115.0445       -       -   # fiducial  pinhole 261017  +-(16, 25) um  설계 X   66.5000  Y  115.1814
+  B1        -56.9090    98.7863       -       -   # fiducial  pinhole 261017  +-(16, 16) um  설계 X  -57.0000  Y   98.7269
+  B3        -18.8293    99.0831       -       -   # fiducial  pinhole 261017  +-(17, 23) um  설계 X  -19.0000  Y   98.7269
+  C4            -          -       -       -   # positioner  설계 X   -9.5000  Y   82.2724
+  C5            -          -       -       -   # positioner  설계 X    9.5000  Y   82.2724
+  C6            -          -       -       -   # positioner  설계 X   28.5000  Y   82.2724
+  D2            -          -       -       -   # positioner  설계 X  -57.0000  Y   65.8179
+  D3            -          -       -       -   # positioner  설계 X  -38.0000  Y   65.8179
+  D4            -          -       -       -   # positioner  설계 X  -19.0000  Y   65.8179
+  D5            -          -       -       -   # positioner  설계 X    0.0000  Y   65.8179
+  D6         18.9250    65.7479       -       -   # fiducial  pinhole 261017  +-(16, 26) um  설계 X   19.0000  Y   65.8179
+  D7            -          -       -       -   # positioner  설계 X   38.0000  Y   65.8179
+  D9         76.0880    65.6861       -       -   # fiducial  pinhole 261017  +-(18, 25) um  설계 X   76.0000  Y   65.8179
+  E2            -          -       -       -   # positioner  설계 X  -66.5000  Y   49.3634
+  E3        -47.3586    49.3695       -       -   # fiducial  pinhole 261017  +-(24, 20) um  설계 X  -47.5000  Y   49.3634
+  E4            -          -       -       -   # positioner  설계 X  -28.5000  Y   49.3634
+  E5            -          -       -       -   # positioner  설계 X   -9.5000  Y   49.3634
+  E6            -          -       -       -   # positioner  설계 X    9.5000  Y   49.3634
+  E7            -          -       -       -   # positioner  설계 X   28.5000  Y   49.3634
+  E8            -          -       -       -   # positioner  설계 X   47.5000  Y   49.3634
+  E9            -          -       -       -   # positioner  설계 X   66.5000  Y   49.3634
+  F1        -95.0486    33.0060       -       -   # fiducial  pinhole 261017  +-(17, 19) um  설계 X  -95.0000  Y   32.9090
+  F2            -          -       -       -   # positioner  설계 X  -76.0000  Y   32.9090
+  F3            -          -       -       -   # positioner  설계 X  -57.0000  Y   32.9090
+  F4            -          -       -       -   # positioner  설계 X  -38.0000  Y   32.9090
+  F5            -          -       -       -   # positioner  설계 X  -19.0000  Y   32.9090
+  F6            -          -       -       -   # positioner  설계 X    0.0000  Y   32.9090
+  F7            -          -       -       -   # positioner  설계 X   19.0000  Y   32.9090
+  F8            -          -       -       -   # positioner  설계 X   38.0000  Y   32.9090
+  F9            -          -       -       -   # positioner  설계 X   57.0000  Y   32.9090
+  F10           -          -       -       -   # positioner  설계 X   76.0000  Y   32.9090
+  G3            -          -       -       -   # positioner  설계 X  -66.5000  Y   16.4545
+  G4            -          -       -       -   # positioner  설계 X  -47.5000  Y   16.4545
+  G5            -          -       -       -   # positioner  설계 X  -28.5000  Y   16.4545
+  G6            -          -       -       -   # positioner  설계 X   -9.5000  Y   16.4545
+  G7            -          -       -       -   # positioner  설계 X    9.5000  Y   16.4545
+  G8         28.5728    16.6182       -       -   # fiducial  pinhole 261017  +-(13, 16) um  설계 X   28.5000  Y   16.4545
+  G9            -          -       -       -   # positioner  설계 X   47.5000  Y   16.4545
+  G10           -          -       -       -   # positioner  설계 X   66.5000  Y   16.4545
+  G11           -          -       -       -   # positioner  설계 X   85.5000  Y   16.4545
+  H0       -133.0579     0.0586       -       -   # fiducial  pinhole 261017  +-(34, 18) um  설계 X -133.0000  Y    0.0000
+  H3            -          -       -       -   # positioner  설계 X  -76.0000  Y    0.0000
+  H4            -          -       -       -   # positioner  설계 X  -57.0000  Y    0.0000
+  H5            -          -       -       -   # positioner  설계 X  -38.0000  Y    0.0000
+  H6            -          -       -       -   # positioner  설계 X  -19.0000  Y    0.0000
+  H7            -          -       -       -   # positioner  설계 X    0.0000  Y    0.0000
+  H8            -          -       -       -   # positioner  설계 X   19.0000  Y    0.0000
+  H9            -          -       -       -   # positioner  설계 X   38.0000  Y    0.0000
+  H10           -          -       -       -   # positioner  설계 X   57.0000  Y    0.0000
+  H11           -          -       -       -   # positioner  설계 X   76.0000  Y    0.0000
+  H13       113.7571    -0.1988       -       -   # fiducial  pinhole 261017  +-(24, 18) um  설계 X  114.0000  Y    0.0000
+  I2            -          -       -       -   # positioner  설계 X  -85.5000  Y  -16.4545
+  I3            -          -       -       -   # positioner  설계 X  -66.5000  Y  -16.4545
+  I4        -47.4147   -16.2786       -       -   # fiducial  pinhole 261017  +-(26, 22) um  설계 X  -47.5000  Y  -16.4545
+  I5            -          -       -       -   # positioner  설계 X  -28.5000  Y  -16.4545
+  I6            -          -       -       -   # positioner  설계 X   -9.5000  Y  -16.4545
+  I7            -          -       -       -   # positioner  설계 X    9.5000  Y  -16.4545
+  I8            -          -       -       -   # positioner  설계 X   28.5000  Y  -16.4545
+  I9            -          -       -       -   # positioner  설계 X   47.5000  Y  -16.4545
+  I10           -          -       -       -   # positioner  설계 X   66.5000  Y  -16.4545
+  J2            -          -       -       -   # positioner  설계 X  -76.0000  Y  -32.9090
+  J3            -          -       -       -   # positioner  설계 X  -57.0000  Y  -32.9090
+  J4            -          -       -       -   # positioner  설계 X  -38.0000  Y  -32.9090
+  J5            -          -       -       -   # positioner  설계 X  -19.0000  Y  -32.9090
+  J6            -          -       -       -   # positioner  설계 X   -0.0000  Y  -32.9090
+  J7            -          -       -       -   # positioner  설계 X   19.0000  Y  -32.9090
+  J8            -          -       -       -   # positioner  설계 X   38.0000  Y  -32.9090
+  J9            -          -       -       -   # positioner  설계 X   57.0000  Y  -32.9090
+  J10           -          -       -       -   # positioner  설계 X   76.0000  Y  -32.9090
+  J11        94.7932   -32.6930       -       -   # fiducial  pinhole 261017  +-(20, 20) um  설계 X   95.0000  Y  -32.9090
+  K2            -          -       -       -   # positioner  설계 X  -66.5000  Y  -49.3634
+  K3            -          -       -       -   # positioner  설계 X  -47.5000  Y  -49.3634
+  K4            -          -       -       -   # positioner  설계 X  -28.5000  Y  -49.3634
+  K5            -          -       -       -   # positioner  설계 X   -9.5000  Y  -49.3634
+  K6            -          -       -       -   # positioner  설계 X    9.5000  Y  -49.3634
+  K7            -          -       -       -   # positioner  설계 X   28.5000  Y  -49.3634
+  K8         47.3454   -49.2766       -       -   # fiducial  pinhole 261017  +-(15, 28) um  설계 X   47.5000  Y  -49.3634
+  K9            -          -       -       -   # positioner  설계 X   66.5000  Y  -49.3634
+  L1        -75.9459   -65.7257       -       -   # fiducial  pinhole 261017  +-(17, 21) um  설계 X  -76.0000  Y  -65.8179
+  L3            -          -       -       -   # positioner  설계 X  -38.0000  Y  -65.8179
+  L4        -19.0475   -65.6660       -       -   # fiducial  pinhole 261017  +-(20, 30) um  설계 X  -19.0000  Y  -65.8179
+  L5            -          -       -       -   # positioner  설계 X   -0.0000  Y  -65.8179
+  L6            -          -       -       -   # positioner  설계 X   19.0000  Y  -65.8179
+  L7            -          -       -       -   # positioner  설계 X   38.0000  Y  -65.8179
+  L8            -          -       -       -   # positioner  설계 X   57.0000  Y  -65.8179
+  M3            -          -       -       -   # positioner  설계 X  -28.5000  Y  -82.2724
+  M4            -          -       -       -   # positioner  설계 X   -9.5000  Y  -82.2724
+  M5            -          -       -       -   # positioner  설계 X    9.5000  Y  -82.2724
+  N1        -57.2426   -98.5734       -       -   # fiducial  pinhole 261017  +-(17, 20) um  설계 X  -57.0000  Y  -98.7269
+  N5         19.3400   -98.7881       -       -   # fiducial  pinhole 261017  +-(15, 26) um  설계 X   19.0000  Y  -98.7269
+  O7         66.3951  -114.7795       -       -   # fiducial  pinhole 261017  +-(19, 25) um  설계 X   66.5000  Y -115.1814
+  Z0        125.0752    43.1774       -       -   # fiducial  pinhole 261017  +-(23, 21) um  설계 X  125.0830  Y   43.3490
+  Z1        100.2067    86.4626       -       -   # fiducial  pinhole 261017  +-(19, 22) um  설계 X  100.0830  Y   86.6510
+  Z2         25.2851   130.2853       -       -   # fiducial  pinhole 261017  +-(13, 30) um  설계 X   25.0000  Y  130.0000
+  Z3        -25.0921   130.0956       -       -   # fiducial  pinhole 261017  +-(17, 32) um  설계 X  -25.0000  Y  130.0000
+  Z4       -100.2695    86.8549       -       -   # fiducial  pinhole 261017  +-(27, 25) um  설계 X -100.0830  Y   86.6510
+  Z5       -125.0386    43.4736       -       -   # fiducial  pinhole 261017  +-(30, 21) um  설계 X -125.0830  Y   43.3490
+  Z6       -125.4946   -43.3726       -       -   # fiducial  pinhole 261017  +-(35, 18) um  설계 X -125.0830  Y  -43.3490
+  Z7       -100.1589   -86.5791       -       -   # fiducial  pinhole 261017  +-(30, 21) um  설계 X -100.0830  Y  -86.6510
+  Z8        -25.0191  -130.1418       -       -   # fiducial  pinhole 261017  +-(14, 26) um  설계 X  -25.0000  Y -130.0000
+  Z9         24.7581  -129.6933       -       -   # fiducial  pinhole 261017  +-(15, 25) um  설계 X   25.0000  Y -130.0000
+  Z10       100.2316   -86.5125       -       -   # fiducial  pinhole 261017  +-(23, 22) um  설계 X  100.0830  Y  -86.6510
+  Z11       125.1718   -43.2777       -       -   # fiducial  pinhole 261017  +-(26, 18) um  설계 X  125.0830  Y  -43.3490

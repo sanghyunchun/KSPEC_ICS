@@ -4,7 +4,9 @@
 양쪽 모두 이 모듈의 함수만 쓴다. 규칙을 바꿀 일이 있으면 여기만 고치면 된다.
 
     이미지 : {data_dir}/{tile}_MetrologyTrial_{itrial}_{iexposure}.fits
+    fiducial 전용 노출 : {data_dir}/{tile}_MetrologyTrial_{itrial}_fid{k}_{iexposure}.fits
     각도   : {json_dir}/{tile}_MetrologyTrial_{itrial}.json
+    이동량 : {json_dir}/{tile}_MetrologyTrial_{itrial}_offset.txt
 
 tile은 target 파일에서 읽은 타일 이름(target_info.tile_name), itrial은 몇 번째
 metrology trial인지, iexposure는 그 trial 안에서 몇 번째 이미지인지를 뜻한다.
@@ -24,6 +26,14 @@ def image_head(tile, itrial):
     return STEM.format(tile=tile, itrial=itrial) + '_'
 
 
+def fid_image_head(tile, itrial, k):
+    """fiducial 전용 노출 k번째 세트의 head (fiber와 다른 노출시간으로 찍을 때).
+
+    fiber 이미지 head 뒤에 fid{k}_ 가 붙는다: {tile}_MetrologyTrial_{itrial}_fid{k}_
+    """
+    return STEM.format(tile=tile, itrial=itrial) + f'_fid{k}_'
+
+
 def image_path(data_dir, head, iexposure):
     """노출 한 장의 경로."""
     return os.path.join(data_dir, f'{head}{iexposure}.fits')
@@ -35,6 +45,22 @@ def image_paths(data_dir, tile, itrial, nexposure):
     return [image_path(data_dir, head, i) for i in range(nexposure)]
 
 
+def fid_image_paths(data_dir, tile, itrial, k, nexposure):
+    """fiducial 전용 노출 세트 k의 이미지 경로 전부."""
+    head = fid_image_head(tile, itrial, k)
+    return [image_path(data_dir, head, i) for i in range(nexposure)]
+
+
+def offset_path(json_dir, tile, itrial):
+    """한 trial의 fiber 이동량 표 (ID, dx, dy, 회전량) 경로."""
+    return os.path.join(json_dir, STEM.format(tile=tile, itrial=itrial) + '_offset.txt')
+
+
 def json_path(json_dir, tile, itrial):
     """한 trial의 positioner 각도 json 경로."""
     return os.path.join(json_dir, STEM.format(tile=tile, itrial=itrial) + '.json')
+
+
+def coeff_path(json_dir, tile, itrial):
+    """한 trial 에서 맞춘 camera->focal 변환 계수 (npy) 경로. 다음 trial 의 'Predict' mode 가 읽는다."""
+    return os.path.join(json_dir, STEM.format(tile=tile, itrial=itrial) + '_coeff.npy')

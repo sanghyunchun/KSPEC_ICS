@@ -1,0 +1,118 @@
+# 실측 기하 (plate 중심 기준)
+#
+# positioner 는 회전 중심, fiducial 은 핀홀 위치를 적는다. arm 길이는
+# positioner 만 해당한다. 아직 안 잰 값은 '-' 로 두면 그 항목만 설계값을 쓴다.
+# '#' 뒤는 주석, 빈 줄은 무시, 줄 순서는 상관없다.
+#
+# 켜는 방법:  KSPEC_USE_MEASURED=1   또는   mtlcal(..., use_measured=True)
+# 이 파일 경로는 KSPEC_MEASURED_GEOMETRY 로 바꿀 수 있다.
+#
+# 주의: 실측 위치를 적은 fiducial 에는 핀홀 오프셋을 따로 더하지 않는다.
+#       arm 길이는 Positioner_Arm_Table + Positioner_Map 이 먼저 적용되고,
+#       여기 적은 값이 그보다 우선한다 (손으로 하는 최종 보정).
+#
+# ID            X          Y    arm1    arm2   (주석은 현재 설계값)
+# --------------------------------------------------------------
+  A7            -          -       -       -   # fiducial    설계 X   66.5000  Y  115.1814
+  B1            -          -       -       -   # fiducial    설계 X  -57.0000  Y   98.7269
+  B3            -          -       -       -   # fiducial    설계 X  -19.0000  Y   98.7269
+  C4            -          -       -       -   # positioner  설계 X   -9.5000  Y   82.2724
+  C5            -          -       -       -   # positioner  설계 X    9.5000  Y   82.2724
+  C6            -          -       -       -   # positioner  설계 X   28.5000  Y   82.2724
+  D2            -          -       -       -   # positioner  설계 X  -57.0000  Y   65.8179
+  D3            -          -       -       -   # positioner  설계 X  -38.0000  Y   65.8179
+  D4            -          -       -       -   # positioner  설계 X  -19.0000  Y   65.8179
+  D5            -          -       -       -   # positioner  설계 X    0.0000  Y   65.8179
+  D6            -          -       -       -   # fiducial    설계 X   19.0000  Y   65.8179
+  D7            -          -       -       -   # positioner  설계 X   38.0000  Y   65.8179
+  D9            -          -       -       -   # fiducial    설계 X   76.0000  Y   65.8179
+  E2            -          -       -       -   # positioner  설계 X  -66.5000  Y   49.3634
+  E3            -          -       -       -   # fiducial    설계 X  -47.5000  Y   49.3634
+  E4            -          -       -       -   # positioner  설계 X  -28.5000  Y   49.3634
+  E5            -          -       -       -   # positioner  설계 X   -9.5000  Y   49.3634
+  E6            -          -       -       -   # positioner  설계 X    9.5000  Y   49.3634
+  E7            -          -       -       -   # positioner  설계 X   28.5000  Y   49.3634
+  E8            -          -       -       -   # positioner  설계 X   47.5000  Y   49.3634
+  E9            -          -       -       -   # positioner  설계 X   66.5000  Y   49.3634
+  F1            -          -       -       -   # fiducial    설계 X  -95.0000  Y   32.9090
+  F2            -          -       -       -   # positioner  설계 X  -76.0000  Y   32.9090
+  F3            -          -       -       -   # positioner  설계 X  -57.0000  Y   32.9090
+  F4            -          -       -       -   # positioner  설계 X  -38.0000  Y   32.9090
+  F5            -          -       -       -   # positioner  설계 X  -19.0000  Y   32.9090
+  F6            -          -       -       -   # positioner  설계 X    0.0000  Y   32.9090
+  F7            -          -       -       -   # positioner  설계 X   19.0000  Y   32.9090
+  F8            -          -       -       -   # positioner  설계 X   38.0000  Y   32.9090
+  F9            -          -       -       -   # positioner  설계 X   57.0000  Y   32.9090
+  F10           -          -       -       -   # positioner  설계 X   76.0000  Y   32.9090
+  G3            -          -       -       -   # positioner  설계 X  -66.5000  Y   16.4545
+  G4            -          -       -       -   # positioner  설계 X  -47.5000  Y   16.4545
+  G5            -          -       -       -   # positioner  설계 X  -28.5000  Y   16.4545
+  G6            -          -       -       -   # positioner  설계 X   -9.5000  Y   16.4545
+  G7            -          -       -       -   # positioner  설계 X    9.5000  Y   16.4545
+  G8            -          -       -       -   # fiducial    설계 X   28.5000  Y   16.4545
+  G9            -          -       -       -   # positioner  설계 X   47.5000  Y   16.4545
+  G10           -          -       -       -   # positioner  설계 X   66.5000  Y   16.4545
+  G11           -          -       -       -   # positioner  설계 X   85.5000  Y   16.4545
+  H0            -          -       -       -   # fiducial    설계 X -133.0000  Y    0.0000
+  H3            -          -       -       -   # positioner  설계 X  -76.0000  Y    0.0000
+  H4            -          -       -       -   # positioner  설계 X  -57.0000  Y    0.0000
+  H5            -          -       -       -   # positioner  설계 X  -38.0000  Y    0.0000
+  H6            -          -       -       -   # positioner  설계 X  -19.0000  Y    0.0000
+  H7            -          -       -       -   # positioner  설계 X    0.0000  Y    0.0000
+  H8            -          -       -       -   # positioner  설계 X   19.0000  Y    0.0000
+  H9            -          -       -       -   # positioner  설계 X   38.0000  Y    0.0000
+  H10           -          -       -       -   # positioner  설계 X   57.0000  Y    0.0000
+  H11           -          -       -       -   # positioner  설계 X   76.0000  Y    0.0000
+  H13           -          -       -       -   # fiducial    설계 X  114.0000  Y    0.0000
+  I2            -          -       -       -   # positioner  설계 X  -85.5000  Y  -16.4545
+  I3            -          -       -       -   # positioner  설계 X  -66.5000  Y  -16.4545
+  I4            -          -       -       -   # fiducial    설계 X  -47.5000  Y  -16.4545
+  I5            -          -       -       -   # positioner  설계 X  -28.5000  Y  -16.4545
+  I6            -          -       -       -   # positioner  설계 X   -9.5000  Y  -16.4545
+  I7            -          -       -       -   # positioner  설계 X    9.5000  Y  -16.4545
+  I8            -          -       -       -   # positioner  설계 X   28.5000  Y  -16.4545
+  I9            -          -       -       -   # positioner  설계 X   47.5000  Y  -16.4545
+  I10           -          -       -       -   # positioner  설계 X   66.5000  Y  -16.4545
+  J2            -          -       -       -   # positioner  설계 X  -76.0000  Y  -32.9090
+  J3            -          -       -       -   # positioner  설계 X  -57.0000  Y  -32.9090
+  J4            -          -       -       -   # positioner  설계 X  -38.0000  Y  -32.9090
+  J5            -          -       -       -   # positioner  설계 X  -19.0000  Y  -32.9090
+  J6            -          -       -       -   # positioner  설계 X   -0.0000  Y  -32.9090
+  J7            -          -       -       -   # positioner  설계 X   19.0000  Y  -32.9090
+  J8            -          -       -       -   # positioner  설계 X   38.0000  Y  -32.9090
+  J9            -          -       -       -   # positioner  설계 X   57.0000  Y  -32.9090
+  J10           -          -       -       -   # positioner  설계 X   76.0000  Y  -32.9090
+  J11           -          -       -       -   # fiducial    설계 X   95.0000  Y  -32.9090
+  K2            -          -       -       -   # positioner  설계 X  -66.5000  Y  -49.3634
+  K3            -          -       -       -   # positioner  설계 X  -47.5000  Y  -49.3634
+  K4            -          -       -       -   # positioner  설계 X  -28.5000  Y  -49.3634
+  K5            -          -       -       -   # positioner  설계 X   -9.5000  Y  -49.3634
+  K6            -          -       -       -   # positioner  설계 X    9.5000  Y  -49.3634
+  K7            -          -       -       -   # positioner  설계 X   28.5000  Y  -49.3634
+  K8            -          -       -       -   # fiducial    설계 X   47.5000  Y  -49.3634
+  K9            -          -       -       -   # positioner  설계 X   66.5000  Y  -49.3634
+  L1            -          -       -       -   # fiducial    설계 X  -76.0000  Y  -65.8179
+  L3            -          -       -       -   # positioner  설계 X  -38.0000  Y  -65.8179
+  L4            -          -       -       -   # fiducial    설계 X  -19.0000  Y  -65.8179
+  L5            -          -       -       -   # positioner  설계 X   -0.0000  Y  -65.8179
+  L6            -          -       -       -   # positioner  설계 X   19.0000  Y  -65.8179
+  L7            -          -       -       -   # positioner  설계 X   38.0000  Y  -65.8179
+  L8            -          -       -       -   # positioner  설계 X   57.0000  Y  -65.8179
+  M3            -          -       -       -   # positioner  설계 X  -28.5000  Y  -82.2724
+  M4            -          -       -       -   # positioner  설계 X   -9.5000  Y  -82.2724
+  M5            -          -       -       -   # positioner  설계 X    9.5000  Y  -82.2724
+  N1            -          -       -       -   # fiducial    설계 X  -57.0000  Y  -98.7269
+  N5            -          -       -       -   # fiducial    설계 X   19.0000  Y  -98.7269
+  O7            -          -       -       -   # fiducial    설계 X   66.5000  Y -115.1814
+  Z0            -          -       -       -   # fiducial    설계 X  125.0830  Y   43.3490
+  Z1            -          -       -       -   # fiducial    설계 X  100.0830  Y   86.6510
+  Z2            -          -       -       -   # fiducial    설계 X   25.0000  Y  130.0000
+  Z3            -          -       -       -   # fiducial    설계 X  -25.0000  Y  130.0000
+  Z4            -          -       -       -   # fiducial    설계 X -100.0830  Y   86.6510
+  Z5            -          -       -       -   # fiducial    설계 X -125.0830  Y   43.3490
+  Z6            -          -       -       -   # fiducial    설계 X -125.0830  Y  -43.3490
+  Z7            -          -       -       -   # fiducial    설계 X -100.0830  Y  -86.6510
+  Z8            -          -       -       -   # fiducial    설계 X  -25.0000  Y -130.0000
+  Z9            -          -       -       -   # fiducial    설계 X   25.0000  Y -130.0000
+  Z10           -          -       -       -   # fiducial    설계 X  100.0830  Y  -86.6510
+  Z11           -          -       -       -   # fiducial    설계 X  125.0830  Y  -43.3490

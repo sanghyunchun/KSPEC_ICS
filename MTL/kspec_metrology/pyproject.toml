@@ -11,6 +11,11 @@ packages = [
 include = [
 	{path = "kspec_metrology/lib/*", format="wheel"},
 	{path = "kspec_metrology/analysis/*.txt"},
+	{path = "kspec_metrology/analysis/*.npz"},
+	{path = "kspec_metrology/analysis/*.template"},
+	{path = "kspec_metrology/notebooks/*.ipynb"},
+	{path = "kspec_metrology/notebooks/README.md"},
+	{path = "kspec_metrology/notebooks/take_exposure.py"},
 	# mock 데이터. 이미지(.fits)는 용량 때문에 뺀다.
 	# 여기 glob이 .fits까지 잡으면 exclude보다 우선해서 들어가 버리므로,
 	# 넣을 것만 하나씩 적는다.
@@ -43,6 +48,11 @@ numpy = ">=1.24"       # astropy>=7 요구 하한
 scipy = ">=1.11"       # photutils>=2 요구 하한
 astropy = ">=5.3"      # photutils>=2 요구 하한
 photutils = ">=1.9"
+
+# 기본 peak 검출 방법이 'sep'이므로 필수다. 다른 방법
+# (find_peaks, daofind, segmentation)만 쓸 거면 없어도 import는 된다
+# (peakfind가 지연 import한다).
+sep = ">=1.2"
 
 [build-system]
 requires = ["poetry-core"]

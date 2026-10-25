@@ -1,0 +1,8 @@
+# 켜져 있지만 fiber 매칭에서 뺄 점들의 초점면 좌표 [mm] (plate 중심 기준).
+#   - 고정된 sky fiber
+#   - 고장나서 움직이지 않는 positioner 의 fiber (그 positioner 는 FIBER_EXCLUDE 에도 넣는다)
+# 'name X Y' 세 칸, '#' 뒤는 주석. 이 거리(FIXED_SPOT_TOL = 1.5 mm) 안의 검출은 fiber 후보에서 뺀다.
+# 좌표는 한 번 측정해서 적는다 (lab.check_peaks / lab.show_steps 의 초점면 좌표).
+# 경로는 KSPEC_FIXED_SPOTS 로 바꿀 수 있다. 비어 있으면 아무것도 하지 않는다.
+#
+# name     X          Y

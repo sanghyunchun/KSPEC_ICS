@@ -74,6 +74,9 @@ def main(argv=None):
     ap.add_argument('--tile', default='test', help='타일 이름 (파일 이름에 쓰인다)')
     ap.add_argument('--itrial', type=int, default=1, help='trial 번호')
     ap.add_argument('--nexposure', type=int, default=1, help='이미지 장수')
+    ap.add_argument('--finder', default='sep',
+                    choices=['sep', 'find_peaks', 'daofind', 'segmentation'],
+                    help='peak 검출 방법 (peakfind 참고)')
     ap.add_argument('--mode', default='Raw', choices=['Raw', 'Predict'],
                     help='peak 검출 방식')
     ap.add_argument('--threshold', type=float, default=3e3,
@@ -81,6 +84,11 @@ def main(argv=None):
     ap.add_argument('--nwindow', type=int, default=40,
                     help='center of mass crop 반폭 [pixel]. fiber 최소 이격 '
                          '3mm 기준이 40이다')
+    ap.add_argument('--model', default='full',
+                    help="왜곡 모델 ('full', 'optics', 'radial', 'similarity')")
+    ap.add_argument('--use-measured', action='store_true',
+                    help='실측 기하(Measured_Geometry.txt)를 쓴다. mock 은 설계값으로 '
+                         '만든 것이라 기본은 끈다')
     ap.add_argument('--via', default='mtlcal',
                     choices=['mtlcal', 'metrologyrun'],
                     help='mtlcal을 직접 부를지, MetrologyRun을 촬영 없이 돌릴지')
@@ -122,9 +130,12 @@ def main(argv=None):
             data_dir=image_dir,
             head=naming.image_head(args.tile, args.itrial),
             mode=args.mode,
+            finder=args.finder,
             threshold=args.threshold,
             nwindow=args.nwindow,
             nexposure=args.nexposure,
+            model=args.model,
+            use_measured=args.use_measured,
             target_file=target_file,
             json_dir=out_dir,
             target_name=args.tile,
@@ -138,9 +149,12 @@ def main(argv=None):
                            data_dir=image_dir,
                            json_dir=out_dir,
                            mode=args.mode,
+                           finder=args.finder,
                            threshold=args.threshold,
                            nwindow=args.nwindow,
                            nexposure=args.nexposure,
+                           model=args.model,
+                           use_measured=args.use_measured,
                            tile=args.tile,
                            max_trial=args.itrial)
         run.start()                                 # Trial 0 = 목표 각도
