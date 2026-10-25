@@ -85,17 +85,19 @@ def matchfiber(x, y
     ngrid = 81
     offset_grid = np.linspace(-20., 20., ngrid)
 
-    # y 방향 offset 전체를 한 번에 질의한다 (x 방향으로만 반복)
-    ygrid = ty[None, :] - offset_grid[:, None]
-    dsum_temp = np.empty((ngrid, ngrid))
-    for i in range(ngrid):
-        xgrid = tx - offset_grid[i]
+    # x, y offset 조합 전체를 한 번에 질의한다. 예전에는 x 방향으로 81번 나눠
+    # 물었는데, 한 번에 묶으면 결과는 같으면서 10배쯤 빠르다 (KD-tree 질의는
+    # 병렬로 도는데 호출을 쪼개면 그 이득이 줄어든다). 질의점은
+    # ngrid*ngrid*점수 개이므로 181점 기준 약 19MB로 메모리도 문제없다.
+    ox, oy = np.meshgrid(offset_grid, offset_grid, indexing='ij')
+    dx = tx[None, None, :] - ox[:, :, None]
+    dy = ty[None, None, :] - oy[:, :, None]
 
-        dd, _ = tree.query(np.column_stack((( cos_g*xgrid[None, :] + sin_g*ygrid).ravel(),
-                                            (-sin_g*xgrid[None, :] + cos_g*ygrid).ravel())),
-                           k=1, workers=-1)
+    dd, _ = tree.query(np.column_stack((( cos_g*dx + sin_g*dy).ravel(),
+                                        (-sin_g*dx + cos_g*dy).ravel())),
+                       k=1, workers=-1)
 
-        dsum_temp[i] = dd.reshape(ngrid, -1).sum(axis=1)
+    dsum_temp = dd.reshape(ngrid, ngrid, -1).sum(axis=2)
 
     imin, jmin = np.unravel_index(dsum_temp.argmin(), dsum_temp.shape)
     log.info(f"Estimated offset : ({offset_grid[imin]}, {offset_grid[jmin]})")

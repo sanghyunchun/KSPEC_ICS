@@ -3,6 +3,14 @@
 카메라 없이 분석 전체를 돌려 볼 수 있는 mock 한 세트다.
 K-SPEC 초점면을 그대로 본뜬 것으로, positioner 151개와 fiducial 30개가 들어 있다.
 
+> **이 mock은 `Fiber_Configuration_250415.txt` 기준이다.** 패키지 기본 표는
+> `config73`(positioner 73개)이므로, 아래 실행에는 표를 지정해 주어야 한다.
+> 지정하지 않으면 개수가 달라 예외가 난다.
+>
+> ```bash
+> export KSPEC_FIBER_TABLE=<패키지경로>/analysis/Fiber_Configuration_250415.txt
+> ```
+
 | 파일 | 크기 | 저장소 | 설명 |
 |---|---|---|---|
 | `object.info` | 6 KB | 포함 | fiber 목표 위치 (`xp`, `yp`) 151개. `tile_id="test"`, `zenith_angle=0` |
@@ -77,7 +85,7 @@ Rayleigh median이 47um이고, 표본 151개의 산포가 더해진 값).
 image_simulation/src/Total/Mock_Image_Generator_kspec_metrology.py
 ```
 
-`fiber_config`와 `Fiber_Configuration_250415.txt`를 그대로 읽어 만들기 때문에,
+`fiber_config`가 가리키는 표를 그대로 읽어 만들기 때문에,
 fiber 구성을 바꾸면 mock도 같이 다시 만들어야 한다. 용량이 부담되면 생성기의
 `COMPRESS = True`로 두면 RICE 무손실 압축이 걸려 92MB가 되고, 확장자가 `.fits`
 그대로라 읽는 쪽 코드는 바꿀 필요가 없다.

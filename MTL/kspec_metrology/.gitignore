@@ -8,11 +8,18 @@
 !LICENSE
 !pyproject.toml
 !poetry.lock
+!tools/
+!tools/**
 !kspec_metrology/
 !kspec_metrology/**
 
 # 패키지 안에서도 제외할 것
 kspec_metrology/.claude/
+kspec_metrology/**/*.ipynb
+kspec_metrology/*.ipynb
+!kspec_metrology/notebooks/
+!kspec_metrology/notebooks/*.ipynb
+!kspec_metrology/notebooks/README.md
 **/__pycache__/
 *.py[cod]
 
@@ -20,3 +27,14 @@ kspec_metrology/.claude/
 dist/
 *.egg-info/
 *.bak
+
+# tmp/ 에서는 object.info만 추적해 공유한다.
+# fits는 400MB대라 따로 공유하고, truth npz는 분석에 쓰이지 않으며(생성기가
+# 로컬 검증용으로만 만든다), 결과 json은 run_mock의 산출물이다.
+kspec_metrology/tmp/*.fits
+kspec_metrology/tmp/*.npz
+kspec_metrology/tmp/*.json
+
+# 노트북을 notebooks/ 안에서 실행했을 때 생기는 결과 폴더
+kspec_metrology/notebooks/metrology_out/
+kspec_metrology/notebooks/*_out/

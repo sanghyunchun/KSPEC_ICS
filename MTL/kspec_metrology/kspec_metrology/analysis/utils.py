@@ -4,48 +4,69 @@ from scipy.spatial import cKDTree
 from functools import lru_cache
 from math import factorial
 
+@lru_cache(maxsize=16)
+def _ones(n, dtype_str):
+    """행렬-벡터 곱에 쓸 1 벡터. 크기/타입별로 한 번만 만든다."""
+    return np.ones(n, dtype=np.dtype(dtype_str))
+
+
+def _marginals(im_crop):
+    """열 방향 합, 행 방향 합, 총합.
+
+    np.sum(axis=...) 대신 1 벡터와의 행렬곱을 쓴다. BLAS로 내려가서 2배쯤
+    빠르고 (80x80에서 5.8us -> 2.8us), 특히 axis=0은 메모리를 건너뛰며 더하므로
+    차이가 크다. 총합은 두 marginal의 합이 같으므로 한 번만 구한다.
+    """
+    ny, nx = im_crop.shape
+    dt = im_crop.dtype.str
+
+    xsum = _ones(ny, dt) @ im_crop          # == im_crop.sum(axis=0)
+    ysum = im_crop @ _ones(nx, dt)          # == im_crop.sum(axis=1)
+
+    return xsum, ysum, xsum.sum()
+
+
 def com(im_crop, x_crop, y_crop):
-    xsum = np.sum(im_crop, axis=0)
-    ysum = np.sum(im_crop, axis=1)
+    """밝기 무게중심."""
+    xsum, ysum, total = _marginals(im_crop)
 
-    xcom = np.sum( x_crop*xsum ) / np.sum(xsum)
-    ycom = np.sum( y_crop*ysum ) / np.sum(ysum)
-
-    return xcom, ycom
+    return (x_crop @ xsum)/total, (y_crop @ ysum)/total
 
 
 def measure_fwhm(im_crop, x_crop, y_crop):
     """measure FWHM of the cropped image along x and y axes
-    SW added on 2026-01-31"""
+    SW added on 2026-01-31
 
-    xsum = np.sum(im_crop, axis=0)
-    ysum = np.sum(im_crop, axis=1)
-    
-    x_max = np.max(xsum)
-    x_half = x_max / 2
-    x_above_half = np.where(xsum >= x_half)[0]
-    fwhm_x = x_crop[x_above_half[-1]] - x_crop[x_above_half[0]]
-    
-    y_max = np.max(ysum)
-    y_half = y_max / 2
-    y_above_half = np.where(ysum >= y_half)[0]
-    fwhm_y = y_crop[y_above_half[-1]] - y_crop[y_above_half[0]]
-    
-    return fwhm_x, fwhm_y
+    각 축으로 합친 profile에서 최대값 절반을 넘는 첫/마지막 픽셀 간격이다.
+    보간하지 않으므로 픽셀 단위로 양자화되어 있다.
+    """
+    xsum, ysum, _ = _marginals(im_crop)
+
+    # profile이 수십 개짜리라 np.where가 argmax 두 번보다 싸다 (재봤다)
+    ix = np.where(xsum >= xsum.max()/2)[0]
+    iy = np.where(ysum >= ysum.max()/2)[0]
+
+    return (x_crop[ix[-1]] - x_crop[ix[0]],
+            y_crop[iy[-1]] - y_crop[iy[0]])
+
 
 def measure_sigma(im_crop, x_crop, y_crop):
     """Measure width (sigma) of the cropped image along x and y axes
-    SW added on 2026-06-10"""
+    SW added on 2026-06-10
 
-    xcom, ycom = com(im_crop, x_crop, y_crop)
+    무게중심 기준 2차 모멘트다 (FWHM이 아니다). com()과 marginal을 공유하므로
+    com을 따로 부르지 않는다.
+    """
+    xsum, ysum, total = _marginals(im_crop)
 
-    xsum = np.sum(im_crop, axis=0)
-    ysum = np.sum(im_crop, axis=1)
+    xcom = (x_crop @ xsum)/total
+    ycom = (y_crop @ ysum)/total
 
-    sigma_x = np.sqrt(np.sum(xsum * (x_crop - xcom)**2) / np.sum(xsum))
-    sigma_y = np.sqrt(np.sum(ysum * (y_crop - ycom)**2) / np.sum(ysum))
+    dx = x_crop - xcom
+    dy = y_crop - ycom
 
-    return sigma_x, sigma_y
+    return (np.sqrt((dx*dx) @ xsum / total),
+            np.sqrt((dy*dy) @ ysum / total))
 
 
 focal2camera_coeff = np.array([-1.18e-1, 0., 0., 0.
@@ -63,6 +84,62 @@ focal2camera_coeff = np.array([-1.18e-1, 0., 0., 0.
 # 실카메라 배율이 확정되면 이 상수만 바꾸면 된다 (참고: 커미셔닝 카메라를 fit한
 # camera2focal_coeff_comm[0]은 -8.86122935).
 CAMERA2FOCAL_M = -8.467529447775467
+
+# 왜곡 다항식 계수 이름 (_transform_core 인자 순서). fitdistortion 이 어느 항을 풀지
+# 고를 때 쓴다.
+COEFF_NAMES = ('m', 'theta', 'x0', 'y0',
+               'r1', 'r2', 'r3', 'r4',          # radial   r^2 .. r^8
+               't1', 't2', 't3',                # tangential
+               'a1', 'a2', 'a4', 'a3',          # PSF 비대칭(coma)으로 생기는 centroid 이동 항
+               'b1', 'b2')                      # affine 비등방 항 (b1+i b2)*conj(w): 축별 배율 차, 전단
+
+# 왜곡 모델. 광학계가 단순하거나 fiducial 이 적을 때 풀 항을 줄인다.
+# 풀지 않는 항은 0 으로 고정되고, 쓰려면 fiducial 이 (항 수 / 2) 개 이상 있어야 한다.
+#   full        본 장비. radial 4 + tangential 3 + PSF 4 항 (15 개, fiducial 8 개 이상)
+#   optics      PSF 항 없이 광학 왜곡만 (11 개). PSF 가 대칭에 가까울 때
+#   radial      배율 · 회전 · offset + r^2, r^4 (6 개). 렌즈가 적은 실험실 광학계
+#   similarity  배율 · 회전 · offset 만 (4 개). 왜곡을 무시해도 될 때
+#   +affine     위 모델에 b1, b2 를 더한 것. plate 가 카메라 축에 기울어 있거나(한쪽 축 축소)
+#               전단이 있을 때 필요하다. 실험실 영상(2026-10-19)에서 잔차 108 -> 61 um.
+DISTORTION_MODELS = {
+    'full': COEFF_NAMES[:15],
+    'optics': COEFF_NAMES[:11],
+    'radial': ('m', 'theta', 'x0', 'y0', 'r1', 'r2'),
+    'similarity': ('m', 'theta', 'x0', 'y0'),
+    'full+affine': COEFF_NAMES,
+    'optics+affine': COEFF_NAMES[:11] + ('b1', 'b2'),
+    'radial+affine': ('m', 'theta', 'x0', 'y0', 'r1', 'r2', 'b1', 'b2'),
+    'affine': ('m', 'theta', 'x0', 'y0', 'b1', 'b2'),
+}
+
+
+def model_mask(model):
+    """모델 이름(또는 계수 이름 목록) -> 풀 계수를 True 로 한 길이 15 의 bool 배열."""
+    if isinstance(model, str):
+        if model not in DISTORTION_MODELS:
+            raise ValueError(f"unknown distortion model {model!r}; "
+                             f"choose from {list(DISTORTION_MODELS)} or give coefficient names")
+        names = DISTORTION_MODELS[model]
+    else:
+        names = tuple(model)
+    bad = [n for n in names if n not in COEFF_NAMES]
+    if bad:
+        raise ValueError(f"unknown coefficient name(s) {bad}; valid: {COEFF_NAMES}")
+    for n in ('m', 'theta', 'x0', 'y0'):
+        if n not in names:
+            raise ValueError(f"'{n}' must always be free (it is a pose term, not distortion)")
+    return np.array([n in names for n in COEFF_NAMES])
+
+
+def full_coeff(coeff):
+    """길이 15 (affine 항 없음) 또는 17 의 계수 배열 -> 길이 17 (b1, b2 는 0 으로 채움)."""
+    coeff = np.asarray(coeff, float)
+    if coeff.size == len(COEFF_NAMES):
+        return coeff
+    if coeff.size == len(COEFF_NAMES) - 2:
+        return np.r_[coeff, 0., 0.]
+    raise ValueError(f"coefficient array must have {len(COEFF_NAMES)-2} or {len(COEFF_NAMES)} entries")
+
 
 camera2focal_coeff = np.array([CAMERA2FOCAL_M, 3.39, -17.6, 6.12
                             , 1e-7 , 1e-10,  -1e-14, 1e-19
@@ -152,6 +229,7 @@ def _transform_core(xtemp, ytemp
                , r1x, r2x, r3x, r4x
                , t1x, t2x, t3x
                , a1x, a2y, a4x, a3y
+               , b1=0., b2=0.
                ):
     """왜곡 다항식 본체. (x, y) 배열을 받아 (xnew-x0, ynew-y0)를 돌려준다.
 
@@ -162,6 +240,9 @@ def _transform_core(xtemp, ytemp
       - Zernike 항 Z20, Z10 은 (x+iy)^5, (x+iy)^3 의 실수부이고
         Z21, Z9 는 각각의 허수부다 (zernike() 참고). 복소 거듭제곱을
         곱셈 연쇄로 한 번만 만들어 네 항이 나눠 쓴다.
+      - affine 항 (b1 + i b2) * (x - iy) = (b1 x + b2 y) + i (b2 x - b1 y):
+        회전·등방 배율(m, theta)이 못 담는 축별 배율 차와 전단. 기본 0 이라 예전
+        15개 계수 배열을 그대로 넘겨도 결과가 같다.
     """
 
     cos_t, sin_t = np.cos(theta), np.sin(theta)
@@ -183,11 +264,13 @@ def _transform_core(xtemp, ytemp
     xnew = (x + x*rad_poly + (t1x*(s + 2.*x2) + (t2x*2.)*xy)*tan_scale
             + a1x*w5.real
             + a4x*w3.real
+            + b1*x + b2*y
             )
 
     ynew = (y + y*rad_poly + (t2x*(s + 2.*y2) + (t1x*2.)*xy)*tan_scale
             + a2y*w5.imag
             + a3y*w3.imag
+            + b2*x - b1*y
             )
 
     return xnew - x0, ynew - y0
@@ -200,9 +283,10 @@ def transform_polynomial(xin
                , r1x, r2x, r3x, r4x
                , t1x, t2x, t3x
                , a1x, a2y, a4x, a3y
+               , b1=0., b2=0.
                ):
     """curve_fit용 wrapper. x, y가 두 번 반복된 배열을 받아 결과를 이어붙여 돌려준다.
-    (curve_fit이 파라미터 개수를 signature에서 읽으므로 인자를 풀어서 적어 둔다.)"""
+    (curve_fit이 파라미터 개수를 signature 또는 p0 에서 읽으므로 인자를 풀어서 적어 둔다.)"""
 
     xtemp, ytemp = xin
     xnew, ynew = _transform_core(xtemp[:xtemp.size//2], ytemp[:ytemp.size//2]
@@ -210,12 +294,38 @@ def transform_polynomial(xin
                         , r1x, r2x, r3x, r4x
                         , t1x, t2x, t3x
                         , a1x, a2y, a4x, a3y
+                        , b1, b2
                         )
 
     return np.concatenate((xnew, ynew))
 
 def transform(x, y, coeff):
     return _transform_core(np.asarray(x), np.asarray(y), *coeff)
+
+
+def invert_transform(xfocal, yfocal, coeff, n_iter=8):
+    """camera->focal 변환의 역: 초점면 (xfocal, yfocal) 에 대응하는 칩 좌표 [mm].
+    닫힌 역함수가 없으므로 1차 근사(최소제곱)로 출발해 Newton 반복(수치 Jacobian)으로 푼다."""
+    xf, yf = np.asarray(xfocal, float), np.asarray(yfocal, float)
+    g = np.linspace(-15., 15., 7)                              # 칩 전체를 덮는 격자 [mm]
+    gx, gy = np.meshgrid(g, g); gx, gy = gx.ravel(), gy.ravel()
+    fx, fy = transform(gx, gy, coeff)
+    A = np.column_stack((fx, fy, np.ones(fx.size)))
+    cx, *_ = np.linalg.lstsq(A, gx, rcond=None); cy, *_ = np.linalg.lstsq(A, gy, rcond=None)
+    u = cx[0]*xf + cx[1]*yf + cx[2]; v = cy[0]*xf + cy[1]*yf + cy[2]
+    h = 1e-3
+    for _ in range(n_iter):
+        px, py = transform(u, v, coeff)
+        ex, ey = xf - px, yf - py
+        pxu, pyu = transform(u + h, v, coeff); pxv, pyv = transform(u, v + h, coeff)
+        j11, j21 = (pxu - px)/h, (pyu - py)/h                   # d(px,py)/du
+        j12, j22 = (pxv - px)/h, (pyv - py)/h                   # d(px,py)/dv
+        det = j11*j22 - j12*j21
+        du = ( j22*ex - j12*ey)/det; dv = (-j21*ex + j11*ey)/det
+        u, v = u + du, v + dv
+        if np.nanmax(np.hypot(du, dv)) < 1e-7:
+            break
+    return u, v
 
 def dedupe_peaks_kdtree(peak_table: Table, min_dist: float) -> Table:
     """
