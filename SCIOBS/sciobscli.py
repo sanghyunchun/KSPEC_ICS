@@ -51,25 +51,30 @@ class sciobscli:
 
 # Load tile position of RA/DEC
     def load_tilepos(self):
-        dtype=[('tid','i'),('RA','f'),('DEC','f')]
-        d=np.loadtxt(self.targetpath+self.project+'_tile_pos.txt',dtype=dtype,skiprows=1)
-        tilepos_list=[]
-        for row in d:
-            ttid=row["tid"]
-            ra=row["RA"]
-            dec=row["DEC"]
-            tilepos_list.append((ttid,ra,dec))
+        tile_id = int(self.tile_id)
+        info_path = os.path.join(self.targetpath, f'{self.project}_2627.info.txt')
+        matches = []
+        with open(info_path) as file:
+            for line_number, line in enumerate(file, start=1):
+                columns = line.partition('#')[0].split()
+                if not columns:
+                    continue
+                if len(columns) != 3:
+                    raise ValueError(f'Invalid tile position at {info_path}:{line_number}')
+                try:
+                    row_tile_id = int(columns[0])
+                except ValueError as error:
+                    raise ValueError(f'Invalid Tile ID at {info_path}:{line_number}') from error
+                if row_tile_id == tile_id:
+                    matches.append((float(columns[1]), float(columns[2])))
 
-        tilepos_list=np.array(tilepos_list)
-        ttid=tilepos_list[:,0]
-        idx = (ttid == int(self.tile_id))
-        stile_id=int(ttid[idx])
-        self.ra=tilepos_list[stile_id-1,1]
-        self.dec=tilepos_list[stile_id-1,2]
+        if len(matches) != 1:
+            raise ValueError(f'Expected one position for Tile ID {tile_id} in {info_path}; found {len(matches)}')
+        self.ra, self.dec = matches[0]
 
         message='Load Position of Tile'
 
-        dict_data={"inst" : 'TCS', "func" : 'loadtile', 'tid' : stile_id, 
+        dict_data={"inst" : 'TCS', "func" : 'loadtile', 'tid' : tile_id,
                 'ra' : self.ra, 'dec' : self.dec, 'message' : message, 'process': 'Done'}
         tiledata=json.dumps(dict_data)
         return tiledata
