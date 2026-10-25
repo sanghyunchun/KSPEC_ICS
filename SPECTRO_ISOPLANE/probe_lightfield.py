@@ -4,12 +4,12 @@ Run this once on the Windows PC before using the IsoPlane server. It checks what
 assumes and writes everything it finds to a JSON report:
 
 1. pythonnet loads the LightField assemblies (V5 or V4 names).
-2. Automation starts LightField and returns the experiment.
+2. Automation starts LightField and returns the experiment. Every LightField call goes through
+   ``netcall`` (GIL released), as in the server: a direct ``Automation()`` call deadlocks.
 3. Devices, saved experiments, and every Camera/Experiment/Spectrometer setting name with its
    current value (this settles the grating, file-name, export and time-stamp setting names).
-4. Enum names used by the server (TimeStamps, ShutterTimingMode).
-5. Whether a setting can be read from a thread other than the one that created Automation.
-6. Optional (--acquire): one exposure with time stamps on, then the SPE time stamps.
+4. Enum names used by the server (TimeStamps, ShutterTimingMode, ExportFileType).
+5. Optional (--acquire): one exposure with time stamps on, then the SPE time stamps.
 
 The probe never changes the grating or the centre wavelength, and never saves the experiment.
 With --acquire it changes the exposure time, time stamps, file name and export settings of the
@@ -26,9 +26,10 @@ import json
 import os
 import platform
 import sys
-import threading
 import time
 import traceback
+
+import netcall  # SPECTRO_ISOPLANE/netcall.py, next to this script
 
 DEFAULT_ROOT = r"C:\Program Files\Princeton Instruments\LightField"
 
@@ -78,20 +79,22 @@ def start_automation(visible):
     from System import String
     from System.Collections.Generic import List
 
-    auto = Automation(visible, List[String]())
-    return auto, auto.LightFieldApplication.Experiment
+    auto = netcall.new(Automation, visible, List[String]())
+    return auto, netcall.get(netcall.get(auto, "LightFieldApplication"), "Experiment")
 
 
 def devices(exp):
     def rows(devs):
-        return [{"type": str(d.Type), "model": str(d.Model), "serial": str(d.SerialNumber)}
-                for d in devs]
+        return [{key: str(netcall.get(d, key)) for key in ("Type", "Model", "SerialNumber")}
+                for d in netcall.items(devs)]
 
-    return {"experiment": rows(exp.ExperimentDevices), "available": rows(exp.AvailableDevices)}
+    return {"experiment": rows(netcall.get(exp, "ExperimentDevices")),
+            "available": rows(netcall.get(exp, "AvailableDevices"))}
 
 
 def saved_experiments(exp):
-    return {"current": str(exp.Name), "saved": [str(n) for n in exp.GetSavedExperiments()]}
+    return {"current": str(netcall.get(exp, "Name")),
+            "saved": [str(n) for n in netcall.items(netcall.call(exp, "GetSavedExperiments"))]}
 
 
 def setting_names(cls):
@@ -121,10 +124,10 @@ def dump_settings(exp):
         for member, key in sorted(setting_names(cls).items()):
             row = {"key": key}
             try:
-                row["exists"] = bool(exp.Exists(key))
+                row["exists"] = bool(netcall.call(exp, "Exists", key))
                 if row["exists"]:
-                    row["value"] = str(exp.GetValue(key))
-                    row["read_only"] = bool(exp.IsReadOnly(key))
+                    row["value"] = str(netcall.call(exp, "GetValue", key))
+                    row["read_only"] = bool(netcall.call(exp, "IsReadOnly", key))
             except Exception as e:  # some keys throw instead of reporting not-exists
                 row["error"] = repr(e)
             rows[member] = row
@@ -146,25 +149,6 @@ def enum_names():
     return out
 
 
-def cross_thread_read(exp):
-    """Read the exposure time from a plain Python thread (the server uses one worker thread)."""
-    from PrincetonInstruments.LightField.AddIns import CameraSettings
-
-    result = {}
-
-    def worker():
-        try:
-            result["value"] = str(exp.GetValue(CameraSettings.ShutterTimingExposureTime))
-        except Exception:
-            result["error"] = traceback.format_exc()
-
-    t = threading.Thread(target=worker)
-    t.start()
-    t.join(30)
-    result["finished"] = not t.is_alive()
-    return result
-
-
 def flags(enum_type, *members):
     """OR together .NET flag-enum members (pythonnet 3 enums are not Python ints)."""
     import clr
@@ -184,43 +168,46 @@ def acquire_one(app, exp, exptime_ms, outdir):
 
     os.makedirs(outdir, exist_ok=True)
     base = "probe_" + dt.datetime.now().strftime("%Y%m%d_%H%M%S")
-    exp.SetValue(CameraSettings.ShutterTimingExposureTime, float(exptime_ms))
-    exp.SetValue(CameraSettings.AcquisitionTimeStampingStamps,
-                 flags(TimeStamps, TimeStamps.ExposureStarted, TimeStamps.ExposureEnded))
-    # the server's per-frame settings (lightfield.LightField._expose)
-    exp.SetValue(ExperimentSettings.AcquisitionFramesToStore, Int64(1))
-    exp.SetValue(ExperimentSettings.OnlineExportFormat, ExportFileType.Fits)
-    exp.SetValue(ExperimentSettings.OnlineExportFormatOptionsIncludeExperimentInformation, True)
-    exp.SetValue(ExperimentSettings.FileNameGenerationDirectory, outdir)
-    exp.SetValue(ExperimentSettings.FileNameGenerationBaseFileName, base)
-    exp.SetValue(ExperimentSettings.FileNameGenerationAttachDate, False)
-    exp.SetValue(ExperimentSettings.FileNameGenerationAttachTime, False)
-    exp.SetValue(ExperimentSettings.FileNameGenerationAttachIncrement, False)
-    exp.SetValue(ExperimentSettings.OnlineExportEnabled, True)
-    exp.SetValue(ExperimentSettings.OnlineExportOutputOptionsExportedFilesOnly, False)
+    for name, value in (
+        (CameraSettings.ShutterTimingExposureTime, float(exptime_ms)),
+        (CameraSettings.AcquisitionTimeStampingStamps,
+         flags(TimeStamps, TimeStamps.ExposureStarted, TimeStamps.ExposureEnded)),
+        # the server's per-frame settings (lightfield.LightField._expose)
+        (ExperimentSettings.AcquisitionFramesToStore, Int64(1)),
+        (ExperimentSettings.OnlineExportFormat, ExportFileType.Fits),
+        (ExperimentSettings.OnlineExportFormatOptionsIncludeExperimentInformation, True),
+        (ExperimentSettings.FileNameGenerationDirectory, outdir),
+        (ExperimentSettings.FileNameGenerationBaseFileName, base),
+        (ExperimentSettings.FileNameGenerationAttachDate, False),
+        (ExperimentSettings.FileNameGenerationAttachTime, False),
+        (ExperimentSettings.FileNameGenerationAttachIncrement, False),
+        (ExperimentSettings.OnlineExportEnabled, True),
+        (ExperimentSettings.OnlineExportOutputOptionsExportedFilesOnly, False),
+    ):
+        netcall.call(exp, "SetValue", name, value)
 
-    if not exp.IsReadyToRun:
+    if not netcall.get(exp, "IsReadyToRun"):
         raise RuntimeError("experiment is not ready to run")
     t_call = dt.datetime.now(dt.timezone.utc)
-    exp.Acquire()
+    netcall.call(exp, "Acquire")
     time.sleep(0.5)
-    while exp.IsRunning:
+    while netcall.get(exp, "IsRunning"):
         time.sleep(0.1)
     t_done = dt.datetime.now(dt.timezone.utc)
 
-    files = [str(f) for f in app.FileManager.GetRecentlyAcquiredFileNames()]
+    fm = netcall.get(app, "FileManager")
+    files = [str(f) for f in netcall.items(netcall.call(fm, "GetRecentlyAcquiredFileNames"))]
     out = {"pc_utc_call": t_call.isoformat(), "pc_utc_done": t_done.isoformat(), "files": files}
     spe = [f for f in files if f.lower().endswith(".spe")]
     if spe:
-        ds = app.FileManager.OpenFile(spe[0], FileAccess.Read)
+        ds = netcall.call(fm, "OpenFile", spe[0], FileAccess.Read)
         try:
-            origin = ds.TimeStampOrigin
-            md = ds.GetFrameMetadata(0)
-            out["time_stamp_origin"] = str(origin)
-            out["exposure_started"] = str(md.ExposureStarted)
-            out["exposure_ended"] = str(md.ExposureEnded)
+            md = netcall.call(ds, "GetFrameMetadata", 0)
+            out["time_stamp_origin"] = str(netcall.get(ds, "TimeStampOrigin"))
+            out["exposure_started"] = str(netcall.get(md, "ExposureStarted"))
+            out["exposure_ended"] = str(netcall.get(md, "ExposureEnded"))
         finally:
-            app.FileManager.CloseFile(ds)
+            netcall.call(fm, "CloseFile", ds)
     return out
 
 
@@ -253,25 +240,28 @@ def main():
     if started is None:
         return finish(report, a.report)
     auto, exp = started
-    app = auto.LightFieldApplication
-
-    if a.experiment:
-        step(report, "load_experiment")(exp.Load, a.experiment)
-    step(report, "devices")(devices, exp)
-    step(report, "experiments")(saved_experiments, exp)
-    step(report, "settings")(dump_settings, exp)
-    step(report, "enums")(enum_names)
-    step(report, "cross_thread_read")(cross_thread_read, exp)
-    if a.acquire:
-        step(report, "acquire")(acquire_one, app, exp, a.exptime_ms, a.outdir)
-    finish(report, a.report)
-    auto.Dispose()
+    try:  # always close LightField: a host left in AddInProcess.exe blocks later starts
+        app = netcall.get(auto, "LightFieldApplication")
+        if a.experiment:
+            step(report, "load_experiment")(netcall.call, exp, "Load", a.experiment)
+        step(report, "devices")(devices, exp)
+        step(report, "experiments")(saved_experiments, exp)
+        step(report, "settings")(dump_settings, exp)
+        step(report, "enums")(enum_names)
+        if a.acquire:
+            step(report, "acquire")(acquire_one, app, exp, a.exptime_ms, a.outdir)
+        finish(report, a.report)
+    finally:
+        try:
+            netcall.call(auto, "Dispose")
+        except netcall.NetError as e:  # LightField already gone
+            print(f"Dispose: {e}", flush=True)
 
 
 def finish(report, path):
     report["finished"] = dt.datetime.now(dt.timezone.utc).isoformat()
     with open(path, "w", encoding="utf-8") as f:
-        json.dump(report, f, indent=1)
+        json.dump(report, f, indent=1, default=str)  # .NET objects as text
     print(f"report written to {path}", flush=True)
 
 

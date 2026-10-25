@@ -4,13 +4,13 @@
 loaded with pythonnet; Windows only). ``FakeLightField`` writes LightField-like FITS files so
 the server can be developed and tested anywhere.
 
-Setting names marked "confirm with probe" are inferred from the January 2026 headers (a header
-key ``PI CAMERA SHUTTERTIMING EXPOSURETIME`` is the setting ``CameraSettings.
-ShutterTimingExposureTime``) and the saved experiment (``.lfe``: ``Devices/Cameras/Camera/Adc/
-Speed`` is ``CameraSettings.AdcSpeed``). ``probe_lightfield.py`` lists the real names on the
-LightField PC.
+The setting names and enum values used here were inferred from the January 2026 headers and
+the saved experiments, and all exist in LightField 6.15.2 (probe_lightfield.py on the LightField
+laptop, 2026-10-25, no camera attached). Still to check with the camera: that each setting
+exists for the PIXIS, and one acquisition with time stamps (``probe_lightfield.py --acquire``).
 """
 
+import atexit
 import datetime as dt
 import os
 import threading
@@ -19,9 +19,11 @@ from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
+from . import netcall
 
-# status key: CameraSettings member, i.e. the .lfe path under Devices/Cameras/Camera
-# (confirm with probe). The 2026 run used Adc 0.1 MHz / High / LowNoise at -55 C, full sensor;
+
+# status key: CameraSettings member, i.e. the .lfe path under Devices/Cameras/Camera.
+# The 2026 run used Adc 0.1 MHz / High / LowNoise at -55 C, full sensor;
 # from 2026-02-03 the layout read 1330 rows of the 1300-row sensor: the last 30 are overscan.
 CAMERA_STATUS = {
     "adc_speed_mhz": "AdcSpeed",
@@ -163,8 +165,9 @@ class FakeLightField(LightFieldBase):
 
 
 class LightField(LightFieldBase):
-    """The real LightField, through pythonnet. Every .NET call runs on one dedicated thread,
-    the thread that created the Automation object."""
+    """The real LightField, through pythonnet. Driver calls are serialised on one Python worker
+    thread; every LightField call goes through ``netcall`` so that it never runs while the GIL
+    is held (``Automation()`` deadlocked otherwise, see netcall)."""
 
     def __init__(self, root, visible=True, experiment=None):
         self.root = root
@@ -191,7 +194,7 @@ class LightField(LightFieldBase):
         sys.path.append(os.path.join(self.root, "AddInViews"))
         for base in ("PrincetonInstruments.LightFieldView",
                      "PrincetonInstruments.LightField.Automation"):
-            for v in ("V5", "V4"):  # confirm with probe
+            for v in ("V5", "V4"):  # LightField 6.15 ships V5
                 try:
                     clr.AddReference(base + v)
                     break
@@ -202,9 +205,10 @@ class LightField(LightFieldBase):
         clr.AddReference("PrincetonInstruments.LightFieldAddInSupportServices")
         from PrincetonInstruments.LightField.Automation import Automation
 
-        self._auto = Automation(self.visible, List[String]())
-        self._app = self._auto.LightFieldApplication
-        self._exp = self._app.Experiment
+        self._auto = netcall.new(Automation, self.visible, List[String]())
+        atexit.register(self._dispose)  # also when the server dies of an exception
+        self._app = netcall.get(self._auto, "LightFieldApplication")
+        self._exp = netcall.get(self._app, "Experiment")
         if self.default_experiment:
             self._load(self.default_experiment)
 
@@ -220,30 +224,32 @@ class LightField(LightFieldBase):
     def _status(self):
         cam, _, spec = self._settings()
         exp = self._exp
-        out = {"ready": bool(exp.IsReadyToRun), "running": bool(exp.IsRunning),
-               "updating": bool(exp.IsUpdating), "driver": "lightfield",
-               "experiment": str(exp.Name)}
-        names = {"grating": spec.GratingSelected,  # confirm with probe
+        out = {"ready": bool(netcall.get(exp, "IsReadyToRun")),
+               "running": bool(netcall.get(exp, "IsRunning")),
+               "updating": bool(netcall.get(exp, "IsUpdating")), "driver": "lightfield",
+               "experiment": str(netcall.get(exp, "Name"))}
+        names = {"grating": spec.GratingSelected,
                  "center_nm": spec.GratingCenterWavelength}
         names.update({key: getattr(cam, member, None) for key, member in CAMERA_STATUS.items()})
         for key, name in names.items():
-            out[key] = str(exp.GetValue(name)) if name is not None and exp.Exists(name) else "None"
+            known = name is not None and netcall.call(exp, "Exists", name)
+            out[key] = str(netcall.call(exp, "GetValue", name)) if known else "None"
         return out
 
     def load_experiment(self, name):
         self._call(self._load, name)
 
     def _load(self, name):
-        if not self._exp.Load(name):
+        if not netcall.call(self._exp, "Load", name):
             raise RuntimeError(f"LightField could not load experiment {name!r}")
-        while self._exp.IsUpdating:  # a grating move happens here
+        while netcall.get(self._exp, "IsUpdating"):  # a grating move happens here
             time.sleep(0.2)
 
     def stop(self):
         self._stopped.set()
         exp = self._exp  # Stop must not wait behind a running expose() on the worker thread
-        if exp is not None and exp.IsRunning:
-            exp.Stop()  # called off the worker thread: confirm with probe (cross_thread_read)
+        if exp is not None and netcall.get(exp, "IsRunning"):
+            netcall.call(exp, "Stop")
 
     def clear_stop(self):
         self._stopped.clear()
@@ -270,10 +276,10 @@ class LightField(LightFieldBase):
         # export with the experiment information (the PI cards the reduction reads), and the SPE.
         for name, value in (
             (cam.ShutterTimingExposureTime, float(exptime_s * 1000.0)),
-            (cam.ShutterTimingMode,  # confirm with probe
+            (cam.ShutterTimingMode,
              ShutterTimingMode.AlwaysClosed if shutter_closed else ShutterTimingMode.Normal),
             (cam.AcquisitionTimeStampingStamps, stamps),
-            (expset.AcquisitionFramesToStore, Int64(1)),  # confirm with probe (all below)
+            (expset.AcquisitionFramesToStore, Int64(1)),
             (expset.FileNameGenerationDirectory, directory),
             (expset.FileNameGenerationBaseFileName, basename),
             (expset.FileNameGenerationAttachDate, False),
@@ -284,40 +290,54 @@ class LightField(LightFieldBase):
             (expset.OnlineExportFormatOptionsIncludeExperimentInformation, True),
             (expset.OnlineExportOutputOptionsExportedFilesOnly, False),  # keep the SPE
         ):
-            if not exp.Exists(name):
+            # Exists first: SetValue/GetValue of a missing setting crashes LightField itself
+            if not netcall.call(exp, "Exists", name):
                 raise RuntimeError(f"LightField has no setting {name}")
-            exp.SetValue(name, value)
+            netcall.call(exp, "SetValue", name, value)
         if self._stopped.is_set():
             raise RuntimeError("acquisition stopped")
-        if not exp.IsReadyToRun:
+        if not netcall.get(exp, "IsReadyToRun"):
             raise RuntimeError("LightField is not ready to run")
-        exp.Acquire()
+        netcall.call(exp, "Acquire")
         time.sleep(0.5)
-        while exp.IsRunning:
+        while netcall.get(exp, "IsRunning"):
             time.sleep(0.1)
         if self._stopped.is_set():
             raise RuntimeError("acquisition stopped")
 
-        files = [str(f) for f in self._app.FileManager.GetRecentlyAcquiredFileNames()]
+        fm = netcall.get(self._app, "FileManager")
+        files = [str(f) for f in netcall.items(netcall.call(fm, "GetRecentlyAcquiredFileNames"))]
         fits_path = os.path.join(directory, basename + ".fits")
         if not os.path.exists(fits_path):
             raise RuntimeError(f"exported FITS not found: {fits_path} (LightField wrote {files})")
         frame = Frame(fits_path, setup=self._status())
         spe = [f for f in files if f.lower().endswith(".spe")]
         if spe:
-            ds = self._app.FileManager.OpenFile(spe[0], FileAccess.Read)
+            ds = netcall.call(fm, "OpenFile", spe[0], FileAccess.Read)
             try:
-                origin, md = ds.TimeStampOrigin, ds.GetFrameMetadata(0)
-                if origin is not None and md.ExposureStarted is not None:
-                    frame.ut_start = _net_utc(origin, md.ExposureStarted)
-                    frame.ut_end = _net_utc(origin, md.ExposureEnded)
+                origin = netcall.get(ds, "TimeStampOrigin")
+                md = netcall.call(ds, "GetFrameMetadata", 0)
+                started = netcall.get(md, "ExposureStarted")
+                if origin is not None and started is not None:
+                    frame.ut_start = _net_utc(origin, started)
+                    frame.ut_end = _net_utc(origin, netcall.get(md, "ExposureEnded"))
             finally:
-                self._app.FileManager.CloseFile(ds)
+                netcall.call(fm, "CloseFile", ds)
         return frame
 
+    def _dispose(self):
+        """Close LightField. Without it, LightField stays in its AddInProcess.exe, and a host
+        left behind (or killed) blocks every later start: IPC "pipe has been ended" or a hang,
+        until a reboot (2026-10-24)."""
+        auto, self._auto = self._auto, None
+        if auto is not None:
+            try:
+                netcall.call(auto, "Dispose")
+            except netcall.NetError:  # LightField already gone (crashed or closed by hand)
+                pass
+
     def close(self):
-        if self._auto is not None:
-            self._call(self._auto.Dispose)
+        self._call(self._dispose)
         self._pool.shutdown()
 
 

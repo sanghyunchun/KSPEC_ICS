@@ -109,6 +109,8 @@ without a command (firmware watchdog). The stage stays where it is: restart the 
 - `ISOPLANE_server.py`: RabbitMQ consumer on queue `ISOPLANE`.
 - `command.py`: the commands, the lock, and the interlock.
 - `lightfield.py`: `LightField` (pythonnet, Windows) and `FakeLightField`.
+- `netcall.py`: runs every LightField call on a .NET thread while Python waits without the GIL.
+  A direct call can deadlock: `Automation()` never returned (LightField 6.15, pythonnet 3.2).
 - `backillum.py`: Uno link, stage operations, `FakeUno`.
 - `fitsio.py`: adds the ICS cards (OBSTYPE, TILEID, UTSTART/UTEND, ...) to the LightField FITS.
   LightField's own cards are kept byte for byte; its EXPTIME stays in ms and the ICS request
@@ -130,6 +132,13 @@ to `<sharepath>/<night>/` when `sharepath` is set; the reply carries the shared 
    `RabbitMQ.ip_addr` on the LightField PC.
 3. On the LightField PC: `pip install pythonnet pyserial aio-pika astropy numpy`, then
    `python SPECTRO_ISOPLANE/probe_lightfield.py` and check the report.
+   LightField runs in a child `AddInProcess.exe`. If the server or the probe is killed while
+   LightField starts, that child can stay behind and break every later start (IPC "pipe has
+   been ended", or a hang); end it, or reboot when it cannot be ended.
+   Read or set a LightField setting only after `Exists`: `GetValue`/`SetValue` of a missing
+   setting crashes LightField itself ("LightField has stopped working"; answer Cancel).
+   Saved experiments are looked up in `<LightField working directory>\Experiments`
+   (LightField Options): keep the working directory fixed rather than per night.
 4. Start the server from the repository root: `python SPECTRO_ISOPLANE/ISOPLANE_server.py`.
 
 Tests with the fakes: `python -m unittest tests.test_isoplane_fake`.
