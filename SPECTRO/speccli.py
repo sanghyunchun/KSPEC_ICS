@@ -71,6 +71,33 @@ def get_flat(exptime,nframe, header):
 def get_arc(exptime,nframe, header):
     return create_spec_command('getarc', time=exptime, numframe=nframe, header=header, message =f'Get {nframe} arc images by {exptime} senconds exposure.')
 
+def get_dark(exptime,nframe, header):
+    return create_spec_command('getdark', time=exptime, numframe=nframe, header=header, message =f'Get {nframe} dark images by {exptime} senconds exposure.')
+
+
+# OBSTYPE (GUI combo, scripts, header) -> SPEC frame command
+FRAME_COMMANDS = {'Bias': 'getbias', 'Dark': 'getdark', 'Flat': 'getflat', 'Arc': 'getarc',
+                  'Object': 'getobj'}
+
+
+def frame_command(obstype, exptime, nframe):
+    """SPEC command line for one frame type: 'getbias <n>', else 'get<type> <t> <n>'.
+
+    ValueError for an unknown or unset type (the GUI's 'None') and for a bad time or count, so
+    a frame is never taken with the wrong command (e.g. a bias with the shutter open).
+    """
+    if obstype not in FRAME_COMMANDS:
+        raise ValueError(f"select a frame type ({', '.join(FRAME_COMMANDS)}), not {obstype!r}")
+    try:
+        n = int(nframe)
+        t = 0.0 if obstype == 'Bias' else float(exptime)
+    except (TypeError, ValueError):
+        raise ValueError(f"bad exposure time {exptime!r} or count {nframe!r}") from None
+    if n < 1 or t < 0:
+        raise ValueError(f"exposure time {t:g} and count {n} must be >= 0 and >= 1")
+    cmd = FRAME_COMMANDS[obstype]
+    return f'{cmd} {n}' if cmd == 'getbias' else f'{cmd} {t:g} {n}'
+
 
 async def handle_spec(arg, ICS_client, header=None):
     cmd, *params = arg.split()
@@ -149,6 +176,17 @@ async def handle_spec(arg, ICS_client, header=None):
             print(f"Error: Input parameters of 'getarc' should be float and int. input value: {params[0]} {params[1]}")
             return
         command_map[cmd] = lambda: get_arc(ExpT,obsnum, header)
+
+    if cmd == 'getdark':
+        if len(params) != 2:
+            print("Error: 'getdark' needs two parameters: exposure time and number of exposures. ex) getdark 600 5 ")
+            return
+        try:
+            ExpT, obsnum = float(params[0]), int(params[1])
+        except ValueError:
+            print(f"Error: Input parameters of 'getdark' should be float and int. input value: {params[0]} {params[1]}")
+            return
+        command_map[cmd] = lambda: get_dark(ExpT,obsnum, header)
 
     if cmd in command_map:
         specmsg = command_map[cmd]()

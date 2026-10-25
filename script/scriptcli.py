@@ -45,7 +45,7 @@ def log_or_print(logging, message, level):
 
 
 def spec_command_timeout(command):
-    """Seconds to wait for the Done reply of a getbias/getflat/getarc/getobj command."""
+    """Seconds to wait for the Done reply of a getbias/getdark/getflat/getarc/getobj command."""
     cmd, *params = command.split()
     try:
         if cmd == 'getbias':
@@ -407,6 +407,64 @@ class script():
             scriptrun.show_status('LAMP','normal')
             scriptrun.show_status('SPEC','normal')
             logging('Run Calibration Task finished', level='normal')
+
+    async def run_dark(self, scriptrun, logging):
+        """Starts the dark sequence asynchronously (before the night starts and after it ends)."""
+        self.script_task = asyncio.create_task(
+                self.handle_dark(scriptrun, logging)
+        )
+
+    async def handle_dark(self, scriptrun, logging):
+        """Darks grouped by exposure time, from Calibinfo.json "Dark":
+        [{"exptime": <s>, "expnum": <n>}, ...], taken in that order with getdark.
+
+        Darks are taken at the object exposure times of the night, as a block before the night
+        starts and another after it ends, not inside runcalib: they can take hours. The arc and
+        flat lamps are switched off first. A group whose getdark does not succeed ends the
+        sequence (specstop interrupts the running exposure).
+        """
+        printing("New Dark task started.")
+        await clear_queue(scriptrun.response_queue)
+        await clear_queue(scriptrun.SPEC_response_queue)
+
+        with open('./Lib/Calibinfo.json', 'r') as f:
+            calinfo = json.load(f)
+        groups = calinfo.get('Dark') or []
+        if isinstance(groups, dict):
+            groups = [groups]
+        groups = [(float(g['exptime']), int(g['expnum'])) for g in groups if int(g.get('expnum', 0)) > 0]
+        if not groups:
+            log_or_print(logging, 'No dark groups in Calibinfo.json "Dark": nothing to take.', 'warning')
+            return
+
+        total_min = sum(t * n for t, n in groups) / 60
+        log_or_print(logging, 'Dark sequence: ' + ', '.join(f'{n} x {t:g} s' for t, n in groups)
+                     + f' ({total_min:.0f} min of exposure).', 'send')
+
+        for lamp in ('arcoff', 'flatoff'):
+            await handle_lamp(
+                lamp, scriptrun.ICSclient, logging=logging,
+                state_callback=getattr(scriptrun, 'lamp_state_callback', None),
+            )
+
+        for exptime, expnum in groups:
+            if logging != None:
+                logging(f"Sent getdark {exptime:g} {expnum}.", level='send')
+            rsp = await self.send_spec_and_log(
+                f"getdark {exptime:g} {expnum}", 'Dark', exptime, expnum, scriptrun, logging=logging,
+            )
+            if rsp.get("status") != "success":
+                log_or_print(logging, f'Dark sequence stopped after the {exptime:g} s group.', 'error')
+                break
+        else:
+            printing("All dark images were obtained.")
+            if logging != None:
+                logging("All dark images were obtained.", level='send')
+
+        self.script_task = None
+        if logging != None:
+            scriptrun.show_status('SPEC', 'normal')
+            logging('Run Dark Task finished', level='normal')
 
     async def spec_illumination(self, cmd, scriptrun, logging=None):
         """illuon / illuoff / illulighton / illulightoff; True when the reply says success."""
@@ -826,7 +884,7 @@ async def handle_script(arg, scriptrun=None, logging=None):
 
     command_map = {
             'obsinitial': scriptrun.obs_initial, 'runcalib': scriptrun.run_calib, 'runobs': scriptrun.run_obs,
-            'runmtl': scriptrun.run_metrology
+            'runmtl': scriptrun.run_metrology, 'rundark': scriptrun.run_dark
     }
 
     if cmd in command_map:

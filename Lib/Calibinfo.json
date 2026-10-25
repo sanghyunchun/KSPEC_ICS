@@ -10,5 +10,9 @@
     "Bias": {
         "exptime": 0,
         "expnum" : 10
-    }
+    },
+    "Dark": [
+        {"exptime": 300, "expnum": 5},
+        {"exptime": 1800, "expnum": 5}
+    ]
 }

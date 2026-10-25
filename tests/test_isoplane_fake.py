@@ -427,6 +427,21 @@ class IsoplaneFakeTest(unittest.TestCase):
             got = (h['DATASEC'], h['BIASSEC']) if 'BIASSEC' in h else None
             self.assertEqual(got, sections, (overscan, bias_rows))
 
+    def test_darks_are_taken_with_the_shutter_closed(self):
+        iso = self.make()
+        self.run_cmds(iso, body('specinitial', dirname='20261101'),
+                      body('getdark', time=5, numframe=2, header={**HEADER, 'OBSTYPE': 'Dark'}))
+        dark, = self.server.done('getdark')
+        self.assertEqual(dark['status'], 'success')
+        self.assertEqual([os.path.basename(p) for p in dark['filenames']],
+                         ['20261101_0001_dark.fits', '20261101_0002_dark.fits'])
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            h = fits.getheader(dark['filename'])
+        self.assertEqual(h['PI CAMERA SHUTTERTIMING MODE'], 'AlwaysClosed')
+        self.assertEqual(h['PI CAMERA SHUTTERTIMING EXPOSURETIME'], '5000')
+        self.assertEqual((h['OBSTYPE'], h['ICSFUNC']), ('Dark', 'getdark'))
+
     def test_late_exposure_is_stopped_and_fails(self):
         iso = self.make(lf=FakeLightField(time_scale=1000, shape=(1, 8, 10)))
         iso.expose_timeout_s = 0.05  # a 0.01 s exposure that would take 10 s
@@ -506,6 +521,64 @@ class MetrologyLoopTest(unittest.TestCase):
                                 'fiducialoff'])
 
 
+class DarkSequenceTest(unittest.TestCase):
+    """script.handle_dark (rundark) and handle_calib with the instrument clients faked."""
+
+    def setUp(self):
+        try:
+            from script import scriptcli
+        except Exception as e:  # redis, pandas, ... exist on the ICS PC
+            self.skipTest(f'script.scriptcli cannot be imported here: {e}')
+        self.cli = scriptcli
+
+    def run_script(self, method, calinfo, fail=()):
+        cli, sent = self.cli, []
+
+        async def go():
+            q = asyncio.Queue()
+            run = SimpleNamespace(ICSclient=None, response_queue=q, GFA_response_queue=q,
+                                  ADC_response_queue=q, SPEC_response_queue=q,
+                                  lamp_state_callback=None, show_status=lambda *a: None)
+
+            async def spec(cmd, client, header=None):
+                sent.append((cmd, (header or {}).get('OBSTYPE')))
+                q.put_nowait({'inst': 'SPEC', 'func': cmd.split()[0], 'process': 'Done',
+                              'status': 'error' if cmd in fail else 'success'})
+
+            async def lamp(cmd, client, logging=None, state_callback=None):
+                sent.append((cmd, None))
+
+            with patch.object(cli, 'handle_spec', spec), patch.object(cli, 'handle_lamp', lamp), \
+                    patch.object(cli.json, 'load', return_value=calinfo):
+                await getattr(cli.script(), method)(run, None)
+        asyncio.run(go())
+        return sent
+
+    def test_rundark_takes_the_groups_in_order_with_the_lamps_off(self):
+        sent = self.run_script('handle_dark', {'Dark': [{'exptime': 300, 'expnum': 5},
+                                                        {'exptime': 1800, 'expnum': 0},
+                                                        {'exptime': 900, 'expnum': 2}]})
+        self.assertEqual(sent, [('arcoff', None), ('flatoff', None),
+                                ('getdark 300 5', 'Dark'), ('getdark 900 2', 'Dark')])
+
+    def test_rundark_stops_after_a_failed_group(self):
+        sent = self.run_script('handle_dark', {'Dark': [{'exptime': 300, 'expnum': 5},
+                                                        {'exptime': 1800, 'expnum': 5}]},
+                               fail=('getdark 300 5',))
+        self.assertEqual([c for c, _ in sent if c.startswith('getdark')], ['getdark 300 5'])
+
+    def test_rundark_without_groups_takes_nothing(self):
+        self.assertEqual(self.run_script('handle_dark', {'Bias': {'exptime': 0, 'expnum': 1}}), [])
+
+    def test_runcalib_takes_no_darks(self):
+        calinfo = {'Bias': {'exptime': 0, 'expnum': 2}, 'Arc': {'exptime': 5, 'expnum': 1},
+                   'Flat': {'exptime': 3, 'expnum': 1},
+                   'Dark': [{'exptime': 300, 'expnum': 5}]}
+        sent = self.run_script('handle_calib', calinfo)
+        self.assertEqual([c.split()[0] for c, o in sent if o],
+                         ['getbias', 'getarc', 'getflat'])
+
+
 class WaitReplyTest(unittest.TestCase):
     def test_skips_progress_and_other_commands(self):
         from Lib.reply import wait_reply
@@ -583,15 +656,18 @@ class SpecCliRoutingTest(unittest.TestCase):
                 patch.object(speccli, 'set_illumination', AsyncMock()) as relay:
             state = asyncio.run(speccli.handle_spec('illuon', client))
             asyncio.run(speccli.handle_spec('getarc 3 2', client, {}))
+            asyncio.run(speccli.handle_spec('getdark 600 2', client, {}))
             asyncio.run(speccli.handle_spec('specinitial 20261101 KSPEC_600_430', client))
             asyncio.run(speccli.handle_spec('specstop', client))
         relay.assert_not_awaited()
         self.assertEqual(state, 1)
         keys = [c.args[0] for c in client.send_message.await_args_list]
-        self.assertEqual(keys, ['ISOPLANE'] * 4)
-        self.assertEqual(json.loads(client.send_message.await_args_list[3].args[1])['func'],
+        self.assertEqual(keys, ['ISOPLANE'] * 5)
+        self.assertEqual(json.loads(client.send_message.await_args_list[4].args[1])['func'],
                          'specstop')
-        init = json.loads(client.send_message.await_args_list[2].args[1])
+        dark = json.loads(client.send_message.await_args_list[2].args[1])
+        self.assertEqual((dark['func'], dark['time'], dark['numframe']), ('getdark', 600.0, 2))
+        init = json.loads(client.send_message.await_args_list[3].args[1])
         self.assertEqual(init['experiment'], 'KSPEC_600_430')
 
     def test_spec_queue_keeps_webrelay(self):
@@ -603,6 +679,20 @@ class SpecCliRoutingTest(unittest.TestCase):
             asyncio.run(speccli.handle_spec('illuon', client))
         relay.assert_awaited_once_with(True)
         client.send_message.assert_not_awaited()
+
+
+class FrameCommandTest(unittest.TestCase):
+    def test_each_frame_type_has_its_command(self):
+        from SPECTRO.speccli import frame_command
+
+        self.assertEqual([frame_command(t, '30', '3') for t in
+                          ('Bias', 'Dark', 'Flat', 'Arc', 'Object')],
+                         ['getbias 3', 'getdark 30 3', 'getflat 30 3', 'getarc 30 3',
+                          'getobj 30 3'])
+        self.assertEqual(frame_command('Bias', '', 5), 'getbias 5')  # no time needed
+        for args in (('None', 30, 1), ('Sky', 30, 1), ('Dark', 'x', 1), ('Dark', 30, 0)):
+            with self.assertRaises(ValueError):
+                frame_command(*args)
 
 
 if __name__ == '__main__':

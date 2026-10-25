@@ -6,7 +6,7 @@ IsoPlane-specific code:
 
     specinitial <night> [experiment]   night directory; optionally load a LightField experiment
     specstatus                         camera, grating, and back-illumination state
-    getbias <n> / getflat <t> <n> / getarc <t> <n> / getobj <t> <n>
+    getbias <n> / getdark <t> <n> / getflat <t> <n> / getarc <t> <n> / getobj <t> <n>
     illuon / illuoff                   back-illumination stage in + light on / light off + out
     illulighton / illulightoff         light only; the stage does not move (on needs it IN)
     specstop                           emergency stop: stage, then light, then LightField
@@ -65,6 +65,7 @@ from SPECTRO_ISOPLANE.lightfield import make_lightfield
 # func: (file-name tag, shutter closed)
 FRAME_TYPES = {
     "getbias": ("bias", True),
+    "getdark": ("dark", True),
     "getflat": ("flat", False),
     "getarc": ("arc", False),
     "getobj": ("obj", False),
