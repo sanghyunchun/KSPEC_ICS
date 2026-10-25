@@ -21,7 +21,15 @@ from SPECTRO_ISOPLANE.fitsio import append_cards
 from SPECTRO_ISOPLANE.lightfield import FakeLightField
 
 HEADER = {'OBSDATE': '20261101', 'OBSTYPE': 'Object', 'PROJID': 'P1', 'TileID': '0123',
-          'RA': '10:00:00', 'DEC': '-30:00:00', 'EXPTIME': 5, 'EXPNUM': '1/1', 'FWHM': 1.2}
+          'RA': '10:00:00', 'DEC': '-30:00:00', 'EXPTIME': 5, 'NEXP': None, 'EXPNUM': None,
+          'FWHM': 1.2, 'OBJECT': 'NGC 1', 'OBSERVAT': None, 'SITELAT': None, 'SITELONG': None,
+          'SITEELEV': None}
+
+
+def read_header(path):
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        return fits.getheader(path)
 
 
 class SingleCallLightField(FakeLightField):
@@ -101,10 +109,50 @@ class IsoplaneFakeTest(unittest.TestCase):
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
             h = fits.getheader(obj['filename'])
-        self.assertEqual((h['TILEID'], h['EXPNUM'], h['BILLUM'], h['SPECBACK']),
-                         ('0123', '1/1', 'OUT', 'ISOPLANE'))
+        self.assertEqual((h['TILEID'], h['OBJECT'], h['EXPNUM'], h['NEXP'], h['BILLUM'],
+                          h['SPECBACK']), ('0123', 'NGC 1', 1, 1, 'OUT', 'ISOPLANE'))
+        self.assertEqual((h['TILERA'], h['TILEDEC']), ('10:00:00', '-30:00:00'))
         self.assertEqual(h['EXPTIME'], '5000')  # LightField's own card is kept (ms)
-        self.assertEqual(h['EXPREQ'], '5')
+        self.assertEqual(h['EXPREQ'], 5.0)
+        self.assertEqual(h['FWHM'], 1.2)
+        self.assertNotIn('OBSERVAT', h)  # unknown values leave their card out
+        self.assertTrue(h['UTSTART'] < h['UTEND'])
+
+    def test_exposure_numbers_and_unknown_values(self):
+        iso = self.make()
+        seq = {**HEADER, 'EXPNUM': 3, 'NEXP': 6}
+        bare = {'OBSTYPE': 'None', 'FWHM': None, 'OBJECT': 'None'}
+        self.run_cmds(iso, body('specinitial', dirname='20261101'),
+                      body('getbias', numframe=2, header=HEADER),
+                      body('getobj', time=5, numframe=2, header=seq),
+                      body('getbias', numframe=1, header=bare))
+        bias, obj = self.server.done('getbias'), self.server.done('getobj')[0]
+        numbers = [(h['EXPNUM'], h['NEXP']) for h in map(read_header, bias[0]['filenames'])]
+        self.assertEqual(numbers, [(1, 2), (2, 2)])
+        numbers = [(h['EXPNUM'], h['NEXP']) for h in map(read_header, obj['filenames'])]
+        self.assertEqual(numbers, [(3, 6), (4, 6)])
+        h = read_header(bias[1]['filename'])
+        self.assertEqual((h['OBSTYPE'], h['ICSFUNC']), ('Bias', 'getbias'))  # from the command
+        for key in ('FWHM', 'OBJECT', 'TILEID', 'EXPREQ'):
+            self.assertNotIn(key, h)
+
+    def test_extra_cards_are_written_or_refuse_before_exposing(self):
+        iso = self.make()
+        good = {**HEADER, 'CARDS': [['TELAIRM', 1.25, 'airmass'], ['LAMPARC', 'ON']]}
+        bad = [{**HEADER, 'CARDS': [['DATE-OBS', 'x', '']]},     # a LightField card
+               {**HEADER, 'CARDS': [['TILEID', 'x', '']]},       # an ICS card
+               {**HEADER, 'CARDS': [['TOOLONGKEY', 1, '']]},
+               {**HEADER, 'CARDS': [['TELPOS', [1, 2], '']]}]
+        self.run_cmds(iso, body('specinitial', dirname='20261101'),
+                      body('getobj', time=5, numframe=1, header=good),
+                      *[body('getobj', time=5, numframe=1, header=b) for b in bad])
+        ok, *refused = self.server.done('getobj')
+        h = read_header(ok['filename'])
+        self.assertEqual((h['TELAIRM'], h['LAMPARC']), (1.25, 'ON'))
+        self.assertEqual([r['status'] for r in refused], ['fail'] * 4)
+        self.assertTrue(all('header:' in r['message'] for r in refused))
+        frames = os.listdir(os.path.join(self.tmp.name, 'raw', '20261101'))
+        self.assertEqual(len(frames), 1)  # the refused commands took no frame
 
     def test_exposure_and_experiment_refused_while_stage_in(self):
         iso = self.make()
@@ -480,6 +528,26 @@ class WaitReplyTest(unittest.TestCase):
         self.assertEqual(got['status'], 'success')
         self.assertEqual(late['status'], 'error')  # timed out, after skipping illuoff
         self.assertEqual(skipped, ['warning', 'warning', 'warning', 'error'])
+
+
+class SetHeaderInfoTest(unittest.TestCase):
+    def test_sequence_seeing_and_site(self):
+        from Lib import make_spec_header as msh
+
+        with tempfile.TemporaryDirectory() as d:
+            ini = os.path.join(d, 'KSPEC.ini')
+            with open(ini, 'w') as f:
+                json.dump({'SITE': {'name': 'Obs', 'latitude_deg': -31.0,
+                                    'longitude_deg': 149.0, 'elevation_m': 1100}}, f)
+            real_site_info = msh.site_info
+            with patch.object(msh, 'site_info', lambda: real_site_info(ini)):
+                h = msh.set_header_info(obstype='Object', exptime=300, expnum=6, fwhm=9.99,
+                                        object_name='M1', extra_cards=[('TELAIRM', 1.1, '')])
+        self.assertEqual((h['NEXP'], h['EXPNUM'], h['FWHM'], h['OBJECT']), (6, None, None, 'M1'))
+        self.assertEqual((h['OBSERVAT'], h['SITELAT'], h['SITEELEV']), ('Obs', -31.0, 1100))
+        self.assertEqual(h['CARDS'], [['TELAIRM', 1.1, '']])
+        self.assertEqual(msh.set_header_info(fwhm=1.4)['FWHM'], 1.4)
+        self.assertEqual(msh.site_info(os.path.join(d, 'missing.ini'))['OBSERVAT'], None)
 
 
 class AppendCardsTest(unittest.TestCase):
