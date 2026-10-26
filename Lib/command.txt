@@ -44,20 +44,20 @@ flaton          : Turn on flat lamps.
 flatoff         : Turn off flat lamps.
 fiducialon      : Turn on fiducial lamps.
 fiducialoff     : Turn off fiducial lamps.
-illuon          : Turn on back-illumination lamp.
-illuoff         : Turn off back-illumination lamp.
             
 [SPEC] 
 specstatus      : Show spectrograph status.
 specstop        : Emergency stop (IsoPlane): back-illumination stage, then light, then exposure.
+illuon          : Move the IsoPlane back-illumination stage IN and switch on the light.
+illuoff         : Switch off the IsoPlane back-illumination light and move the stage OUT.
 illulighton     : Back-illumination light on; the IsoPlane stage must already be IN (illuon).
 illulightoff    : Back-illumination light off; the IsoPlane stage stays where it is.
-specinitial     : Initialize spectrograph.
-getobj          : Exposure spectrograph for object.
-getbias         : Get bias images.
-getdark         : Get dark images (shutter closed).
-getflat         : Get flat images.
-getarc          : Get arc images.
+specinitial     : Initialize the observing night and optionally load a LightField experiment.
+getobj          : Expose object frames.
+getbias         : Get bias frames with the shutter closed.
+getdark         : Get dark frames with the shutter closed.
+getflat         : Get flat frames; the flat lamp is controlled separately.
+getarc          : Get arc frames; the arc lamp is controlled separately.
             
 [TCS/AUX]
 pointing        : Slew telescope to new sky position calcuated by pointing offset.

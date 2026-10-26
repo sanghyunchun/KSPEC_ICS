@@ -1,0 +1,32 @@
+[Command]       [Usage: enter in the GUI command field, then press Send]
+specstatus      specstatus
+specstop        specstop
+specinitial     specinitial <night> [experiment]
+illuon          illuon
+illuoff         illuoff
+illulighton     illulighton
+illulightoff    illulightoff
+getbias         getbias <frames>
+getdark         getdark <exposure_seconds> <frames>
+getflat         getflat <exposure_seconds> <frames>
+getarc          getarc <exposure_seconds> <frames>
+getobj          getobj <exposure_seconds> <frames>
+
+Examples
+specinitial 20261026
+specinitial 20261026 KSPEC_600_430
+getbias 10
+getdark 600 5
+getflat 2.5 3
+getarc 3 2
+getobj 300 6
+
+<frames> is a positive integer. Exposure time is in seconds and must be finite
+and non-negative. Brackets indicate an optional argument; do not type them.
+
+For the IsoPlane server, set SPEC.queue to ISOPLANE in Lib/KSPEC.ini.
+Run specinitial before taking frames. The back-illumination stage must be OUT
+for frame exposures. illuon moves the stage IN and turns the light on;
+illulighton only turns the light on when the stage is already IN.
+getflat and getarc do not switch on their lamps. Use flaton/flatoff and
+arcon/arcoff separately.

@@ -1,6 +1,7 @@
 import sys
 import os
 import asyncio
+import re
 import shlex
 from pathlib import Path
 
@@ -33,6 +34,7 @@ from FBP.fbpcli import handle_fbp
 from MTL.mtlcli import handle_mtl, mtl_start, mtl_set
 from LAMP.lampcli import handle_lamp
 from SPECTRO.speccli import handle_spec, spec_queue, ILLUMINATION_COMMANDS, frame_command
+from SPECTRO_ISOPLANE.specisocli import handle_speciso
 from TCS.tcscli import handle_telcom
 from script.scriptcli import handle_script, ILLUMINATION_TIMEOUT_S
 from Lib.reply import wait_reply
@@ -502,6 +504,8 @@ class MainWindow(QMainWindow):
             file_path = "./Lib/MTLcommand.txt"
         elif instrument == 'FBP?':
             file_path = "./Lib/FBPcommand.txt"
+        elif instrument == 'SPEC?':
+            file_path = "./Lib/SPECcommand.txt"
 
         try:
             with open(file_path, "r", encoding="utf-8") as f:
@@ -925,6 +929,14 @@ class MainWindow(QMainWindow):
             self.scriptrun.fwhm = self.fwhm
             self.scriptrun.obslog = self.obslog
             await handle_script(message, scriptrun=self.scriptrun, logging=self.logging)
+            return
+
+        if category == "spec" and spec_queue() == "ISOPLANE":
+            try:
+                await handle_speciso(message, self.ICS_client)
+            except ValueError as error:
+                self.logging(str(error), status='error', level='error',
+                             save=self.msglog_path is not None)
             return
 
         handler = general_handlers.get(category)
@@ -2579,8 +2591,10 @@ class MainWindow(QMainWindow):
    
 
     ### Real survey Observation ####    
+        calibration_plan = re.fullmatch(r'Calib_obsplan_(?:\d{8}|YYYYMMDD)\.txt', filename) is not None
         self.tilemsg,self.objmsg,self.motionmsg1,self.motionmsg2=sciobs.loadtile(
-            self.TileID, invert_motion_angles=True
+            self.TileID, invert_motion_angles=True,
+            zenith_angle_override=0.0 if calibration_plan else None,
         )
         self.ra, self.dec=self.convert_to_sexagesimal(sciobs.ra,sciobs.dec)
 

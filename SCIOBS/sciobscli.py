@@ -81,7 +81,7 @@ class sciobscli:
 
 
 # Load science objects from the assignment file for the selected tile.
-    def load_target(self):
+    def load_target(self, zenith_angle_override=None):
         tile_id=int(self.tile_id)
         assignfile=os.path.join(self.targetpath, f'{self.project}_2627_{tile_id:04d}.assign.txt')
         # File columns: fiberid, xp, yp, mag, class, flag, ra, dec (no header).
@@ -89,7 +89,8 @@ class sciobscli:
         obj_fiberid,obj_xp,obj_yp,obj_ra,obj_dec,obj_class=np.loadtxt(
             assignfile,dtype=dtype,unpack=True,usecols=(0,1,2,6,7,4),ndmin=1)
 
-        zenith_angle = self.calculate_zenith_distance(self.ra, self.dec)
+        zenith_angle = (self.calculate_zenith_distance(self.ra, self.dec)
+                        if zenith_angle_override is None else float(zenith_angle_override))
         message='Load Target Objects of Tile'
 
         dict_data = { "tile_id":tile_id, "project":self.project, "inst" : 'SCIOBS', "func" : 'loadobj', "ra":obj_ra.tolist(), "dec":obj_dec.tolist(),"xp":obj_xp.tolist(),
@@ -170,7 +171,7 @@ class sciobscli:
         return motionmsg1,motionmsg2
 
 
-    def loadtile(self,tile_id, invert_motion_angles=False):
+    def loadtile(self,tile_id, invert_motion_angles=False, zenith_angle_override=None):
         self.tile_id=tile_id
 #        print(self.tile_id)
         tileinfo = self.load_tilepos()
@@ -179,7 +180,7 @@ class sciobscli:
     #    guideinfo=self.load_guide()
     #    GFAmsg=guideinfo
 
-        objinfo=self.load_target()
+        objinfo=self.load_target(zenith_angle_override=zenith_angle_override)
         OBJmsg=objinfo
 
         #print(OBJmsg)
