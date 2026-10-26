@@ -22,17 +22,26 @@ import datetime
 import os
 import sys
 
+from kspec_metrology.naming import image_path
+
 
 def output_paths(pattern, exptime, nexposure, now=None):
-    """--out 패턴에서 실제 저장 경로(head, 각 장의 경로)를 만든다."""
+    """--out 패턴에서 실제 저장 경로(폴더, head, 각 장의 경로)를 만든다.
+
+    mtlexp 가 저장하는 이름은 naming.image_path(data_dir, head, i) = {data_dir}/{head}{i}.fits 이므로
+    head 는 '{i}.fits' 바로 앞까지의 이름이어야 한다 (확장자가 들어가면 ..._.fits0.fits 가 된다).
+    """
     now = now or datetime.datetime.now()
     name = pattern.format(ms=f'{exptime:g}', date=now.strftime('%y%m%d'), time=now.strftime('%H%M%S'), i='{i}')
     if '{i}' not in name:
-        root, ext = os.path.splitext(name)
-        name = f'{root}_{{i}}{ext or ".fits"}'
-    head = name.replace('{i}', '')
-    paths = [name.replace('{i}', str(i)) for i in range(nexposure)]
-    return os.path.dirname(os.path.abspath(head)), os.path.basename(head), paths
+        root, _ext = os.path.splitext(name)
+        name = f'{root}_{{i}}.fits'
+    if not name.endswith('{i}.fits'):
+        raise SystemExit(f"--out 의 {{i}} 는 '.fits' 바로 앞에 와야 한다 (예: fid_{{i}}.fits): {pattern}")
+    head = os.path.abspath(name[:-len('{i}.fits')])
+    data_dir, head = os.path.dirname(head), os.path.basename(head)
+    paths = [image_path(data_dir, head, i) for i in range(nexposure)]
+    return data_dir, head, paths
 
 
 def main(argv=None):
