@@ -325,33 +325,43 @@ FIBERS = load_fibers()
 # 아래 ID는 사용하지 않는다. 지금은 전부 쓴다.
 FIDUCIAL_EXCLUDE = ()
 
-# 끊어졌거나 불이 안 들어오는 fiber. 표와 target 파일, json key 순서는 그대로 두고
-# (positioner 는 그대로 꽂혀 있다) 이미지에서 찾지 않고 매칭에서 뺀다. 그 fiber 의
-# 위치 오차는 NaN, 회전량은 0 으로 나온다 (누적 각도는 직전 값 유지).
-#   환경변수 : KSPEC_FIBER_EXCLUDE="C4,D2"
-#   파일     : 아래 FIBER_EXCLUDE = [...] 한 줄 (또는 import 뒤 fiber_config.FIBER_EXCLUDE = [...])
-# 2026-10-25 확정 (설치표 Positioner mapping_20261012): G4 는 끊어져서 빛이 안 나온다.
-FIBER_EXCLUDE = ['G4']                   # <- 끊어진 fiber 의 홀 ID
+# 어느 positioner 가 켜지는가 (2026-10-26 확정, 설치표 Positioner mapping_20261012 의 obj / sky 열).
+#
+# 분광기에 연결된 fiber 는 43 개뿐이다 (obj 37 + sky 6). back-illumination 은 분광기에서 나오므로
+# 이 43 개만 켜지고, 나머지 positioner 30 개 (고장나 고정된 25 + fiber 가 안 꽂힌 8) 는 빛이
+# 나지 않는다. 설치표의 obj 가운데 G4 는 fiber 가 끊어져 그 자리 대신 H3 를 쓴다 (사용자 확인 2026-10-26).
+#
+#   FIBER_OBJ      분광기 obj fiber 가 꽂힌 positioner 홀 37 개 (설치표 obj 에서 G4 -> H3). 전부 매칭.
+#   FIBER_EXCLUDE  빛이 안 나는 positioner 홀 33 개 (obj 도 FIXED 도 아닌 것; 끊어진 G4 포함). 이미지에서
+#                  찾지 않고 매칭에서 뺀다. 표·target·json 순서는 그대로 두고 (positioner 는 꽂혀 있다) 그 fiber 의
+#                  위치 오차는 NaN, 회전량은 0 으로 나온다 (누적 각도는 직전 값 유지).
+#   FIBER_FIXED    빛은 나지만 움직이지 않는 positioner 홀: sky fiber 가 꽂힌 고정 positioner 3 개 (G7, H8, J6).
+#                  목표·json 에서는 FIBER_EXCLUDE 처럼 빠지고(회전량 0, 오차 NaN), 이미지에서는 켜져 있다고 본다.
+#   SKY_FIBERS     표에서 -9 인 홀에 꽂힌 sky fiber 3 개 (B7, H1, N7). 켜져 있다고 본다.
+#
+# FIXED 와 SKY 는 "그 홀 중심에서 arm 길이 안에 있으면서 살아 있는 fiber 의 목표 근처는 아닌" 검출을
+# 그 점으로 보고 fiber 매칭에서 뺀다. 자리를 정확히 아는 경우는 아래 Fixed_Spots 파일.
+#
+# 켜진 점 기대 수 = 37 (obj) + 3 (FIXED) + 3 (SKY) = 43 (+ fiducial 30 = 73). 매칭하는 fiber = 37.
+#
+#   환경변수 : KSPEC_FIBER_EXCLUDE="G4,C6,..."  KSPEC_FIBER_FIXED="G7,H8,J6"  KSPEC_SKY_FIBERS="B7,H1,N7"
+#   파일     : 아래 목록 (또는 import 뒤 fiber_config.FIBER_EXCLUDE = [...])
+FIBER_OBJ = ['C4', 'C5', 'D2', 'D3', 'D4', 'D5', 'D7', 'E8', 'E9', 'F8', 'F9',
+             'G3', 'G5', 'G6', 'G9', 'H3', 'H4', 'H5', 'H6', 'H7',
+             'I3', 'I5', 'I6', 'I7', 'I8', 'J2', 'J3', 'J4', 'J5',
+             'K2', 'K3', 'K4', 'L3', 'L5', 'L6', 'L7', 'M3']          # <- 분광기 obj fiber 홀 (37; 설치표 "F19" 는 F9, G4 대신 H3)
+FIBER_FIXED = ['G7', 'H8', 'J6']        # <- sky fiber 가 꽂힌, 고장나 고정된 positioner 홀 (켜짐, 매칭 안 함)
+SKY_FIBERS = ['B7', 'H1', 'N7']         # <- 표에서 -9 인 홀의 sky fiber (켜짐, 매칭 안 함)
+
+# 빛이 안 나는 positioner = obj 도 FIXED 도 아닌 것 (고정 25: C6 E2 E4 E5 E6 E7 F2 F3 F4 F5 F6 F7
+# H9 H10 H11 I9 I10 J7 J8 J9 J10 K5 K6 K7 K9, fiber 없음 8: F10 G4 G10 G11 I2 L8 M4 M5).
+FIBER_EXCLUDE = [h for h, _a1, _a2 in FIBERS if h not in FIBER_OBJ and h not in FIBER_FIXED]
 
 FIBER_EXCLUDE_ENV = 'KSPEC_FIBER_EXCLUDE'
 if os.environ.get(FIBER_EXCLUDE_ENV, '').strip():      # 환경변수가 있으면 그것이 우선
     FIBER_EXCLUDE = [t.strip() for t in
                      os.environ[FIBER_EXCLUDE_ENV].replace(';', ',').split(',') if t.strip()]
 
-
-# 빛은 나오지만 움직이지 않는 것들. 홀 ID 만 알면 된다 (위치는 몰라도 된다).
-#   FIBER_FIXED : 고장나서 고정된 positioner 의 홀 ID (표의 positioner). 목표·json 에서는
-#                 FIBER_EXCLUDE 처럼 빠지고(회전량 0, 오차 NaN), 이미지에서는 켜져 있다고 본다.
-#   SKY_FIBERS  : sky fiber 가 꽂힌 홀 ID (표에서 -9 인 홀). 켜져 있다고 본다.
-# 둘 다 "그 홀 중심에서 arm 길이 안에 있으면서 살아 있는 fiber 의 목표 근처는 아닌" 검출을
-# 그 점으로 보고 fiber 매칭에서 뺀다. 자리를 정확히 아는 경우는 아래 Fixed_Spots 파일.
-#   환경변수 : KSPEC_FIBER_FIXED="C6"   KSPEC_SKY_FIBERS="A6,B7,B8,G0,H1,I0,N7,N8,O6"
-# 2026-10-25 확정 (설치표 Positioner mapping_20261012 의 주황색 행 28 개 + sky 9 홀).
-# 켜진 점 기대 수 = 73 - len(FIBER_EXCLUDE) + len(SKY_FIBERS) = 81, 매칭하는 fiber = 44.
-FIBER_FIXED = ['C6', 'E2', 'E4', 'E5', 'E6', 'E7', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7',
-               'G7', 'H8', 'H9', 'H10', 'H11', 'I9', 'I10', 'J6', 'J7', 'J8', 'J9', 'J10',
-               'K5', 'K6', 'K7', 'K9']   # <- 고장나 고정된 positioner 홀 ID
-SKY_FIBERS = ['A6', 'B7', 'B8', 'G0', 'H1', 'I0', 'N7', 'N8', 'O6']   # <- sky fiber 홀 ID (표에서 -9 인 홀)
 for _env, _name in (('KSPEC_FIBER_FIXED', 'FIBER_FIXED'), ('KSPEC_SKY_FIBERS', 'SKY_FIBERS')):
     if os.environ.get(_env, '').strip():
         globals()[_name] = [t.strip() for t in os.environ[_env].replace(';', ',').split(',') if t.strip()]

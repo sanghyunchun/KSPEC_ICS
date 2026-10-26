@@ -268,21 +268,27 @@ target 파일(object.info) 에 `xp`/`yp` 대신 각도를 적어도 된다: `{"a
 같은 각도로 두는 calibration run 은 target 파일만 바꿔 끼우면 된다
 (`lab.make_target(path, angles=(-30, 150))` 으로 만들 수 있다).
 
-### 켜져 있지만 무시할 점 (sky fiber, 고장난 positioner)
+### 어느 positioner 가 켜지는가 (분광기에 연결된 fiber, sky fiber, 고장난 positioner)
 
-홀 ID 만 알면 된다. 2026-10-25 에 설치표(Positioner mapping_20261012)로 확정한 값이
-패키지 기본값이다.
+홀 ID 만 알면 된다. 2026-10-26 에 설치표(Positioner mapping_20261012 의 obj / sky 열)로 확정한
+값이 패키지 기본값이다. **분광기에 연결된 fiber 는 43 개(obj 37 + sky 6)뿐이고 back-illumination
+은 분광기에서 나오므로 이 43 개만 켜진다.** 설치표의 obj 가운데 G4 는 fiber 가 끊어져 그 대신 H3 를
+쓴다. 나머지 positioner 30 개(고장나 고정된 25 + fiber 가 안 꽂힌 8)는 빛이 나지 않는다.
 
 ```python
 # analysis/fiber_config.py (기본값)
-FIBER_FIXED = ['C6', 'E2', 'E4', 'E5', 'E6', 'E7', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7',
-               'G7', 'H8', 'H9', 'H10', 'H11', 'I9', 'I10', 'J6', 'J7', 'J8', 'J9', 'J10',
-               'K5', 'K6', 'K7', 'K9']                    # 빛은 나오지만 고장나 움직이지 않는 positioner (28)
-SKY_FIBERS  = ['A6', 'B7', 'B8', 'G0', 'H1', 'I0', 'N7', 'N8', 'O6']   # sky fiber 홀 (표에서 -9) (9)
+FIBER_OBJ     = ['C4', 'C5', 'D2', 'D3', 'D4', 'D5', 'D7', 'E8', 'E9', 'F8', 'F9', 'G3', 'G5', 'G6',
+                 'G9', 'H3', 'H4', 'H5', 'H6', 'H7', 'I3', 'I5', 'I6', 'I7', 'I8', 'J2', 'J3', 'J4', 'J5',
+                 'K2', 'K3', 'K4', 'L3', 'L5', 'L6', 'L7', 'M3']     # 분광기 obj fiber 홀 (37, G4 대신 H3)
+FIBER_FIXED   = ['G7', 'H8', 'J6']   # sky fiber 가 꽂힌 고장난 positioner: 켜져 있지만 움직이지 않음 (3)
+SKY_FIBERS    = ['B7', 'H1', 'N7']   # 표에서 -9 인 홀의 sky fiber (3)
+FIBER_EXCLUDE = (obj 도 FIXED 도 아닌 positioner 33 개, G4 포함)   # 빛이 안 나는 홀 (33)
 ```
-(환경변수 `KSPEC_FIBER_FIXED`, `KSPEC_SKY_FIBERS` 로 바꿀 수 있다.) 켜진 점 기대 수 =
-73 − 끊어진 1 + sky 9 = 81, 매칭하는 fiber = 73 − 1 − 28 = 44.
+(환경변수 `KSPEC_FIBER_EXCLUDE`, `KSPEC_FIBER_FIXED`, `KSPEC_SKY_FIBERS` 로 바꿀 수 있다.)
+켜진 점 기대 수 = obj 37 + FIXED 3 + SKY 3 = 43 (fiducial 30 을 더하면 73), 매칭하는 fiber = 37.
 
+- `FIBER_EXCLUDE` 의 positioner 는 이미지에서 찾지 않고 매칭에서 빠진다 (오차 NaN, 회전량 0,
+  누적 각도는 직전 값). 표·object.info·json 의 73 개 순서는 그대로다.
 - `FIBER_FIXED` 의 positioner 는 object.info 와 json 에 그대로 들어 있되(순서 유지) 목표
   매칭에서 빠진다 (오차 NaN, 회전량 0). 이미지에서는 켜져 있다고 보고 검출 개수에 센다.
 - 매칭은 살아 있는 fiber 의 목표와 검출을 거리 합이 최소가 되게 일대일로 붙인다(할당 문제).
@@ -301,14 +307,14 @@ SKY_FIBERS  = ['A6', 'B7', 'B8', 'G0', 'H1', 'I0', 'N7', 'N8', 'O6']   # sky fib
 
 ### 끊어진 fiber
 
-fiber 가 끊어져 불이 안 들어오면 표와 target 파일, json key 순서는 그대로 두고
-그 fiber 만 제외한다 (positioner 는 그대로 꽂혀 있으므로 표에서 지우면 target
+fiber 가 끊어져 불이 안 들어오면 (또는 분광기에 연결되지 않아 back-illumination 이
+안 되면) 표와 target 파일, json key 순서는 그대로 두고 그 fiber 만 제외한다 (positioner 는 그대로 꽂혀 있으므로 표에서 지우면 target
 파일과 json 순서가 다 바뀐다).
 
 가장 간단한 방법은 `analysis/fiber_config.py` 의 한 줄이다.
 
 ```python
-FIBER_EXCLUDE = ['G4']                        # 끊어진 fiber 의 홀 ID (2026-10-25 기본값)
+FIBER_OBJ.remove('G4')                        # 끊어진 fiber 의 홀 ID 를 obj 목록에서 빼면 FIBER_EXCLUDE 에 들어간다
 ```
 
 코드를 안 고치려면 환경변수로도 된다 (환경변수가 있으면 그것이 우선).

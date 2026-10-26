@@ -734,7 +734,8 @@ def mtlcal(data_dir='./MTL/data/'
               finder=finder, finder_opts=finder_opts, background=background,
               background_opts=background_opts, min_dist=min_dist)
 
-    # 끊어진 fiber (FIBER_EXCLUDE) 와 고장나 고정된 positioner (FIBER_FIXED): 매칭에서 뺀다.
+    # 빛이 안 나는 positioner (FIBER_EXCLUDE: 끊어졌거나 분광기에 fiber 가 안 연결된 홀) 와 고장나
+    # 고정된 positioner (FIBER_FIXED): 매칭에서 뺀다.
     # 배열 순서는 그대로. 고정된 positioner 와 sky fiber (SKY_FIBERS) 는 이미지에 켜져 있으므로
     # 검출 개수 상한에 더한다 (measure_fibers 가 홀 근처에서 걸러낸다).
     # cross_exclude: 노출을 나눠 찍었는데 fiber 노출에 fiducial 이, fiducial 노출에 fiber 가
@@ -743,7 +744,7 @@ def mtlcal(data_dir='./MTL/data/'
     dead = np.r_[cfg.dead_mask(), np.zeros(x.size-nfib, dtype=bool)]
     n_extra = n_extra + len(cfg.FIBER_FIXED) + len(cfg.SKY_FIBERS)
     if dead.any() or cfg.SKY_FIBERS:
-        log.info("Excluded fiber(s): broken %s; fixed (lit, not matched) %s; sky fibers %s",
+        log.info("Excluded fiber(s): unlit (broken / not connected) %s; fixed (lit, not matched) %s; sky fibers %s",
                  [h for h in cfg.fiber_ids() if h in cfg.FIBER_EXCLUDE] or '-',
                  list(cfg.FIBER_FIXED) or '-', list(cfg.SKY_FIBERS) or '-')
     xa, ya, fa = x[~dead], y[~dead], fid_flag[~dead]
