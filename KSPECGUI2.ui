@@ -16834,7 +16834,7 @@ restart</string>
           <set>Qt::AlignmentFlag::AlignCenter</set>
          </property>
          <property name="placeholderText">
-          <string>ex) 4</string>
+          <string>ex) 0.03</string>
          </property>
         </widget>
         <widget class="QPushButton" name="pushbtn_MTL_trial">

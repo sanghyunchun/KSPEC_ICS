@@ -76,10 +76,10 @@ def _require_run(context):
 
 
 def _exposure_settings(message):
-    # Wire exposure time is in microseconds (unchanged); default is one second.
+    # Wire exposure time is in microseconds; default fiber exposure is 30 ms.
     # kspec_metrology (MetrologyRun / mtlexp) takes milliseconds since 2026-10-24,
     # so the value is converted here, at the boundary.
-    exptime_us = _value(message, 'time', 1_000_000.0, float)
+    exptime_us = _value(message, 'time', 30_000.0, float)
     count = _value(message, 'nexposure', 1, float)
     if not math.isfinite(exptime_us) or exptime_us <= 0:
         raise ValueError('Exposure time must be finite and greater than zero')
@@ -150,6 +150,7 @@ async def identify_execute(MTL_server, cmd, context):
                     mode=_value(receive_msg, "mode", "Raw", str),      # Raw: detect + match (robust); Predict only once the errors are < ~1 mm
                     threshold=_value(receive_msg, "threshold", 3000.0, float),
                     exptime=exptime,
+                    fid_exptime=[1.0, 10.0],  # separate fiducial frames [ms] each trial
                     gain=_value(receive_msg, "gain", 10, float),
                     offset=_value(receive_msg, "offset", 30, float),
                     readmode=_value(receive_msg, "readmode", 1, int),

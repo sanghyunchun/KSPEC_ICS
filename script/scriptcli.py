@@ -158,7 +158,7 @@ class script():
         self.dir_name = None
         self.obsnum = None
         self.expT = None
-        self.MTLexpT = 5.    # default MTL exposure time
+        self.MTLexpT = 0.03    # default MTL fiber exposure time [s]
         self.GFAexpT = 5.    # default GFA exposure time
         self.GFAexpN = 1    # default GFA exposure count
         self.MTLexpN = 1

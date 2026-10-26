@@ -1,10 +1,12 @@
 [Command]            [Usages (Type below)]
 mtltrial             mtltrial
 mtlset               mtlset exptime_seconds nexposure
-                     예: mtlset 2.5 3 (2.5초, 3장)
+                     예: mtlset 0.03 1 (fiber 30 ms, 1장)
                      mtlstart 이후 기존 run의 다음 trial부터 적용합니다.
                      GUI MTL_set도 동일하게 서버 설정을 변경합니다.
-                     GUI 노출시간/횟수의 빈 값은 각각 1초/1장입니다.
+                     GUI 노출시간/횟수의 빈 값은 각각 0.03초/1장입니다.
+                     mtlstart 기본값도 fiber 0.03초이며, 매 trial에서 fiducial은
+                     0.001초와 0.01초로 각각 한 장씩 분리 노출합니다.
 
 mtlcal : 기존 이미지로 metrology 계산 (mtlstart 필요 없음)
 

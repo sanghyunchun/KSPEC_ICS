@@ -2033,7 +2033,7 @@ class MainWindow(QMainWindow):
 
     # region MTL controls
     def _mtl_exposure_inputs(self):
-        exptime_text = self.ui.lineEdit_MTL_exptime.text().strip() or '1'
+        exptime_text = self.ui.lineEdit_MTL_exptime.text().strip() or '0.03'
         count_text = self.ui.lineEdit_MTL_expnum.text().strip() or '1'
         exptime, count = float(exptime_text), int(count_text)
         mtl_set(exptime, count)  # Validate before sending or starting a tile load.

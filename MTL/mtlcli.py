@@ -35,7 +35,7 @@ def mtl_start(
     """MetrologyRun을 초기화하고 Trial 0 기준 JSON 생성을 요청한다."""
     data = {
         "message": "Initialize metrology run",
-        "time": seconds_to_microseconds(1.0),
+        "time": seconds_to_microseconds(0.03),
         "nexposure": 1,
     }
 
@@ -69,7 +69,7 @@ def mtl_test(exptime=None, nexposure=None, filename=None):
     return create_mtl_command("mtltest", **data)
 
 
-def mtl_set(exptime=1.0, nexposure=1):
+def mtl_set(exptime=0.03, nexposure=1):
     """기존 run의 촬영 설정을 변경한다. exptime 입력 단위는 초다."""
     exptime = float(exptime)
     count = float(nexposure)

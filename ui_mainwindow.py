@@ -6624,7 +6624,7 @@ class Ui_MainWindow(object):
         self.pushbtn_adc_connect.setText(QCoreApplication.translate("MainWindow", u"Connect", None))
         self.group_metrology.setTitle(QCoreApplication.translate("MainWindow", u"Metrology", None))
         self.label_MTL_exptime.setText(QCoreApplication.translate("MainWindow", u"Time", None))
-        self.lineEdit_MTL_exptime.setPlaceholderText(QCoreApplication.translate("MainWindow", u"ex) 4", None))
+        self.lineEdit_MTL_exptime.setPlaceholderText(QCoreApplication.translate("MainWindow", u"ex) 0.03", None))
         self.pushbtn_MTL_trial.setText(QCoreApplication.translate("MainWindow", u"Trial", None))
         self.pushbtn_MTL_set.setText(QCoreApplication.translate("MainWindow", u"Set", None))
         self.label_MTL_file.setText(QCoreApplication.translate("MainWindow", u"File", None))
