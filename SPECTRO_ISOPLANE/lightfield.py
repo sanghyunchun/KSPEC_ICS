@@ -67,6 +67,12 @@ class LightFieldBase(ABC):
         """Take one frame, export it as ``directory/basename.fits``, and return a Frame.
         Blocks until the file is written."""
 
+    @abstractmethod
+    def set_shutter_open(self, is_open):
+        """Shutter mode outside an acquisition: AlwaysOpen (True), for the back illumination to
+        reach the fibres through the entrance shutter, or Normal (False). expose() sets its own
+        mode for every frame."""
+
     def stop(self):
         """Abort a running acquisition (best effort, from any thread); expose() then raises
         until clear_stop()."""
@@ -113,13 +119,17 @@ class FakeLightField(LightFieldBase):
                        "physical_rows": str(self.shape[-2] - overscan_rows),
                        "roi_selection": "FullSensor"}
         self.camera.update({k: str(v) for k, v in (camera or {}).items()})
+        self.shutter = "Normal"
 
     def connect(self):
         pass
 
     def setup(self):
         return {"experiment": self.experiment, "grating": self.grating,
-                "center_nm": self.center_nm, **self.camera}
+                "center_nm": self.center_nm, "shutter": self.shutter, **self.camera}
+
+    def set_shutter_open(self, is_open):
+        self.shutter = "AlwaysOpen" if is_open else "Normal"
 
     def status(self):
         return {"ready": not self.running, "running": self.running, "driver": "fake",
@@ -229,7 +239,8 @@ class LightField(LightFieldBase):
                "updating": bool(netcall.get(exp, "IsUpdating")), "driver": "lightfield",
                "experiment": str(netcall.get(exp, "Name"))}
         names = {"grating": spec.GratingSelected,
-                 "center_nm": spec.GratingCenterWavelength}
+                 "center_nm": spec.GratingCenterWavelength,
+                 "shutter": cam.ShutterTimingMode}
         names.update({key: getattr(cam, member, None) for key, member in CAMERA_STATUS.items()})
         for key, name in names.items():
             known = name is not None and netcall.call(exp, "Exists", name)
@@ -244,6 +255,18 @@ class LightField(LightFieldBase):
             raise RuntimeError(f"LightField could not load experiment {name!r}")
         while netcall.get(self._exp, "IsUpdating"):  # a grating move happens here
             time.sleep(0.2)
+
+    def set_shutter_open(self, is_open):
+        self._call(self._set_shutter, is_open)
+
+    def _set_shutter(self, is_open):
+        from PrincetonInstruments.LightField.AddIns import ShutterTimingMode
+
+        cam, _, _ = self._settings()
+        if not netcall.call(self._exp, "Exists", cam.ShutterTimingMode):
+            raise RuntimeError("LightField has no shutter setting (no camera in the experiment)")
+        mode = ShutterTimingMode.AlwaysOpen if is_open else ShutterTimingMode.Normal
+        netcall.call(self._exp, "SetValue", cam.ShutterTimingMode, mode)
 
     def stop(self):
         self._stopped.set()

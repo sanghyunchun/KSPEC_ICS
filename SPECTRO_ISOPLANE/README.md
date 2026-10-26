@@ -38,6 +38,14 @@ light: `fiducialon`, `illuon`, then `mtltrial` with the light on, `illulightoff`
 `illulighton`, ... until the MTL run converges or reaches `max_trial`, then `illuoff` and
 `fiducialoff`, also after a failed step. The stage moves twice per tile, not twice per trial.
 
+The light reaches the fibres backwards through the spectrograph and its entrance shutter (Vincent
+CS25), which LightField opens only during an exposure. So every light-on first sets the
+LightField shutter mode to AlwaysOpen (if that fails, the light stays off and the command fails),
+and every light-off (`illulightoff`, `illuoff`, the auto-off, `specstop`, server exit) sets it back
+to Normal; a reply warns when that did not work. Exposures set their own mode and are refused
+while the stage is not OUT anyway. Checked on the instrument (2026-10-26, shutter opened by hand
+in LightField): the light comes out of the fibres.
+
 Every light-on starts a timer: the server switches the light off after
 `backillum.light_max_on_s` (default 300 s, 0 disables) and sends an `ING` reply; the stage stays
 IN. This covers the ICS script dying with the light on in the turret (the Uno watchdog only

@@ -126,6 +126,8 @@ class Isoplane:
         self.light_timer = None
         self.light_off_at = None  # time.monotonic() of the next auto-off
         self.lf_status = {}  # last LightField status, served while a command runs
+        self.shutter_open = False  # entrance shutter set AlwaysOpen for the back illumination
+        self.shutter_timeout_s = 10.0
         self.lf_status_time = None
 
     # -------------------------------------------------- lifecycle
@@ -144,6 +146,7 @@ class Isoplane:
         self.cancel_light_timer()
         if self.bl is not None:
             await asyncio.to_thread(self.bl.close)  # light off
+        await self.close_shutter()
         await asyncio.to_thread(self.lf.close)
 
     # -------------------------------------------------- messaging
@@ -224,6 +227,9 @@ class Isoplane:
             done.append("acquisition stopped")
         except Exception as e:
             failed.append(f"LightField: {e}")
+        if self.shutter_open:
+            warning = await self.close_shutter()
+            (failed if warning else done).append(warning.strip() or "shutter back to Normal")
         msg = f"Emergency stop ({'during ' + interrupted if running else 'idle'}): "
         msg += "; ".join(done + failed) + "."
         if self.bl is not None:
@@ -253,6 +259,23 @@ class Isoplane:
             )
         self.bl.state = "OUT"
 
+    # -------------------------------------------------- entrance shutter
+    async def set_shutter(self, is_open):
+        """Entrance shutter AlwaysOpen while the back illumination is on (its light reaches the
+        fibres only through that shutter), Normal otherwise."""
+        await asyncio.to_thread(self.lf.set_shutter_open, is_open)
+        self.shutter_open = is_open
+
+    async def close_shutter(self):
+        """Shutter back to Normal after a light-off: '' or a warning for the reply."""
+        if not self.shutter_open:
+            return ""
+        try:
+            await asyncio.wait_for(self.set_shutter(False), self.shutter_timeout_s)
+            return ""
+        except Exception as e:
+            return f" Warning: entrance shutter not set back to Normal ({type(e).__name__}: {e})."
+
     # -------------------------------------------------- light auto-off
     def lease_note(self):
         return f", auto-off in {self.light_max_on_s:g} s" if self.light_max_on_s > 0 else ""
@@ -280,9 +303,10 @@ class Isoplane:
             self.busy = AUTO_OFF
             try:
                 await asyncio.to_thread(self.bl.set_light, False)
+                warning = await self.close_shutter()
                 await self.reply(server, "illulightoff",
                                  f"Back illumination light switched off after {after:g} s on "
-                                 f"(light_max_on_s); stage stays {self.bl.state}.",
+                                 f"(light_max_on_s); stage stays {self.bl.state}.{warning}",
                                  process="ING", backillum=self.bl.status())
             except Exception as e:
                 await self.reply(server, "illulightoff",
@@ -292,6 +316,7 @@ class Isoplane:
                 self.busy = "idle"
 
     async def light_on(self, server):
+        await self.set_shutter(True)  # first: if it fails, the light stays off
         await asyncio.to_thread(self.bl.set_light, True)
         self.arm_light_timer(server)
         await asyncio.sleep(self.light_settle_s)
@@ -364,10 +389,14 @@ class Isoplane:
         self.cancel_light_timer()
         await self.reply(server, "illuoff", "Back illumination: light off, raising the stage.",
                          process="ING")
-        await asyncio.to_thread(self.bl.retract)
+        try:
+            await asyncio.to_thread(self.bl.retract)
+        finally:
+            warning = await self.close_shutter()
         msg = "Back illumination light off, stage OUT."
         if self.bl.last_error:
             msg += f" Warning: {self.bl.last_error}"
+        msg += warning
         await self.reply(server, "illuoff", msg, backillum=self.bl.status())
 
     async def illulighton(self, server, d):
@@ -385,8 +414,9 @@ class Isoplane:
         self.require_unit()
         self.cancel_light_timer()
         await asyncio.to_thread(self.bl.set_light, False)
+        warning = await self.close_shutter()
         await self.reply(server, "illulightoff",
-                         f"Back illumination light off, stage {self.bl.state}.",
+                         f"Back illumination light off, stage {self.bl.state}.{warning}",
                          backillum=self.bl.status())
 
     async def take_frames(self, server, d):
