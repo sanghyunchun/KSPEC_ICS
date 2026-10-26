@@ -373,27 +373,62 @@ def measure_fiducials(fid_heads, x, y, fid_flag, data_dir, nexposure,
         _, xobs, yobs, peak, nsat = findpeak((nmin, nmax), data_dir=data_dir, head=head,
                                              nexposure=nexp, sat_level=sat_level,
                                              exclude=exclude, ReturnNsat=True, **pk)
-        if xobs.size > nfid and exclude is None:
-            # fiber 도 보인다: 전체 패턴으로 매칭하고 fiducial 자리만 쓴다 (fiber 자리를 지운 뒤라면
-            # 남은 여분은 고정 점·sky fiber 뿐이므로 fiducial 패턴만으로 매칭한다)
-            imatch, theta_guess, (xoff, yoff) = matchfiber(x, y, xobs, yobs, m_init=m_init)
-            imatch = imatch[fid_flag]
-        else:
-            imatch, theta_guess, (xoff, yoff) = matchfiber(xf, yf, xobs, yobs, m_init=m_init)
-        # 매칭 검사: 변환(배율·회전·offset 만)으로 옮긴 검출이 설계 위치에서 match_tol 안에 있고
-        # 다른 fiducial 과 같은 검출을 쓰지 않아야 "찾았다" 고 본다
-        coeff_s = np.copy(camera2focal_coeff); coeff_s[0] = m_init or coeff_s[0]
-        coeff_s[1], coeff_s[2], coeff_s[3] = theta_guess, xoff, yoff; coeff_s[4:] = 0.   # fitdistortion 과 같은 자리
-        xs, ys = transform(xobs[imatch], yobs[imatch], coeff_s)
-        dist = np.hypot(xs - xf, ys - yf)
-        _, first = np.unique(imatch, return_index=True)
-        unique = np.zeros(nfid, bool); unique[first] = True
-        # 같은 검출을 두 fiducial 이 쓰면 가까운 쪽만 인정
-        for j in np.unique(imatch):
-            same = np.where(imatch == j)[0]
-            if same.size > 1:
-                unique[same] = False; unique[same[np.argmin(dist[same])]] = True
-        found = unique & (dist < match_tol)
+        def _assign(px, py):
+            """예측 초점면 위치 (px, py) 의 검출을 fiducial 마다 match_tol 안 가장 가까운 것으로, 중복 없이."""
+            d, j = cKDTree(np.column_stack((px, py))).query(np.column_stack((xf, yf)))
+            found = d < match_tol
+            for jj in np.unique(j[found]):               # 같은 검출을 두 fiducial 이 쓰면 가까운 쪽만
+                same = np.where(found & (j == jj))[0]
+                if same.size > 1:
+                    found[same] = False; found[same[np.argmin(d[same])]] = True
+            return j, found
+
+        def _check(theta_guess, xoff, yoff):
+            """matchfiber 의 회전·offset 으로 옮긴 검출을 설계 위치에 붙이고 (match_tol 안, 중복 없이),
+            붙은 쌍으로 1차(affine) 변환을 최소제곱으로 다시 맞춰 다시 붙인다 (lab.match_fiducials 와 같다).
+            반환: (fiducial 마다 검출 번호 j, found)
+
+            왜곡 항은 기본 계수(camera2focal_coeff) 그대로 둔다. matchfiber 가 그 계수로 옮긴 좌표에서
+            회전·offset 을 찾았으므로 여기서 0 으로 두면 본 장비 광학계에서는 가장자리 fiducial 이 2-3 mm
+            어긋나 match_tol 안에 못 든다 (2026-10-27 수정: 그래서 fiducial 이 4-9 개만 "찾아졌다").
+            matchfiber 의 격자(0.5 deg, 0.5 mm)만으로는 가장자리에서 1 mm 넘게 틀리므로 affine 재적합이
+            있어야 30 개가 다 붙는다."""
+            coeff_s = np.copy(camera2focal_coeff); coeff_s[0] = m_init or coeff_s[0]
+            coeff_s[1], coeff_s[2], coeff_s[3] = theta_guess, xoff, yoff   # fitdistortion 과 같은 자리
+            xs, ys = transform(xobs, yobs, coeff_s)
+            j, found = _assign(xs, ys)
+            for _ in range(8):
+                if found.sum() < 3:
+                    break
+                z = xobs[j[found]] + 1j*yobs[j[found]]; w = xf[found] + 1j*yf[found]
+                A = np.column_stack((z, np.conj(z), np.ones(z.size)))
+                M = np.vstack([np.column_stack([A.real, -A.imag]), np.column_stack([A.imag, A.real])])
+                c, *_ = np.linalg.lstsq(M, np.r_[w.real, w.imag], rcond=None)
+                cc = c[:3] + 1j*c[3:]
+                pz = np.column_stack((xobs + 1j*yobs, xobs - 1j*yobs, np.ones(xobs.size))) @ cc
+                j2, found2 = _assign(pz.real, pz.imag)
+                if found2.sum() < found.sum():
+                    break
+                improved = found2.sum() > found.sum()
+                j, found = j2, found2
+                if not improved:
+                    break
+            return j, found
+
+        # 먼저 fiducial 패턴만으로 맞춘다. 검출이 fiducial 수보다 많아도 (back-illumination 이 꺼져
+        # 있으면 여분은 반사광·쪼개진 spot 몇 개뿐이다) 이것이 맞으면 그대로 쓴다.
+        _, theta_guess, (xoff, yoff) = matchfiber(xf, yf, xobs, yobs, m_init=m_init)
+        imatch, found = _check(theta_guess, xoff, yoff)
+        if found.sum() < max(3, nfid//2) and xobs.size > nfid and exclude is None:
+            # fiber 가 같이 켜져 있으면 fiducial 사이에 fiber 가 빽빽해 fiducial 30 개만으로는 회전각이
+            # 정해지지 않을 수 있다: fiber 목표까지 넣은 전체 패턴으로 다시 맞추고 fiducial 자리만 쓴다
+            # (fiber 자리를 지운 뒤(exclude)라면 남은 여분은 고정 점·sky fiber 뿐이므로 하지 않는다).
+            _, theta2, (xoff2, yoff2) = matchfiber(x, y, xobs, yobs, m_init=m_init)
+            imatch2, found2 = _check(theta2, xoff2, yoff2)
+            log.info("Fiducial set %d: fiducial-only pattern matched %d/%d, with fiber targets %d/%d",
+                     k, int(found.sum()), nfid, int(found2.sum()), nfid)
+            if found2.sum() > found.sum():
+                imatch, theta_guess, xoff, yoff, found = imatch2, theta2, xoff2, yoff2, found2
         sets.append(dict(x=xobs[imatch], y=yobs[imatch], peak=peak[imatch], nsat=nsat[imatch],
                          found=found, theta=theta_guess, off=(xoff, yoff),
                          all_x=xobs, all_y=yobs, all_peak=peak, all_nsat=nsat))
@@ -457,22 +492,8 @@ def measure_fiducials(fid_heads, x, y, fid_flag, data_dir, nexposure,
             ref = max(range(len(sets)), key=lambda k: int(sets[k]['found'].sum()))
             if not improved:
                 break
-        # 마지막으로, 아직 못 찾은 fiducial 은 허용 거리를 두 배로 늘려 한 번 더 (가장자리 외삽 오차)
-        for k, st in enumerate(sets):
-            if st['found'].all():
-                continue
-            (px, py), _ = _predict(sets[ref], st['all_x'], st['all_y'])
-            d, j = cKDTree(np.column_stack((px, py))).query(np.column_stack((xf, yf)))
-            used = set(np.where(st['found'])[0].tolist())
-            taken = set(np.unique(st['all_x'].size and np.array([np.argmin(np.hypot(st['all_x'] - st['x'][i], st['all_y'] - st['y'][i])) for i in used])) if used else [])
-            extra = 0
-            for i in np.where(~st['found'])[0]:
-                if d[i] < 2*match_tol and j[i] not in taken:
-                    st['x'][i], st['y'][i] = st['all_x'][j[i]], st['all_y'][j[i]]
-                    st['peak'][i], st['nsat'][i] = st['all_peak'][j[i]], st['all_nsat'][j[i]]
-                    st['found'][i] = True; taken.add(j[i]); extra += 1
-            if extra:
-                log.info("Fiducial set %d: %d more found within %.1f mm", k, extra, 2*match_tol)
+        # (2026-10-27 제거: 남은 fiducial 을 허용 거리 2 배(3 mm)로 다시 붙이던 단계. 핀홀 실측 위치를
+        #  쓰면 맞는 검출은 1.5 mm 안에 들어오고, 넓히면 fiber 점이 fiducial 로 잡힐 수 있다.)
 
     fallback = [False]*len(sets) if fallback is None else list(fallback)
     choice = np.full(nfid, -1, dtype=int)

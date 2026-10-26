@@ -500,7 +500,7 @@ def match_fiducials(xo, yo, magnification=None, tol=1.5, use_measured=None, targ
                                  "target_file 을 주어야 회전이 바로 잡힌다", xo.size, nfid)
         _, theta, (xoff, yoff) = matchfiber(xf, yf, xo, yo, m_init=magnification)
     coeff_s = np.copy(camera2focal_coeff); coeff_s[0] = magnification or coeff_s[0]
-    coeff_s[1], coeff_s[2], coeff_s[3] = theta, xoff, yoff; coeff_s[4:] = 0.
+    coeff_s[1], coeff_s[2], coeff_s[3] = theta, xoff, yoff        # 왜곡 항은 기본 계수 그대로 (matchfiber 와 같은 변환)
     xs, ys = transform(xo, yo, coeff_s)
 
     def assign(px, py):
@@ -636,7 +636,7 @@ def _match_pattern(xt, yt, xo, yo, magnification=None, tol=1.5):
         return idx, resid
     _, theta, (xoff, yoff) = matchfiber(xt, yt, xo, yo, m_init=magnification)
     coeff_s = np.copy(camera2focal_coeff); coeff_s[0] = magnification or coeff_s[0]
-    coeff_s[1], coeff_s[2], coeff_s[3] = theta, xoff, yoff; coeff_s[4:] = 0.
+    coeff_s[1], coeff_s[2], coeff_s[3] = theta, xoff, yoff        # 왜곡 항은 기본 계수 그대로 (matchfiber 와 같은 변환)
     xs, ys = transform(xo, yo, coeff_s)
 
     def assign(px, py):
