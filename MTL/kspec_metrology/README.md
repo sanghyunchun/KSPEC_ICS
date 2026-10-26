@@ -247,17 +247,19 @@ INFO Measured geometry /경로/Measured_Geometry.txt: 2/103 holes replaced
 
     명령각 = ANGLE_SIGN × 기하각 − ANGLE_ZERO
 
-- `fiber_config.ANGLE_SIGN` 기본 `(1, 1)`: alpha = +theta (초점면 +x 에서 반시계가 양),
-  beta = +phi. 2026-10-23 실험실 배치로 확인. 그 이전 기본값 `(-1, -1)` 은 두 각 모두
-  부호가 반대였다 (0.3.x 까지의 json).
-- `fiber_config.ANGLE_ZERO` 기본 `(30, 150)` (2026-10-27 확정): 기하학적으로 (alpha, beta) =
-  (30°, 150°) 인 자세가 positioner 제어의 **(0, 0) 초기 위치**다. 따라서 json 의 누적각,
+- `fiber_config.ANGLE_SIGN` 기본 `(-1, -1)` (2026-10-27 본 장비에서 확인): positioner 는 기하각의
+  반대 방향으로 돈다. ICS `fbpoffset` 으로 trial 1 → 2 → 3 을 움직였을 때 오차가 0.8 → 1.6 → 2.9 mm
+  로 늘었고, 측정 위치에서 json 의 −1 배를 돌린 예측만 실측과 0.2 mm 안에서 맞았다.
+  2026-10-23 실험실(다른 제어 소프트웨어)에서는 `(1, 1)` 이었다.
+- `fiber_config.ANGLE_ZERO` 기본 `(-30, -150)`: 기하학적으로 (alpha, beta) = (30°, 150°) 인 자세가
+  positioner 제어의 **(0, 0) 초기 위치**다 (부호가 −1 이므로 영점은 −30, −150). json 의 누적각,
   offset 표, `lab.xy2ab` 의 출력과 target 파일의 alpha/beta, 각도 json, `lab.make_target(angles=)`
   의 입력은 모두 명령각이다 (초기 위치 = `angles=(0, 0)`). 이번 trial 회전량(dalpha, dbeta)은
-  차이라서 영점과 무관하다. 2026-10-27 이전 json(기하각)과는 alpha 30, beta 150 만큼 다르다.
+  차이라서 영점과 무관하다.
 - 출력 alpha 는 (−180°, 180°] 로 접는다.
-- 다른 규약이면 `KSPEC_ANGLE_SIGN="-1,-1"`, `KSPEC_ANGLE_ZERO="0,0"` 또는 `fiber_config` 의 값.
-  부호가 틀리면 fiber 가 목표에서 수 mm 떨어져 나오고 매칭이 겹친다.
+- 부호가 틀리면 positioner 가 trial 마다 목표에서 **멀어진다** (오차가 1, 2, 3 배로 는다). 영점이
+  틀리면 Trial 0 json 이 (0, 0) 이 아니다. 다른 규약이면 `KSPEC_ANGLE_SIGN`, `KSPEC_ANGLE_ZERO`
+  또는 `fiber_config` 의 값.
 
 ### 포화와 노출 자동 조정
 

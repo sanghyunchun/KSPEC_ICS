@@ -57,10 +57,9 @@ LabTest_README.md            이 파일
 환경변수 `KSPEC_FIBER_EXCLUDE`, `KSPEC_FIBER_FIXED`, `KSPEC_SKY_FIBERS` 와 같다.
 
 **각도 부호·영점**: 노트북 1절의 `ANGLE_SIGN`, `ANGLE_ZERO`. 명령각 = 부호 × 기하각 − 영점.
-기본 부호 `(1, 1)`: alpha 는 초점면 +x 에서 반시계가 양, beta 는 elbow-down 으로 0 이상 (2026-10-23
-실험실 배치로 확인). 기본 영점 `(30, 150)`: 기하각 (30, 150) 이 positioner 의 (0, 0) 초기 위치
-(2026-10-27). 출력 json 과 각도 입력은 모두 명령각. 부호가 틀리면 fiber 가 목표에서 수 mm 떨어져 나온다
-(`fiber - target` 중앙값이 mm 단위).
+기본 부호 `(-1, -1)` (2026-10-27 본 장비: positioner 는 기하각의 반대 방향으로 돈다; 2026-10-23
+실험실에서는 (1, 1) 이었다). 기본 영점 `(-30, -150)`: 기하각 (30, 150) 이 positioner 의 (0, 0) 초기
+위치. 출력 json 과 각도 입력은 모두 명령각. 부호가 틀리면 trial 마다 fiber 가 목표에서 멀어진다.
 
 **포화**: fiducial 전용 노출에서 안 보이는 fiducial 은 fiber 노출(보통 포화)에서라도
 가져온다. 포화된 것은 로그에 `saturated ... (used anyway)` 로 남는다. 촬영을 직접 하는
