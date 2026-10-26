@@ -11,8 +11,9 @@ close (light off, LightField disposed).
 
 Commands: ``specinitial <night> [experiment]``, ``specstatus``, ``getbias <n>``,
 ``getdark|getflat|getarc|getobj <t> <n>``, ``illuon``, ``illuoff``, ``illulighton``,
-``illulightoff``, ``specstop``, and ``wait <s>`` (bench only: sleep, the server keeps running,
-e.g. for the light auto-off). Frame commands carry the header dict of
+``illulightoff``, ``specstop``, ``wait <s>`` (bench only: sleep, the server keeps running,
+e.g. for the light auto-off) and ``waitlock <s>`` (bench only: poll the camera every 30 s until
+its temperature is Locked, at most <s> s; a camera just powered on takes 15-20 min). Frame commands carry the header dict of
 ``Lib/make_spec_header.set_header_info`` (OBJECT ``bench``), as the ICS sends it.
 """
 
@@ -21,6 +22,7 @@ import asyncio
 import json
 import os
 import sys
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -76,6 +78,20 @@ async def run(cfg, commands, keep_going):
             if words[0] == "wait":
                 print(f"-> wait {words[1]} s", flush=True)
                 await asyncio.sleep(float(words[1]))
+                continue
+            if words[0] == "waitlock":
+                print(f"-> waitlock (at most {words[1]} s)", flush=True)
+                t_end = time.monotonic() + float(words[1])
+                while True:
+                    st = await iso.read_lf_status()
+                    print(f"  camera {st.get('sensor_temp_c')} C {st.get('temp_status')}",
+                          flush=True)
+                    if str(st.get("temp_status")).lower() == "locked":
+                        break
+                    if time.monotonic() > t_end:
+                        print("stopping: the camera did not lock", flush=True)
+                        return 1
+                    await asyncio.sleep(30)
                 continue
             if words[0] == "specinitial":
                 night = words[1]
