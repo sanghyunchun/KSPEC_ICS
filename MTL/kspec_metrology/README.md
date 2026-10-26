@@ -240,15 +240,24 @@ INFO Measured geometry /경로/Measured_Geometry.txt: 2/103 holes replaced
 실측 위치를 적은 fiducial 에는 핀홀 오프셋을 **더하지 않는다** (이중 계산이
 되므로). 위치를 아직 안 잰 fiducial 에만 오프셋이 적용된다.
 
-### 각도 부호와 positioner 규약
+### 각도 부호·영점과 positioner 규약
 
-계산은 반시계(CCW) 기준으로 theta ∈ [0°, 360°), elbow-down 으로 phi ∈ [0°, 180°] 를
-구하고, 출력 각도 = `fiber_config.ANGLE_SIGN` × 계산각 이다. **기본 `(1, 1)`**:
-alpha = +theta (초점면 +x 에서 반시계가 양; (−180°, 180°] 로 접음), beta = +phi ≥ 0.
-2026-10-23 실험실에서 (−30°, 150°) 으로 보낸 fiber 72개가 이 규약의 자리에 있는 것으로
-확인했다. 그 이전 기본값 `(-1, -1)` 은 두 각 모두 부호가 반대였다 (0.3.x 까지의
-json). 다른 규약이면 `KSPEC_ANGLE_SIGN="-1,-1"` 또는 `fiber_config.ANGLE_SIGN`.
-부호가 틀리면 fiber 가 목표에서 수 mm 떨어져 나오고 매칭이 겹친다.
+계산은 반시계(CCW) 기준으로 theta ∈ [0°, 360°), elbow-down 으로 phi ∈ [0°, 180°] 인
+**기하각**을 구하고, 이 패키지가 내보내고 받는 각도는 모두 positioner **명령각**이다.
+
+    명령각 = ANGLE_SIGN × 기하각 − ANGLE_ZERO
+
+- `fiber_config.ANGLE_SIGN` 기본 `(1, 1)`: alpha = +theta (초점면 +x 에서 반시계가 양),
+  beta = +phi. 2026-10-23 실험실 배치로 확인. 그 이전 기본값 `(-1, -1)` 은 두 각 모두
+  부호가 반대였다 (0.3.x 까지의 json).
+- `fiber_config.ANGLE_ZERO` 기본 `(30, 150)` (2026-10-27 확정): 기하학적으로 (alpha, beta) =
+  (30°, 150°) 인 자세가 positioner 제어의 **(0, 0) 초기 위치**다. 따라서 json 의 누적각,
+  offset 표, `lab.xy2ab` 의 출력과 target 파일의 alpha/beta, 각도 json, `lab.make_target(angles=)`
+  의 입력은 모두 명령각이다 (초기 위치 = `angles=(0, 0)`). 이번 trial 회전량(dalpha, dbeta)은
+  차이라서 영점과 무관하다. 2026-10-27 이전 json(기하각)과는 alpha 30, beta 150 만큼 다르다.
+- 출력 alpha 는 (−180°, 180°] 로 접는다.
+- 다른 규약이면 `KSPEC_ANGLE_SIGN="-1,-1"`, `KSPEC_ANGLE_ZERO="0,0"` 또는 `fiber_config` 의 값.
+  부호가 틀리면 fiber 가 목표에서 수 mm 떨어져 나오고 매칭이 겹친다.
 
 ### 포화와 노출 자동 조정
 
@@ -266,7 +275,7 @@ target 파일(object.info) 에 `xp`/`yp` 대신 각도를 적어도 된다: `{"a
 (positioner 순서, deg, 출력 규약) 또는 이 패키지의 각도 json 형식 (`"C4_a": ..`).
 `load_configuration` 이 회전 중심(실측)과 arm 길이로 (x, y) 를 만든다. 따라서 모든 arm 을
 같은 각도로 두는 calibration run 은 target 파일만 바꿔 끼우면 된다
-(`lab.make_target(path, angles=(-30, 150))` 으로 만들 수 있다).
+(`lab.make_target(path, angles=(0, 0))` 으로 만들 수 있다; 명령각 (0, 0) = 초기 위치 = 기하각 (30, 150)).
 
 ### 어느 positioner 가 켜지는가 (분광기에 연결된 fiber, sky fiber, 고장난 positioner)
 

@@ -95,11 +95,12 @@ def make_fiber_table(positioners, out_path, src_table=None, fiducials=None):
 
 
 def ab2xy(xorigin, yorigin, alpha_deg, beta_deg, arm1, arm2):
-    """positioner 출력 각도 (alpha, beta) [deg, json 과 같은 부호 규약] -> fiber 끝 (x, y) [mm].
-    mtlcal 은 계산각 (theta, phi) 를 부호를 뒤집어 내보내므로 (출력 = -계산각) 여기서 되돌린다."""
+    """positioner 명령각 (alpha, beta) [deg, json 과 같은 규약] -> fiber 끝 (x, y) [mm].
+    명령각 = ANGLE_SIGN x 기하각 - ANGLE_ZERO 이므로 여기서 되돌린다 (명령 (0, 0) = 기하 (30, 150))."""
     sa, sb = cfg.ANGLE_SIGN
-    theta = sa*np.asarray(alpha_deg, float)/rtod          # 부호 x 부호 = 1 이므로 곱해서 되돌린다
-    phi = sb*np.asarray(beta_deg, float)/rtod
+    za, zb = cfg.ANGLE_ZERO
+    theta = sa*(np.asarray(alpha_deg, float) + za)/rtod   # 부호 x 부호 = 1 이므로 곱해서 되돌린다
+    phi = sb*(np.asarray(beta_deg, float) + zb)/rtod
     if cfg.CLOCKWISE:
         theta, phi = -theta, -phi
     x = xorigin + arm1*np.cos(theta) + arm2*np.cos(theta + phi)
@@ -108,7 +109,7 @@ def ab2xy(xorigin, yorigin, alpha_deg, beta_deg, arm1, arm2):
 
 
 def xy2ab(xorigin, yorigin, x, y, arm1, arm2):
-    """(x, y) [mm] -> 출력 각도 (alpha, beta) [deg]. ab2xy 의 역이고 mtlcal 과 같은 계산이다."""
+    """(x, y) [mm] -> 명령각 (alpha, beta) [deg]. ab2xy 의 역이고 mtlcal 과 같은 계산이다."""
     x, y = np.atleast_1d(x), np.atleast_1d(y)
     xo, yo = np.broadcast_to(xorigin, x.shape), np.broadcast_to(yorigin, x.shape)
     a1, a2 = np.broadcast_to(arm1, x.shape), np.broadcast_to(arm2, x.shape)
@@ -118,7 +119,9 @@ def xy2ab(xorigin, yorigin, x, y, arm1, arm2):
             xo.flat[i], yo.flat[i], x.flat[i], y.flat[i], a1.flat[i], a2.flat[i],
             elbow=cfg.ELBOW, clockwise=cfg.CLOCKWISE)
     sa, sb = cfg.ANGLE_SIGN
-    return sa*th*rtod, sb*ph*rtod
+    za, zb = cfg.ANGLE_ZERO
+    alpha = sa*th*rtod - za
+    return (alpha + 180.) % 360. - 180., sb*ph*rtod - zb
 
 
 def read_spec(path):
@@ -368,7 +371,7 @@ def inspect_trial(run, itrial, n=8):
 # ============================================================================ 목표 파일 만들기
 def make_target(out_path, angles=None, offset=None, xy=None, tile='lab', use_measured=None):
     """target 파일(object.info 형식) 을 만든다. 셋 중 하나를 준다.
-        angles=(alpha, beta)  모든 positioner 를 같은 각도로 [deg, json 부호 규약]
+        angles=(alpha, beta)  모든 positioner 를 같은 명령각으로 [deg, json 규약; (0, 0) = 기하각 (30, 150)]
         offset=(dx, dy)       모든 fiber 끝을 각자의 회전 중심에서 같은 (dx, dy) 만큼 [mm]
         xy=(xp, yp)           positioner 마다 다른 목표 [mm] (표 순서)
     각도 파일은 'alpha'/'beta' 키로 저장되어 read_targets 가 그대로 읽는다.
@@ -967,10 +970,13 @@ def measure(target_file, fiber_image, fid_images=(), out_dir='./lab_out', tile='
                    zenith_angle=0.0), open(tfile, 'w'), indent=1)
 
     def place(src, dst):
+        src_abs = os.path.realpath(src)
+        if os.path.lexists(dst) and os.path.realpath(dst) == src_abs:
+            return                                     # 이미 그 자리에 있는 이미지: 그대로 둔다 (자기 자신을 가리키는 링크로 바꾸지 않게)
         if os.path.lexists(dst):
             os.remove(dst)
         try:
-            os.symlink(os.path.abspath(src), dst)
+            os.symlink(src_abs, dst)
         except OSError:
             shutil.copy2(src, dst)
 

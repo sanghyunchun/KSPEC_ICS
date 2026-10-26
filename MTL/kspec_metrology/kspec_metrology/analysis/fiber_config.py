@@ -446,6 +446,20 @@ if os.environ.get(ANGLE_SIGN_ENV, '').strip():
     if len(ANGLE_SIGN) != 2 or any(abs(v) != 1. for v in ANGLE_SIGN):
         raise ValueError(f"{ANGLE_SIGN_ENV} must be two values of +1/-1, e.g. '-1,1'")
 
+# positioner 명령각의 영점 (2026-10-27 확정). 기하학적으로 (alpha, beta) = (30, 150) 인 자세가 positioner
+# 제어에서는 (0, 0) 이다. 이 패키지가 내보내는 각도 (json, offset 표의 누적각, lab.xy2ab) 와 받는 각도
+# (target 파일의 alpha/beta, 각도 json, lab.make_target(angles=...)) 는 모두 **명령각** 이다:
+#     명령각 = ANGLE_SIGN x 기하각 - ANGLE_ZERO        (기하각: 초점면 +x 에서 반시계 theta, elbow-down phi)
+# 이번 trial 의 회전량 (dalpha, dbeta) 은 차이라서 영점과 무관하다. 기하각을 그대로 내보내던
+# 2026-10-27 이전 json 과는 alpha 30, beta 150 만큼 다르다.
+#   환경변수 : KSPEC_ANGLE_ZERO="30,150"   (기하각을 그대로 쓰려면 "0,0")
+ANGLE_ZERO_ENV = 'KSPEC_ANGLE_ZERO'
+ANGLE_ZERO = (30., 150.)
+if os.environ.get(ANGLE_ZERO_ENV, '').strip():
+    ANGLE_ZERO = tuple(float(t) for t in os.environ[ANGLE_ZERO_ENV].replace(';', ',').split(','))
+    if len(ANGLE_ZERO) != 2:
+        raise ValueError(f"{ANGLE_ZERO_ENV} must be two values (alpha, beta) in deg, e.g. '30,150'")
+
 ELBOW = "down"
 CLOCKWISE = False
 
