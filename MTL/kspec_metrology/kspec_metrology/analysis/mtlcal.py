@@ -371,7 +371,11 @@ def measure_fiducials(fid_heads, x, y, fid_flag, data_dir, nexposure,
     sets = []
     for k, head in enumerate(fid_heads):
         nexp = nexposure if set_nexposure is None else set_nexposure[k]
-        nmax = nfid + n_extra if exclude is not None else nfid + nfib + n_extra
+        # 검출 상한은 fiber 자리를 지웠을 때도 nfid + nfib + n_extra 로 둔다. 지운 것은 "매칭된" fiber 자리만이라
+        # 목표에서 멀어져 매칭 안 된 fiber 의 점이 남는데, 상한을 nfid + n_extra 로 잡으면 findpeak 이 문턱을
+        # 올리거나 가장 어두운 검출을 버려 상한에 맞추다가 어두운 fiducial 을 버린다 (2026-10-27 trial 3: Z11).
+        # 여분은 패턴 매칭에서 자연히 빠지므로 상한을 넉넉히 두는 쪽이 안전하다.
+        nmax = nfid + nfib + n_extra
         nmin = max(3, nfid//2)                          # 일부가 안 보여도 받아들인다
         _, xobs, yobs, peak, nsat = findpeak((nmin, nmax), data_dir=data_dir, head=head,
                                              nexposure=nexp, sat_level=sat_level,
@@ -854,18 +858,25 @@ def mtlcal(data_dir='./MTL/data/'
             head, xa, ya, nfib_a, coeff, data_dir, nexposure, n_extra=n_extra,
             exclude=(xo_fid, yo_fid) if cross_exclude else None, mode=mode, **pk)
         if cross_exclude:
-            # fiber 자리를 지우고 fiducial 을 다시 찾아 변환을 다시 맞춘다
-            xo_fid, yo_fid, _, theta_guess, (xoff_guess, yoff_guess) = measure_fiducials(
-                heads_all, xa, ya, fa, data_dir, fid_nexposure, set_nexposure=nexp_all,
-                n_extra=n_extra, m_init=magnification, sat_level=sat_level, fid_min_peak=fid_min_peak,
-                fallback=fb_all, exclude=(xo_fib[:nfib_a], yo_fib[:nfib_a]), **pk)
-            xf_fid, yf_fid, dxf, dyf, coeff = fitdistortion(
-                x_fid, y_fid, np.ones(x_fid.size, dtype=bool), xo_fid, yo_fid,
-                np.arange(x_fid.size), theta_guess, xoff_guess, yoff_guess,
-                model=model, m_init=magnification)
-            xf_a, yf_a, _, _ = measure_fibers(
-                head, xa, ya, nfib_a, coeff, data_dir, nexposure, n_extra=n_extra,
-                exclude=(xo_fid, yo_fid), mode=mode, **pk)
+            # fiber 자리를 지우고 fiducial 을 다시 찾아 변환을 다시 맞춘다. 이 2차 탐색은 다듬기일 뿐이므로
+            # 여기서 fiducial 을 잃으면 (예: 어두운 fiducial 이 검출 상한 때문에 버려짐) 1차 결과를 그대로 쓴다.
+            try:
+                xo_fid2, yo_fid2, _, theta2, (xoff2, yoff2) = measure_fiducials(
+                    heads_all, xa, ya, fa, data_dir, fid_nexposure, set_nexposure=nexp_all,
+                    n_extra=n_extra, m_init=magnification, sat_level=sat_level, fid_min_peak=fid_min_peak,
+                    fallback=fb_all, exclude=(xo_fib[:nfib_a], yo_fib[:nfib_a]), **pk)
+            except RuntimeError as err:
+                log.warning("cross_exclude: fiducial re-detection with fiber spots masked failed (%s); "
+                            "keeping the first-pass fiducial positions", err)
+            else:
+                xo_fid, yo_fid, theta_guess, xoff_guess, yoff_guess = xo_fid2, yo_fid2, theta2, xoff2, yoff2
+                xf_fid, yf_fid, dxf, dyf, coeff = fitdistortion(
+                    x_fid, y_fid, np.ones(x_fid.size, dtype=bool), xo_fid, yo_fid,
+                    np.arange(x_fid.size), theta_guess, xoff_guess, yoff_guess,
+                    model=model, m_init=magnification)
+                xf_a, yf_a, _, _ = measure_fibers(
+                    head, xa, ya, nfib_a, coeff, data_dir, nexposure, n_extra=n_extra,
+                    exclude=(xo_fid, yo_fid), mode=mode, **pk)
         xf_a[fa], yf_a[fa] = xf_fid, yf_fid                      # fiducial 은 전용 노출 값
 
     xfocal = np.full(x.size, np.nan); yfocal = np.full(y.size, np.nan)
