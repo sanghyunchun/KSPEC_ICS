@@ -23,8 +23,9 @@ LabTest_README.md            이 파일
 ## 입력
 
 **fiber 표**: 패키지 기본 `analysis/Fiber_Configuration_config73.txt`
-(positioner 73 + fiducial 30). 바깥 sky fiber 9개 홀은 −9 로 표에서 빠져 있고,
-켜져 있으면 `SKY_FIBERS` 에 그 홀 ID 를 적는다 (아래).
+(positioner 73 + fiducial 30). 바깥 sky fiber 홀은 −9 로 표에서 빠져 있고,
+켜져 있으면 `SKY_FIBERS` 에 그 홀 ID 를 적는다 (아래). 분광기에 연결된 fiber 만 켜진다
+(2026-10 설치표: obj 37 + sky 6 = 43; G4 는 끊어져 대신 H3).
 
 **목표 파일**: `object.info` 와 같은 json. 배열은 표의 positioner 순서(73개).
 
@@ -46,11 +47,11 @@ LabTest_README.md            이 파일
 
 | 목록 | 뜻 | 처리 |
 |---|---|---|
-| `BROKEN_FIBERS = ['G4']` | 끊어져 빛이 안 나오는 fiber | 이미지에서 찾지 않음. 결과 NaN, 회전량 0 |
-| `FIXED_FIBERS = ['C6']` | 빛은 나오지만 고장나 움직이지 않는 positioner | 그 홀의 arm 도달 범위 안이고 다른 목표에서 3 mm 넘게 떨어진 검출을 후보에서 뺌. 결과 NaN, 회전량 0 |
-| `SKY_FIBERS = ['A6', ...]` | 켜져 있는 sky fiber 홀 9개 | 같은 방식으로 뺌. 꺼져 있으면 `[]` |
+| `BROKEN_FIBERS = ['G4', ...]` | 빛이 안 나는 positioner (분광기에 fiber 가 안 연결된 33 홀, 끊어진 G4 포함; 패키지 기본) | 이미지에서 찾지 않음. 결과 NaN, 회전량 0 |
+| `FIXED_FIBERS = ['G7', 'H8', 'J6']` | 빛은 나오지만 고장나 움직이지 않는 positioner (sky fiber 가 꽂힘; 패키지 기본) | 그 홀의 arm 도달 범위 안이고 다른 목표에서 3 mm 넘게 떨어진 검출을 후보에서 뺌. 결과 NaN, 회전량 0 |
+| `SKY_FIBERS = ['B7', 'H1', 'N7']` | 표에서 −9 인 홀의 sky fiber (패키지 기본) | 같은 방식으로 뺌 |
 
-기대 검출 개수 = 73 − 끊어진 수 + sky 수 (고정된 positioner 는 73 안에 있다).
+기대 검출 개수 = 73 − BROKEN 수 + SKY 수 (FIXED 는 73 안에 있다) = 73 − 33 + 3 = 43 (기본값). 빈 리스트 `[]` 는 패키지 기본값을 그대로 쓴다.
 남은 목표와 검출은 1:1 assignment 로 매칭되고, 3 mm 넘게 떨어져 매칭된 fiber 는 ID 와 함께 경고가 난다.
 `N_EXTRA` 는 이들 외의 여분 밝은 점(반사광 등)만 센다 (보통 0).
 환경변수 `KSPEC_FIBER_EXCLUDE`, `KSPEC_FIBER_FIXED`, `KSPEC_SKY_FIBERS` 와 같다.
