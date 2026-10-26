@@ -487,11 +487,15 @@ python -m kspec_metrology.make_labtest_bundle --out dist/kspec_metrology_LabTest
 
 ### 카메라 배율
 
-`analysis/utils.py` 의 `CAMERA2FOCAL_M` 이 camera -> focal 배율 초기값이다.
-`matchfiber` 는 회전과 offset만 훑고 배율은 맞추지 않으므로, 이 값이 실제와
-몇 % 이상 어긋나면 시야 가장자리에서 fiber 매칭이 어긋난다. 지금은 mock
-이미지(Zemax 설계 광학계) 기준인 `-8.4675` 로 맞춰져 있으니, 실카메라 배율이
-확정되면 이 상수를 바꾸거나 `magnification` 인자로 넘긴다.
+`analysis/utils.py` 의 `camera2focal_coeff` 가 camera -> focal 변환(배율, 회전, offset,
+왜곡)의 초기값이고 `CAMERA2FOCAL_M` 이 그 배율이다. 2026-10-26 부터 **2026-01 commissioning
+때 실카메라를 fit 한 값**(`camera2focal_coeff_comm`, 배율 -8.86) 을 기본으로 쓴다.
+
+`matchfiber` 는 회전과 offset 만 훑고 배율은 맞추지 않으므로 초기 배율이 실제와 몇 %
+어긋나면 매칭이 통째로 깨진다 (실측: 5% 차이면 fiducial 30 개 중 1 개만 맞는다).
+다른 광학계의 영상은 `magnification` 인자로 그 값을 준다. 설치 전 시험 셋업(2026-10-17)
+영상은 +8.40, mock 이미지는 `CAMERA2FOCAL_M_MOCK` (-8.4675) 이다. 부호는 180° 회전과
+같아서 매칭에는 영향이 없다.
 
 ### peak 검출 방법
 

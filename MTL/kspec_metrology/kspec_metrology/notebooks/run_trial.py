@@ -38,7 +38,7 @@ def main(argv=None):
                     help='fiducial 전용 노출시간 [ms], 0-2 개 (기본 2 10). 없으면 fiber 이미지에서 fiducial 도 찾는다')
     ap.add_argument('--n', type=int, default=1, help='노출 장수 (기본 1)')
     ap.add_argument('--mode', default='Raw', choices=['Raw', 'Predict'])
-    ap.add_argument('--magnification', type=float, default=8.40)
+    ap.add_argument('--magnification', type=float, default=None, help='배율 초기값. 기본 None = 패키지 기본 (2026-01 commissioning -8.86)')
     ap.add_argument('--model', default='full+affine')
     ap.add_argument('--threshold', type=float, default=1e3)
     ap.add_argument('--min-dist', type=float, default=80)

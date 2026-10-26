@@ -77,13 +77,15 @@ focal2camera_coeff = np.array([-1.18e-1, 0., 0., 0.
 # camera -> focal 배율(magnification) 초기값.
 #
 # matchfiber는 회전과 offset만 grid search하고 배율은 맞추지 않으므로, 이 값이
-# 실제와 몇 % 이상 어긋나면 시야 가장자리에서 fiber 매칭이 어긋난다.
+# 실제와 몇 % 이상 어긋나면 fiducial/fiber 매칭이 통째로 어긋난다 (5% 차이면 30개 중
+# 1개만 맞는다).
 #
-# 지금 값은 image_simulation의 mock 이미지(Zemax 설계 광학계)에 맞춘 것이다.
-#   focal2ccd 배율 -0.11809820162629767 의 역수
-# 실카메라 배율이 확정되면 이 상수만 바꾸면 된다 (참고: 커미셔닝 카메라를 fit한
-# camera2focal_coeff_comm[0]은 -8.86122935).
-CAMERA2FOCAL_M = -8.467529447775467
+# 2026-10-26 부터 2026-01 commissioning 때 실카메라를 fit 한 값(camera2focal_coeff_comm)
+# 을 기본 초기값으로 쓴다 (metrology 카메라 설치 뒤의 배율 8.8~8.9 에 맞다).
+# 설치 전 시험 셋업(2026-10-17, 배율 +8.40) 이나 mock 이미지(Zemax 설계, -8.4675) 의
+# 영상은 magnification 인자로 그 값을 따로 준다.
+CAMERA2FOCAL_M_MOCK = -8.467529447775467      # image_simulation mock (focal2ccd 배율 -0.118098 의 역수)
+CAMERA2FOCAL_M = -8.86122935                  # 2026-01 commissioning fit (= camera2focal_coeff_comm[0])
 
 # 왜곡 다항식 계수 이름 (_transform_core 인자 순서). fitdistortion 이 어느 항을 풀지
 # 고를 때 쓴다.
@@ -141,7 +143,8 @@ def full_coeff(coeff):
     raise ValueError(f"coefficient array must have {len(COEFF_NAMES)-2} or {len(COEFF_NAMES)} entries")
 
 
-camera2focal_coeff = np.array([CAMERA2FOCAL_M, 3.39, -17.6, 6.12
+# mock 이미지(Zemax 설계 광학계) 기준 초기값
+camera2focal_coeff_mock = np.array([CAMERA2FOCAL_M_MOCK, 3.39, -17.6, 6.12
                             , 1e-7 , 1e-10,  -1e-14, 1e-19
                             , 1e-5 , -1e-5, -1e-5 
                             , -1e-12, 1e-12, -1e-8, -1e-8])
@@ -150,6 +153,9 @@ camera2focal_coeff_comm = np.array([-8.86122935e+00,  3.38690494e+00, -1.8252885
   1.66354341e-06, -6.79248222e-12, -3.24245319e-15,  1.21355101e-19,
   2.15555123e-05, -5.33596998e-06, -4.25871882e-06,
   5.61938788e-13,  3.45829439e-12,  1.43624651e-08, -5.47145640e-08,])
+
+# 기본 초기값: 2026-01 commissioning fit (matchfiber / fitdistortion / lab 이 쓴다)
+camera2focal_coeff = camera2focal_coeff_comm.copy()
 
 focal2camera_coeff_comm = np.array([-1.12893885e-01,  2.89629810e+00,  1.85740059e+00, -1.04152670e+00,
        -1.33678211e-04,  3.67028322e-07, -9.27834147e-10,  7.36408576e-13,
