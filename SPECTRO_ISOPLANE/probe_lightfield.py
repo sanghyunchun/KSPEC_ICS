@@ -12,8 +12,9 @@ assumes and writes everything it finds to a JSON report:
 5. Optional (--acquire): one exposure with time stamps on, then the SPE time stamps.
 
 The probe never changes the grating or the centre wavelength, and never saves the experiment.
-With --acquire it changes the exposure time, time stamps, file name and export settings of the
-loaded experiment for that one frame; check the shutter and lamps first.
+With --acquire it changes the exposure time, shutter, time stamps, file name and export settings
+of the loaded experiment for that one frame. The frame is a dark (shutter closed) unless
+--open-shutter is given; then check the lamps first.
 
 usage (Windows, from the KSPEC_ICS root):
     python SPECTRO_ISOPLANE/probe_lightfield.py
@@ -160,9 +161,10 @@ def flags(enum_type, *members):
     return Enum.ToObject(clr.GetClrType(enum_type), value)
 
 
-def acquire_one(app, exp, exptime_ms, outdir):
+def acquire_one(app, exp, exptime_ms, outdir, open_shutter=False):
     from PrincetonInstruments.LightField.AddIns import (CameraSettings, ExperimentSettings,
-                                                        ExportFileType, TimeStamps)
+                                                        ExportFileType, ShutterTimingMode,
+                                                        TimeStamps)
     from System import Int64
     from System.IO import FileAccess
 
@@ -170,6 +172,8 @@ def acquire_one(app, exp, exptime_ms, outdir):
     base = "probe_" + dt.datetime.now().strftime("%Y%m%d_%H%M%S")
     for name, value in (
         (CameraSettings.ShutterTimingExposureTime, float(exptime_ms)),
+        (CameraSettings.ShutterTimingMode,
+         ShutterTimingMode.Normal if open_shutter else ShutterTimingMode.AlwaysClosed),
         (CameraSettings.AcquisitionTimeStampingStamps,
          flags(TimeStamps, TimeStamps.ExposureStarted, TimeStamps.ExposureEnded)),
         # the server's per-frame settings (lightfield.LightField._expose)
@@ -202,7 +206,7 @@ def acquire_one(app, exp, exptime_ms, outdir):
     if spe:
         ds = netcall.call(fm, "OpenFile", spe[0], FileAccess.Read)
         try:
-            md = netcall.call(ds, "GetFrameMetadata", 0)
+            md = netcall.call(ds, "GetFrameMetaData", 0)
             out["time_stamp_origin"] = str(netcall.get(ds, "TimeStampOrigin"))
             out["exposure_started"] = str(netcall.get(md, "ExposureStarted"))
             out["exposure_ended"] = str(netcall.get(md, "ExposureEnded"))
@@ -220,6 +224,8 @@ def main():
     ap.add_argument("--hidden", action="store_true", help="run LightField without its window")
     ap.add_argument("--acquire", action="store_true", help="take one frame (see the warning)")
     ap.add_argument("--exptime-ms", type=float, default=100.0)
+    ap.add_argument("--open-shutter", action="store_true",
+                    help="--acquire with the shutter open (default: a dark)")
     ap.add_argument("--outdir", default=os.path.join(os.getcwd(), "probe_out"))
     ap.add_argument("--report", default="lightfield_probe.json")
     a = ap.parse_args()
@@ -249,7 +255,8 @@ def main():
         step(report, "settings")(dump_settings, exp)
         step(report, "enums")(enum_names)
         if a.acquire:
-            step(report, "acquire")(acquire_one, app, exp, a.exptime_ms, a.outdir)
+            step(report, "acquire")(acquire_one, app, exp, a.exptime_ms, a.outdir,
+                                      a.open_shutter)
         finish(report, a.report)
     finally:
         try:

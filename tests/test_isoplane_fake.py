@@ -343,6 +343,33 @@ class IsoplaneFakeTest(unittest.TestCase):
         self.assertEqual(iso.bl.state, 'OUT')
         self.assertFalse(uno.light)
 
+    def test_shutter_open_only_while_the_light_is_on(self):
+        class ShutterLog(FakeLightField):
+            def __init__(self, fail_open=False, **kw):
+                super().__init__(**kw)
+                self.history, self.fail_open = [], fail_open
+
+            def set_shutter_open(self, is_open):
+                if is_open and self.fail_open:
+                    raise RuntimeError("no camera")
+                self.history.append(is_open)
+                super().set_shutter_open(is_open)
+
+        lf = ShutterLog(time_scale=0.001, shape=(1, 8, 10))
+        iso = self.make(lf=lf)
+        self.run_cmds(iso, body('specinitial', dirname='20261101'), body('illuon'),
+                      body('illulightoff'), body('illulighton'), body('illuoff'))
+        self.assertEqual(lf.history, [True, False, True, False])  # the light needs the shutter
+        self.assertEqual(lf.status()['shutter'], 'Normal')
+        # the shutter is opened first: if that fails, the light stays off
+        lf = ShutterLog(fail_open=True, time_scale=0.001, shape=(1, 8, 10))
+        self.server = FakeServer()
+        iso = self.make(lf=lf)
+        self.run_cmds(iso, body('specinitial', dirname='20261101'), body('illuon'), body('illuoff'))
+        self.assertEqual(self.server.done('illuon')[0]['status'], 'error')
+        self.assertFalse(iso.bl.link.light)
+        self.assertEqual(iso.bl.state, 'OUT')
+
     def test_light_switches_off_after_light_max_on_s(self):
         iso = self.make()
         iso.light_max_on_s = 0.05
