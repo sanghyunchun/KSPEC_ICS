@@ -15,7 +15,8 @@ from unittest.mock import AsyncMock, patch
 
 from astropy.io import fits
 
-from SPECTRO_ISOPLANE.backillum import RELEASE, STOP_HOLD, BackIllumination, FakeUno
+from SPECTRO_ISOPLANE.backillum import (RELEASE, STOP_HOLD, BackIllumination, FakeUno,
+                                        approach_window)
 from SPECTRO_ISOPLANE.command import Isoplane
 from SPECTRO_ISOPLANE.fitsio import append_cards
 from SPECTRO_ISOPLANE.lightfield import FakeLightField
@@ -621,6 +622,16 @@ class SetHeaderInfoTest(unittest.TestCase):
         self.assertEqual(h['CARDS'], [['TELAIRM', 1.1, '']])
         self.assertEqual(msh.set_header_info(fwhm=1.4)['FWHM'], 1.4)
         self.assertEqual(msh.site_info(os.path.join(d, 'missing.ini'))['OBSERVAT'], None)
+
+
+class ApproachWindowTest(unittest.TestCase):
+    def test_seated_start_trips_earlier(self):
+        # on the instrument a seated start tripped Near after 1.70 and 1.74 mm (2026-10-26)
+        lo, hi = approach_window(True)
+        self.assertTrue(lo <= 1.70 <= hi and lo <= 1.74 <= hi)
+        self.assertFalse(approach_window(False)[0] <= 1.70)
+        lo, hi = approach_window(None)  # unknown start: either is accepted
+        self.assertTrue(lo <= 1.70 and 2.3 <= hi)
 
 
 class AppendCardsTest(unittest.TestCase):

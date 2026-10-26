@@ -37,6 +37,19 @@ WATCHDOG_S = 60
 PING_EVERY_S = 15
 
 
+def approach_window(start_seated):
+    """(lo, hi) in mm where the slow approach of a retract must trip Near, for an insert that
+    started at the trip point (False), seated SEAT_MM above it (True), or either (None: the
+    first insert after a connect, or after a stop). A seated start trips SEAT_MM earlier."""
+    lo = APPROACH_MM + 0.1 - APPROACH_TOL_MM
+    hi = APPROACH_MM + 0.1 + APPROACH_TOL_MM
+    if start_seated:
+        return lo - SEAT_MM, hi - SEAT_MM
+    if start_seated is None:
+        return lo - SEAT_MM, hi
+    return lo, hi
+
+
 # ------------------------------------------------------------ SBC-11R4 frames (CRC added by the Uno)
 def wr16(reg, val):
     return bytes([SLAVE, 0x06, reg >> 8, reg & 0xFF, val >> 8, val & 0xFF])
@@ -188,6 +201,8 @@ class BackIllumination:
         self.state = "UNKNOWN"
         self.light = False
         self.last_error = None
+        self.seated = None  # stage seated SEAT_MM past the Near trip point; None: unknown
+        self.start_seated = None  # self.seated when the last insert left Near
         self._stop_ping = threading.Event()
         self._ping_thread = None
         self._abort = threading.Event()
@@ -237,6 +252,7 @@ class BackIllumination:
         self._mb(wr32(0x28, SLOW_SPEED))
         self._mb(wr32(0x2B, move_word(SEAT_MM, far=False, limit=False)))
         self._sleep(SEAT_MM * STEPS_PER_MM / SLOW_SPEED + 0.2)
+        self.seated = True
 
     # -------------------------------------------------- operations
     def connect(self):
@@ -276,6 +292,7 @@ class BackIllumination:
             self._cmd("L OFF")
             self.light = False
             self.home()
+            self.start_seated = self.seated
             self._move(self.depth, far=True, speed=self.speed)
             near, far = self.limits()
             if far:
@@ -309,8 +326,10 @@ class BackIllumination:
                 if th is None:
                     raise BackIllumError("Near not reached on the slow approach: steps lost")
                 dist = th * SLOW_SPEED / STEPS_PER_MM
-                if abs(dist - APPROACH_MM - 0.1) > APPROACH_TOL_MM:
-                    self.last_error = f"Near after {dist:.2f} mm (expect ~2.1): steps lost"
+                lo, hi = approach_window(self.start_seated)
+                if not lo <= dist <= hi:
+                    self.last_error = (f"Near after {dist:.2f} mm (expect {lo:.1f}-{hi:.1f}): "
+                                       "steps lost")
                 self._seat()
             else:
                 self.home()
@@ -331,6 +350,7 @@ class BackIllumination:
             except Exception:
                 pass
         self.light = False
+        self.seated = None
         self.state = "UNKNOWN"
 
     def emergency_stop(self):
@@ -341,6 +361,7 @@ class BackIllumination:
         self._abort.set()
         replies = [self.link.cmd("MB " + STOP_HOLD.hex().upper()), self.link.cmd("L OFF")]
         self.light = False
+        self.seated = None
         self.state = "UNKNOWN"
         if not all(r.startswith("OK") for r in replies):
             raise BackIllumError(f"Uno replies to the stop: {replies}")
