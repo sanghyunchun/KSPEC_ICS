@@ -22,6 +22,11 @@ import datetime
 import os
 import sys
 
+# 이 저장소 안의 패키지를 우선 쓴다 (다른 곳에 설치된 옛 버전이 잡히지 않게)
+_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+if os.path.exists(os.path.join(_ROOT, 'kspec_metrology', '__init__.py')) and _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
 from kspec_metrology.naming import image_path
 
 
