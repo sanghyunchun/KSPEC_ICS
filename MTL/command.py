@@ -5,9 +5,43 @@ import os
 import time
 
 import Lib.mkmessage as mkmsg
+import kspec_metrology
 from kspec_metrology.exposure.mtlexp import mtlexp as take_test_exposure
 from kspec_metrology.mtlrun import MetrologyRun
 from kspec_metrology.analysis.mtlcal import mtlcal as analyze_images, json_path
+from kspec_metrology.analysis import utils as mtl_utils
+
+
+# 분석 설정. kspec_metrology 의 노트북(Calibration_Run, Metrology_Debug 등)과 run_trial.py 에서
+# 실제 영상으로 검증한 값이다. MetrologyRun / mtlcal 의 자체 기본값(min_dist 40, finder_opts None,
+# threshold 3000)은 PSF 가 큰 본 장비에서 spot 하나가 여러 검출로 쪼개져(deblending) fiducial
+# 패턴 매칭이 안 될 수 있다. 메시지에 같은 이름의 키가 있으면 그 값을 쓴다 (mtlstart, mtlcal).
+#   threshold      : peak 검출 시작 문턱 [ADU]; 검출 개수에 맞춰 자동으로 오르내린다
+#   nwindow        : centroid 창 반폭 [px]
+#   niter_recenter : centroid 를 무게중심으로 옮겨 다시 재는 횟수
+#   min_dist       : 이보다 가까운 검출은 하나로 합친다 [px]
+#   model          : camera -> focal 왜곡 모델
+ANALYSIS_DEFAULTS = dict(threshold=1e3, nwindow=40, niter_recenter=1, min_dist=80, model='full+affine')
+FINDER_OPTS = {'minarea': 9, 'deblend_cont': 1.0}      # sep: spot 하나를 쪼개지 않는다
+
+
+def _analysis_options(message):
+    """ANALYSIS_DEFAULTS 를 메시지 값으로 덮어 돌려준다 (타입은 기본값을 따른다)."""
+    out = {}
+    for key, default in ANALYSIS_DEFAULTS.items():
+        out[key] = _value(message, key, default, type(default))
+    if out['nwindow'] < 1 or out['niter_recenter'] < 0 or out['min_dist'] <= 0 or out['threshold'] <= 0:
+        raise ValueError('nwindow >= 1, niter_recenter >= 0, min_dist > 0, threshold > 0 이어야 합니다.')
+    out['finder_opts'] = dict(FINDER_OPTS)
+    # camera -> focal 배율 초기값. None 이면 패키지 기본값 (2026-01 commissioning fit). 다른 광학계일 때만 준다.
+    out['magnification'] = _value(message, 'magnification', None, float)
+    return out
+
+
+def _package_info():
+    """어느 kspec_metrology 가 import 됐는지 (옛 설치본이 잡히는 사고를 로그와 응답으로 드러낸다)."""
+    return dict(package=os.path.dirname(os.path.abspath(kspec_metrology.__file__)),
+                magnification_default=float(mtl_utils.CAMERA2FOCAL_M))
 
 
 class MTLContext:
@@ -139,6 +173,12 @@ async def identify_execute(MTL_server, cmd, context):
                 )
                 tile = _value(receive_msg, "tile", None)
 
+                analysis = _analysis_options(receive_msg)
+                info = _package_info()
+                print(f"MTL mtlstart: kspec_metrology at {info['package']}, "
+                      f"default magnification {info['magnification_default']:.3f}, "
+                      f"analysis {analysis}")
+
                 run = MetrologyRun(
                     target_file=target_file,
                     data_dir=data_dir,
@@ -148,7 +188,8 @@ async def identify_execute(MTL_server, cmd, context):
                     max_trial=_value(receive_msg, "max_trial", 5, int),
                     nexposure=nexposure,
                     mode=_value(receive_msg, "mode", "Raw", str),      # Raw: detect + match (robust); Predict only once the errors are < ~1 mm
-                    threshold=_value(receive_msg, "threshold", 3000.0, float),
+                    **analysis,                                        # threshold, nwindow, niter_recenter, min_dist, model, finder_opts, magnification
+                    n_extra=_value(receive_msg, "n_extra", 0, int),
                     exptime=exptime,
                     fid_exptime=[1.0, 10.0],  # separate fiducial frames [ms] each trial
                     gain=_value(receive_msg, "gain", 10, float),
@@ -174,6 +215,7 @@ async def identify_execute(MTL_server, cmd, context):
                     nexposure=run.nexposure,
                     tolerance=run.tolerance,
                     metric=run.metric,
+                    **info,
                 )
                 return
 
@@ -252,15 +294,19 @@ async def identify_execute(MTL_server, cmd, context):
                     config['mtlfilepath'], 'object.info'
                 )
                 json_dir = _value(receive_msg, 'json_dir', None, str)
+                fid_head = receive_msg.get('fid_head', None)      # fiducial 전용 노출의 head (0-2 개)
+                if isinstance(fid_head, str):
+                    fid_head = [t.strip() for t in fid_head.replace(';', ',').split(',') if t.strip()]
                 options = {
                     'data_dir': _expand_path(
                         _value(receive_msg, 'data_dir', config['mtlimagepath'], str)
                     ),
                     'head': _value(receive_msg, 'head', 'test', str),
+                    'fid_head': list(fid_head) if fid_head else None,
                     'mode': _value(receive_msg, 'mode', 'Raw', str),
-                    'threshold': _value(receive_msg, 'threshold', 3e3, float),
-                    'nwindow': _value(receive_msg, 'nwindow', 40, int),
+                    'n_extra': _value(receive_msg, 'n_extra', 0, int),
                     'nexposure': _value(receive_msg, 'nexposure', 1, int),
+                    **_analysis_options(receive_msg),
                     'target_file': _expand_path(
                         _value(receive_msg, 'target_file', default_target, str)
                     ),
@@ -270,8 +316,8 @@ async def identify_execute(MTL_server, cmd, context):
                 }
                 if options['mode'] not in ('Raw', 'Predict'):
                     raise ValueError('mode must be Raw or Predict')
-                if options['nwindow'] < 1 or options['nexposure'] < 1 or options['itrial'] < 1:
-                    raise ValueError('nwindow, nexposure and itrial must be at least 1')
+                if options['nexposure'] < 1 or options['itrial'] < 1:
+                    raise ValueError('nexposure and itrial must be at least 1')
                 if (options['json_dir'] is None) != (options['target_name'] is None):
                     raise ValueError('Specify both json_dir and target_name to save JSON')
 

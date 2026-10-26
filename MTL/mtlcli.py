@@ -81,13 +81,18 @@ def mtl_set(exptime=0.03, nexposure=1):
                               nexposure=int(count), message='Update MTL exposure settings')
 
 
-def mtl_cal(data_dir=None, head='test', mode='Raw', threshold=3e3,
+def mtl_cal(data_dir=None, head='test', fid_head=None, mode='Raw', threshold=1e3,
             nwindow=40, nexposure=1, target_file=None, json_dir=None,
             target_name=None, itrial=1):
-    """기존 이미지를 analysis.mtlcal의 인자로 분석한다 (촬영/run 초기화 없음)."""
+    """기존 이미지를 analysis.mtlcal의 인자로 분석한다 (촬영/run 초기화 없음).
+
+    fid_head : fiducial 전용 노출의 head 0-2 개 (예: tile_MetrologyTrial_1_fid0_ tile_MetrologyTrial_1_fid1_).
+    나머지 분석 설정(min_dist, model, finder_opts ...)은 서버의 ANALYSIS_DEFAULTS 를 따른다.
+    """
     return create_mtl_command(
         'mtlcal', message='Analyze existing metrology images',
-        data_dir=data_dir, head=head, mode=mode, threshold=threshold,
+        data_dir=data_dir, head=head, fid_head=list(fid_head) if fid_head else None,
+        mode=mode, threshold=threshold,
         nwindow=nwindow, nexposure=nexposure, target_file=target_file,
         json_dir=json_dir, target_name=target_name, itrial=itrial,
     )
@@ -103,8 +108,12 @@ def _parse_mtlcal(params):
         help='image directory (default: KSPEC.ini MTL.mtlimagepath)',
     )
     parser.add_argument('--head', default='test')
+    parser.add_argument(
+        '--fid_head', '--fid-head', nargs='*', default=None,
+        help='heads of the fiducial-only exposures (0-2), e.g. tile_MetrologyTrial_1_fid0_ tile_MetrologyTrial_1_fid1_',
+    )
     parser.add_argument('--mode', choices=('Raw', 'Predict'), default='Raw')
-    parser.add_argument('--threshold', type=float, default=3e3)
+    parser.add_argument('--threshold', type=float, default=1e3)
     parser.add_argument('--nwindow', type=int, default=40)
     parser.add_argument('--nexposure', type=int, default=1)
     parser.add_argument('--target_file', '--target-file')
