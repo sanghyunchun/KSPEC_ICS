@@ -1084,7 +1084,7 @@ def test_exe_cal_success_minimal_flow(tmp_path, guider_config, monkeypatch):
     )
 
     monkeypatch.setattr(g, "cal_final_offset", lambda dxp, dyp, pindp: (1.23, 4.56))
-    monkeypatch.setattr(g, "cal_seeing", lambda cutouts: 0.78)
+    monkeypatch.setattr(g, "cal_seeing", lambda cutouts, pixel_scale=None: 0.78)
 
     fdx, fdy, fwhm = g.exe_cal()
     assert fdx == 1.23 and fdy == 4.56 and fwhm == 0.78

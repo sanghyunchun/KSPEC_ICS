@@ -40,7 +40,7 @@
                 "sub_ind2": [0, 1024, 512, 1024]
             },
             "crop_indices": [12, 979, 1, 1023],
-            "pixel_scale": 0.4
+            "pixel_scale": 0.418
         }
     },
     "astrometry": {
