@@ -684,15 +684,20 @@ R = |a₁ + a₂e^{iφ}|). beta = 0 과 180 두 번이면 `fit_arms` 로 a₁, a
 
 ```python
 from kspec_metrology.analysis import armcal
-res = armcal.arm_calibration(images, fid_images=None, magnification=8.4, n_extra=9,
-                             threshold=1e3, min_dist=80)
+# alpha 단계마다 take_exposure.py --fiber 30 --fid 1 10 --out /data/scan_b0/alpha_{각도} 로 찍은 세트
+SCAN = armcal.scan_sets('/data/scan_b0/alpha_*')     # [(fiber 30 ms, [fid 1 ms, fid 10 ms]), ...]
+res = armcal.arm_calibration(SCAN, model='full+affine', threshold=1e3, min_dist=80,
+                             finder_opts={'minarea': 9, 'deblend_cont': 1.0})
 res.table                      # id, x0, y0, R, rms, n, dx, dy (설계 중심과의 차)
 armcal.plot_arm_calibration(res)
 armcal.write_measured_geometry(res, 'Measured_Geometry_scan.txt',
                                template='analysis/Measured_Geometry.txt')
 ```
 
-이미지마다 fiducial 이 같이 찍혀 있으면 이미지마다 변환을 새로 맞춘다. 각
+프레임마다 본 metrology 와 같은 방법으로 fiducial 을 찾는다 (노출별로 포화되지 않은 가장 밝은 것;
+첫 프레임은 패턴 매칭, 그 뒤는 직전 프레임의 fiducial 자리 주변) 고 변환을 새로 맞추므로 scan 중
+카메라가 흘러가도 된다. 경로 목록만 주면 (`arm_calibration(images, fid_images=[...])`) 모든 프레임에
+같은 fiducial 전용 노출을 쓴다. 각
 positioner 중심에서 arm 길이 + 1 mm 안의 검출 중 중심에 가장 가까운 것을 그 궤적
 점으로 본다 (이웃 positioner 가 같은 자리를 지나는 순간은 원 fit 의 robust 가중치가
 거른다). 점이 5개 미만이면 그 positioner 는 비워 둔다.

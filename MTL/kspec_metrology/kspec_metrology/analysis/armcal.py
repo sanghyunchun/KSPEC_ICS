@@ -27,7 +27,8 @@ from scipy.spatial import cKDTree
 from kspec_metrology.analysis import fiber_config as cfg
 from kspec_metrology.analysis.findpeak import findpeak
 from kspec_metrology.analysis.fitdistortion import fitdistortion
-from kspec_metrology.analysis.mtlcal import load_configuration, measure_fiducials
+from kspec_metrology.analysis.mtlcal import (load_configuration, measure_fiducials, measure_fiducials_ref,
+                                             fit_fiducials)
 from kspec_metrology.analysis.utils import transform
 from kspec_metrology.logging.log import get_logger
 
@@ -59,9 +60,33 @@ class ArmCalResult:
     log: list = field(default_factory=list)
 
 
+def scan_sets(pattern):
+    """take_exposure.py 세트 촬영 (--fiber/--fid) 으로 찍은 scan 영상을 (fiber, [fiducial ...]) 목록으로.
+
+    pattern 은 세트 이름의 앞부분 glob (예: '/data/scan_b0/alpha_*'). 각 세트는
+    {stem}_fib_{ms}ms_0.fits 한 장과 {stem}_fid1_*_0.fits, {stem}_fid2_*_0.fits (0-2 장) 으로 이루어진다.
+    이름 순으로 정렬한다 (이름에 각도를 넣으면 alpha 순).
+    """
+    import glob, re
+    fibs = sorted(glob.glob(pattern + '_fib_*ms_0.fits'))
+    if not fibs:
+        raise FileNotFoundError(f"no scan fiber images match {pattern}_fib_*ms_0.fits")
+    out = []
+    for f in fibs:
+        stem = re.sub(r'_fib_[^_]+ms_0\.fits$', '', f)
+        fids = sorted(glob.glob(stem + '_fid[0-9]_*ms_0.fits'))
+        out.append((f, fids))
+    return out
+
+
 def _detect_focal(fiber_image, fid_images, target_file, nfib_expect, n_extra, magnification, model,
-                  **pk):
-    """이미지 한 장(+ fiducial 이미지들)에서 검출을 초점면 좌표로. 반환: (xf, yf, peak)."""
+                  ref=None, **pk):
+    """이미지 한 장(+ fiducial 이미지들)에서 검출을 초점면 좌표로.
+
+    fiducial 은 본 metrology (mtlcal) 와 같은 방법으로 찾는다: fiducial 전용 노출(들) + fiber 노출을 세트로
+    보고 fiducial 마다 포화되지 않은 가장 밝은 세트를 쓴다. ref ((nfid, 2) 칩 좌표) 가 있으면 그 주변에서만
+    찾고 (직전 프레임의 fiducial 자리; scan 중 카메라는 고정), 없으면 패턴 매칭.
+    반환: (xf, yf, peak, xorigin, yorigin, fid_chip (nfid, 2))."""
     log = get_logger()
     xo, yo, x, y, fid_flag, nfib = load_configuration(target_file, apply_zenith_offset=False)
     dead = np.r_[cfg.dead_mask(), np.zeros(x.size - nfib, bool)]
@@ -76,24 +101,38 @@ def _detect_focal(fiber_image, fid_images, target_file, nfib_expect, n_extra, ma
         raise ValueError("fiducial 이미지와 fiber 이미지는 같은 폴더에 있어야 한다 (findpeak 의 경로 규칙)")
     heads = fid_heads + [head]
     nfid = int(fa.sum())
-    xo_f, yo_f, choice, th, off = measure_fiducials(
-        heads, xa, ya, fa, d, 1, set_nexposure=[1]*len(heads), n_extra=n_extra + nfib_expect,
-        m_init=magnification, fallback=[False]*len(fid_heads) + [True], **pk)
-    _, _, _, _, coeff = fitdistortion(xa[fa], ya[fa], np.ones(nfid, bool), xo_f, yo_f, np.arange(nfid),
-                                      th, *off, model=model, m_init=magnification)
+    fb = [False]*len(fid_heads) + [True]
+    xf_d, yf_d = xa[fa], ya[fa]
+    got = None
+    if ref is not None:
+        got = measure_fiducials_ref(heads, xf_d, yf_d, ref, d, 1, nfib_expect, set_nexposure=[1]*len(heads),
+                                    n_extra=n_extra, fallback=fb, **pk)
+    if got is not None:
+        xo_f, yo_f, _ = got
+        ok = np.isfinite(xo_f)
+        from kspec_metrology.analysis.matchfiber import matchfiber
+        _, th, off = matchfiber(xf_d[ok], yf_d[ok], xo_f[ok], yo_f[ok], m_init=magnification)
+    else:
+        xo_f, yo_f, choice, th, off = measure_fiducials(
+            heads, xa, ya, fa, d, 1, set_nexposure=[1]*len(heads), n_extra=n_extra + nfib_expect,
+            m_init=magnification, fallback=fb, **pk)
+    _, _, coeff, used = fit_fiducials(xf_d, yf_d, xo_f, yo_f, th, off[0], off[1], model, magnification)
+    xo_f = np.where(used, xo_f, np.nan); yo_f = np.where(used, yo_f, np.nan)
     _, xobs, yobs, peak = findpeak((1, nfid + nfib_expect + n_extra + 50), data_dir=d, head=head,
-                                   nexposure=1, exclude=(xo_f, yo_f), **pk)
+                                   nexposure=1, exclude=(xo_f[used], yo_f[used]), **pk)
     xf, yf = transform(xobs, yobs, coeff)
-    return xf, yf, peak, xo[:nfib], yo[:nfib]
+    return xf, yf, peak, xo[:nfib], yo[:nfib], np.column_stack((xo_f, yo_f))
 
 
 def arm_calibration(fiber_images, fid_images=None, target_file=None, reach=None, magnification=None,
                     model='radial+affine', n_extra=0, min_points=5, **pk):
     """alpha(또는 beta)를 돌리며 찍은 이미지들로 positioner 마다 궤적 원을 맞춘다.
 
-    fiber_images : 궤적 이미지들 (각각 ...0.fits). fiducial 이 같이 찍혀 있어야 한다
-                   (없으면 fid_images 를 주고, 그 변환을 모든 이미지에 쓴다).
-    fid_images   : fiducial 전용 노출 (fiber_images 와 같은 폴더). None 이면 각 이미지의 fiducial.
+    fiber_images : 궤적 이미지들 (각각 ...0.fits), 또는 scan_sets() 가 돌려주는 [(fiber, [fid, ...]), ...]
+                   (alpha 단계마다 take_exposure.py --fiber 30 --fid 1 10 으로 찍은 세트; 본 metrology 와 같은
+                   방식으로 fiducial 을 노출별로 고른다 -- 권장).
+    fid_images   : fiber_images 가 경로 목록일 때, 모든 프레임에 같이 쓸 fiducial 전용 노출 (같은 폴더).
+                   None 이면 각 fiber 이미지의 fiducial 만 쓴다 (포화되어 있으면 수십 um 틀어진다).
     target_file  : 더미 target (각도 아무 값). None 이면 모두 0 으로 만든다.
     reach        : positioner 중심에서 이 거리 [mm] 안의 검출을 그 positioner 의 점으로 본다.
                    None 이면 a1 + a2 + 1.
@@ -103,6 +142,11 @@ def arm_calibration(fiber_images, fid_images=None, target_file=None, reach=None,
     fiber_images = list(fiber_images)
     if not fiber_images:
         raise ValueError('arm_calibration: no scan images given (fiber_images is empty)')
+    if isinstance(fiber_images[0], (tuple, list)):                 # scan_sets() 형식: 프레임마다 fiducial 세트
+        sets = [(f, list(fd)) for f, fd in fiber_images]
+    else:
+        sets = [(f, list(fid_images or [])) for f in fiber_images]
+    fiber_images = [f for f, _ in sets]
 
     import json, tempfile
     import pandas as pd
@@ -117,9 +161,10 @@ def arm_calibration(fiber_images, fid_images=None, target_file=None, reach=None,
     dead = cfg.dead_mask()
     pts = {i: [] for i in ids}; frm = {i: [] for i in ids}
     centres = None
-    for k, img in enumerate(fiber_images):
-        xf, yf, peak, xo, yo = _detect_focal(img, fid_images, target_file, int((~dead).sum()), n_extra,
-                                             magnification, model, **pk)
+    ref = None                                                     # 직전 프레임의 fiducial 칩 좌표
+    for k, (img, fids) in enumerate(sets):
+        xf, yf, peak, xo, yo, ref = _detect_focal(img, fids, target_file, int((~dead).sum()), n_extra,
+                                                  magnification, model, ref=ref, **pk)
         centres = np.column_stack((xo, yo))
         tree = cKDTree(np.column_stack((xf, yf)))
         for i, (cx, cy), dd in zip(ids, centres, dead):
