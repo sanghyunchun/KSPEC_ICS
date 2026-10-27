@@ -929,7 +929,7 @@ def measure(target_file, fiber_image, fid_images=(), out_dir='./lab_out', tile='
             magnification=None, model='full', nwindow=40, threshold=3e3, niter_recenter=0,
             finder='sep', finder_opts=None, background='crop', background_opts=None,
             sat_level=65000., fid_min_peak=0., n_extra=0, use_measured=None, mode='Raw',
-            cross_exclude=True, min_dist=40, fid_fallback_fiber=True):
+            cross_exclude=True, min_dist=40, fid_fallback_fiber=True, use_measured_positioners=None):
     """한 배치를 한 번 잰다: 목표 파일과 이미지 1-3장 -> fiber 위치 오차와 positioner 회전량.
 
     target_file : object.info 형식 (read_targets 참고; xp/yp 또는 각도)
@@ -987,7 +987,8 @@ def measure(target_file, fiber_image, fid_images=(), out_dir='./lab_out', tile='
             a = np.empty(2*xp.size); a[0::2], a[1::2] = read_targets(target_file)[:2]
             save_angles(out_dir, tile, 0, a)
         else:
-            save_initial_angles(out_dir, tile, tfile, use_measured=use_measured)   # trial 0 = 목표 각도
+            save_initial_angles(out_dir, tile, tfile, use_measured=use_measured,
+                                use_measured_positioners=use_measured_positioners)   # trial 0 = 목표 각도
     head = naming.image_head(tile, itrial)
     place(fiber_image, image_path(data_dir, head, 0))
     fid_heads = []
@@ -1002,7 +1003,7 @@ def measure(target_file, fiber_image, fid_images=(), out_dir='./lab_out', tile='
                   background_opts=background_opts, magnification=magnification, model=model,
                   sat_level=sat_level, fid_min_peak=fid_min_peak, n_extra=n_extra,
                   use_measured=use_measured, cross_exclude=cross_exclude, min_dist=min_dist,
-                  fid_fallback_fiber=fid_fallback_fiber)
+                  fid_fallback_fiber=fid_fallback_fiber, use_measured_positioners=use_measured_positioners)
     dx, dy, angle_rot, angle_cum = mtlcal(data_dir=data_dir, head=head, nexposure=1,
                                           fid_head=fid_heads or None, target_file=tfile,
                                           json_dir=out_dir, target_name=tile, itrial=itrial, **params)

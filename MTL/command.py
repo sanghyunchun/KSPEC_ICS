@@ -35,7 +35,20 @@ def _analysis_options(message):
     out['finder_opts'] = dict(FINDER_OPTS)
     # camera -> focal 배율 초기값. None 이면 패키지 기본값 (2026-01 commissioning fit). 다른 광학계일 때만 준다.
     out['magnification'] = _value(message, 'magnification', None, float)
+    # positioner 회전 중심 실측값 (arm scan, Measured_Geometry.txt) 을 쓸지. None 이면 패키지 기본값
+    # (fiber_config.USE_MEASURED_POSITIONERS, 2026-10-27 현재 꺼짐). fiducial 핀홀 실측과는 별개 스위치.
+    out['use_measured_positioners'] = _flag(message, 'use_measured_positioners', None)
     return out
+
+
+def _flag(message, key, default):
+    """메시지의 참/거짓 값. 없으면 default. 문자열 'true'/'1'/'on' 등도 받는다."""
+    value = message.get(key, None)
+    if _is_missing(value):
+        return default
+    if isinstance(value, str):
+        return value.strip().lower() in ('1', 'true', 'yes', 'on')
+    return bool(value)
 
 
 def _package_info():

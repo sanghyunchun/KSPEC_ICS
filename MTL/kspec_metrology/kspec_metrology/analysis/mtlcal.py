@@ -26,7 +26,7 @@ BETA_SUFFIX = 'b'
 
 
 def load_configuration(target_file=None, apply_zenith_offset=True,
-                       apply_pinhole_offset=False, use_measured=None):
+                       apply_pinhole_offset=False, use_measured=None, use_measured_positioners=None):
     """설계 좌표와 목표 위치를 읽는다.
 
     target 파일의 목표 위치 (xp, yp)는 천정거리 0도 기준이라, 관측 고도가 함께
@@ -39,7 +39,9 @@ def load_configuration(target_file=None, apply_zenith_offset=True,
     기준이 되므로 맞게 넣으면 그만큼 왜곡 fit이 정확해진다.
     xorigin, yorigin은 홀 설계 좌표 그대로 둔다.
 
-    use_measured 면 설계 좌표와 arm 길이를 실측값으로 바꾼다
+    use_measured 면 설계 좌표와 arm 길이를 실측값으로 바꾼다 (fiducial 핀홀 위치, arm 길이).
+    use_measured_positioners 면 positioner 회전 중심도 실측값(arm scan) 으로 바꾼다 (별개 스위치, 기본 꺼짐;
+    fiber_config.USE_MEASURED_POSITIONERS / KSPEC_USE_MEASURED_POSITIONERS)
     (fiber_config.measured_geometry). None이면 fiber_config.USE_MEASURED를
     따르고 그 기본값은 True다 (KSPEC_USE_MEASURED=0 으로 끈다). 실측 위치가
     있는 fiducial에는 핀홀 오프셋을 더하지 않는다 (이중 계산이 되므로).
@@ -89,10 +91,14 @@ def load_configuration(target_file=None, apply_zenith_offset=True,
                 raise FileNotFoundError(msg)
             log.warning("%s -- 설계값을 씁니다", msg)
 
-        nhit = 0
+        nhit = 0; nskip_pos = 0
+        use_pos = cfg._use_measured_positioners(use_measured_positioners)
         for k, hole in enumerate(pick_ids):
             m = measured.get(hole)
             if m is None or m['x'] is None or m['y'] is None:
+                continue
+            if k < nfib and not use_pos:                     # positioner 중심 실측은 별개 스위치
+                nskip_pos += 1
                 continue
             dev = float(np.hypot(m['x']-xorigin[k], m['y']-yorigin[k]))
             if dev > cfg.MEASURED_MAX_DEV:
@@ -107,8 +113,10 @@ def load_configuration(target_file=None, apply_zenith_offset=True,
 
         unknown = [h for h, m in measured.items() if h not in set(pick_ids)
                    and (m['x'] is not None or m['arm1'] is not None)]
-        log.info("Measured geometry %s: %d/%d holes replaced",
-                 cfg.MEASURED_GEOMETRY_PATH, nhit, len(pick_ids))
+        log.info("Measured geometry %s: %d/%d holes replaced (positioner centres %s%s)",
+                 cfg.MEASURED_GEOMETRY_PATH, nhit, len(pick_ids),
+                 'ON' if use_pos else 'OFF',
+                 f', {nskip_pos} measured but not used' if nskip_pos else '')
         if unknown:
             log.warning("Measured file lists %d hole(s) not in the fiber "
                         "table; ignored: %s", len(unknown),
@@ -299,7 +307,7 @@ def save_angles(json_dir, target_name, itrial, angles):
 
 
 def save_initial_angles(json_dir, target_name, target_file=None,
-                        use_measured=None):
+                        use_measured=None, use_measured_positioners=None):
     """관측 전에 목표 각도를 Trial 0 json으로 저장한다.
 
     이후 trial의 누적 각도는 이 파일에서 출발한다.
@@ -307,7 +315,7 @@ def save_initial_angles(json_dir, target_name, target_file=None,
     log = get_logger()
 
     xorigin, yorigin, x, y, _, _ = load_configuration(
-        target_file, use_measured=use_measured)
+        target_file, use_measured=use_measured, use_measured_positioners=use_measured_positioners)
     theta_true, phi_true = _arm_angles(xorigin, yorigin, x, y, use_measured)
 
     angles = _flatten_angles(theta_true, phi_true)
@@ -827,6 +835,7 @@ def mtlcal(data_dir='./MTL/data/'
            , niter_recenter=0
            , apply_pinhole_offset=False
            , use_measured=None
+           , use_measured_positioners=None
            , finder='sep'
            , finder_opts=None
            , background='crop'
@@ -914,7 +923,7 @@ def mtlcal(data_dir='./MTL/data/'
 
     xorigin, yorigin, x, y, fid_flag, nfib = load_configuration(
         target_file, apply_pinhole_offset=apply_pinhole_offset,
-        use_measured=use_measured)
+        use_measured=use_measured, use_measured_positioners=use_measured_positioners)
 
     pk = dict(threshold=threshold, nwindow=nwindow, niter_recenter=niter_recenter,
               finder=finder, finder_opts=finder_opts, background=background,

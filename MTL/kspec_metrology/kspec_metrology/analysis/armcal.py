@@ -195,6 +195,27 @@ def arm_calibration(fiber_images, fid_images=None, target_file=None, reach=None,
                         frames=frm, table=T)
 
 
+def expected_radius(a1, a2, phi_deg):
+    """기하각 beta = phi 로 고정하고 alpha 를 돌릴 때 fiber 끝 궤적의 반지름 R = |a1 + a2 e^{i phi}| [mm].
+    초기 위치 (기하각 30, 150) 에서 alpha 만 돌리면 phi = 150: a1 = 5.2, a2 = 11.6 이면 R ~ 7.6 mm."""
+    phi = np.deg2rad(np.asarray(phi_deg, float))
+    a1, a2 = np.asarray(a1, float), np.asarray(a2, float)
+    return np.sqrt(a1**2 + a2**2 + 2*a1*a2*np.cos(phi))
+
+
+def arm1_from_radius(R, a2, phi_deg):
+    """한 beta 에서만 돌렸을 때: 바깥 arm a2 를 안다고 보고 반지름 R 에서 안쪽 arm a1 을 푼다.
+    a1^2 + 2 a2 cos(phi) a1 + (a2^2 - R^2) = 0 의 양수 해. (반대로 a1 을 알면 a2 도 같은 식으로.)"""
+    phi = np.deg2rad(np.asarray(phi_deg, float))
+    R, a2 = np.asarray(R, float), np.asarray(a2, float)
+    b = 2*a2*np.cos(phi); c = a2**2 - R**2
+    disc = b**2 - 4*c
+    sq = np.sqrt(np.clip(disc, 0, None))
+    r1, r2 = (-b - sq)/2, (-b + sq)/2                  # phi > 90 이면 둘 다 양수일 수 있다: 안쪽 arm 은 a1 < a2 인 작은 해
+    small = np.where(r1 > 0, r1, r2)
+    return np.where(disc >= 0, small, np.nan)
+
+
 def fit_arms(R_beta0, R_beta180):
     """두 beta 에서 잰 반지름 -> (a1, a2). beta=0: R = a1 + a2, beta=180: R = |a2 - a1| (a2 > a1)."""
     R0, R180 = np.asarray(R_beta0, float), np.asarray(R_beta180, float)

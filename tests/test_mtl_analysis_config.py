@@ -35,6 +35,7 @@ class MTLAnalysisConfigTest(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(settings[key], value, key)
         self.assertEqual(settings["finder_opts"], FINDER_OPTS)
         self.assertIsNone(settings["magnification"])          # package default (commissioning fit)
+        self.assertIsNone(settings["use_measured_positioners"])  # package default (off for now)
         self.assertEqual(settings["fid_exptime"], [1.0, 10.0])
         reply = json.loads(server.send_message.call_args.args[1])
         self.assertEqual(reply["status"], "success")
@@ -44,7 +45,8 @@ class MTLAnalysisConfigTest(unittest.IsolatedAsyncioTestCase):
     async def test_start_message_can_override_analysis_settings(self):
         server = SimpleNamespace(send_message=AsyncMock())
         message = json.loads(mtl_start())
-        message.update(min_dist=40, model="radial+affine", magnification=8.4, threshold="2000")
+        message.update(min_dist=40, model="radial+affine", magnification=8.4, threshold="2000",
+                       use_measured_positioners="true")
         with patch("MTL.command._load_mtl_config", return_value=CONFIG), \
              patch("MTL.command.MetrologyRun") as run_type:
             run = run_type.return_value
@@ -55,6 +57,7 @@ class MTLAnalysisConfigTest(unittest.IsolatedAsyncioTestCase):
         settings = run_type.call_args.kwargs
         self.assertEqual((settings["min_dist"], settings["model"], settings["magnification"], settings["threshold"]),
                          (40, "radial+affine", 8.4, 2000.0))
+        self.assertIs(settings["use_measured_positioners"], True)
 
     async def test_cal_passes_fid_heads_and_analysis_settings(self):
         server = SimpleNamespace(send_message=AsyncMock())
