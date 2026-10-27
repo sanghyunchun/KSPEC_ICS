@@ -31,6 +31,13 @@
         "light_settle_s": 1.0,
         "light_max_on_s": 300.0
     },
+    "zero_order": {
+        "command": null,
+        "reference": null,
+        "args": {},
+        "max_center_nm": 1.0,
+        "timeout_s": 60.0
+    },
     "datapath": "../DATA/RAWDATA/",
     "sharepath": ""
 }

@@ -5,6 +5,7 @@ Run from the repository root: python -m unittest tests.test_isoplane_fake
 import asyncio
 import json
 import os
+import sys
 import tempfile
 import threading
 import time
@@ -548,6 +549,90 @@ class IsoplaneFakeTest(unittest.TestCase):
         obj, = self.server.done('getobj')
         self.assertEqual(obj['status'], 'error')
         self.assertIn('did not finish', obj['message'])
+
+    # A stand-in for ``python -m kspecdr.extract.zero_order_frame``: echoes its arguments
+    ZO_SCRIPT = (
+        "import json, os, sys\n"
+        "raw = sys.argv[1]\n"
+        "if os.path.basename(raw).endswith('0003_obj.fits'):\n"
+        "    print(json.dumps({'ok': False, 'raw': raw, 'error': 'ValueError: no spots'}))\n"
+        "    sys.exit(1)\n"
+        "print('a log line on stdout')\n"
+        "print(json.dumps({'ok': True, 'raw': raw, 'argv': sys.argv[2:], 'nfib': 3, 'ndet': 3,\n"
+        "                  'method': 'DETECT', 'fibres': {'fibno': [1, 2, 3],\n"
+        "                                                 'flux': [10.0, 30.0, None]}}))\n"
+    )
+
+    def zero_order_cfg(self, script=None, **extra):
+        path = os.path.join(self.tmp.name, 'fake_zo.py')
+        with open(path, 'w') as f:
+            f.write(script or self.ZO_SCRIPT)
+        return {'command': [sys.executable, path], **extra}
+
+    def test_zero_order_frames_carry_fibre_fluxes(self):
+        lf = FakeLightField(time_scale=0.001, shape=(1, 8, 10), center_nm=0.0)
+        zo = self.zero_order_cfg(reference='flat_zo.fits', args={'ZO_APHW_X': 6})
+        iso = self.make(lf=lf, zero_order=zo)
+        self.run_cmds(iso, body('specinitial', dirname='20261101'),
+                      body('specstatus'),
+                      body('getbias', numframe=1, header=HEADER),
+                      body('getobj', time=5, numframe=2, header=HEADER))
+        status, = self.server.done('specstatus')
+        self.assertTrue(status['isoplane']['zero_order'])
+        bias, = self.server.done('getbias')
+        self.assertNotIn('zoflux', bias)  # shutter-closed frames are not measured
+        obj, = self.server.done('getobj')
+        self.assertEqual(obj['status'], 'success')  # a failed measurement keeps the frame
+        first, second = obj['zofluxes']
+        self.assertEqual(obj['zoflux'], second)
+        self.assertTrue(first['ok'])
+        # the local frame (not the shared copy); frame 0001 is the bias
+        self.assertEqual(first['raw'], os.path.join(self.tmp.name, 'raw', '20261101',
+                                                    '20261101_0002_obj.fits'))
+        outdir = os.path.join(self.tmp.name, 'raw', '20261101', 'zero_order')
+        self.assertEqual(first['argv'], ['--outdir', outdir, '--ref', 'flat_zo.fits',
+                                         '--set', 'ZO_APHW_X=6'])
+        self.assertEqual(second, {'ok': False, 'raw': second['raw'],
+                                  'error': 'ValueError: no spots'})
+        saved = [m for m in self.server.replies('getobj', 'ING') if 'saved' in m['message']]
+        self.assertEqual([m['zoflux'] for m in saved], [first, second])
+        self.assertIn('Zero order: 3/3 fibres found (DETECT), median flux 20.', saved[0]['message'])
+        self.assertIn('Zero-order fluxes failed: ValueError: no spots.', obj['message'])
+
+    def test_no_zero_order_fluxes_off_zero_order_or_unconfigured(self):
+        for center_nm, zo in ((430.0, self.zero_order_cfg()), (0.0, None)):
+            self.server = FakeServer()
+            lf = FakeLightField(time_scale=0.001, shape=(1, 8, 10), center_nm=center_nm)
+            iso = self.make(lf=lf, zero_order=zo)
+            self.run_cmds(iso, body('specinitial', dirname=f'2026110{int(center_nm > 0)}'),
+                          body('getobj', time=5, numframe=1, header=HEADER))
+            obj, = self.server.done('getobj')
+            self.assertEqual(obj['status'], 'success')
+            self.assertNotIn('zoflux', obj, center_nm)
+            self.assertNotIn('Zero', obj['message'])
+
+    def test_zero_order_command_failures_are_reported(self):
+        lf = FakeLightField(time_scale=0.001, shape=(1, 8, 10), center_nm=0.0)
+        cases = (
+            ("import sys; sys.stderr.write('Traceback\\nImportError: kspecdr')\n"
+             "sys.exit(1)\n", {}, 'exit 1, no result: ImportError: kspecdr'),
+            ("import time; time.sleep(5)\n", {'timeout_s': 0.5}, 'no result within 0.5 s (timeout_s)'),
+        )
+        for i, (script, extra, error) in enumerate(cases):
+            self.server = FakeServer()
+            iso = self.make(lf=lf, zero_order=self.zero_order_cfg(script, **extra))
+            self.run_cmds(iso, body('specinitial', dirname=f'2026110{i}'),
+                          body('getflat', time=5, numframe=1, header=HEADER))
+            flat, = self.server.done('getflat')
+            self.assertEqual(flat['status'], 'success')
+            self.assertEqual(flat['zoflux'], {'ok': False, 'error': error})
+        iso = self.make(lf=lf, zero_order={'command': [os.path.join(self.tmp.name, 'none.exe')]})
+        self.server = FakeServer()
+        self.run_cmds(iso, body('specinitial', dirname='20261109'),
+                      body('getarc', time=5, numframe=1, header=HEADER))
+        arc, = self.server.done('getarc')
+        self.assertEqual(arc['status'], 'success')
+        self.assertIn('cannot run', arc['zoflux']['error'])
 
 
 class MetrologyLoopTest(unittest.TestCase):
