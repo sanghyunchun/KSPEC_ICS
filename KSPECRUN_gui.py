@@ -18,7 +18,7 @@ from astropy.coordinates import Angle, SkyCoord
 import astropy.units as u
 import Lib.mkmessage as mkmsg
 import Lib.zscale as zs
-from Lib.updatelog import obslog
+from Lib.updatelog import obslog, add_isoplane_reply
 from Lib.make_spec_header import set_header_info
 import json
 from aio_pika import IncomingMessage
@@ -34,7 +34,8 @@ from FBP.fbpcli import handle_fbp
 from MTL.mtlcli import handle_mtl, mtl_start, mtl_set
 from LAMP.lampcli import handle_lamp
 from SPECTRO.speccli import handle_spec, spec_queue, ILLUMINATION_COMMANDS, frame_command
-from SPECTRO_ISOPLANE.specisocli import handle_speciso
+from SPECTRO_ISOPLANE.specisocli import (handle_speciso, make_speciso_command,
+                                         make_frame_header)
 from TCS.tcscli import handle_telcom
 from script.scriptcli import handle_script, ILLUMINATION_TIMEOUT_S
 from Lib.reply import wait_reply
@@ -789,6 +790,14 @@ class MainWindow(QMainWindow):
                     self._sync_illumi_state(backillum)
                 if inst == 'SPEC':
                     self._log_spec_camera_problems(response_data)
+                    if response_data.get('cmdlog'):
+                        try:
+                            self.obslog = await asyncio.to_thread(
+                                add_isoplane_reply, self.obslog, response_data)
+                            self.scriptrun.obslog = self.obslog
+                            self.logging(self.obslog.message, level='receive')
+                        except Exception as error:
+                            self.logging(f'CMDLOG update failed: {error}', level='error')
 
                 # The illumination button waits for its own reply; a script's reply falls through.
                 if (
@@ -933,7 +942,13 @@ class MainWindow(QMainWindow):
 
         if category == "spec" and spec_queue() == "ISOPLANE":
             try:
-                await handle_speciso(message, self.ICS_client)
+                parsed = json.loads(make_speciso_command(message))
+                header = make_frame_header(
+                    parsed, night=self.dir_name or self.obsdate, project=self.project,
+                    tile_id=self.TileID, object_name=self.object,
+                    ra=self.ra, dec=self.dec, fwhm=self.fwhm,
+                )
+                await handle_speciso(message, self.ICS_client, header)
             except ValueError as error:
                 self.logging(str(error), status='error', level='error',
                              save=self.msglog_path is not None)
@@ -2281,6 +2296,8 @@ class MainWindow(QMainWindow):
         header['OBJECT'] = self.object
 
         await handle_spec(command, self.ICS_client, header)
+        if spec_queue() == 'ISOPLANE':
+            return  # The ICS logs the IsoPlane Done reply after the frames are saved.
         
         cmt = ''
     
@@ -2559,6 +2576,7 @@ class MainWindow(QMainWindow):
             return
 
         self.TileID = dialog.selected_values[0]
+        self.object = None  # The newly selected tile has no separate object name.
         self.obsnum = dialog.selected_values[2]
         self.expT = dialog.selected_values[3]
 #            self.ra = dialog.selected_values[4]        # For commission

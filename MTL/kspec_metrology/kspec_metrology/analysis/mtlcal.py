@@ -370,6 +370,7 @@ def save_fid_ref(json_dir, target_name, itrial, xo_fid, yo_fid):
     """이 trial 의 fiducial 칩 좌표를 trial 파일과 기준 파일에 저장한다 (기준 파일은 잰 것만 갱신)."""
     if json_dir is None:
         return
+    os.makedirs(json_dir, exist_ok=True)
     cur = np.column_stack((xo_fid, yo_fid))
     if target_name is not None and itrial is not None:
         np.save(naming.fid_path(json_dir, target_name, itrial), cur)
@@ -416,7 +417,11 @@ def measure_fiducials_ref(fid_heads, xf, yf, ref, data_dir, nexposure, nfib, set
         d, j = tree.query(ref[ok_ref])
         near = d < 3*win
         shift = np.median(obs[j[near]] - ref[ok_ref][near], axis=0) if near.sum() >= 3 else np.zeros(2)
-        d, j = tree.query(np.where(ok_ref[:, None], ref + shift, np.inf))
+        # cKDTree.query rejects non-finite coordinates. Keep missing reference rows out of
+        # the query and leave their distances infinite so they cannot be selected.
+        d = np.full(nfid, np.inf)
+        j = np.zeros(nfid, dtype=int)
+        d[ok_ref], j[ok_ref] = tree.query(ref[ok_ref] + shift)
         found = ok_ref & (d < win)
         for jj in np.unique(j[found]):                       # 한 검출에 둘 이상 붙으면 가까운 쪽만
             same = np.where(found & (j == jj))[0]
