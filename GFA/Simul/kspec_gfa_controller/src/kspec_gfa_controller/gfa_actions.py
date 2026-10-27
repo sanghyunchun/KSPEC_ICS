@@ -4,7 +4,7 @@
 import os
 import asyncio
 import shutil
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Union, List, Dict, Any, Optional, Tuple
 from pathlib import Path
 import glob
@@ -174,7 +174,8 @@ class GFAActions:
         path: str = None,
     ) -> Dict[str, Any]:
         save_root, dirs = self._get_save_root_and_dirs()
-        date_str = datetime.now().strftime("%Y-%m-%d")
+        grab_started_utc = datetime.now(timezone.utc)
+        date_str = grab_started_utc.strftime("%Y-%m-%d")
 
         if path:
             grab_save_path = Path(path).expanduser().resolve()
@@ -261,7 +262,7 @@ class GFAActions:
                 #     images_by_camera[cam_num].append(result["image"])
 
             grab_files = []
-            timestamp = datetime.utcnow().strftime("D%Y%m%d_T%H%M%S")
+            timestamp = grab_started_utc.strftime("D%Y%m%d_T%H%M%S")
 
             for cam_num, image_list in images_by_camera.items():
                 if len(image_list) == 0:
@@ -326,7 +327,8 @@ class GFAActions:
         import math
 
         save_root, dirs = self._get_save_root_and_dirs()
-        date_str = datetime.now().strftime("%Y-%m-%d")
+        run_started_utc = datetime.now(timezone.utc)
+        date_str = run_started_utc.strftime("%Y-%m-%d")
 
         raw_dir = dirs.get("raw_images", "raw")
         guiding_dir = dirs.get("guiding_save", "guiding_save")
@@ -656,7 +658,8 @@ class GFAActions:
         MaxGrabRetry: int = 3,
     ) -> Dict[str, Any]:
         save_root, dirs = self._get_save_root_and_dirs()
-        date_str = datetime.now().strftime("%Y-%m-%d")
+        run_started_utc = datetime.now(timezone.utc)
+        date_str = run_started_utc.strftime("%Y-%m-%d")
 
         raw_dir = dirs.get("raw_images", "raw")
         pointing_dir = dirs.get("pointing_save", "pointing_save")
@@ -703,8 +706,7 @@ class GFAActions:
         try:
             self.env.logger.info("Starting pointing sequence...")
             self.env.logger.info(f"Target RA/DEC: {ra}, {dec}")
-            date_str = datetime.now().strftime("%Y-%m-%d")
-            run_timestamp = datetime.now().strftime("D%Y%m%d_T%H%M%S")
+            run_timestamp = run_started_utc.strftime("D%Y%m%d_T%H%M%S")
 
             cfg = self.env.astrometry.inpar["pointing_filter"]
             min_valid_images = cfg["min_valid_images"]
