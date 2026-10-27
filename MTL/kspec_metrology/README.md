@@ -85,7 +85,7 @@ from kspec_metrology.mtlrun import MetrologyRun
 
 run = MetrologyRun(target_file='/path/to/target.info',
                    data_dir='./MTL/data/', json_dir='./MTL/json/',
-                   exptime=100., tolerance=10., max_trial=5)     # exptime [ms]
+                   exptime=30., fid_exptime=[1., 10.], tolerance=10., max_trial=10)   # [ms]
 
 move(run.start())                 # Trial 0 json = 관측 전 목표 각도
 
