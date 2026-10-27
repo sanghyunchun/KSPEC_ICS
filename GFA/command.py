@@ -331,6 +331,7 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
         path_astroimg=kspecinfo['GFA']['final_astrometry_images']
         deleted = clear_astrometry_outputs(path_astroimg)
         printing(f"Deleted {deleted} astrometry output files from {path_astroimg}")
+        geometry_path=os.path.join(kspecinfo['GFA']['gfafilepath'], BORESIGHT_GEOMETRY_FILE)
 
         await send_gfa_response(
             GFA_server,
@@ -385,18 +386,21 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
                 )
 
             valid_crval_pairs = [
-                (float(crval1), float(crval2))
-                for crval1, crval2 in zip(crval1_list, crval2_list)
+                (img, float(crval1), float(crval2))
+                for img, crval1, crval2 in zip(img_list, crval1_list, crval2_list)
                 if is_finite_number(crval1) and is_finite_number(crval2)
             ]
 
-            valid_crval1 = [crval1 for crval1, _ in valid_crval_pairs]
-            valid_crval2 = [crval2 for _, crval2 in valid_crval_pairs]
+            valid_images = [img for img, _, _ in valid_crval_pairs]
+            valid_crval1 = [crval1 for _, crval1, _ in valid_crval_pairs]
+            valid_crval2 = [crval2 for _, _, crval2 in valid_crval_pairs]
 
             # Success condition
             if len(valid_crval1) >= min_required:
                 printing(f"Astrometry success with {len(valid_crval1)} valid CRVAL pairs")
-                ra_c, dec_c = get_boresight(valid_crval1, valid_crval2)    # Boresight coordinate
+                ra_c, dec_c, bs_method, bs_info = compute_boresight(
+                    path_astroimg, valid_images, valid_crval1, valid_crval2, geometry_path
+                )    # Boresight coordinate
                 ra, dec = radec_str_to_deg(parsed_args['ra'], parsed_args['dec'])  # covert RA,DEC of Tile center to degree
                 printing(f'Telescope Target: RA = {ra} DEC = {dec}')
                 printing(f'Current Telescope pointing: RA = {ra_c} DEC= {dec_c}')
@@ -425,6 +429,9 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
                     ddec=deldec,
                     new_ra=ra_new,
                     new_dec=dec_new,
+                    bsmethod=bs_method,
+                    bsrms=bs_info.get('rms_arcsec'),
+                    bscams=bs_info.get('used'),
                     process='Done',
                     status='success',
                     subinst='POINT',
@@ -448,6 +455,36 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
 
 
         
+def compute_boresight(astro_dir, images, crval1_list, crval2_list, geometry_path):
+    """Boresight (RA, DEC deg) of the solved GFA frames.
+
+    Uses the per-camera boresight geometry (GFA/etc/boresight_geometry.json, made by
+    GFA/calib_boresight.py), which works with any subset of cameras. Falls back to the
+    mean of the camera centres, which is only correct when every camera on the ring is
+    solved: with one camera missing it is off by ~1060" (R/5, R = 1.47 deg).
+
+    Returns (ra_deg, dec_deg, method, info).
+    """
+    try:
+        geometry = load_boresight_geometry(geometry_path)
+        ra_c, dec_c, info = boresight_from_astro_files(
+            [Path(astro_dir) / name for name in images], geometry
+        )
+    except Exception as e:
+        printing(
+            f"Boresight geometry unavailable ({e}); using the mean of the camera centres "
+            "(correct only when all cameras are solved)."
+        )
+        ra_c, dec_c = get_boresight(crval1_list, crval2_list)
+        return ra_c, dec_c, 'crval_mean', {}
+
+    printing(
+        f"Boresight from camera geometry: cameras={info['used']}, "
+        f"rejected={info['rejected']}, rms={info['rms_arcsec']:.1f} arcsec"
+    )
+    return ra_c, dec_c, 'geometry', info
+
+
 def savedata(ra,dec,xp,yp,mag):
     with open('./Lib/KSPEC.ini','r') as f:
         inidata=json.load(f)

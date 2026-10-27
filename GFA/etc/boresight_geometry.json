@@ -1,0 +1,41 @@
+{
+  "description": "GFA boresight geometry per camera serial: sep_deg = chip centre to boresight, theta_deg = boresight direction in the camera pixel frame (+x towards +y). Boresight of each calibration set = vector mean of all camera centres.",
+  "created_utc": "2026-10-27T11:40:06Z",
+  "calibration_sets": [
+    "D20260123_T152557_40103667_exp5s.wcs",
+    "D20260123_T173011_40103651_exp5s.wcs",
+    "D20260124_T100006_40103834_exp1s.wcs"
+  ],
+  "cameras": {
+    "40103651": {
+      "sep_deg": 1.4731025715800585,
+      "theta_deg": 89.58311803281055,
+      "n_sets": 3
+    },
+    "40103663": {
+      "sep_deg": 1.4730586501401313,
+      "theta_deg": 88.77107939849266,
+      "n_sets": 3
+    },
+    "40103667": {
+      "sep_deg": 1.4723669079852642,
+      "theta_deg": 89.75692738771741,
+      "n_sets": 3
+    },
+    "40103831": {
+      "sep_deg": 1.4733664010095417,
+      "theta_deg": 90.0160726973882,
+      "n_sets": 3
+    },
+    "40103833": {
+      "sep_deg": 1.4751318919767111,
+      "theta_deg": 89.72748415704079,
+      "n_sets": 3
+    },
+    "40103834": {
+      "sep_deg": 1.4745504649462242,
+      "theta_deg": 90.0041736795296,
+      "n_sets": 3
+    }
+  }
+}

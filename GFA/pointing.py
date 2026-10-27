@@ -1,5 +1,10 @@
+import json
 import math
+import os
+import re
 from astropy.coordinates import SkyCoord, CartesianRepresentation
+from astropy.io import fits
+from astropy.wcs import WCS
 import astropy.units as u
 import numpy as np
 
@@ -162,6 +167,160 @@ def apply_offsets(ra_deg, dec_deg, dRA_arcsec_east, dDEC_arcsec_north):
     dRA_deg = (dRA_arcsec_east / AS_PER_DEG) / math.cos(dec_ref)
     ra2 = wrap_deg360(ra_deg + dRA_deg)
     return ra2, dec2
+
+# ---------------- 카메라 기하 기반 boresight ----------------
+# 각 GFA 카메라에서 boresight(초점면 중심)는 칩 밖의 고정된 위치에 있다.
+# 카메라마다 (sep, theta)를 한 번 보정해 두면:
+#   sep   : 칩 중심 -> boresight 각거리 [deg]
+#   theta : 카메라 픽셀 좌표계에서 boresight 방향 [deg, +x에서 +y 쪽으로]
+# 매 pointing에서 카메라 하나의 WCS만으로 boresight를 추정할 수 있다.
+# 카메라 중심의 단순 평균(get_boresight)은 링 위 카메라가 모두 있을 때만
+# 중심과 일치하고, 1대가 빠지면 반대쪽으로 R/5 (R=1.47 deg -> ~1060") 치우친다.
+
+BORESIGHT_GEOMETRY_FILE = "boresight_geometry.json"
+_GFA_SERIAL_RE = re.compile(r"D\d{8}_T\d{6}_(\d+)_")
+
+
+def camera_serial(filename):
+    """GFA 파일명(D20260124_T100007_40103667_exp1s...)에서 카메라 serial."""
+    m = _GFA_SERIAL_RE.search(os.path.basename(str(filename)))
+    if m is None:
+        raise ValueError(f"Cannot parse camera serial from {filename}")
+    return m.group(1)
+
+
+def _camera_center(header):
+    """(celestial WCS, 칩 중심 x, y [0-based], 칩 중심 SkyCoord)."""
+    w = WCS(header).celestial
+    nx = header.get("NAXIS1") or header.get("IMAGEW")
+    ny = header.get("NAXIS2") or header.get("IMAGEH")
+    if not nx or not ny:
+        raise KeyError("Header has neither NAXIS1/2 nor IMAGEW/H")
+    cx, cy = (nx - 1) / 2.0, (ny - 1) / 2.0
+    ra, dec = w.pixel_to_world_values(cx, cy)
+    return w, cx, cy, SkyCoord(ra * u.deg, dec * u.deg, frame="icrs")
+
+
+def _vector_mean(coords):
+    v = SkyCoord(coords).cartesian.mean()
+    return SkyCoord(v / v.norm(), frame="icrs")
+
+
+def calibrate_boresight_geometry(headers, boresight=None):
+    """
+    카메라별 boresight 기하 (sep, theta) 보정.
+
+    Parameters
+    ----------
+    headers : dict
+        {serial: astrometry WCS header}
+    boresight : SkyCoord, optional
+        알려진 boresight. 없으면 카메라 중심의 벡터 평균을 쓴다
+        (링 위 카메라가 모두 풀린 프레임에서만 의미가 있다).
+
+    Returns
+    -------
+    dict : {serial: {"sep_deg": float, "theta_deg": float}}
+    """
+    centers = {s: _camera_center(h) for s, h in headers.items()}
+    if boresight is None:
+        boresight = _vector_mean([c for *_, c in centers.values()])
+
+    geometry = {}
+    for serial, (w, cx, cy, c) in centers.items():
+        sep = c.separation(boresight)
+        step = c.directional_offset_by(c.position_angle(boresight), 60 * u.arcsec)
+        px, py = w.world_to_pixel_values(step.ra.deg, step.dec.deg)
+        theta = math.degrees(math.atan2(py - cy, px - cx))
+        geometry[serial] = {"sep_deg": float(sep.deg), "theta_deg": float(theta)}
+    return geometry
+
+
+def average_boresight_geometry(geometries):
+    """여러 프레임 세트의 기하를 카메라별로 평균 (theta는 원형 평균)."""
+    serials = sorted({s for g in geometries for s in g})
+    out = {}
+    for s in serials:
+        vals = [g[s] for g in geometries if s in g]
+        t = np.radians([v["theta_deg"] for v in vals])
+        out[s] = {
+            "sep_deg": float(np.mean([v["sep_deg"] for v in vals])),
+            "theta_deg": float(
+                np.degrees(np.arctan2(np.mean(np.sin(t)), np.mean(np.cos(t))))
+            ),
+            "n_sets": len(vals),
+        }
+    return out
+
+
+def boresight_estimates(headers, geometry):
+    """카메라별 boresight 추정 {serial: SkyCoord}; geometry에 없는 카메라는 제외."""
+    est = {}
+    for serial, h in headers.items():
+        g = geometry.get(serial)
+        if g is None:
+            continue
+        w, cx, cy, c = _camera_center(h)
+        t = math.radians(g["theta_deg"])
+        ra, dec = w.pixel_to_world_values(cx + 100.0 * math.cos(t), cy + 100.0 * math.sin(t))
+        pa = c.position_angle(SkyCoord(ra * u.deg, dec * u.deg, frame="icrs"))
+        est[serial] = c.directional_offset_by(pa, g["sep_deg"] * u.deg)
+    return est
+
+
+def boresight_from_wcs(headers, geometry, reject_arcsec=30.0, min_cameras=2):
+    """
+    카메라 WCS와 보정된 기하로 boresight 추정. 카메라 수와 무관하게 동작한다.
+
+    카메라별 추정을 벡터 평균하고, 평균에서 reject_arcsec보다 먼 추정
+    (잘못 풀린 WCS 등)은 버리고 다시 평균한다.
+
+    Returns
+    -------
+    ra_deg, dec_deg : float
+    info : dict
+        used / rejected serial 목록, 사용 추정의 rms [arcsec],
+        카메라별 평균과의 거리 [arcsec]
+    """
+    est = boresight_estimates(headers, geometry)
+    if len(est) < min_cameras:
+        raise ValueError(
+            f"Boresight needs >= {min_cameras} cameras with geometry, got {len(est)}"
+        )
+
+    used = sorted(est)
+    bs = _vector_mean([est[s] for s in used])
+    dist = {s: float(bs.separation(est[s]).arcsec) for s in used}
+    keep = [s for s in used if dist[s] <= reject_arcsec]
+    if len(keep) >= min_cameras and len(keep) < len(used):
+        used = keep
+        bs = _vector_mean([est[s] for s in used])
+        dist = {s: float(bs.separation(est[s]).arcsec) for s in est}
+
+    rms = float(np.sqrt(np.mean([dist[s] ** 2 for s in used])))
+    info = {
+        "used": used,
+        "rejected": sorted(set(est) - set(used)),
+        "rms_arcsec": rms,
+        "dist_arcsec": dist,
+    }
+    return float(bs.ra.deg), float(bs.dec.deg), info
+
+
+def load_boresight_geometry(path):
+    """boresight_geometry.json -> {serial: {"sep_deg", "theta_deg"}}."""
+    with open(path, "r") as f:
+        return json.load(f)["cameras"]
+
+
+def boresight_from_astro_files(astro_paths, geometry, **kwargs):
+    """astro_*.fits 경로 목록으로 boresight_from_wcs 실행."""
+    headers = {}
+    for p in astro_paths:
+        with fits.open(p) as hdul:
+            headers[camera_serial(p)] = hdul[0].header.copy()
+    return boresight_from_wcs(headers, geometry, **kwargs)
+
 
 #def refine_command_coordinate(
 #    ra1, dec1, ra2, dec2,          # guide centers
