@@ -214,6 +214,7 @@ class MainWindow(QMainWindow):
         self.fwhm = None
         self.object = None
         self.obslog = None
+        self._pending_spec_cmdlog = {}  # GUI frame commands awaiting a Done reply
 
         ### Instrument position state & state ###
         self.adcadjusting_state = False
@@ -790,7 +791,21 @@ class MainWindow(QMainWindow):
                     self._sync_illumi_state(backillum)
                 if inst == 'SPEC':
                     self._log_spec_camera_problems(response_data)
-                    if response_data.get('cmdlog'):
+                    func = response_data.get('func')
+                    pending = self._pending_spec_cmdlog.get(func)
+                    if process == 'Done' and pending:
+                        row = pending.pop(0)
+                        if not pending:
+                            del self._pending_spec_cmdlog[func]
+                        if status == 'success':
+                            try:
+                                self.obslog = await asyncio.to_thread(
+                                    self._append_spec_cmdlog, row)
+                                self.scriptrun.obslog = self.obslog
+                                self.logging(self.obslog.message, level='receive')
+                            except Exception as error:
+                                self.logging(f'CMDLOG update failed: {error}', level='error')
+                    elif response_data.get('cmdlog'):
                         try:
                             self.obslog = await asyncio.to_thread(
                                 add_isoplane_reply, self.obslog, response_data)
@@ -948,7 +963,32 @@ class MainWindow(QMainWindow):
                     tile_id=self.TileID, object_name=self.object,
                     ra=self.ra, dec=self.dec, fwhm=self.fwhm,
                 )
-                await handle_speciso(message, self.ICS_client, header)
+                row = None
+                if header is not None:
+                    def known(value):
+                        return '' if value is None or str(value).strip() in ('', 'None') else value
+
+                    row = {
+                        'night': known(header['OBSDATE']),
+                        'ut': datetime.now(timezone.utc).isoformat(timespec='milliseconds'),
+                        'projid': known(header['PROJID']),
+                        'tile_id': known(header['TileID']),
+                        'objtype': header['OBSTYPE'],
+                        'object_name': known(header['OBJECT']) or known(header['TileID']),
+                        'exposure': parsed.get('time', 0.0),
+                        'exp_num': parsed['numframe'],
+                        'comments': message.strip(),
+                    }
+                    self._pending_spec_cmdlog.setdefault(parsed['func'], []).append(row)
+                try:
+                    await handle_speciso(message, self.ICS_client, header)
+                except BaseException:
+                    if row is not None:
+                        pending = self._pending_spec_cmdlog[parsed['func']]
+                        pending.remove(row)
+                        if not pending:
+                            del self._pending_spec_cmdlog[parsed['func']]
+                    raise
             except ValueError as error:
                 self.logging(str(error), status='error', level='error',
                              save=self.msglog_path is not None)
@@ -2320,6 +2360,18 @@ class MainWindow(QMainWindow):
             self.logging(self.obslog.message, level='receive')
         except Exception as e:
             self.logging(f'Observation log update failed: {e}', level='error')
+
+    def _append_spec_cmdlog(self, row):
+        """Write a GUI command snapshot after the matching SPEC command succeeds."""
+        log = self.obslog
+        if log is None or log.title != row['night']:
+            log = obslog(row['night'])
+        log.add_log(
+            row['ut'], row['projid'], row['tile_id'], row['objtype'],
+            row['object_name'], row['exposure'], row['exp_num'], row['comments'],
+            value_input_option='RAW',
+        )
+        return log
 
     def _spec_frame_path(self, filename):
         """Local path of a frame named in a SPEC reply: as given, else under SPEC.specimagepath.
