@@ -200,6 +200,8 @@ without a command (firmware watchdog). The stage stays where it is: restart the 
 - `backillum.py`: Uno link, stage operations, `FakeUno`.
 - `fitsio.py`: adds the ICS cards ("Header cards" above) to the LightField FITS. LightField's
   own cards are kept byte for byte; its EXPTIME stays in ms and the ICS request goes to EXPREQ.
+- `sendcmd.py`: sends one command to the running server through RabbitMQ and prints its
+  replies (`zoflux` summarised; `--save` keeps the Done reply).
 - `probe_lightfield.py`: run once on the LightField PC; reports setting names, devices, and
   whether one acquisition with time stamps works.
 
