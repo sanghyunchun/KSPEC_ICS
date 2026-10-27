@@ -5,6 +5,7 @@ import json
 from aio_pika import IncomingMessage
 
 from Lib.AMQ import AMQclass, UDPClientProtocol, TCPClient
+from Lib.updatelog import add_isoplane_reply
 from ADC.adccli import handle_adc
 from GFA.gfacli import handle_gfa
 from FBP.fbpcli import handle_fbp
@@ -27,6 +28,7 @@ class KSPECRunner:
         self.GFA_response_queue = asyncio.Queue()
         self.ADC_response_queue = asyncio.Queue()
         self.SPEC_response_queue = asyncio.Queue()
+        self.obslog = None
 
         self.command_list = self.load_command_list()
         self.tcsagentIP, self.tcsagentPort, self.telcomIP, self.telcomPort = self.load_config()
@@ -116,6 +118,13 @@ class KSPECRunner:
                 message =response_data.get('message','None')
                 status = response_data.get('status', 'fail')
                 self.set_inst_pos_state(response_data) 
+                if response_data.get('cmdlog'):
+                    try:
+                        self.obslog = await asyncio.to_thread(
+                            add_isoplane_reply, self.obslog, response_data)
+                        print(f'[ICS] {self.obslog.message}', flush=True)
+                    except Exception as error:
+                        print(f'[ICS] CMDLOG update failed: {error}', flush=True)
 
                 if isinstance(message,dict):
                     message = json.dumps(message, indent=2)

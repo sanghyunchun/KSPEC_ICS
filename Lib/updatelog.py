@@ -20,19 +20,19 @@ class obslog():
             return self.sh.add_worksheet(
                 title=self.title,
                 rows=200,
-                cols=9,
+                cols=8,
                 index=0
             ), True
 
     def _setup_worksheet(self):
         self.ws.freeze(rows=2)
 
-# 각 열별로 1행~2행 세로 병합: A1:A2, B1:B2, ..., I1:I2
-        for col in range(1, 10):               # 1..9
+        # Merge the two header rows in each of the eight CMDLOG columns.
+        for col in range(1, 9):
             self.ws.merge_cells(1, col, 2, col)     # (row_start=1, col_start=col, row_end=2, col_end=col)
 
         letters = ['UT', 'PROJID', 'TILE ID', 'OBJTYPE', 'OBJECT', 'EXPOSURE', 'EXP #', 'Comments']
-        self.ws.update([letters], range_name="A1:I1")          # gspread 6.x: values 먼저, range_name 키워드 인자
+        self.ws.update([letters], range_name="A1:H1")
 
         fmt = CellFormat(
             textFormat=TextFormat(bold=True),       
@@ -40,7 +40,7 @@ class obslog():
             verticalAlignment='MIDDLE'          
         )
 
-        format_cell_range(self.ws, "A1:I2", fmt)
+        format_cell_range(self.ws, "A1:H2", fmt)
 
 
     def add_log(
@@ -52,7 +52,8 @@ class obslog():
         object_name,
         exposure,
         exp_num,
-        comments=""
+        comments="",
+        value_input_option="USER_ENTERED",
     ):
         values = [
             ut,
@@ -67,10 +68,26 @@ class obslog():
 
         self.ws.append_row(
             values,
-            value_input_option="USER_ENTERED"
+            value_input_option=value_input_option
         )
 
         self.message = f'Current observation log is updated.'
+
+
+def add_isoplane_reply(current_log, reply):
+    """Record a successful IsoPlane frame reply on the ICS and return the active worksheet."""
+    if (reply.get("inst") != "SPEC" or reply.get("process") != "Done"
+            or reply.get("status") != "success" or reply.get("backend") != "ISOPLANE"
+            or not isinstance(reply.get("cmdlog"), dict)):
+        return current_log
+
+    row = reply["cmdlog"]
+    night = row["night"]
+    log = current_log if current_log is not None and current_log.title == night else obslog(night)
+    log.add_log(row["ut"], row["projid"], row["tile_id"], row["objtype"],
+                row["object_name"], row["exposure"], row["exp_num"], row["comments"],
+                value_input_option="RAW")
+    return log
 
 
 #obslog = obslog()

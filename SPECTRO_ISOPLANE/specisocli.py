@@ -3,6 +3,7 @@
 import math
 
 from SPECTRO.speccli import create_spec_command
+from Lib.make_spec_header import set_header_info
 
 
 NO_ARGUMENT_COMMANDS = {
@@ -14,6 +15,21 @@ NO_ARGUMENT_COMMANDS = {
     "illulightoff": "Switch off back-illumination light without moving the stage.",
 }
 FRAME_COMMANDS = {"getdark", "getflat", "getarc", "getobj"}
+FRAME_TYPES = {"getbias": "Bias", "getdark": "Dark", "getflat": "Flat",
+               "getarc": "Arc", "getobj": "Object"}
+
+
+def make_frame_header(command, *, night, project, tile_id, object_name, ra, dec, fwhm):
+    """Attach the selected GUI tile to a validated IsoPlane frame command."""
+    func = command["func"]
+    if func not in FRAME_TYPES:
+        return None
+    return set_header_info(
+        obsdate=night, obstype=FRAME_TYPES[func], TileID=tile_id,
+        obsra=ra, obsdec=dec, exptime=command.get("time", 0),
+        expnum=command["numframe"], projID=project, fwhm=fwhm,
+        object_name=object_name or tile_id,
+    )
 
 
 def _positive_count(value):

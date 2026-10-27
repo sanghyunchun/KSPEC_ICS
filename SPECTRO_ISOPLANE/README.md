@@ -16,6 +16,12 @@ the GUI and the observing scripts work unchanged:
 | `illulighton` / `illulightoff` | light only, the stage does not move; on needs the stage IN (new) |
 | `specstop` | emergency stop: stage, then light, then the acquisition (new command) |
 
+After a frame command saves all its images, its `Done` reply includes `cmdlog`: observing
+night, UT (first frame start), PROJID, TILE ID, OBJTYPE, OBJECT, EXPOSURE (seconds), EXP #
+(frames in the command), and Comments (last saved FITS path). Unknown header values are blank.
+The ICS receives this reply and appends the row to the `CMDLOG` spreadsheet. Google credentials
+are needed on the ICS machine only; a sheet failure does not change the exposure reply.
+
 ## Replies
 The ICS pairs replies with commands by their order, so every command gets exactly one `Done`
 reply and nothing else is sent as `Done`. Its `status` is:

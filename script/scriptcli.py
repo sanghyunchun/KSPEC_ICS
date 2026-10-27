@@ -272,7 +272,7 @@ class script():
         if spec_rsp.get("status") != "success":
             log_or_print(logging, f"{command} did not succeed ({spec_rsp.get('status')}): "
                          f"{spec_rsp.get('message')}", 'error')
-        else:
+        elif spec_rsp.get("backend") != 'ISOPLANE':
             log_comment = comments or spec_rsp.get("filename") or spec_rsp.get("message", "")
             await self.add_obslog(
                 obstype,

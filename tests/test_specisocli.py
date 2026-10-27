@@ -5,7 +5,8 @@ import json
 import unittest
 from unittest.mock import AsyncMock
 
-from SPECTRO_ISOPLANE.specisocli import handle_speciso, make_speciso_command
+from SPECTRO_ISOPLANE.specisocli import (handle_speciso, make_speciso_command,
+                                         make_frame_header)
 
 
 class IsoPlaneCliTests(unittest.TestCase):
@@ -47,6 +48,16 @@ class IsoPlaneCliTests(unittest.TestCase):
         routing_key, message = client.send_message.await_args.args
         self.assertEqual(routing_key, "ISOPLANE")
         self.assertEqual(json.loads(message)["numframe"], 2)
+
+    def test_selected_tile_header_for_manual_getobj(self):
+        command = json.loads(make_speciso_command('getobj 300 3'))
+        header = make_frame_header(
+            command, night='20261027', project='Calib', tile_id='0001',
+            object_name=None, ra='01:00:00', dec='-30:00:00', fwhm=None)
+        self.assertEqual((header['PROJID'], header['TileID'], header['OBJECT']),
+                         ('Calib', '0001', '0001'))
+        self.assertEqual((header['OBSTYPE'], header['EXPTIME'], header['NEXP']),
+                         ('Object', 300.0, 3))
 
 
 if __name__ == "__main__":

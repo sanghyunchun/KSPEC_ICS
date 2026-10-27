@@ -20,6 +20,7 @@ from SPECTRO_ISOPLANE.backillum import (RELEASE, STOP_HOLD, BackIllumination, Fa
 from SPECTRO_ISOPLANE.command import Isoplane
 from SPECTRO_ISOPLANE.fitsio import append_cards
 from SPECTRO_ISOPLANE.lightfield import FakeLightField
+from SPECTRO_ISOPLANE.specisocli import make_frame_header, make_speciso_command
 
 HEADER = {'OBSDATE': '20261101', 'OBSTYPE': 'Object', 'PROJID': 'P1', 'TileID': '0123',
           'RA': '10:00:00', 'DEC': '-30:00:00', 'EXPTIME': 5, 'NEXP': None, 'EXPNUM': None,
@@ -118,6 +119,67 @@ class IsoplaneFakeTest(unittest.TestCase):
         self.assertEqual(h['FWHM'], 1.2)
         self.assertNotIn('OBSERVAT', h)  # unknown values leave their card out
         self.assertTrue(h['UTSTART'] < h['UTEND'])
+
+    def test_cmdlog_records_each_completed_frame_command(self):
+        iso = self.make()
+        headers = {**HEADER, 'PROJID': 'None', 'TileID': None, 'OBJECT': ''}
+        self.run_cmds(iso, body('specinitial', dirname='20261101'),
+                      body('getbias', numframe=2, header=headers),
+                      body('getdark', time=5, numframe=1, header=headers),
+                      body('getflat', time=5, numframe=1, header=headers),
+                      body('getarc', time=5, numframe=1, header=headers),
+                      body('getobj', time=5, numframe=1, header=headers))
+        replies = [self.server.done(func)[0] for func in
+                   ('getbias', 'getdark', 'getflat', 'getarc', 'getobj')]
+        rows = [reply['cmdlog'] for reply in replies]
+        self.assertTrue(all(reply['backend'] == 'ISOPLANE' for reply in replies))
+        self.assertEqual([row['objtype'] for row in rows],
+                         ['Bias', 'Dark', 'Flat', 'Arc', 'Object'])
+        self.assertEqual([(row['exposure'], row['exp_num']) for row in rows],
+                         [(0.0, 2), (5.0, 1), (5.0, 1), (5.0, 1), (5.0, 1)])
+        self.assertTrue(all(row['ut'].startswith('2026-') for row in rows))
+        self.assertTrue(all(row['projid'] == row['tile_id'] == row['object_name'] == ''
+                            for row in rows))
+        self.assertTrue(all(row['comments'].endswith('.fits') for row in rows))
+
+    def test_ics_records_reply_and_sheet_failure_does_not_fail_frames(self):
+        from Lib.updatelog import add_isoplane_reply
+
+        iso = self.make()
+        self.run_cmds(iso, body('specinitial', dirname='20261101'),
+                      body('getbias', numframe=1, header=HEADER))
+        reply, = self.server.done('getbias')
+        self.assertEqual(reply['status'], 'success')
+        self.assertTrue(os.path.isfile(reply['filename']))
+        with patch('Lib.updatelog.obslog') as log_class:
+            log = add_isoplane_reply(None, reply)
+        self.assertIs(log, log_class.return_value)
+        log_class.assert_called_once_with('20261101')
+        log.add_log.assert_called_once_with(
+            reply['cmdlog']['ut'], 'P1', '0123', 'Bias', 'NGC 1', 0.0, 1,
+            reply['filename'], value_input_option='RAW')
+        self.assertIs(add_isoplane_reply(log, {**reply, 'status': 'error'}), log)
+        log.add_log.assert_called_once()
+        with patch('Lib.updatelog.obslog', side_effect=RuntimeError('sheet unavailable')):
+            with self.assertRaisesRegex(RuntimeError, 'sheet unavailable'):
+                add_isoplane_reply(None, reply)
+        self.assertEqual(reply['status'], 'success')
+
+    def test_selected_calib_tile_getobj_cmdlog_row(self):
+        from Lib.updatelog import add_isoplane_reply
+
+        command = json.loads(make_speciso_command('getobj 300 3'))
+        command['header'] = make_frame_header(
+            command, night='20261101', project='Calib', tile_id='0001',
+            object_name=None, ra=None, dec=None, fwhm=None)
+        iso = self.make()
+        self.run_cmds(iso, body('specinitial', dirname='20261101'), json.dumps(command))
+        reply, = self.server.done('getobj')
+        with patch('Lib.updatelog.obslog') as log_class:
+            add_isoplane_reply(None, reply)
+        row = log_class.return_value.add_log.call_args.args
+        self.assertEqual(row[1:7], ('Calib', '0001', 'Object', '0001', 300.0, 3))
+        self.assertEqual(row[7], reply['filename'])
 
     def test_exposure_numbers_and_unknown_values(self):
         iso = self.make()
@@ -558,6 +620,20 @@ class DarkSequenceTest(unittest.TestCase):
         except Exception as e:  # redis, pandas, ... exist on the ICS PC
             self.skipTest(f'script.scriptcli cannot be imported here: {e}')
         self.cli = scriptcli
+
+    def test_isoplane_reply_does_not_duplicate_cmdlog(self):
+        run = SimpleNamespace(ICSclient=None, response_queue=asyncio.Queue())
+        script = self.cli.script()
+        reply = {'inst': 'SPEC', 'func': 'getbias', 'process': 'Done',
+                 'status': 'success', 'backend': 'ISOPLANE'}
+        with patch.object(self.cli, 'handle_spec', new_callable=AsyncMock), \
+                patch.object(self.cli, 'wait_reply', new_callable=AsyncMock,
+                             return_value=reply), \
+                patch.object(script, 'add_obslog', new_callable=AsyncMock) as add_log:
+            result = asyncio.run(script.send_spec_and_log(
+                'getbias 1', 'Bias', 0, 1, run))
+        self.assertEqual(result, reply)
+        add_log.assert_not_awaited()
 
     def run_script(self, method, calinfo, fail=()):
         cli, sent = self.cli, []

@@ -440,6 +440,7 @@ class Isoplane:
 
         directory = os.path.join(self.datapath, self.night)
         paths = []
+        ut_start = None
         for i in range(n):
             basename = self.next_basename(directory, kind)
             await self.reply(server, func, f"{kind} {i + 1}/{n}: {exptime:g} s exposure started.",
@@ -447,6 +448,8 @@ class Isoplane:
             frame = await self.with_progress(
                 server, func, exptime, self.lf.expose, exptime, shutter_closed, directory, basename
             )
+            if i == 0:
+                ut_start = frame.ut_start
             cards = ics_cards(header, frame, func, i, n, self.sensor_bias_rows)
             cards.append(("BILLUM", self.bl.state if self.bl else "NONE",
                           "back-illumination stage state"))
@@ -454,8 +457,23 @@ class Isoplane:
             paths.append(await asyncio.to_thread(self.publish, frame.path))
             await self.reply(server, func, f"{kind} {i + 1}/{n} saved: {paths[-1]}",
                              process="ING")
+        def known(value):
+            return "" if value is None or str(value).strip() in ("", "None") else value
+
+        cmdlog = {
+            "night": self.night,
+            "ut": known(ut_start),
+            "projid": known(header.get("PROJID")),
+            "tile_id": known(header.get("TileID")),
+            "objtype": {"getbias": "Bias", "getdark": "Dark", "getflat": "Flat",
+                        "getarc": "Arc", "getobj": "Object"}[func],
+            "object_name": known(header.get("OBJECT")),
+            "exposure": exptime,
+            "exp_num": n,
+            "comments": paths[-1],
+        }
         await self.reply(server, func, f"{n} {kind} frame(s) obtained.", filename=paths[-1],
-                         filenames=paths)
+                         filenames=paths, backend="ISOPLANE", cmdlog=cmdlog)
 
     # -------------------------------------------------- helpers
     async def with_progress(self, server, func, exptime, fn, *args):
