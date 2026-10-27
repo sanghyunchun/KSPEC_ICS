@@ -419,6 +419,7 @@ def measure_fiducials_ref(fid_heads, xf, yf, ref, data_dir, nexposure, nfib, set
         shift = np.median(obs[j[near]] - ref[ok_ref][near], axis=0) if near.sum() >= 3 else np.zeros(2)
         # cKDTree.query rejects non-finite coordinates. Keep missing reference rows out of
         # the query and leave their distances infinite so they cannot be selected.
+        # (ICS 담당자 수정 2026-10-27, KSPEC_ICS 980d52b)
         d = np.full(nfid, np.inf)
         j = np.zeros(nfid, dtype=int)
         d[ok_ref], j[ok_ref] = tree.query(ref[ok_ref] + shift)
