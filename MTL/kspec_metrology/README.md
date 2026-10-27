@@ -247,17 +247,47 @@ INFO Measured geometry /경로/Measured_Geometry.txt: 2/103 holes replaced
 
     명령각 = ANGLE_SIGN × 기하각 − ANGLE_ZERO
 
-- `fiber_config.ANGLE_SIGN` 기본 `(1, 1)`: alpha = +theta (초점면 +x 에서 반시계가 양),
-  beta = +phi. 2026-10-23 실험실 배치로 확인. 그 이전 기본값 `(-1, -1)` 은 두 각 모두
-  부호가 반대였다 (0.3.x 까지의 json).
-- `fiber_config.ANGLE_ZERO` 기본 `(30, 150)` (2026-10-27 확정): 기하학적으로 (alpha, beta) =
-  (30°, 150°) 인 자세가 positioner 제어의 **(0, 0) 초기 위치**다. 따라서 json 의 누적각,
+- `fiber_config.ANGLE_SIGN` 기본 `(-1, -1)` (2026-10-27 본 장비에서 확인): positioner 는 기하각의
+  반대 방향으로 돈다. ICS `fbpoffset` 으로 trial 1 → 2 → 3 을 움직였을 때 오차가 0.8 → 1.6 → 2.9 mm
+  로 늘었고, 측정 위치에서 json 의 −1 배를 돌린 예측만 실측과 0.2 mm 안에서 맞았다.
+  2026-10-23 실험실(다른 제어 소프트웨어)에서는 `(1, 1)` 이었다.
+- `fiber_config.ANGLE_ZERO` 기본 `(-30, -150)`: 기하학적으로 (alpha, beta) = (30°, 150°) 인 자세가
+  positioner 제어의 **(0, 0) 초기 위치**다 (부호가 −1 이므로 영점은 −30, −150). json 의 누적각,
   offset 표, `lab.xy2ab` 의 출력과 target 파일의 alpha/beta, 각도 json, `lab.make_target(angles=)`
   의 입력은 모두 명령각이다 (초기 위치 = `angles=(0, 0)`). 이번 trial 회전량(dalpha, dbeta)은
-  차이라서 영점과 무관하다. 2026-10-27 이전 json(기하각)과는 alpha 30, beta 150 만큼 다르다.
+  차이라서 영점과 무관하다.
 - 출력 alpha 는 (−180°, 180°] 로 접는다.
-- 다른 규약이면 `KSPEC_ANGLE_SIGN="-1,-1"`, `KSPEC_ANGLE_ZERO="0,0"` 또는 `fiber_config` 의 값.
-  부호가 틀리면 fiber 가 목표에서 수 mm 떨어져 나오고 매칭이 겹친다.
+- 부호가 틀리면 positioner 가 trial 마다 목표에서 **멀어진다** (오차가 1, 2, 3 배로 는다). 영점이
+  틀리면 Trial 0 json 이 (0, 0) 이 아니다. 다른 규약이면 `KSPEC_ANGLE_SIGN`, `KSPEC_ANGLE_ZERO`
+  또는 `fiber_config` 의 값.
+
+### fiducial 찾기 (기준 칩 좌표)
+
+fiducial 은 초점면에 고정되어 있고 카메라도 고정이므로 칩 좌표가 trial 사이에 거의 변하지
+않는다. 그래서 2026-10-27 부터 fiducial 식별은 두 단계다.
+
+1. **기준 칩 좌표가 있으면** (`{json_dir}/{tile}_MetrologyTrial_{k-1}_fid.npy`, 없으면 run 과 무관한
+   `{json_dir}/Fiducial_Chip_Positions.npy`; `KSPEC_FIDUCIAL_CHIP_REF` 로 경로 변경) 세 노출(1 ms,
+   10 ms, fiber 30 ms) 각각에서 fiducial 마다 기준 자리 반경 60 px (약 2 mm) 안의 **가장 가까운**
+   검출을 그 fiducial 로 본다 (`measure_fiducials_ref`). 밝기는 쓰지 않으므로 fiber 나 sky 점이
+   창에 들어와도 자리가 다르면 안 잡힌다. 카메라가 조금 움직였으면 검출 전체의 공통 이동량을
+   먼저 빼므로 fiducial 간격(15 mm) 보다 작은 이동은 그대로 처리된다. 패턴 매칭·배율 초기값·검출
+   수 상한이 모두 필요 없다.
+2. **기준이 없거나 절반도 못 찾으면** 패턴 매칭 (`measure_fiducials`: 배율 초기값으로 옮긴 검출을
+   설계 패턴에 회전·offset 격자 탐색으로 맞추고 affine 재적합) 으로 처음부터 찾는다. 성공하면
+   그 좌표가 기준 파일로 저장되어 다음부터 1 로 간다.
+
+어느 경로든 그 뒤는 같다. fiducial 마다 포화되지 않은 가장 밝은 노출을 고르고 (전용 노출 우선,
+fiber 노출은 예비), 찾은 fiducial 로 왜곡 변환을 맞춘다. **fiducial 이 30 개 중 20 개
+(`MIN_FIDUCIALS`) 이상 보이면 trial 은 계속 진행**하고 못 찾은 것은 경고와 함께 NaN 으로 둔다
+(2026-10-27 이전에는 하나라도 없으면 실패였다). fit 잔차가 0.3 mm (`FID_RESID_MAX`) 를 넘는
+fiducial 은 잘못 붙인 것(fiber 점 등)으로 보고 빼고 다시 맞춘다 (정상 잔차는 50 µm 수준).
+그 뒤 매칭된 fiber 자리를 지우고 fiducial 을 한 번 더 찾아 변환을 다듬는데(cross_exclude), 이
+2차 탐색이 실패하면 1차 결과를 그대로 쓴다.
+
+실기 trial 3 영상으로 확인한 것: 기준이 없을 때와 있을 때 같은 좌표(0.00 px 차), 한 fiducial 을
+세 노출에서 모두 지우면 29/30 으로 계속 진행, 그 자리 1.2 mm 옆에 가짜 점을 넣으면 잔차 850 µm
+로 걸러짐, 기준을 40 px 옮겨 놓으면 공통 이동량으로 보정.
 
 ### 포화와 노출 자동 조정
 

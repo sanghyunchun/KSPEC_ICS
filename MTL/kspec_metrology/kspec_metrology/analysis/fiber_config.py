@@ -433,14 +433,17 @@ def dead_mask():
     return np.array([i in FIBER_EXCLUDE for i in ids], dtype=bool) | fixed_mask()
 
 # find_angle_double_method2_select_elbow에 넘기는 자세 정의
-# 출력 각도의 부호 (alpha, beta). json / target 파일의 각도 = 부호 x 계산각(theta, phi).
-# positioner 규약 (2026-10-23 실험실 측정으로 확인): alpha 는 초점면 +x 에서 반시계가
-# 양이고 그대로 출력한다 (alpha = +theta), beta 는 항상 0 이상 (beta = +phi, phi 는
-# elbow-down 으로 [0, 180]). 실험실에서 (-30, 150) 으로 보낸 fiber 가 이 규약의 자리에
-# 있었다. 2026-10-23 이전 기본값 (-1, -1) 은 둘 다 부호가 반대였다. 다른 규약이면
-# KSPEC_ANGLE_SIGN="-1,-1" 또는 fiber_config.ANGLE_SIGN 으로 바꾼다.
+# 출력 각도의 부호 (alpha, beta). 명령각 = ANGLE_SIGN x 기하각 - ANGLE_ZERO (아래).
+# 기하각: 초점면 +x 에서 반시계 theta, elbow-down phi ([0, 180]).
+#
+# 2026-10-27 본 장비 (ICS fbpoffset 으로 positioner 를 움직인 trial 1 -> 2 -> 3) 에서 확인:
+# positioner 는 json 의 alpha, beta 와 **반대 방향** 으로 돌았다 (오차가 trial 마다 0.8 -> 1.6 -> 2.9 mm
+# 로 늘었고, 측정 위치에서 json 의 -1 배를 돌린 예측만 실측과 0.2 mm 안에서 맞았다). 그래서 둘 다 -1.
+# 사용자 확인 (2026-10-27): FBP 제어는 반시계를 음수로 쓴다. 기하각 정의는 그대로이고 부호만 붙인다.
+# 2026-10-23 실험실 (다른 제어 소프트웨어) 에서는 (+1, +1) 이었다. 다른 규약이면
+# KSPEC_ANGLE_SIGN="1,1" 또는 fiber_config.ANGLE_SIGN 으로 바꾼다 (ANGLE_ZERO 도 같이).
 ANGLE_SIGN_ENV = 'KSPEC_ANGLE_SIGN'
-ANGLE_SIGN = (1., 1.)
+ANGLE_SIGN = (-1., -1.)
 if os.environ.get(ANGLE_SIGN_ENV, '').strip():
     ANGLE_SIGN = tuple(float(t) for t in os.environ[ANGLE_SIGN_ENV].replace(';', ',').split(','))
     if len(ANGLE_SIGN) != 2 or any(abs(v) != 1. for v in ANGLE_SIGN):
@@ -449,12 +452,12 @@ if os.environ.get(ANGLE_SIGN_ENV, '').strip():
 # positioner 명령각의 영점 (2026-10-27 확정). 기하학적으로 (alpha, beta) = (30, 150) 인 자세가 positioner
 # 제어에서는 (0, 0) 이다. 이 패키지가 내보내는 각도 (json, offset 표의 누적각, lab.xy2ab) 와 받는 각도
 # (target 파일의 alpha/beta, 각도 json, lab.make_target(angles=...)) 는 모두 **명령각** 이다:
-#     명령각 = ANGLE_SIGN x 기하각 - ANGLE_ZERO        (기하각: 초점면 +x 에서 반시계 theta, elbow-down phi)
-# 이번 trial 의 회전량 (dalpha, dbeta) 은 차이라서 영점과 무관하다. 기하각을 그대로 내보내던
-# 2026-10-27 이전 json 과는 alpha 30, beta 150 만큼 다르다.
-#   환경변수 : KSPEC_ANGLE_ZERO="30,150"   (기하각을 그대로 쓰려면 "0,0")
+#     명령각 = ANGLE_SIGN x 기하각 - ANGLE_ZERO
+# ANGLE_SIGN = (-1, -1) 이므로 기하각 (30, 150) 이 명령 (0, 0) 이 되려면 ANGLE_ZERO = (-30, -150) 이다
+# (명령 0 = -30 - za -> za = -30). 이번 trial 의 회전량 (dalpha, dbeta) 은 차이라서 영점과 무관하다.
+#   환경변수 : KSPEC_ANGLE_ZERO="-30,-150"   (부호 (1, 1) 이면 "30,150"; 기하각을 그대로 쓰려면 "0,0")
 ANGLE_ZERO_ENV = 'KSPEC_ANGLE_ZERO'
-ANGLE_ZERO = (30., 150.)
+ANGLE_ZERO = (-30., -150.)
 if os.environ.get(ANGLE_ZERO_ENV, '').strip():
     ANGLE_ZERO = tuple(float(t) for t in os.environ[ANGLE_ZERO_ENV].replace(';', ',').split(','))
     if len(ANGLE_ZERO) != 2:

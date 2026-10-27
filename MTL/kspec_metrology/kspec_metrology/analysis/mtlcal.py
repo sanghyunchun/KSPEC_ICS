@@ -336,6 +336,155 @@ def save_offsets(json_dir, target_name, itrial, dx, dy, angle_rot, nfib):
     return path
 
 
+# fiducial 이 이만큼은 보여야 변환을 맞춘다 (full+affine 17 계수에 30 개 중 20 개면 넉넉하다).
+# 모자라면 그 trial 은 실패로 둔다 (fiducial 이 대부분 안 보이면 조명·카메라 문제다).
+MIN_FIDUCIALS = 20
+# 찾은 fiducial 가운데 fit 잔차가 이보다 크면 잘못 붙인 것(fiber 점 등)으로 보고 빼고 다시 맞춘다 [mm].
+FID_RESID_MAX = 0.3
+# fiducial 기준 칩 좌표 주변에서 찾는 창 반경 [px] (60 px x 3.76 um x 배율 8.9 = 2 mm).
+FID_WINDOW_PX = 60
+
+
+def min_found(nfid):
+    return min(MIN_FIDUCIALS, max(3, nfid//2))
+
+
+def load_fid_ref(json_dir, target_name, itrial, nfid):
+    """fiducial 칩 좌표 기준: 직전 trial 의 _fid.npy, 없으면 run 과 무관한 기준 파일. 없으면 None."""
+    if json_dir is None:
+        return None, None
+    cands = []
+    if target_name is not None and itrial is not None and itrial >= 1:
+        cands.append(naming.fid_path(json_dir, target_name, itrial - 1))
+    cands.append(naming.fid_ref_path(json_dir))
+    for path in cands:
+        if os.path.exists(path):
+            ref = np.load(path)
+            if ref.shape == (nfid, 2) and int(np.isfinite(ref).all(axis=1).sum()) >= min_found(nfid):
+                return ref, path
+            get_logger().warning("fiducial reference %s ignored: shape %s or too few finite rows", path, ref.shape)
+    return None, None
+
+
+def save_fid_ref(json_dir, target_name, itrial, xo_fid, yo_fid):
+    """이 trial 의 fiducial 칩 좌표를 trial 파일과 기준 파일에 저장한다 (기준 파일은 잰 것만 갱신)."""
+    if json_dir is None:
+        return
+    cur = np.column_stack((xo_fid, yo_fid))
+    if target_name is not None and itrial is not None:
+        np.save(naming.fid_path(json_dir, target_name, itrial), cur)
+    path = naming.fid_ref_path(json_dir)
+    ref = cur.copy()
+    if os.path.exists(path):
+        old = np.load(path)
+        if old.shape == cur.shape:
+            keep = ~np.isfinite(cur).all(axis=1)
+            ref[keep] = old[keep]
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    np.save(path, ref)
+
+
+def measure_fiducials_ref(fid_heads, xf, yf, ref, data_dir, nexposure, nfib, set_nexposure=None, n_extra=0,
+                          sat_level=65000., fid_min_peak=0., fallback=None, window_px=FID_WINDOW_PX,
+                          exclude=None, **pk):
+    """기준 칩 좌표(ref, (nfid, 2)) 주변에서만 fiducial 을 찾는다. 패턴 매칭이 필요 없다.
+
+    fiducial 은 초점면에 고정되어 있고 카메라도 고정이므로 칩 좌표는 trial 사이에 거의 변하지 않는다.
+    세트(노출)마다 peak 을 모두 찾은 뒤
+      1. 기준 좌표마다 가장 가까운 검출을 보고 공통 이동량(중앙값)을 구해 기준을 통째로 옮기고
+         (카메라가 조금 움직였을 때),
+      2. fiducial 마다 옮긴 기준에서 window_px 안의 **가장 가까운** 검출을 그 fiducial 로 본다
+         (밝기는 쓰지 않는다: fiber 점이 창에 들어와도 자리가 다르면 안 잡힌다). 한 검출은 한 fiducial 에만.
+    세트 선택은 measure_fiducials 와 같다 (포화되지 않은 가장 밝은 세트, fallback 세트는 뒤로).
+    절반도 못 찾으면 None 을 돌려주고 호출자가 패턴 매칭으로 돌아간다.
+    exclude : (xchip, ychip) 이미 아는 fiber 자리. 주면 그 자리를 지우고 찾는다 (cross_exclude 2차).
+
+    반환: xobs, yobs (fiducial 순서, 못 찾은 것은 NaN), choice
+    """
+    log = get_logger()
+    nfid = xf.size
+    win = window_px * 3.76e-3                               # 칩 좌표 [mm]
+    sets = []
+    for k, head in enumerate(fid_heads):
+        nexp = nexposure if set_nexposure is None else set_nexposure[k]
+        _, xobs, yobs, peak, nsat = findpeak((min_found(nfid), nfid + nfib + n_extra + 20), data_dir=data_dir,
+                                             head=head, nexposure=nexp, sat_level=sat_level,
+                                             exclude=exclude, ReturnNsat=True, **pk)
+        obs = np.column_stack((xobs, yobs))
+        tree = cKDTree(obs)
+        ok_ref = np.isfinite(ref).all(axis=1)
+        d, j = tree.query(ref[ok_ref])
+        near = d < 3*win
+        shift = np.median(obs[j[near]] - ref[ok_ref][near], axis=0) if near.sum() >= 3 else np.zeros(2)
+        d, j = tree.query(np.where(ok_ref[:, None], ref + shift, np.inf))
+        found = ok_ref & (d < win)
+        for jj in np.unique(j[found]):                       # 한 검출에 둘 이상 붙으면 가까운 쪽만
+            same = np.where(found & (j == jj))[0]
+            if same.size > 1:
+                found[same] = False; found[same[np.argmin(d[same])]] = True
+        sets.append(dict(x=xobs[j], y=yobs[j], peak=peak[j], nsat=nsat[j], found=found))
+        log.info("Fiducial set %d (%s): %d peaks, %d/%d fiducials within %d px of the reference "
+                 "(common shift %.1f, %.1f px), %d saturated, peak %.0f..%.0f", k, head, xobs.size,
+                 int(found.sum()), nfid, window_px, shift[0]/3.76e-3, shift[1]/3.76e-3,
+                 int((nsat[j][found] > 0).sum()),
+                 peak[j][found].min() if found.any() else np.nan, peak[j][found].max() if found.any() else np.nan)
+
+    fallback = [False]*len(sets) if fallback is None else list(fallback)
+    choice = np.full(nfid, -1, dtype=int)
+    for i in range(nfid):
+        cand = [k for k, st in enumerate(sets) if st['found'][i] and not fallback[k]]
+        if not cand:
+            cand = [k for k, st in enumerate(sets) if st['found'][i]]
+        if not cand:
+            continue
+        ok = [k for k in cand if sets[k]['nsat'][i] == 0 and sets[k]['peak'][i] >= fid_min_peak]
+        choice[i] = max(ok, key=lambda k: sets[k]['peak'][i]) if ok else \
+            min(cand, key=lambda k: (sets[k]['nsat'][i], -sets[k]['peak'][i]))
+    nfound = int((choice >= 0).sum())
+    if nfound < min_found(nfid):
+        log.warning("Fiducial reference search found only %d/%d fiducials; falling back to pattern matching",
+                    nfound, nfid)
+        return None
+    missing = np.where(choice < 0)[0]
+    if missing.size:
+        log.warning("fiducial %s not found near the reference in any set; continuing with %d/%d",
+                    ", ".join(str(i) for i in missing), nfound, nfid)
+    xobs = np.array([sets[choice[i]]['x'][i] if choice[i] >= 0 else np.nan for i in range(nfid)])
+    yobs = np.array([sets[choice[i]]['y'][i] if choice[i] >= 0 else np.nan for i in range(nfid)])
+    if len(sets) > 1:
+        log.info("Fiducial exposure chosen per fiducial: %s",
+                 ", ".join(f"set {k}: {int((choice == k).sum())}" for k in range(len(sets))))
+    bad = [i for i in range(nfid) if choice[i] >= 0 and sets[choice[i]]['nsat'][i] > 0]
+    if bad:
+        log.warning("%d fiducial(s) saturated in every set where found (used anyway): %s", len(bad),
+                    ", ".join(str(i) for i in bad))
+    return xobs, yobs, choice
+
+
+def fit_fiducials(x_fid, y_fid, xo_fid, yo_fid, theta_guess, xoff_guess, yoff_guess, model, m_init,
+                  resid_max=FID_RESID_MAX):
+    """찾은 fiducial (NaN 아닌 것) 로 변환을 맞추고, 잔차가 resid_max 를 넘는 것은 잘못 붙인 것으로 보고
+    빼고 다시 맞춘다 (남는 수가 min_found 이상일 때만). 반환: xf, yf (fiducial 순서, 안 쓴 것은 NaN), coeff, used."""
+    log = get_logger()
+    nfid = x_fid.size
+    used = np.isfinite(xo_fid) & np.isfinite(yo_fid)
+    for _ in range(3):
+        idx = np.where(used)[0]
+        xf_u, yf_u, _, _, coeff = fitdistortion(x_fid[idx], y_fid[idx], np.ones(idx.size, bool),
+                                                xo_fid[idx], yo_fid[idx], np.arange(idx.size),
+                                                theta_guess, xoff_guess, yoff_guess, model=model, m_init=m_init)
+        resid = np.hypot(xf_u - x_fid[idx], yf_u - y_fid[idx])
+        bad = resid > resid_max
+        if not bad.any() or idx.size - bad.sum() < min_found(nfid):
+            break
+        log.warning("%d fiducial(s) with fit residual > %.2f mm dropped as misidentified: %s",
+                    int(bad.sum()), resid_max, ", ".join(f"{i} ({r*1e3:.0f} um)" for i, r in zip(idx[bad], resid[bad])))
+        used[idx[bad]] = False
+    xf = np.full(nfid, np.nan); yf = np.full(nfid, np.nan)
+    xf[idx], yf[idx] = xf_u, yf_u
+    return xf, yf, coeff, used
+
+
 def measure_fiducials(fid_heads, x, y, fid_flag, data_dir, nexposure,
                       m_init=None, sat_level=65000., fid_min_peak=0., n_extra=0, exclude=None,
                       set_nexposure=None, match_tol=1.5, fallback=None, **pk):
@@ -371,7 +520,11 @@ def measure_fiducials(fid_heads, x, y, fid_flag, data_dir, nexposure,
     sets = []
     for k, head in enumerate(fid_heads):
         nexp = nexposure if set_nexposure is None else set_nexposure[k]
-        nmax = nfid + n_extra if exclude is not None else nfid + nfib + n_extra
+        # 검출 상한은 fiber 자리를 지웠을 때도 nfid + nfib + n_extra 로 둔다. 지운 것은 "매칭된" fiber 자리만이라
+        # 목표에서 멀어져 매칭 안 된 fiber 의 점이 남는데, 상한을 nfid + n_extra 로 잡으면 findpeak 이 문턱을
+        # 올리거나 가장 어두운 검출을 버려 상한에 맞추다가 어두운 fiducial 을 버린다 (2026-10-27 trial 3: Z11).
+        # 여분은 패턴 매칭에서 자연히 빠지므로 상한을 넉넉히 두는 쪽이 안전하다.
+        nmax = nfid + nfib + n_extra
         nmin = max(3, nfid//2)                          # 일부가 안 보여도 받아들인다
         _, xobs, yobs, peak, nsat = findpeak((nmin, nmax), data_dir=data_dir, head=head,
                                              nexposure=nexp, sat_level=sat_level,
@@ -512,13 +665,16 @@ def measure_fiducials(fid_heads, x, y, fid_flag, data_dir, nexposure,
         else:
             choice[i] = min(cand, key=lambda k: (sets[k]['nsat'][i], -sets[k]['peak'][i]))
     missing = np.where(choice < 0)[0]
-    if missing.size:
+    if nfid - missing.size < min_found(nfid):
         raise RuntimeError(f"fiducial {', '.join(str(i) for i in missing)} not found in any set "
-                           f"({len(sets)} set(s)); add an exposure where they are visible "
-                           "(fid_images / fid_exptime) or allow the fiber frame (fid_fallback_fiber)")
-    xobs = np.array([sets[choice[i]]['x'][i] for i in range(nfid)])
-    yobs = np.array([sets[choice[i]]['y'][i] for i in range(nfid)])
-    bad = [i for i in range(nfid) if sets[choice[i]]['nsat'][i] > 0]
+                           f"({len(sets)} set(s)); only {nfid - missing.size}/{nfid} found -- add an exposure "
+                           "where they are visible (fid_images / fid_exptime) or allow the fiber frame (fid_fallback_fiber)")
+    if missing.size:
+        log.warning("fiducial %s not found in any set (%d set(s)); continuing with %d/%d fiducials",
+                    ", ".join(str(i) for i in missing), len(sets), nfid - missing.size, nfid)
+    xobs = np.array([sets[choice[i]]['x'][i] if choice[i] >= 0 else np.nan for i in range(nfid)])
+    yobs = np.array([sets[choice[i]]['y'][i] if choice[i] >= 0 else np.nan for i in range(nfid)])
+    bad = [i for i in range(nfid) if choice[i] >= 0 and sets[choice[i]]['nsat'][i] > 0]
     if len(sets) > 1:
         log.info("Fiducial exposure chosen per fiducial: %s",
                  ", ".join(f"set {k}: {int((choice == k).sum())}" for k in range(len(sets))))
@@ -841,32 +997,72 @@ def mtlcal(data_dir='./MTL/data/'
 
         fb_all = [False]*len(fid_heads) + ([True] if fid_fallback_fiber else [])
 
-        xo_fid, yo_fid, _, theta_guess, (xoff_guess, yoff_guess) = measure_fiducials(
-            heads_all, xa, ya, fa, data_dir, fid_nexposure, set_nexposure=nexp_all, n_extra=n_extra,
-            m_init=magnification, sat_level=sat_level, fid_min_peak=fid_min_peak, fallback=fb_all, **pk)
+        # fiducial 찾기. 기준 칩 좌표(직전 trial / 기준 파일)가 있으면 그 주변에서만 찾고 (패턴 매칭 없음),
+        # 없거나 절반도 못 찾으면 패턴 매칭 (measure_fiducials) 으로 처음부터 찾는다.
+        ref, ref_path = load_fid_ref(json_dir, target_name, itrial, x_fid.size)
+        used_ref = False
+        if ref is not None:
+            got = measure_fiducials_ref(heads_all, x_fid, y_fid, ref, data_dir, fid_nexposure, nfib_a,
+                                        set_nexposure=nexp_all, n_extra=n_extra, sat_level=sat_level,
+                                        fid_min_peak=fid_min_peak, fallback=fb_all, **pk)
+            if got is not None:
+                xo_fid, yo_fid, _ = got
+                used_ref = True
+                log.info("Fiducials identified from the reference chip positions (%s)", ref_path)
+                # fitdistortion 초기값: 직전 trial 의 변환이 있으면 그것, 없으면 찾은 쌍으로 격자 탐색
+                prev_c = naming.coeff_path(json_dir, target_name, itrial - 1) if target_name is not None else None
+                if prev_c and os.path.exists(prev_c):
+                    pc = np.load(prev_c); theta_guess, xoff_guess, yoff_guess = pc[1], pc[2], pc[3]
+                else:
+                    ok = np.isfinite(xo_fid)
+                    _, theta_guess, (xoff_guess, yoff_guess) = matchfiber(x_fid[ok], y_fid[ok], xo_fid[ok], yo_fid[ok],
+                                                                          m_init=magnification)
+        if not used_ref:
+            xo_fid, yo_fid, _, theta_guess, (xoff_guess, yoff_guess) = measure_fiducials(
+                heads_all, xa, ya, fa, data_dir, fid_nexposure, set_nexposure=nexp_all, n_extra=n_extra,
+                m_init=magnification, sat_level=sat_level, fid_min_peak=fid_min_peak, fallback=fb_all, **pk)
 
-        xf_fid, yf_fid, dxf, dyf, coeff = fitdistortion(
-            x_fid, y_fid, np.ones(x_fid.size, dtype=bool), xo_fid, yo_fid,
-            np.arange(x_fid.size), theta_guess, xoff_guess, yoff_guess,
-            model=model, m_init=magnification)
+        xf_fid, yf_fid, coeff, fid_used = fit_fiducials(x_fid, y_fid, xo_fid, yo_fid, theta_guess, xoff_guess,
+                                                        yoff_guess, model, magnification)
+        xo_fid = np.where(fid_used, xo_fid, np.nan); yo_fid = np.where(fid_used, yo_fid, np.nan)
+        ok_fid = np.isfinite(xo_fid)
 
         xf_a, yf_a, _, (xo_fib, yo_fib) = measure_fibers(
             head, xa, ya, nfib_a, coeff, data_dir, nexposure, n_extra=n_extra,
-            exclude=(xo_fid, yo_fid) if cross_exclude else None, mode=mode, **pk)
+            exclude=(xo_fid[ok_fid], yo_fid[ok_fid]) if cross_exclude else None, mode=mode, **pk)
         if cross_exclude:
-            # fiber 자리를 지우고 fiducial 을 다시 찾아 변환을 다시 맞춘다
-            xo_fid, yo_fid, _, theta_guess, (xoff_guess, yoff_guess) = measure_fiducials(
-                heads_all, xa, ya, fa, data_dir, fid_nexposure, set_nexposure=nexp_all,
-                n_extra=n_extra, m_init=magnification, sat_level=sat_level, fid_min_peak=fid_min_peak,
-                fallback=fb_all, exclude=(xo_fib[:nfib_a], yo_fib[:nfib_a]), **pk)
-            xf_fid, yf_fid, dxf, dyf, coeff = fitdistortion(
-                x_fid, y_fid, np.ones(x_fid.size, dtype=bool), xo_fid, yo_fid,
-                np.arange(x_fid.size), theta_guess, xoff_guess, yoff_guess,
-                model=model, m_init=magnification)
-            xf_a, yf_a, _, _ = measure_fibers(
-                head, xa, ya, nfib_a, coeff, data_dir, nexposure, n_extra=n_extra,
-                exclude=(xo_fid, yo_fid), mode=mode, **pk)
-        xf_a[fa], yf_a[fa] = xf_fid, yf_fid                      # fiducial 은 전용 노출 값
+            # fiber 자리를 지우고 fiducial 을 다시 찾아 변환을 다시 맞춘다 (fiducial 가까이 있는 fiber 의 빛이
+            # 무게중심을 끌지 않게). 이 2차 탐색은 다듬기일 뿐이므로 여기서 fiducial 을 잃으면 (예: 어두운
+            # fiducial 이 검출 상한 때문에 버려짐) 1차 결과를 그대로 쓴다.
+            try:
+                if used_ref:
+                    got = measure_fiducials_ref(heads_all, x_fid, y_fid, ref, data_dir, fid_nexposure, nfib_a,
+                                                set_nexposure=nexp_all, n_extra=n_extra, sat_level=sat_level,
+                                                fid_min_peak=fid_min_peak, fallback=fb_all,
+                                                exclude=(xo_fib[:nfib_a], yo_fib[:nfib_a]), **pk)
+                    if got is None:
+                        raise RuntimeError("reference search found too few fiducials with fiber spots masked")
+                    xo_fid2, yo_fid2, _ = got
+                    theta2, xoff2, yoff2 = theta_guess, xoff_guess, yoff_guess
+                else:
+                    xo_fid2, yo_fid2, _, theta2, (xoff2, yoff2) = measure_fiducials(
+                        heads_all, xa, ya, fa, data_dir, fid_nexposure, set_nexposure=nexp_all,
+                        n_extra=n_extra, m_init=magnification, sat_level=sat_level, fid_min_peak=fid_min_peak,
+                        fallback=fb_all, exclude=(xo_fib[:nfib_a], yo_fib[:nfib_a]), **pk)
+            except RuntimeError as err:
+                log.warning("cross_exclude: fiducial re-detection with fiber spots masked failed (%s); "
+                            "keeping the first-pass fiducial positions", err)
+            else:
+                xo_fid, yo_fid, theta_guess, xoff_guess, yoff_guess = xo_fid2, yo_fid2, theta2, xoff2, yoff2
+                xf_fid, yf_fid, coeff, fid_used = fit_fiducials(x_fid, y_fid, xo_fid, yo_fid, theta_guess,
+                                                                xoff_guess, yoff_guess, model, magnification)
+                xo_fid = np.where(fid_used, xo_fid, np.nan); yo_fid = np.where(fid_used, yo_fid, np.nan)
+                ok_fid = np.isfinite(xo_fid)
+                xf_a, yf_a, _, _ = measure_fibers(
+                    head, xa, ya, nfib_a, coeff, data_dir, nexposure, n_extra=n_extra,
+                    exclude=(xo_fid[ok_fid], yo_fid[ok_fid]), mode=mode, **pk)
+        xf_a[fa], yf_a[fa] = xf_fid, yf_fid                      # fiducial 은 전용 노출 값 (안 쓴 fiducial 은 NaN)
+        save_fid_ref(json_dir, target_name, itrial, xo_fid, yo_fid)   # 다음 trial 의 fiducial 찾기 기준
 
     xfocal = np.full(x.size, np.nan); yfocal = np.full(y.size, np.nan)
     xfocal[~dead], yfocal[~dead] = xf_a, yf_a                   # 끊어진 fiber 는 NaN
