@@ -189,9 +189,9 @@ def load_configuration(target_file=None, apply_zenith_offset=True,
 
 def _target_xy(target, xorigin, yorigin, use_measured, target_file=None):
     """target dict -> fiber 목표 (xp, yp) [mm].
-    {"xp", "yp"} 면 그대로, {"alpha", "beta"} (deg, 출력 규약) 또는 각도 json ({"C4_a", "C4_b"})
+    {"xp", "yp"} 면 그대로, {"alpha", "beta"} (deg, 명령각 = 출력 규약) 또는 각도 json ({"C4_a", "C4_b"})
     이면 positioner 회전 중심과 arm 길이로 (x, y) 를 만든다 (calibration run 처럼 모든 arm 을
-    같은 각도로 둘 때 object.info 에 각도만 적어도 된다)."""
+    같은 각도로 둘 때 object.info 에 각도만 적어도 된다). 명령각 (0, 0) 은 기하각 ANGLE_ZERO 다."""
     low = {str(k).lower(): v for k, v in target.items()}
     if 'xp' in low and 'yp' in low:
         return np.asarray(low['xp'], dtype=float), np.asarray(low['yp'], dtype=float)
@@ -207,7 +207,8 @@ def _target_xy(target, xorigin, yorigin, use_measured, target_file=None):
     if al.size != len(ids) or be.size != len(ids):
         raise ValueError(f"target 파일의 각도 개수({al.size}/{be.size})가 positioner 개수({len(ids)})와 다릅니다")
     sa, sb = cfg.ANGLE_SIGN
-    theta, phi = sa*al/rtod, sb*be/rtod            # 부호 x 부호 = 1 이므로 곱해서 되돌린다
+    za, zb = cfg.ANGLE_ZERO
+    theta, phi = sa*(al + za)/rtod, sb*(be + zb)/rtod      # 명령각 -> 기하각 (부호 x 부호 = 1)
     if cfg.CLOCKWISE:
         theta, phi = -theta, -phi
     a1, a2 = cfg.arm_lengths(use_measured)
@@ -244,17 +245,19 @@ def _wrap(theta, phi):
     return theta, phi
 
 
-def _flatten_angles(theta, phi):
+def _flatten_angles(theta, phi, absolute=True):
     """fiber 순서의 (theta, phi)를 (alpha, beta)가 번갈아 놓인 degree 배열로 편다.
 
-    출력 부호는 positioner 제어 규약에 맞춘다 (출력 각도 = fiber_config.ANGLE_SIGN x 계산각;
-    기본 (1, 1): alpha 반시계 양, beta >= 0).
+    출력은 positioner 명령각이다: 명령각 = fiber_config.ANGLE_SIGN x 계산각 - fiber_config.ANGLE_ZERO
+    (기본 부호 (1, 1): alpha 반시계 양, beta >= 0; 기본 영점 (30, 150) = positioner 의 (0, 0)).
+    absolute=False 면 회전량(차이)이라 영점을 빼지 않는다.
     """
     sa, sb = cfg.ANGLE_SIGN
+    za, zb = cfg.ANGLE_ZERO if absolute else (0., 0.)
     angles = np.empty(2*theta.size)
-    alpha = sa*theta*rtod
+    alpha = sa*theta*rtod - za
     angles[0::2] = (alpha + 180.) % 360. - 180.           # (-180, 180] 로 접는다 (30 이 -330 으로 안 나오게)
-    angles[1::2] = sb*phi*rtod
+    angles[1::2] = sb*phi*rtod - zb
 
     return angles
 
@@ -883,7 +886,7 @@ def mtlcal(data_dir='./MTL/data/'
                     int(lost.sum()), ", ".join(ids[i] for i in np.where(lost)[0]))
         dtheta[lost] = 0.; dphi[lost] = 0.
 
-    angle_rot = _flatten_angles(dtheta, dphi)
+    angle_rot = _flatten_angles(dtheta, dphi, absolute=False)   # 회전량: 영점과 무관
 
     #---누적 각도---------------------------------------------------------------
     prev = None

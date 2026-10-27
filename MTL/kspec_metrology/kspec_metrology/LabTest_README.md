@@ -56,9 +56,11 @@ LabTest_README.md            이 파일
 `N_EXTRA` 는 이들 외의 여분 밝은 점(반사광 등)만 센다 (보통 0).
 환경변수 `KSPEC_FIBER_EXCLUDE`, `KSPEC_FIBER_FIXED`, `KSPEC_SKY_FIBERS` 와 같다.
 
-**각도 부호**: 노트북 1절의 `ANGLE_SIGN`. 출력 각도 = 부호 × 계산각. 기본 `(1, 1)`:
-alpha 는 초점면 +x 에서 반시계가 양, beta 는 항상 0 이상 (2026-10-23 실험실에서
-(-30, 150) 으로 보낸 배치로 확인). 틀리면 fiber 가 목표에서 수 mm 떨어져 나온다 (`fiber - target` 중앙값이 mm 단위).
+**각도 부호·영점**: 노트북 1절의 `ANGLE_SIGN`, `ANGLE_ZERO`. 명령각 = 부호 × 기하각 − 영점.
+기본 부호 `(1, 1)`: alpha 는 초점면 +x 에서 반시계가 양, beta 는 elbow-down 으로 0 이상 (2026-10-23
+실험실 배치로 확인). 기본 영점 `(30, 150)`: 기하각 (30, 150) 이 positioner 의 (0, 0) 초기 위치
+(2026-10-27). 출력 json 과 각도 입력은 모두 명령각. 부호가 틀리면 fiber 가 목표에서 수 mm 떨어져 나온다
+(`fiber - target` 중앙값이 mm 단위).
 
 **포화**: fiducial 전용 노출에서 안 보이는 fiducial 은 fiber 노출(보통 포화)에서라도
 가져온다. 포화된 것은 로그에 `saturated ... (used anyway)` 로 남는다. 촬영을 직접 하는
@@ -68,7 +70,7 @@ alpha 는 초점면 +x 에서 반시계가 양, beta 는 항상 0 이상 (2026-1
 검출 개수·밝기·쪼개짐을 먼저 본다 (노트북 2절 뒤). `THRESHOLD` 는 시작값이고 본
 패키지처럼 검출 개수가 기대 범위에 들도록 자동으로 올리고 내린다.
 
-**목표 파일 만들기**: `lab.make_target(path, angles=(30, 150))` (모두 같은 각도),
+**목표 파일 만들기**: `lab.make_target(path, angles=(0, 0))` (모두 같은 명령각; (0, 0) = 초기 위치 = 기하각 (30, 150)),
 `offset=(dx, dy)` (회전 중심에서 같은 offset), `xy=(xp, yp)` (개별).
 
 **fiducial 밝기 조정**: 노트북 8절. `lab.fiducial_brightness(fits, groups={...})` 가 fiducial 노출에서
