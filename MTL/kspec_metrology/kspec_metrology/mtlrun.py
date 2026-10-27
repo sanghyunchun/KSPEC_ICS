@@ -17,7 +17,7 @@ fiber를 옮기는 일은 이 패키지 밖의 일이므로, 여기서는 trial 
 
     run = MetrologyRun(target_file='/path/to/target.info',
                        data_dir='./MTL/data/', json_dir='./MTL/json/',
-                       exptime=100., tolerance=10., max_trial=10)  # exptime [ms]
+                       exptime=30., fid_exptime=[1., 10.], tolerance=10., max_trial=10)   # [ms]
 
     move(run.start())                 # Trial 0 json = 관측 전 목표 각도
 
@@ -147,7 +147,7 @@ class MetrologyRun:
                  , finder_opts=None
                  , background='crop'
                  , background_opts=None
-                 , exptime=100.
+                 , exptime=30.
                  , gain=10
                  , offset=30
                  , readmode=1
