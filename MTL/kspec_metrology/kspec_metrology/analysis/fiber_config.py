@@ -439,6 +439,7 @@ def dead_mask():
 # 2026-10-27 본 장비 (ICS fbpoffset 으로 positioner 를 움직인 trial 1 -> 2 -> 3) 에서 확인:
 # positioner 는 json 의 alpha, beta 와 **반대 방향** 으로 돌았다 (오차가 trial 마다 0.8 -> 1.6 -> 2.9 mm
 # 로 늘었고, 측정 위치에서 json 의 -1 배를 돌린 예측만 실측과 0.2 mm 안에서 맞았다). 그래서 둘 다 -1.
+# 사용자 확인 (2026-10-27): FBP 제어는 반시계를 음수로 쓴다. 기하각 정의는 그대로이고 부호만 붙인다.
 # 2026-10-23 실험실 (다른 제어 소프트웨어) 에서는 (+1, +1) 이었다. 다른 규약이면
 # KSPEC_ANGLE_SIGN="1,1" 또는 fiber_config.ANGLE_SIGN 으로 바꾼다 (ANGLE_ZERO 도 같이).
 ANGLE_SIGN_ENV = 'KSPEC_ANGLE_SIGN'
