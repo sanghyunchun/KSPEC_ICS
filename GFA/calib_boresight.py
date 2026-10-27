@@ -13,6 +13,11 @@ GFA 카메라별 boresight 기하 (sep, theta) 보정 -> GFA/etc/boresight_geome
   radec --boresight RA DEC로 준 좌표 (세트 하나). 별을 알려진 fiber에 올리는
         dither 등으로 boresight를 따로 잰 경우.
 
+--boresight-offset DE DN: ring / mean 으로 구한 중심에서 진짜 boresight 가 동쪽 DE",
+북쪽 DN" 에 있다고 보고 옮긴다. 별을 fiber 에 올리는 dither 등으로 링 중심과 fiber 좌표
+원점 사이의 차이를 잰 경우. KMTNet 은 적도의라 필드가 돌지 않으므로 하늘의 동/북 오프셋이
+초점면에 고정된 벡터이고, 여러 세트에 같은 값을 쓸 수 있다.
+
 --update GEOMETRY --cameras SERIAL...: 지정한 카메라만 다시 보정한다. 세트의
 boresight는 나머지 카메라의 기존 기하로 구하고(boresight_from_wcs), 나머지
 카메라의 값은 그대로 둔다. 카메라를 다시 달았거나 수리해 추가할 때.
@@ -20,6 +25,7 @@ boresight는 나머지 카메라의 기존 기하로 구하고(boresight_from_wc
 사용:
     python -m GFA.calib_boresight FILES...                          # 새 설치, 5대도 가능
     python -m GFA.calib_boresight FILES... --center radec --boresight 05:49:45.1 -46:00:03
+    python -m GFA.calib_boresight FILES... --boresight-offset 3.2 -1.5   # dither 로 잰 차이
     python -m GFA.calib_boresight FILES... --update GFA/etc/boresight_geometry.json \\
         --cameras 40103833
 """
@@ -91,11 +97,17 @@ def set_boresight(headers, center, boresight=None, n_cam_all=None):
     return ring_centre(centres)[0]
 
 
-def calibrate(path_sets, center="ring", boresight=None, update=None, cameras=None):
+def calibrate(path_sets, center="ring", boresight=None, update=None, cameras=None,
+              offset=None):
     """
-    Returns (geometry, report): geometry {serial: {...}}, report = list of per-set
-    dicts (name, cameras, boresight) for logging.
+    offset : (dE, dN) arcsec, the true boresight relative to the ring / mean centre
+             of each set (--boresight-offset). Not with center='radec' or update.
+
+    Returns (geometry, per_set, report): geometry {serial: {...}}, per_set the
+    geometry of each set, report = list of per-set dicts (name, cameras, boresight).
     """
+    if offset is not None and (center == "radec" or update is not None):
+        raise ValueError("--boresight-offset goes with --center ring or mean only")
     groups = [read_headers(g) for g in path_sets]
     names = [sorted(Path(p).name for p in g)[0] for g in path_sets]
     n_cam_all = max(len(h) for h in groups)
@@ -119,6 +131,8 @@ def calibrate(path_sets, center="ring", boresight=None, update=None, cameras=Non
                 print(f"  skip {name}: {len(headers)}/{n_cam_all} cameras (mean needs all)")
                 continue
             bore = set_boresight(headers, center, boresight, n_cam_all)
+            if offset is not None:
+                bore = bore.spherical_offsets_by(offset[0] * u.arcsec, offset[1] * u.arcsec)
             targets = headers
         if not targets:
             print(f"  skip {name}: none of the cameras to calibrate")
@@ -148,6 +162,8 @@ def main(argv=None):
     ap.add_argument("--center", choices=("ring", "mean", "radec"), default="ring")
     ap.add_argument("--boresight", nargs=2, metavar=("RA", "DEC"),
                     help="boresight of the frame set, sexagesimal or degrees")
+    ap.add_argument("--boresight-offset", nargs=2, type=float, metavar=("DE", "DN"),
+                    help="true boresight east/north of the ring or mean centre [arcsec]")
     ap.add_argument("--update", metavar="GEOMETRY",
                     help="existing geometry; recalibrate only --cameras")
     ap.add_argument("--cameras", nargs="+", metavar="SERIAL")
@@ -161,6 +177,8 @@ def main(argv=None):
         ra, dec = args.boresight
         unit = (u.deg, u.deg) if ":" not in ra else (u.hourangle, u.deg)
         boresight = SkyCoord(ra, dec, unit=unit, frame="icrs")
+    if args.boresight_offset and (args.center == "radec" or args.update):
+        ap.error("--boresight-offset goes with --center ring or mean only")
     update = None
     if args.update:
         if not args.cameras:
@@ -170,7 +188,7 @@ def main(argv=None):
     path_sets = group_frame_sets(args.files, args.group_seconds)
     print(f"{len(path_sets)} frame sets")
     geometry, per_set, report = calibrate(
-        path_sets, args.center, boresight, update, args.cameras
+        path_sets, args.center, boresight, update, args.cameras, args.boresight_offset
     )
     for r in report:
         print(f"  {r['name']}: cameras {r['cameras']}")
@@ -204,6 +222,8 @@ def main(argv=None):
             else {"ring": "boresight of each set = centre of the camera ring",
                   "mean": "boresight of each set = vector mean of all camera centres",
                   "radec": f"boresight given: {args.boresight}"}[args.center]
+            + (f", moved by {args.boresight_offset} arcsec (east, north)"
+               if args.boresight_offset else "")
         ),
         "created_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "calibration_sets": [r["name"] for r in report],

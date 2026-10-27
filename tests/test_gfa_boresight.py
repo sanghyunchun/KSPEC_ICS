@@ -159,6 +159,21 @@ class RingCalibrationTests(unittest.TestCase):
                                         min_cameras=1)
         self.assertLess(bore.separation(SkyCoord(ra * u.deg, dec * u.deg)).arcsec, 0.1)
 
+    def test_boresight_offset_carries_to_other_fields(self):
+        # True boresight 4" east, 3" south of the ring centre (measured by a dither)
+        sets = []
+        for i, ring in enumerate([SkyCoord(87.4 * u.deg, -46 * u.deg),
+                                  SkyCoord(157.0 * u.deg, -37 * u.deg)]):
+            sets.append(write_wcs_files(self.tmp, camera_headers(ring, self.five),
+                                        f'D20261101_T03{i}000'))
+        geometry, _, report = calib.calibrate(sets, center='ring', offset=(4.0, -3.0))
+        ring = SkyCoord(300.0 * u.deg, -65.0 * u.deg)
+        expected = ring.spherical_offsets_by(4.0 * u.arcsec, -3.0 * u.arcsec)
+        ra, dec, _ = boresight_from_wcs(camera_headers(ring, self.five), geometry)
+        self.assertLess(expected.separation(SkyCoord(ra * u.deg, dec * u.deg)).arcsec, 0.1)
+        with self.assertRaises(ValueError):
+            calib.calibrate(sets[:1], center='radec', boresight=ring, offset=(1.0, 0.0))
+
     def test_given_boresight(self):
         bore = SkyCoord(87.4 * u.deg, -46 * u.deg)
         files = write_wcs_files(self.tmp, camera_headers(bore, self.five), 'D20261101_T030000')
