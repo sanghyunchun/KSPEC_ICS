@@ -270,16 +270,16 @@ INFO Measured geometry /경로/Measured_Geometry.txt: 2/103 holes replaced
 | 항목 | 스위치 | 기본 |
 |---|---|---|
 | fiducial 핀홀 실측 위치, arm 길이 측정표 | `use_measured` / `KSPEC_USE_MEASURED` | 켜짐 |
-| positioner 회전 중심 실측값 | `use_measured_positioners` / `KSPEC_USE_MEASURED_POSITIONERS` / `fiber_config.USE_MEASURED_POSITIONERS` | **꺼짐** (지켜보는 중) |
+| positioner 회전 중심 실측값 | `use_measured_positioners` / `KSPEC_USE_MEASURED_POSITIONERS` / `fiber_config.USE_MEASURED_POSITIONERS` | 켜짐 (2026-10-27 부터) |
 
-켜는 방법: `MetrologyRun(..., use_measured_positioners=True)`, `mtlcal(..., use_measured_positioners=True)`,
-`lab.measure(..., use_measured_positioners=True)`, 환경변수 `KSPEC_USE_MEASURED_POSITIONERS=1`, 노트북 설정 셀의
-`MEASURED_POSITIONERS = True`, 또는 ICS `mtlstart` 메시지의 `use_measured_positioners`. 기본값을 바꾸려면
+끄는 방법: `MetrologyRun(..., use_measured_positioners=False)`, `mtlcal(..., use_measured_positioners=False)`,
+`lab.measure(..., use_measured_positioners=False)`, 환경변수 `KSPEC_USE_MEASURED_POSITIONERS=0`, 노트북 설정 셀의
+`MEASURED_POSITIONERS = False`, 또는 ICS `mtlstart` 메시지의 `use_measured_positioners: false`. 기본값을 바꾸려면
 `fiber_config.USE_MEASURED_POSITIONERS` 한 줄. 로그 `Measured geometry ...: 67/103 holes replaced (positioner
 centres ON)` 이면 켜진 것이고, `30/103 ... (positioner centres OFF, 37 measured but not used)` 이면 꺼진 것이다.
 
 켜면 Trial 0 의 목표 각도와 각 trial 의 회전량이 실측 중심 기준으로 계산되므로, 첫 trial 의 fiber−target
-오차가 설계 중심일 때보다 작아져야 한다. 그 차이로 실측 중심의 가치를 판단하면 된다.
+오차가 설계 중심일 때보다 작아야 한다. 비교해 보려면 같은 배치를 꺼짐으로 한 번 더 돌린다.
 
 ### fiducial 찾기 (기준 칩 좌표)
 

@@ -146,15 +146,15 @@ USE_MEASURED = os.environ.get(USE_MEASURED_ENV, '1').strip().lower() not in (
     '0', 'false', 'no', 'off')
 
 # positioner 회전 중심 실측값 (Measured_Geometry 의 positioner 행 X, Y; arm scan 결과) 을 쓸지.
-# fiducial 핀홀 실측값 (use_measured) 과 **별개 스위치** 다 (2026-10-27): 핀홀은 거의 항상 쓰고,
-# positioner 중심 실측은 아직 지켜보는 중이라 기본은 꺼져 있다. 켜는 방법:
-#   - 환경변수 : KSPEC_USE_MEASURED_POSITIONERS=1
-#   - 호출 인자: mtlcal(..., use_measured_positioners=True) / MetrologyRun(..., use_measured_positioners=True)
+# fiducial 핀홀 실측값 (use_measured) 과 **별개 스위치** 다 (2026-10-27). 2026-10-27 arm scan 결과를
+# 기본으로 쓴다 (사용자 결정, 같은 날). 끄는 방법:
+#   - 환경변수 : KSPEC_USE_MEASURED_POSITIONERS=0
+#   - 호출 인자: mtlcal(..., use_measured_positioners=False) / MetrologyRun(..., use_measured_positioners=False)
 #   - 기본값을 바꾸려면 아래 한 줄.
 # 꺼져 있으면 positioner 중심은 설계값, arm 길이는 use_measured 를 따른다 (Positioner_Arm_Table + Map).
 USE_MEASURED_POSITIONERS_ENV = 'KSPEC_USE_MEASURED_POSITIONERS'
-USE_MEASURED_POSITIONERS = os.environ.get(USE_MEASURED_POSITIONERS_ENV, '0').strip().lower() in (
-    '1', 'true', 'yes', 'on')
+USE_MEASURED_POSITIONERS = os.environ.get(USE_MEASURED_POSITIONERS_ENV, '1').strip().lower() not in (
+    '0', 'false', 'no', 'off')
 
 
 def _use_measured_positioners(flag):

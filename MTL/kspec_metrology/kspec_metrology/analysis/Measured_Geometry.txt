@@ -16,7 +16,8 @@
 # fiducial X, Y: pinhole positions measured 2026-10-17 (Fiducial_Pinhole_261017.txt, Plate_Pinhole_261017.ipynb)
 # positioner X, Y: alpha rotation centres from the arm scan of 2026-10-27 (Arm_Scan.ipynb, 12 alpha steps at
 #   command beta 0 = geometric 150 deg; 37 lit positioners; centre - design median 131 um, max 298 um;
-#   circle rms median 11 um). Used only when KSPEC_USE_MEASURED_POSITIONERS=1 / use_measured_positioners=True.
+#   circle rms median 11 um). Used by default (fiber_config.USE_MEASURED_POSITIONERS); switch off with
+#   KSPEC_USE_MEASURED_POSITIONERS=0 / use_measured_positioners=False.
 #
   A7         66.5186   115.0445       -       -   # fiducial  pinhole 261017  +-(16, 25) um  설계 X   66.5000  Y  115.1814
   B1        -56.9090    98.7863       -       -   # fiducial  pinhole 261017  +-(16, 16) um  설계 X  -57.0000  Y   98.7269

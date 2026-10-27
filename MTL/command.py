@@ -36,7 +36,7 @@ def _analysis_options(message):
     # camera -> focal 배율 초기값. None 이면 패키지 기본값 (2026-01 commissioning fit). 다른 광학계일 때만 준다.
     out['magnification'] = _value(message, 'magnification', None, float)
     # positioner 회전 중심 실측값 (arm scan, Measured_Geometry.txt) 을 쓸지. None 이면 패키지 기본값
-    # (fiber_config.USE_MEASURED_POSITIONERS, 2026-10-27 현재 꺼짐). fiducial 핀홀 실측과는 별개 스위치.
+    # (fiber_config.USE_MEASURED_POSITIONERS, 2026-10-27 부터 켜짐). fiducial 핀홀 실측과는 별개 스위치.
     out['use_measured_positioners'] = _flag(message, 'use_measured_positioners', None)
     return out
 
