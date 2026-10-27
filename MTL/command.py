@@ -198,7 +198,7 @@ async def identify_execute(MTL_server, cmd, context):
                     json_dir=json_dir,
                     tolerance=_value(receive_msg, "tolerance", 10.0, float),
                     metric=_value(receive_msg, "metric", "max", str),
-                    max_trial=_value(receive_msg, "max_trial", 5, int),
+                    max_trial=_value(receive_msg, "max_trial", 10, int),   # 2026-10-27: 5 -> 10
                     nexposure=nexposure,
                     mode=_value(receive_msg, "mode", "Raw", str),      # Raw: detect + match (robust); Predict only once the errors are < ~1 mm
                     **analysis,                                        # threshold, nwindow, niter_recenter, min_dist, model, finder_opts, magnification
