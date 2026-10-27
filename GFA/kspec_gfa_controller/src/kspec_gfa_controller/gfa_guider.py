@@ -1067,7 +1067,33 @@ class GFAGuider:
         g = offset + amp * np.exp(-((x - x0) ** 2 + (y - y0) ** 2) / (2 * sigma**2))
         return g.ravel()
 
-    def cal_seeing(self, cutoutn_stack: List[np.ndarray]) -> float:
+    @staticmethod
+    def _wcs_pixel_scale(wcs_obj) -> Optional[float]:
+        """
+        Mean pixel scale (arcsec/pix) of a celestial WCS, or None if unavailable.
+        """
+        try:
+            from astropy.wcs.utils import proj_plane_pixel_scales
+
+            scale = float(np.mean(proj_plane_pixel_scales(wcs_obj))) * 3600.0
+        except Exception:
+            return None
+        return scale if np.isfinite(scale) and scale > 0 else None
+
+    def cal_seeing(
+        self,
+        cutoutn_stack: List[np.ndarray],
+        pixel_scale: Optional[float] = None,
+    ) -> float:
+        """
+        FWHM (arcsec) of the median-stacked cutouts from an isotropic Gaussian fit.
+
+        ``pixel_scale`` (arcsec/pix) is normally measured from the astrometry WCS;
+        the config value ``settings.image_processing.pixel_scale`` is the fallback.
+        """
+        if pixel_scale is None:
+            pixel_scale = self.pixel_scale
+
         if not cutoutn_stack:
             self.logger.warning(
                 "No cutouts available for FWHM calculation. Returning NaN."
@@ -1132,7 +1158,7 @@ class GFAGuider:
                 * math.sqrt(2.0 * math.log(2.0))
                 * sigma
             )
-            fwhm_arcsec = fwhm_pixel * self.pixel_scale
+            fwhm_arcsec = fwhm_pixel * pixel_scale
 
             self.logger.debug(
                 "Gaussian fitting completed. "
@@ -1191,6 +1217,7 @@ class GFAGuider:
 
             dxpp, dypp, pindpp = [], [], []
             cutoutn_stack: List[np.ndarray] = []
+            wcs_scales: List[float] = []
             file_counter = 1
             skipped = 0
 
@@ -1213,6 +1240,10 @@ class GFAGuider:
                     _, header, wcs_obj = self.load_image_and_wcs(astro_file)
                     crval1, crval2 = header["CRVAL1"], header["CRVAL2"]
                     self.logger.debug(f"  CRVAL1: {crval1:.6f}, CRVAL2: {crval2:.6f}")
+
+                    scale = self._wcs_pixel_scale(wcs_obj)
+                    if scale is not None:
+                        wcs_scales.append(scale)
 
                     # 2) centroid는 raw에서 (background 포함)
                     raw_data_p = self.load_only_image(raw_file)
@@ -1318,7 +1349,14 @@ class GFAGuider:
                 f"Computed final offset: ΔX = {fdx} arcsec, ΔY = {fdy} arcsec"
             )
 
-            fwhm = self.cal_seeing(cutoutn_stack)
+            pixel_scale = (
+                float(np.median(wcs_scales)) if wcs_scales else self.pixel_scale
+            )
+            self.logger.info(
+                f"Pixel scale for FWHM: {pixel_scale:.4f} arcsec/pix "
+                f"({'astrometry WCS' if wcs_scales else 'config fallback'})"
+            )
+            fwhm = self.cal_seeing(cutoutn_stack, pixel_scale=pixel_scale)
             self.logger.info(f"Estimated FWHM from cutouts: {fwhm} arcsec")
 
             self.logger.info(
