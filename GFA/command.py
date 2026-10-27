@@ -248,6 +248,14 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
             except asyncio.CancelledError:
                 printing("Previous guiding task cancelled.")
 
+        # A new guiding session needs its own reference WCS. Astrometry outputs left by
+        # pointing (or an earlier guide) would otherwise be reused when the RA/DEC is
+        # within the 30" session tolerance, and the first cycle would undo the pointing
+        # correction just applied.
+        path_astroimg=kspecinfo['GFA']['final_astrometry_images']
+        deleted = clear_astrometry_outputs(path_astroimg)
+        printing(f"Deleted {deleted} astrometry output files from {path_astroimg} (new guiding reference)")
+
         # Start a new adcadjust task
         printing("New guiding task started.")
         await send_gfa_response(
@@ -329,8 +337,6 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
 
     elif func == 'pointing':
         path_astroimg=kspecinfo['GFA']['final_astrometry_images']
-        deleted = clear_astrometry_outputs(path_astroimg)
-        printing(f"Deleted {deleted} astrometry output files from {path_astroimg}")
         geometry_path=os.path.join(kspecinfo['GFA']['gfafilepath'], BORESIGHT_GEOMETRY_FILE)
 
         await send_gfa_response(
@@ -346,6 +352,11 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
         min_required = 5
 
         for attempt in range (1, max_try+1):
+            # Clear before every attempt: astrometry outputs that are still there are
+            # reused instead of solving the frames grabbed in this attempt.
+            deleted = clear_astrometry_outputs(path_astroimg)
+            printing(f"Deleted {deleted} astrometry output files from {path_astroimg}")
+
             result = await gfa_actions.pointing(
                 ra=parsed_args['ra'],
                 dec=parsed_args['dec'],
