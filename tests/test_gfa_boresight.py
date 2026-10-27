@@ -15,10 +15,11 @@ from astropy.wcs import WCS, FITSFixedWarning
 
 # GFA.command imports Lib.AMQ (aio_pika); compute_boresight does not use it.
 sys.modules.setdefault('Lib.AMQ', types.ModuleType('Lib.AMQ'))
+import GFA.calib_boresight as calib  # noqa: E402
 import GFA.command as command  # noqa: E402
-from GFA.pointing import (
+from GFA.pointing import (  # noqa: E402
     BORESIGHT_GEOMETRY_FILE, _vector_mean, boresight_from_wcs,
-    calibrate_boresight_geometry, get_boresight, load_boresight_geometry,
+    calibrate_boresight_geometry, get_boresight, load_boresight_geometry, ring_centre,
 )
 
 warnings.simplefilter('ignore', FITSFixedWarning)
@@ -95,6 +96,80 @@ class SyntheticBoresightTests(unittest.TestCase):
             boresight_from_wcs(headers, {'40100000': self.geometry['40100000']})
 
 
+def write_wcs_files(tmp, headers, stamp):
+    """Header-only files named like solve-field .wcs outputs (IMAGEW/IMAGEH)."""
+    paths = []
+    for serial, h in headers.items():
+        h = h.copy()
+        h['IMAGEW'], h['IMAGEH'] = h.pop('NAXIS1'), h.pop('NAXIS2')
+        p = Path(tmp) / f'{stamp}_{serial}_exp5s.wcs'
+        fits.PrimaryHDU(header=h).writeto(p)
+        paths.append(p)
+    return paths
+
+
+class RingCalibrationTests(unittest.TestCase):
+    """Calibrating the geometry when not every camera is available."""
+
+    def setUp(self):
+        import tempfile
+        self._tmp = tempfile.TemporaryDirectory()
+        self.tmp = self._tmp.name
+        self.five = {s: v for s, v in CAMERAS.items() if s != '40100005'}
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def test_ring_centre_from_five_or_three_cameras(self):
+        bore = SkyCoord(200.0 * u.deg, -72.0 * u.deg)
+        centres = [SkyCoord(*WCS(h).wcs.crval, unit='deg')
+                   for h in camera_headers(bore, self.five).values()]
+        for subset in (centres, centres[:3]):
+            c, radii = ring_centre(subset)
+            self.assertLess(bore.separation(c).arcsec, 0.05)
+            np.testing.assert_allclose(radii, RING_DEG * 3600, atol=0.05)
+        with self.assertRaises(ValueError):
+            ring_centre(centres[:2])
+
+    def test_five_camera_calibration_then_add_sixth(self):
+        sets = []
+        for i, bore in enumerate([SkyCoord(87.4 * u.deg, -46 * u.deg),
+                                  SkyCoord(157.0 * u.deg, -37 * u.deg)]):
+            sets.append(write_wcs_files(self.tmp, camera_headers(bore, self.five),
+                                        f'D20261101_T03{i}000'))
+        geometry, _, _ = calib.calibrate(sets, center='ring')
+        self.assertEqual(set(geometry), set(self.five))
+
+        bore = SkyCoord(300.0 * u.deg, -65.0 * u.deg)
+        headers = camera_headers(bore, self.five)
+        for drop in headers:
+            ra, dec, _ = boresight_from_wcs(
+                {s: h for s, h in headers.items() if s != drop}, geometry)
+            self.assertLess(bore.separation(SkyCoord(ra * u.deg, dec * u.deg)).arcsec, 0.1)
+
+        # The sixth camera comes back: calibrate it alone against the other five
+        six = write_wcs_files(self.tmp, camera_headers(SkyCoord(10 * u.deg, -30 * u.deg)),
+                              'D20261102_T030000')
+        updated, _, _ = calib.calibrate([six], update=geometry, cameras=['40100005'])
+        self.assertEqual(set(updated), set(CAMERAS))
+        for s in self.five:
+            self.assertEqual(updated[s], geometry[s])
+        headers = camera_headers(bore)
+        ra, dec, _ = boresight_from_wcs({'40100005': headers['40100005']}, updated,
+                                        min_cameras=1)
+        self.assertLess(bore.separation(SkyCoord(ra * u.deg, dec * u.deg)).arcsec, 0.1)
+
+    def test_given_boresight(self):
+        bore = SkyCoord(87.4 * u.deg, -46 * u.deg)
+        files = write_wcs_files(self.tmp, camera_headers(bore, self.five), 'D20261101_T030000')
+        offset = bore.spherical_offsets_by(4 * u.arcsec, -3 * u.arcsec)  # measured on sky
+        geometry, _, _ = calib.calibrate([files], center='radec', boresight=offset)
+        ra, dec, _ = boresight_from_wcs(camera_headers(bore, self.five), geometry)
+        self.assertLess(offset.separation(SkyCoord(ra * u.deg, dec * u.deg)).arcsec, 0.05)
+        with self.assertRaises(ValueError):
+            calib.calibrate([files, files], center='radec', boresight=offset)
+
+
 @unittest.skipUnless(COMMISSIONING.is_dir(), 'commissioning solve-field outputs not present')
 class CommissioningGeometryTests(unittest.TestCase):
     """The committed geometry on the 2026-01-23/24 solve-field outputs."""
@@ -129,15 +204,70 @@ class CommissioningGeometryTests(unittest.TestCase):
                 sep = bore6.separation(SkyCoord(ra * u.deg, dec * u.deg)).arcsec
                 self.assertLess(sep, 5.0, f'drop {drop}: {sep:.1f}"')
 
+    def test_five_camera_ring_calibration(self):
+        """Calibrate without one camera (ring centre), use it on the other nights."""
+        files = sorted(COMMISSIONING.glob('*/*.wcs'))
+        path_sets = calib.group_frame_sets(files)
+        self.assertEqual(len(path_sets), 3)
+        for missing in ('40103833', '40103651'):
+            for i in range(3):
+                cal_sets = [[p for p in s if missing not in p.name]
+                            for j, s in enumerate(path_sets) if j != i]
+                geometry, _, _ = calib.calibrate(cal_sets, center='ring')
+                headers = calib.read_headers([p for p in path_sets[i] if missing not in p.name])
+                ring, _ = ring_centre([SkyCoord(*WCS(h).wcs.crval, unit='deg')
+                                       for h in headers.values()])
+                for drop in headers:
+                    ra, dec, _ = boresight_from_wcs(
+                        {s: h for s, h in headers.items() if s != drop}, geometry)
+                    sep = ring.separation(SkyCoord(ra * u.deg, dec * u.deg)).arcsec
+                    self.assertLess(sep, 5.0, f'missing {missing}, drop {drop}: {sep:.1f}"')
+
 
 class ComputeBoresightTests(unittest.TestCase):
-    def test_missing_geometry_falls_back_to_crval_mean(self):
+    def write_frames(self, tmp, headers, stamp='D20261101_T030000'):
+        names = []
+        for serial, h in headers.items():
+            name = f'astro_{stamp}_{serial}_exp5s.fits'
+            h = h.copy()
+            del h['NAXIS1'], h['NAXIS2']  # set by the data
+            fits.writeto(Path(tmp) / name, np.zeros((NY, NX), np.float32), h)
+            names.append(name)
+        return names
+
+    @staticmethod
+    def crvals(headers):
+        crval = [WCS(h).wcs.crval for h in headers.values()]
+        return [c[0] for c in crval], [c[1] for c in crval]
+
+    def test_missing_geometry_falls_back_to_ring_centre(self):
+        bore = SkyCoord(120.0 * u.deg, -50.0 * u.deg)
+        five = dict(list(camera_headers(bore).items())[1:])
+        cr1, cr2 = self.crvals(five)
         ra, dec, method, info = command.compute_boresight(
-            '/nonexistent', ['astro_x.fits'] * 6, [10.0] * 6, [-30.0] * 6,
+            '/nonexistent', ['astro_D20261101_T030000_40100001_exp5s.fits'] * 5, cr1, cr2,
             '/nonexistent/boresight_geometry.json')
-        self.assertEqual(method, 'crval_mean')
-        self.assertAlmostEqual(dec, -30.0)
-        self.assertEqual(info, {})
+        self.assertEqual(method, 'ring')
+        self.assertLess(bore.separation(SkyCoord(ra * u.deg, dec * u.deg)).arcsec, 0.1)
+
+    def test_turned_gfa_plate_is_flagged(self):
+        import tempfile
+        cal = calibrate_boresight_geometry(camera_headers(SkyCoord(87.4 * u.deg, -46 * u.deg)))
+        # cameras reinstalled: the whole GFA plate turned by 0.5 deg
+        bore = SkyCoord(30.0 * u.deg, -40.0 * u.deg)
+        turned = camera_headers(bore, extra_rot={s: 0.5 for s in CAMERAS})
+        five = dict(list(turned.items())[:5])
+        with tempfile.TemporaryDirectory() as tmp:
+            names = self.write_frames(tmp, five)
+            geo = Path(tmp) / BORESIGHT_GEOMETRY_FILE
+            geo.write_text(json.dumps({'cameras': cal}))
+            cr1, cr2 = self.crvals(five)
+            ra, dec, method, info = command.compute_boresight(tmp, names, cr1, cr2, str(geo))
+        self.assertEqual(method, 'geometry')
+        self.assertTrue(info['stale'])
+        self.assertGreater(info['rms_arcsec'], command.RMS_CHECK_ARCSEC)
+        # a rigid turn mostly cancels in the mean: R * 0.5 deg / 5 with five cameras
+        self.assertLess(bore.separation(SkyCoord(ra * u.deg, dec * u.deg)).arcsec, 12.0)
 
     @unittest.skipUnless((ROOT / 'GFA' / 'Simul').is_dir(), 'no commissioning outputs')
     def test_commissioning_five_cameras(self):
@@ -152,6 +282,7 @@ class ComputeBoresightTests(unittest.TestCase):
             '', [str(f) for f in files[1:]], [], [], geometry_path)
         self.assertEqual((method6, method5), ('geometry', 'geometry'))
         self.assertEqual(len(info5['used']), 5)
+        self.assertFalse(info5['stale'])
         sep = command.get_separation(ra6, dec6, ra5, dec5)
         self.assertLess(sep, 5.0)
 

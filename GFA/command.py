@@ -443,6 +443,8 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
                     bsmethod=bs_method,
                     bsrms=bs_info.get('rms_arcsec'),
                     bscams=bs_info.get('used'),
+                    bsringsep=bs_info.get('ring_sep_arcsec'),
+                    bsstale=bs_info.get('stale'),
                     process='Done',
                     status='success',
                     subinst='POINT',
@@ -466,22 +468,49 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
 
 
         
+# Normal values on the commissioning frames: rms of the per-camera estimates ~3.5",
+# geometry vs ring centre ~4".
+RMS_CHECK_ARCSEC = 15.0
+RING_CHECK_ARCSEC = 20.0
+
+
 def compute_boresight(astro_dir, images, crval1_list, crval2_list, geometry_path):
     """Boresight (RA, DEC deg) of the solved GFA frames.
 
-    Uses the per-camera boresight geometry (GFA/etc/boresight_geometry.json, made by
-    GFA/calib_boresight.py), which works with any subset of cameras. Falls back to the
-    mean of the camera centres, which is only correct when every camera on the ring is
-    solved: with one camera missing it is off by ~1060" (R/5, R = 1.47 deg).
+    1. Per-camera boresight geometry (GFA/etc/boresight_geometry.json, made by
+       GFA/calib_boresight.py): works with any subset of cameras, ~3" with 5.
+    2. Without it: centre of the camera ring fitted to >= 3 cameras (~5").
+    3. Last resort: mean of the camera centres, correct only when every camera on the
+       ring is solved; with one missing it is off by ~1060" (R/5, R = 1.47 deg).
+
+    The geometry result is checked (info['stale']): per-camera estimates spread by more
+    than RMS_CHECK_ARCSEC (or one rejected), or the result more than RING_CHECK_ARCSEC
+    from the ring centre, mean the geometry no longer matches the cameras (remounted or
+    reinstalled) and GFA/calib_boresight.py should be run again.
 
     Returns (ra_deg, dec_deg, method, info).
     """
+    paths = [Path(astro_dir) / name for name in images]
+
+    ring = None
+    try:
+        centres = [SkyCoord(c1 * u.deg, c2 * u.deg) for c1, c2 in zip(crval1_list, crval2_list)]
+        ring, radii = ring_centre(centres)
+    except Exception as e:
+        printing(f"Ring centre unavailable ({e}).")
+
     try:
         geometry = load_boresight_geometry(geometry_path)
-        ra_c, dec_c, info = boresight_from_astro_files(
-            [Path(astro_dir) / name for name in images], geometry
-        )
+        ra_c, dec_c, info = boresight_from_astro_files(paths, geometry)
     except Exception as e:
+        if ring is not None:
+            printing(
+                f"Boresight geometry unavailable ({e}); using the centre of the camera ring "
+                f"({len(radii)} cameras, radius spread {np.ptp(radii):.1f} arcsec)."
+            )
+            return float(ring.ra.deg), float(ring.dec.deg), 'ring', {
+                'used': [camera_serial(p) for p in paths], 'rms_arcsec': None,
+            }
         printing(
             f"Boresight geometry unavailable ({e}); using the mean of the camera centres "
             "(correct only when all cameras are solved)."
@@ -493,6 +522,23 @@ def compute_boresight(astro_dir, images, crval1_list, crval2_list, geometry_path
         f"Boresight from camera geometry: cameras={info['used']}, "
         f"rejected={info['rejected']}, rms={info['rms_arcsec']:.1f} arcsec"
     )
+    reasons = []
+    if info['rms_arcsec'] > RMS_CHECK_ARCSEC or info['rejected']:
+        # e.g. the GFA plate turned: per-camera estimates spread around the boresight
+        reasons.append(f"camera estimates disagree (rms {info['rms_arcsec']:.0f} arcsec, "
+                       f"rejected {info['rejected']})")
+    if ring is not None:
+        info['ring_sep_arcsec'] = float(
+            ring.separation(SkyCoord(ra_c * u.deg, dec_c * u.deg)).arcsec
+        )
+        if info['ring_sep_arcsec'] > RING_CHECK_ARCSEC:
+            reasons.append(f"{info['ring_sep_arcsec']:.0f} arcsec from the camera ring centre")
+    info['stale'] = bool(reasons)
+    if reasons:
+        printing(
+            "WARNING: the boresight geometry may not match the cameras any more ("
+            + "; ".join(reasons) + "). Re-run GFA/calib_boresight.py."
+        )
     return ra_c, dec_c, 'geometry', info
 
 

@@ -2,7 +2,7 @@ import json
 import math
 import os
 import re
-from astropy.coordinates import SkyCoord, CartesianRepresentation
+from astropy.coordinates import SkyCoord, CartesianRepresentation, SkyOffsetFrame
 from astropy.io import fits
 from astropy.wcs import WCS
 import astropy.units as u
@@ -206,6 +206,41 @@ def _vector_mean(coords):
     return SkyCoord(v / v.norm(), frame="icrs")
 
 
+def ring_centre(coords, max_iter=20, tol_arcsec=1e-3):
+    """
+    카메라 중심들이 이루는 링(원)의 중심. 설계상 카메라가 boresight에서 같은
+    반경에 있으므로, 3대 이상이면 빠진 카메라와 무관하게 boresight를 준다
+    (커미셔닝 WCS에서 카메라별 반경 차이 ~5" -> 중심 정확도 ~5").
+
+    현재 중심을 접점으로 한 gnomonic 접평면에서 원을 선형 최소제곱(Kasa)으로
+    맞추고 접점을 새 중심으로 옮겨 반복한다. 접점이 링 중심이면 링은 접평면에서
+    정확한 원이므로, 카메라가 비대칭으로 빠져도 치우침이 없다.
+
+    Returns
+    -------
+    centre : SkyCoord
+    radii_arcsec : np.ndarray
+        각 카메라 중심의 링 중심 거리
+    """
+    coords = SkyCoord(coords)
+    if len(coords) < 3:
+        raise ValueError(f"Ring centre needs >= 3 cameras, got {len(coords)}")
+    centre = _vector_mean(coords)
+    for _ in range(max_iter):
+        frame = SkyOffsetFrame(origin=centre)
+        v = coords.transform_to(frame).cartesian  # +x towards the tangent point
+        x, y = (v.y / v.x).value, (v.z / v.x).value  # gnomonic coordinates
+        a = np.c_[2.0 * x, 2.0 * y, np.ones_like(x)]
+        (xc, yc, _), *_ = np.linalg.lstsq(a, x**2 + y**2, rcond=None)
+        c = SkyCoord(CartesianRepresentation(1.0, xc, yc), frame=frame).icrs
+        new = SkyCoord(c.ra, c.dec, frame="icrs")
+        step = new.separation(centre).arcsec
+        centre = new
+        if step < tol_arcsec:
+            break
+    return centre, coords.separation(centre).arcsec
+
+
 def calibrate_boresight_geometry(headers, boresight=None):
     """
     카메라별 boresight 기하 (sep, theta) 보정.
@@ -215,7 +250,8 @@ def calibrate_boresight_geometry(headers, boresight=None):
     headers : dict
         {serial: astrometry WCS header}
     boresight : SkyCoord, optional
-        알려진 boresight. 없으면 카메라 중심의 벡터 평균을 쓴다
+        이 프레임 세트의 boresight (알려진 좌표, ring_centre(), 또는 다른
+        카메라의 기존 기하로 구한 값). 없으면 카메라 중심의 벡터 평균을 쓴다
         (링 위 카메라가 모두 풀린 프레임에서만 의미가 있다).
 
     Returns
