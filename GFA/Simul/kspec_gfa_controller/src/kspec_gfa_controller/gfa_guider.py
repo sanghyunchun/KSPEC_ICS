@@ -833,28 +833,23 @@ class GFAGuider:
                 fdec = ndec - (boxsize / 4 - yc)
 
                 # -------------------------------------------------------------
-                # 6. Convert pixel offset to angular offset
+                # 6. Convert pixel offset to on-sky angular offset
                 # -------------------------------------------------------------
-                ra1, dec1 = wcs.pixel_to_world_values(fra, fdec)
-                ra2, dec2 = wcs.pixel_to_world_values(fra + 1, fdec)
-
-                x1d = (ra2 - ra1) * 3600.0
-                x2d = (dec2 - dec1) * 3600.0
-
-                ra3, dec3 = wcs.pixel_to_world_values(fra, fdec)
-                ra4, dec4 = wcs.pixel_to_world_values(fra, fdec + 1)
-
-                y1d = (ra4 - ra3) * 3600.0
-                y2d = (dec4 - dec3) * 3600.0
-
-                dx_val = (
-                    (fra - dra_f[i]) * x1d
-                    + (fdec - ddec_f[i]) * x2d
+                # Map both the measured centroid and the expected catalog
+                # position to the sky through the reference WCS and take
+                # their difference. fra/fdec and dra_f/ddec_f are 1-based.
+                # dx is the east offset (dRA * cos(dec)) and dy the north
+                # offset, both in arcsec, as the ICS applies them with
+                # SkyCoord.spherical_offsets_by.
+                ra_m, dec_m = wcs.pixel_to_world_values(fra - 1.0, fdec - 1.0)
+                ra_c, dec_c = wcs.pixel_to_world_values(
+                    dra_f[i] - 1.0, ddec_f[i] - 1.0
                 )
-                dy_val = (
-                    (fra - dra_f[i]) * y1d
-                    + (fdec - ddec_f[i]) * y2d
-                )
+
+                dra_deg = (float(ra_m) - float(ra_c) + 180.0) % 360.0 - 180.0
+
+                dx_val = dra_deg * math.cos(math.radians(float(dec_c))) * 3600.0
+                dy_val = (float(dec_m) - float(dec_c)) * 3600.0
 
                 if not np.isfinite(dx_val) or not np.isfinite(dy_val):
                     raise ValueError(
