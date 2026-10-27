@@ -261,6 +261,26 @@ INFO Measured geometry /경로/Measured_Geometry.txt: 2/103 holes replaced
   틀리면 Trial 0 json 이 (0, 0) 이 아니다. 다른 규약이면 `KSPEC_ANGLE_SIGN`, `KSPEC_ANGLE_ZERO`
   또는 `fiber_config` 의 값.
 
+### positioner 회전 중심 실측값 (arm scan) 쓰기 -- 별개 스위치
+
+`analysis/Measured_Geometry.txt` 에는 fiducial 핀홀 실측 위치(2026-10-17)와 positioner 회전 중심
+실측값(2026-10-27 arm scan, 37 개; 설계와의 차 중앙값 131 µm, 최대 298 µm, 원 fit rms 중앙값 11 µm)
+이 함께 들어 있다. 둘은 **별개 스위치** 로 켠다.
+
+| 항목 | 스위치 | 기본 |
+|---|---|---|
+| fiducial 핀홀 실측 위치, arm 길이 측정표 | `use_measured` / `KSPEC_USE_MEASURED` | 켜짐 |
+| positioner 회전 중심 실측값 | `use_measured_positioners` / `KSPEC_USE_MEASURED_POSITIONERS` / `fiber_config.USE_MEASURED_POSITIONERS` | **꺼짐** (지켜보는 중) |
+
+켜는 방법: `MetrologyRun(..., use_measured_positioners=True)`, `mtlcal(..., use_measured_positioners=True)`,
+`lab.measure(..., use_measured_positioners=True)`, 환경변수 `KSPEC_USE_MEASURED_POSITIONERS=1`, 노트북 설정 셀의
+`MEASURED_POSITIONERS = True`, 또는 ICS `mtlstart` 메시지의 `use_measured_positioners`. 기본값을 바꾸려면
+`fiber_config.USE_MEASURED_POSITIONERS` 한 줄. 로그 `Measured geometry ...: 67/103 holes replaced (positioner
+centres ON)` 이면 켜진 것이고, `30/103 ... (positioner centres OFF, 37 measured but not used)` 이면 꺼진 것이다.
+
+켜면 Trial 0 의 목표 각도와 각 trial 의 회전량이 실측 중심 기준으로 계산되므로, 첫 trial 의 fiber−target
+오차가 설계 중심일 때보다 작아져야 한다. 그 차이로 실측 중심의 가치를 판단하면 된다.
+
 ### fiducial 찾기 (기준 칩 좌표)
 
 fiducial 은 초점면에 고정되어 있고 카메라도 고정이므로 칩 좌표가 trial 사이에 거의 변하지
@@ -684,15 +704,20 @@ R = |a₁ + a₂e^{iφ}|). beta = 0 과 180 두 번이면 `fit_arms` 로 a₁, a
 
 ```python
 from kspec_metrology.analysis import armcal
-res = armcal.arm_calibration(images, fid_images=None, magnification=8.4, n_extra=9,
-                             threshold=1e3, min_dist=80)
+# alpha 단계마다 take_exposure.py --fiber 30 --fid 1 10 --out /data/scan_b0/alpha_{각도} 로 찍은 세트
+SCAN = armcal.scan_sets('/data/scan_b0/alpha_*')     # [(fiber 30 ms, [fid 1 ms, fid 10 ms]), ...]
+res = armcal.arm_calibration(SCAN, model='full+affine', threshold=1e3, min_dist=80,
+                             finder_opts={'minarea': 9, 'deblend_cont': 1.0})
 res.table                      # id, x0, y0, R, rms, n, dx, dy (설계 중심과의 차)
 armcal.plot_arm_calibration(res)
 armcal.write_measured_geometry(res, 'Measured_Geometry_scan.txt',
                                template='analysis/Measured_Geometry.txt')
 ```
 
-이미지마다 fiducial 이 같이 찍혀 있으면 이미지마다 변환을 새로 맞춘다. 각
+프레임마다 본 metrology 와 같은 방법으로 fiducial 을 찾는다 (노출별로 포화되지 않은 가장 밝은 것;
+첫 프레임은 패턴 매칭, 그 뒤는 직전 프레임의 fiducial 자리 주변) 고 변환을 새로 맞추므로 scan 중
+카메라가 흘러가도 된다. 경로 목록만 주면 (`arm_calibration(images, fid_images=[...])`) 모든 프레임에
+같은 fiducial 전용 노출을 쓴다. 각
 positioner 중심에서 arm 길이 + 1 mm 안의 검출 중 중심에 가장 가까운 것을 그 궤적
 점으로 본다 (이웃 positioner 가 같은 자리를 지나는 순간은 원 fit 의 robust 가중치가
 거른다). 점이 5개 미만이면 그 positioner 는 비워 둔다.

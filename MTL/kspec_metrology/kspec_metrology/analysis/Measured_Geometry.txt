@@ -14,19 +14,22 @@
 # ID            X          Y    arm1    arm2   (주석은 현재 설계값)
 # --------------------------------------------------------------
 # fiducial X, Y: pinhole positions measured 2026-10-17 (Fiducial_Pinhole_261017.txt, Plate_Pinhole_261017.ipynb)
+# positioner X, Y: alpha rotation centres from the arm scan of 2026-10-27 (Arm_Scan.ipynb, 12 alpha steps at
+#   command beta 0 = geometric 150 deg; 37 lit positioners; centre - design median 131 um, max 298 um;
+#   circle rms median 11 um). Used only when KSPEC_USE_MEASURED_POSITIONERS=1 / use_measured_positioners=True.
 #
   A7         66.5186   115.0445       -       -   # fiducial  pinhole 261017  +-(16, 25) um  설계 X   66.5000  Y  115.1814
   B1        -56.9090    98.7863       -       -   # fiducial  pinhole 261017  +-(16, 16) um  설계 X  -57.0000  Y   98.7269
   B3        -18.8293    99.0831       -       -   # fiducial  pinhole 261017  +-(17, 23) um  설계 X  -19.0000  Y   98.7269
-  C4            -          -       -       -   # positioner  설계 X   -9.5000  Y   82.2724
-  C5            -          -       -       -   # positioner  설계 X    9.5000  Y   82.2724
+  C4         -9.5618    82.5034       -       -   # positioner centre from arm scan (rms 18 um, n 12)
+  C5          9.5291    82.3793       -       -   # positioner centre from arm scan (rms 12 um, n 12)
   C6            -          -       -       -   # positioner  설계 X   28.5000  Y   82.2724
-  D2            -          -       -       -   # positioner  설계 X  -57.0000  Y   65.8179
-  D3            -          -       -       -   # positioner  설계 X  -38.0000  Y   65.8179
-  D4            -          -       -       -   # positioner  설계 X  -19.0000  Y   65.8179
-  D5            -          -       -       -   # positioner  설계 X    0.0000  Y   65.8179
+  D2        -57.0060    65.9279       -       -   # positioner centre from arm scan (rms 7 um, n 12)
+  D3        -37.9935    66.0457       -       -   # positioner centre from arm scan (rms 16 um, n 12)
+  D4        -19.0010    65.8808       -       -   # positioner centre from arm scan (rms 11 um, n 12)
+  D5          0.0633    65.9108       -       -   # positioner centre from arm scan (rms 17 um, n 12)
   D6         18.9250    65.7479       -       -   # fiducial  pinhole 261017  +-(16, 26) um  설계 X   19.0000  Y   65.8179
-  D7            -          -       -       -   # positioner  설계 X   38.0000  Y   65.8179
+  D7         37.9651    65.9327       -       -   # positioner centre from arm scan (rms 21 um, n 12)
   D9         76.0880    65.6861       -       -   # fiducial  pinhole 261017  +-(18, 25) um  설계 X   76.0000  Y   65.8179
   E2            -          -       -       -   # positioner  설계 X  -66.5000  Y   49.3634
   E3        -47.3586    49.3695       -       -   # fiducial  pinhole 261017  +-(24, 20) um  설계 X  -47.5000  Y   49.3634
@@ -34,8 +37,8 @@
   E5            -          -       -       -   # positioner  설계 X   -9.5000  Y   49.3634
   E6            -          -       -       -   # positioner  설계 X    9.5000  Y   49.3634
   E7            -          -       -       -   # positioner  설계 X   28.5000  Y   49.3634
-  E8            -          -       -       -   # positioner  설계 X   47.5000  Y   49.3634
-  E9            -          -       -       -   # positioner  설계 X   66.5000  Y   49.3634
+  E8         47.5575    49.4121       -       -   # positioner centre from arm scan (rms 10 um, n 12)
+  E9         66.5204    49.3986       -       -   # positioner centre from arm scan (rms 27 um, n 12)
   F1        -95.0486    33.0060       -       -   # fiducial  pinhole 261017  +-(17, 19) um  설계 X  -95.0000  Y   32.9090
   F2            -          -       -       -   # positioner  설계 X  -76.0000  Y   32.9090
   F3            -          -       -       -   # positioner  설계 X  -57.0000  Y   32.9090
@@ -43,64 +46,64 @@
   F5            -          -       -       -   # positioner  설계 X  -19.0000  Y   32.9090
   F6            -          -       -       -   # positioner  설계 X    0.0000  Y   32.9090
   F7            -          -       -       -   # positioner  설계 X   19.0000  Y   32.9090
-  F8            -          -       -       -   # positioner  설계 X   38.0000  Y   32.9090
-  F9            -          -       -       -   # positioner  설계 X   57.0000  Y   32.9090
+  F8         38.0556    32.9478       -       -   # positioner centre from arm scan (rms 12 um, n 12)
+  F9         57.0842    32.9882       -       -   # positioner centre from arm scan (rms 15 um, n 12)
   F10           -          -       -       -   # positioner  설계 X   76.0000  Y   32.9090
-  G3            -          -       -       -   # positioner  설계 X  -66.5000  Y   16.4545
+  G3        -66.4675    16.4406       -       -   # positioner centre from arm scan (rms 5 um, n 12)
   G4            -          -       -       -   # positioner  설계 X  -47.5000  Y   16.4545
-  G5            -          -       -       -   # positioner  설계 X  -28.5000  Y   16.4545
-  G6            -          -       -       -   # positioner  설계 X   -9.5000  Y   16.4545
+  G5        -28.5100    16.6340       -       -   # positioner centre from arm scan (rms 9 um, n 12)
+  G6         -9.6481    16.6342       -       -   # positioner centre from arm scan (rms 7 um, n 11)
   G7            -          -       -       -   # positioner  설계 X    9.5000  Y   16.4545
   G8         28.5728    16.6182       -       -   # fiducial  pinhole 261017  +-(13, 16) um  설계 X   28.5000  Y   16.4545
-  G9            -          -       -       -   # positioner  설계 X   47.5000  Y   16.4545
+  G9         47.6511    16.5830       -       -   # positioner centre from arm scan (rms 22 um, n 12)
   G10           -          -       -       -   # positioner  설계 X   66.5000  Y   16.4545
   G11           -          -       -       -   # positioner  설계 X   85.5000  Y   16.4545
   H0       -133.0579     0.0586       -       -   # fiducial  pinhole 261017  +-(34, 18) um  설계 X -133.0000  Y    0.0000
-  H3            -          -       -       -   # positioner  설계 X  -76.0000  Y    0.0000
-  H4            -          -       -       -   # positioner  설계 X  -57.0000  Y    0.0000
-  H5            -          -       -       -   # positioner  설계 X  -38.0000  Y    0.0000
-  H6            -          -       -       -   # positioner  설계 X  -19.0000  Y    0.0000
-  H7            -          -       -       -   # positioner  설계 X    0.0000  Y    0.0000
+  H3        -75.9694     0.1003       -       -   # positioner centre from arm scan (rms 5 um, n 12)
+  H4        -56.9996     0.1473       -       -   # positioner centre from arm scan (rms 5 um, n 12)
+  H5        -37.9744     0.1172       -       -   # positioner centre from arm scan (rms 14 um, n 12)
+  H6        -18.9421    -0.0306       -       -   # positioner centre from arm scan (rms 24 um, n 12)
+  H7          0.0253     0.1287       -       -   # positioner centre from arm scan (rms 13 um, n 12)
   H8            -          -       -       -   # positioner  설계 X   19.0000  Y    0.0000
   H9            -          -       -       -   # positioner  설계 X   38.0000  Y    0.0000
   H10           -          -       -       -   # positioner  설계 X   57.0000  Y    0.0000
   H11           -          -       -       -   # positioner  설계 X   76.0000  Y    0.0000
   H13       113.7571    -0.1988       -       -   # fiducial  pinhole 261017  +-(24, 18) um  설계 X  114.0000  Y    0.0000
   I2            -          -       -       -   # positioner  설계 X  -85.5000  Y  -16.4545
-  I3            -          -       -       -   # positioner  설계 X  -66.5000  Y  -16.4545
+  I3        -66.5043   -16.2159       -       -   # positioner centre from arm scan (rms 6 um, n 12)
   I4        -47.4147   -16.2786       -       -   # fiducial  pinhole 261017  +-(26, 22) um  설계 X  -47.5000  Y  -16.4545
-  I5            -          -       -       -   # positioner  설계 X  -28.5000  Y  -16.4545
-  I6            -          -       -       -   # positioner  설계 X   -9.5000  Y  -16.4545
-  I7            -          -       -       -   # positioner  설계 X    9.5000  Y  -16.4545
-  I8            -          -       -       -   # positioner  설계 X   28.5000  Y  -16.4545
+  I5        -28.4228   -16.3317       -       -   # positioner centre from arm scan (rms 9 um, n 12)
+  I6         -9.5161   -16.3487       -       -   # positioner centre from arm scan (rms 7 um, n 11)
+  I7          9.4724   -16.3575       -       -   # positioner centre from arm scan (rms 6 um, n 12)
+  I8         28.5039   -16.3646       -       -   # positioner centre from arm scan (rms 35 um, n 12)
   I9            -          -       -       -   # positioner  설계 X   47.5000  Y  -16.4545
   I10           -          -       -       -   # positioner  설계 X   66.5000  Y  -16.4545
-  J2            -          -       -       -   # positioner  설계 X  -76.0000  Y  -32.9090
-  J3            -          -       -       -   # positioner  설계 X  -57.0000  Y  -32.9090
-  J4            -          -       -       -   # positioner  설계 X  -38.0000  Y  -32.9090
-  J5            -          -       -       -   # positioner  설계 X  -19.0000  Y  -32.9090
+  J2        -75.9346   -32.8549       -       -   # positioner centre from arm scan (rms 19 um, n 12)
+  J3        -56.8864   -32.6647       -       -   # positioner centre from arm scan (rms 6 um, n 12)
+  J4        -38.0188   -32.6119       -       -   # positioner centre from arm scan (rms 7 um, n 12)
+  J5        -18.9240   -32.7591       -       -   # positioner centre from arm scan (rms 7 um, n 12)
   J6            -          -       -       -   # positioner  설계 X   -0.0000  Y  -32.9090
   J7            -          -       -       -   # positioner  설계 X   19.0000  Y  -32.9090
   J8            -          -       -       -   # positioner  설계 X   38.0000  Y  -32.9090
   J9            -          -       -       -   # positioner  설계 X   57.0000  Y  -32.9090
   J10           -          -       -       -   # positioner  설계 X   76.0000  Y  -32.9090
   J11        94.7932   -32.6930       -       -   # fiducial  pinhole 261017  +-(20, 20) um  설계 X   95.0000  Y  -32.9090
-  K2            -          -       -       -   # positioner  설계 X  -66.5000  Y  -49.3634
-  K3            -          -       -       -   # positioner  설계 X  -47.5000  Y  -49.3634
-  K4            -          -       -       -   # positioner  설계 X  -28.5000  Y  -49.3634
+  K2        -66.4368   -49.1975       -       -   # positioner centre from arm scan (rms 15 um, n 12)
+  K3        -47.4052   -49.1300       -       -   # positioner centre from arm scan (rms 4 um, n 12)
+  K4        -28.4257   -49.2024       -       -   # positioner centre from arm scan (rms 5 um, n 12)
   K5            -          -       -       -   # positioner  설계 X   -9.5000  Y  -49.3634
   K6            -          -       -       -   # positioner  설계 X    9.5000  Y  -49.3634
   K7            -          -       -       -   # positioner  설계 X   28.5000  Y  -49.3634
   K8         47.3454   -49.2766       -       -   # fiducial  pinhole 261017  +-(15, 28) um  설계 X   47.5000  Y  -49.3634
   K9            -          -       -       -   # positioner  설계 X   66.5000  Y  -49.3634
   L1        -75.9459   -65.7257       -       -   # fiducial  pinhole 261017  +-(17, 21) um  설계 X  -76.0000  Y  -65.8179
-  L3            -          -       -       -   # positioner  설계 X  -38.0000  Y  -65.8179
+  L3        -37.9826   -65.6201       -       -   # positioner centre from arm scan (rms 23 um, n 12)
   L4        -19.0475   -65.6660       -       -   # fiducial  pinhole 261017  +-(20, 30) um  설계 X  -19.0000  Y  -65.8179
-  L5            -          -       -       -   # positioner  설계 X   -0.0000  Y  -65.8179
-  L6            -          -       -       -   # positioner  설계 X   19.0000  Y  -65.8179
-  L7            -          -       -       -   # positioner  설계 X   38.0000  Y  -65.8179
+  L5          0.0718   -65.6674       -       -   # positioner centre from arm scan (rms 7 um, n 11)
+  L6         18.9988   -65.5457       -       -   # positioner centre from arm scan (rms 10 um, n 12)
+  L7         37.9894   -65.8041       -       -   # positioner centre from arm scan (rms 105 um, n 12)
   L8            -          -       -       -   # positioner  설계 X   57.0000  Y  -65.8179
-  M3            -          -       -       -   # positioner  설계 X  -28.5000  Y  -82.2724
+  M3        -28.5309   -82.1168       -       -   # positioner centre from arm scan (rms 15 um, n 12)
   M4            -          -       -       -   # positioner  설계 X   -9.5000  Y  -82.2724
   M5            -          -       -       -   # positioner  설계 X    9.5000  Y  -82.2724
   N1        -57.2426   -98.5734       -       -   # fiducial  pinhole 261017  +-(17, 20) um  설계 X  -57.0000  Y  -98.7269

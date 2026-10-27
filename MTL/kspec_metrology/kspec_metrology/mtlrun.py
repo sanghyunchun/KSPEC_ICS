@@ -142,6 +142,7 @@ class MetrologyRun:
                  , niter_recenter=0
                  , apply_pinhole_offset=False
                  , use_measured=None
+                 , use_measured_positioners=None
                  , finder='sep'
                  , finder_opts=None
                  , background='crop'
@@ -190,6 +191,7 @@ class MetrologyRun:
         self.niter_recenter = niter_recenter
         self.apply_pinhole_offset = apply_pinhole_offset
         self.use_measured = use_measured
+        self.use_measured_positioners = use_measured_positioners
         self.finder = finder
         self.finder_opts = finder_opts
         self.background = background
@@ -267,7 +269,8 @@ class MetrologyRun:
                       self.max_trial if self.max_trial is not None else 'none')
 
         save_initial_angles(self.json_dir, self.tile, self.target_file,
-                            use_measured=self.use_measured)
+                            use_measured=self.use_measured,
+                            use_measured_positioners=self.use_measured_positioners)
 
         return self.json_path(0)
 
@@ -314,6 +317,7 @@ class MetrologyRun:
                       , niter_recenter=self.niter_recenter
                       , apply_pinhole_offset=self.apply_pinhole_offset
                       , use_measured=self.use_measured
+                      , use_measured_positioners=self.use_measured_positioners
                       , finder=self.finder
                       , finder_opts=self.finder_opts
                       , background=self.background

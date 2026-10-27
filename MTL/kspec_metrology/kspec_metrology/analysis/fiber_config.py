@@ -145,6 +145,23 @@ USE_MEASURED_ENV = 'KSPEC_USE_MEASURED'
 USE_MEASURED = os.environ.get(USE_MEASURED_ENV, '1').strip().lower() not in (
     '0', 'false', 'no', 'off')
 
+# positioner 회전 중심 실측값 (Measured_Geometry 의 positioner 행 X, Y; arm scan 결과) 을 쓸지.
+# fiducial 핀홀 실측값 (use_measured) 과 **별개 스위치** 다 (2026-10-27): 핀홀은 거의 항상 쓰고,
+# positioner 중심 실측은 아직 지켜보는 중이라 기본은 꺼져 있다. 켜는 방법:
+#   - 환경변수 : KSPEC_USE_MEASURED_POSITIONERS=1
+#   - 호출 인자: mtlcal(..., use_measured_positioners=True) / MetrologyRun(..., use_measured_positioners=True)
+#   - 기본값을 바꾸려면 아래 한 줄.
+# 꺼져 있으면 positioner 중심은 설계값, arm 길이는 use_measured 를 따른다 (Positioner_Arm_Table + Map).
+USE_MEASURED_POSITIONERS_ENV = 'KSPEC_USE_MEASURED_POSITIONERS'
+USE_MEASURED_POSITIONERS = os.environ.get(USE_MEASURED_POSITIONERS_ENV, '0').strip().lower() in (
+    '1', 'true', 'yes', 'on')
+
+
+def _use_measured_positioners(flag):
+    """None 이면 모듈 기본값(USE_MEASURED_POSITIONERS)을 쓴다."""
+    return USE_MEASURED_POSITIONERS if flag is None else bool(flag)
+
+
 # 실측 좌표가 설계 좌표에서 이보다 멀면 다른 plate 의 파일로 보고 멈춘다 [mm].
 # 핀홀은 홀 중심에서 0.5 mm 안에 있고, 표를 바꿔도 fiducial ID 가 상당수 겹치므로
 # 옛 plate 의 실측값이 조용히 적용되는 것을 이 검사로 막는다.
