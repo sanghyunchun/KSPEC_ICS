@@ -7,6 +7,8 @@
     fiducial 전용 노출 : {data_dir}/{tile}_MetrologyTrial_{itrial}_fid{k}_{iexposure}.fits
     각도   : {json_dir}/{tile}_MetrologyTrial_{itrial}.json
     이동량 : {json_dir}/{tile}_MetrologyTrial_{itrial}_offset.txt
+    fiducial 칩 좌표 : {json_dir}/{tile}_MetrologyTrial_{itrial}_fid.npy  (다음 trial 이 fiducial 을 찾는 기준)
+    fiducial 칩 좌표 기준 파일 : {json_dir}/Fiducial_Chip_Positions.npy  (run 과 무관한 마지막 성공값)
 
 tile은 target 파일에서 읽은 타일 이름(target_info.tile_name), itrial은 몇 번째
 metrology trial인지, iexposure는 그 trial 안에서 몇 번째 이미지인지를 뜻한다.
@@ -64,3 +66,18 @@ def json_path(json_dir, tile, itrial):
 def coeff_path(json_dir, tile, itrial):
     """한 trial 에서 맞춘 camera->focal 변환 계수 (npy) 경로. 다음 trial 의 'Predict' mode 가 읽는다."""
     return os.path.join(json_dir, STEM.format(tile=tile, itrial=itrial) + '_coeff.npy')
+
+
+def fid_path(json_dir, tile, itrial):
+    """한 trial 에서 잰 fiducial 칩 좌표 (npy, (nfid, 2) [mm, 칩 중심 기준], 못 잰 것은 NaN).
+    다음 trial 은 이 자리 주변에서만 fiducial 을 찾는다 (mtlcal.measure_fiducials_ref)."""
+    return os.path.join(json_dir, STEM.format(tile=tile, itrial=itrial) + '_fid.npy')
+
+
+FID_REF_ENV = 'KSPEC_FIDUCIAL_CHIP_REF'
+
+
+def fid_ref_path(json_dir):
+    """run 과 무관한 fiducial 칩 좌표 기준 파일. 성공한 trial 마다 갱신되고, 새 run 의 첫 trial 이 읽는다.
+    환경변수 KSPEC_FIDUCIAL_CHIP_REF 로 다른 경로를 줄 수 있다."""
+    return os.environ.get(FID_REF_ENV) or os.path.join(json_dir, 'Fiducial_Chip_Positions.npy')

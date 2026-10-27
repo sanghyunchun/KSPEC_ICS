@@ -261,6 +261,34 @@ INFO Measured geometry /경로/Measured_Geometry.txt: 2/103 holes replaced
   틀리면 Trial 0 json 이 (0, 0) 이 아니다. 다른 규약이면 `KSPEC_ANGLE_SIGN`, `KSPEC_ANGLE_ZERO`
   또는 `fiber_config` 의 값.
 
+### fiducial 찾기 (기준 칩 좌표)
+
+fiducial 은 초점면에 고정되어 있고 카메라도 고정이므로 칩 좌표가 trial 사이에 거의 변하지
+않는다. 그래서 2026-10-27 부터 fiducial 식별은 두 단계다.
+
+1. **기준 칩 좌표가 있으면** (`{json_dir}/{tile}_MetrologyTrial_{k-1}_fid.npy`, 없으면 run 과 무관한
+   `{json_dir}/Fiducial_Chip_Positions.npy`; `KSPEC_FIDUCIAL_CHIP_REF` 로 경로 변경) 세 노출(1 ms,
+   10 ms, fiber 30 ms) 각각에서 fiducial 마다 기준 자리 반경 60 px (약 2 mm) 안의 **가장 가까운**
+   검출을 그 fiducial 로 본다 (`measure_fiducials_ref`). 밝기는 쓰지 않으므로 fiber 나 sky 점이
+   창에 들어와도 자리가 다르면 안 잡힌다. 카메라가 조금 움직였으면 검출 전체의 공통 이동량을
+   먼저 빼므로 fiducial 간격(15 mm) 보다 작은 이동은 그대로 처리된다. 패턴 매칭·배율 초기값·검출
+   수 상한이 모두 필요 없다.
+2. **기준이 없거나 절반도 못 찾으면** 패턴 매칭 (`measure_fiducials`: 배율 초기값으로 옮긴 검출을
+   설계 패턴에 회전·offset 격자 탐색으로 맞추고 affine 재적합) 으로 처음부터 찾는다. 성공하면
+   그 좌표가 기준 파일로 저장되어 다음부터 1 로 간다.
+
+어느 경로든 그 뒤는 같다. fiducial 마다 포화되지 않은 가장 밝은 노출을 고르고 (전용 노출 우선,
+fiber 노출은 예비), 찾은 fiducial 로 왜곡 변환을 맞춘다. **fiducial 이 30 개 중 20 개
+(`MIN_FIDUCIALS`) 이상 보이면 trial 은 계속 진행**하고 못 찾은 것은 경고와 함께 NaN 으로 둔다
+(2026-10-27 이전에는 하나라도 없으면 실패였다). fit 잔차가 0.3 mm (`FID_RESID_MAX`) 를 넘는
+fiducial 은 잘못 붙인 것(fiber 점 등)으로 보고 빼고 다시 맞춘다 (정상 잔차는 50 µm 수준).
+그 뒤 매칭된 fiber 자리를 지우고 fiducial 을 한 번 더 찾아 변환을 다듬는데(cross_exclude), 이
+2차 탐색이 실패하면 1차 결과를 그대로 쓴다.
+
+실기 trial 3 영상으로 확인한 것: 기준이 없을 때와 있을 때 같은 좌표(0.00 px 차), 한 fiducial 을
+세 노출에서 모두 지우면 29/30 으로 계속 진행, 그 자리 1.2 mm 옆에 가짜 점을 넣으면 잔차 850 µm
+로 걸러짐, 기준을 40 px 옮겨 놓으면 공통 이동량으로 보정.
+
 ### 포화와 노출 자동 조정
 
 `MetrologyRun(..., auto_exposure=True)` 면 찍은 이미지에 포화 화소가
