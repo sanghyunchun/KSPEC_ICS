@@ -600,6 +600,95 @@ class GFAActions:
                 save_path=str(guiding_save_path),
             )
 
+    def _evaluate_pointing_image_quality(
+        self,
+        fits_path: Path,
+    ) -> Dict[str, Any]:
+        """
+        Relaxed pointing image filter.
+        Reject only obviously bad images before astrometry.
+        """
+    
+        cfg = self.env.astrometry.inpar["pointing_filter"]
+    
+        min_std_bg = cfg["min_std_bg"]
+        min_peaks = cfg["min_peaks"]
+        min_brightest_flux = cfg["min_brightest_flux"]
+    
+        fwhm = cfg["dao"]["fwhm"]
+        sigma_threshold = cfg["dao"]["sigma_threshold"]
+    
+        reasons = []
+
+        try:
+            img = fits.getdata(str(fits_path))
+            img = np.asarray(img, dtype=float)
+
+            if img.ndim != 2:
+                reasons.append(f"invalid_dimension={img.ndim}")
+                return {
+                    "passed": False,
+                    "n_peaks": 0,
+                    "brightest_flux": 0.0,
+                    "std_bg": 0.0,
+                    "reasons": reasons,
+                }
+
+            finite_fraction = np.mean(np.isfinite(img))
+            if finite_fraction < 0.99:
+                reasons.append(f"low_finite_fraction={finite_fraction:.3f}<0.99")
+
+            mean_bg, median_bg, std_bg = sigma_clipped_stats(
+                img,
+                sigma=3.0,
+            )
+
+            n_peaks = 0
+            brightest_flux = 0.0
+
+            if std_bg > 0:
+                finder = DAOStarFinder(
+                    fwhm=fwhm,
+                    threshold=sigma_threshold * std_bg,
+                )
+
+                sources = finder(img - median_bg)
+
+                if sources is not None:
+                    n_peaks = len(sources)
+
+                    if n_peaks > 0 and "flux" in sources.colnames:
+                        brightest_flux = float(np.max(sources["flux"]))
+
+            if std_bg < min_std_bg:
+                reasons.append(f"low_std_bg={std_bg:.2f}<MIN_STD_BG={min_std_bg}")
+
+            if n_peaks < min_peaks:
+                reasons.append(f"few_peaks={n_peaks}<MIN_PEAKS={min_peaks}")
+
+            if brightest_flux < min_brightest_flux:
+                reasons.append(
+                    f"low_brightest_flux={brightest_flux:.2f}"
+                    f"<MIN_BRIGHTEST_FLUX={min_brightest_flux}"
+                )
+
+            return {
+                "passed": len(reasons) == 0,
+                "n_peaks": n_peaks,
+                "brightest_flux": brightest_flux,
+                "std_bg": float(std_bg),
+                "reasons": reasons,
+            }
+
+        except Exception as e:
+            return {
+                "passed": False,
+                "n_peaks": 0,
+                "brightest_flux": 0.0,
+                "std_bg": 0.0,
+                "reasons": [f"filter_error={e}"],
+            }
+
     def _move_with_unique_name(self, src: Path, dst_dir: Path) -> Path:
         dst_dir.mkdir(parents=True, exist_ok=True)
 
