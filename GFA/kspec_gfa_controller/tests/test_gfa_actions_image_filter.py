@@ -125,13 +125,13 @@ def _photutils_major():
     return int(photutils.__version__.split(".")[0])
 
 
-def frame(n_stars, seed=1, shape=(288, 333)):
+def frame(n_stars, seed=1, shape=(288, 333), star_fwhm=3.0):
     """Binned GFA-like frame: background 100 ADU, read noise 5, Gaussian stars (FWHM 3 px)."""
     rng = np.random.default_rng(seed)
     ny, nx = shape
     img = 100.0 + rng.normal(0.0, 5.0, shape)
     yy, xx = np.mgrid[0:ny, 0:nx]
-    sig = 3.0 / 2.3548
+    sig = star_fwhm / 2.3548
     for x0, y0, a in zip(rng.uniform(15, nx - 15, n_stars), rng.uniform(15, ny - 15, n_stars),
                          rng.uniform(600.0, 2500.0, n_stars)):
         img += a * np.exp(-((xx - x0) ** 2 + (yy - y0) ** 2) / (2 * sig**2))
@@ -158,9 +158,13 @@ def test_brightest_flux_cut_applies(tmp_path):
 
 
 @pytest.mark.skipif(_photutils_major() < 2, reason="DAOStarFinder flux is a ratio before photutils 2")
-def test_shipped_config_passes_star_field(tmp_path):
-    res = make_actions()._evaluate_pointing_image_quality(write(tmp_path / "stars.fits", frame(25)))
+@pytest.mark.parametrize("star_fwhm", [3.0, 7.0])
+def test_shipped_config_passes_star_field(tmp_path, star_fwhm):
+    """Good seeing (3 px = 1.2") and the 2026-10-28 SSO frames (~7 px) both pass."""
+    res = make_actions()._evaluate_pointing_image_quality(
+        write(tmp_path / "stars.fits", frame(25, star_fwhm=star_fwhm)))
     assert res["passed"], res["reasons"]
+    assert res["n_peaks"] >= 20
 
 
 def test_blank_frame_fails_on_peaks(actions, tmp_path):

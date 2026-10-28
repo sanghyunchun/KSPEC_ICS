@@ -617,7 +617,9 @@ class GFAActions:
     
         fwhm = cfg["dao"]["fwhm"]
         sigma_threshold = cfg["dao"]["sigma_threshold"]
-    
+        # photutils' default 1.0 rejects stars much narrower than fwhm
+        sharphi = cfg["dao"].get("sharphi", 1.0)
+
         reasons = []
 
         try:
@@ -650,6 +652,7 @@ class GFAActions:
                 finder = DAOStarFinder(
                     fwhm=fwhm,
                     threshold=sigma_threshold * std_bg,
+                    sharphi=sharphi,
                 )
 
                 sources = finder(img - median_bg)
