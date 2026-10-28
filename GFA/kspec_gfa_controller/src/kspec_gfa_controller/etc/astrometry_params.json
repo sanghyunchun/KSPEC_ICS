@@ -55,7 +55,7 @@
         },
         "peak_detection": {
             "max": 4000,
-            "min": 300
+            "min": 100
         }
     },
     "catalog_matching": {
@@ -65,8 +65,8 @@
             "mag_flux": "FLUX"
         },
         "tolerance": {
-            "angular_distance": 0.06,
-            "mag_flux_min": 300
+            "angular_distance": 0.10,
+            "mag_flux_min": 100
         }
     }
 }

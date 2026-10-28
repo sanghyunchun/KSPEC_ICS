@@ -12,7 +12,9 @@ offsets that the ICS applies with SkyCoord.spherical_offsets_by
 Camera layout: six cameras on a 1.473 deg ring, rotated like the commissioning
 solve-field WCS (2026-01-24: 0, +-61, +-121, 179 deg; 0.418 arcsec/pix, det(CD) < 0).
 """
+import json
 import logging
+import math
 import sys
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
@@ -143,7 +145,14 @@ def render(w: WCS, stars: SkyCoord, peak: np.ndarray, rng) -> np.ndarray:
 class GuidingRig:
     """Reference products on disk + a GFAGuider; renders raw frames per pointing."""
 
-    def __init__(self, root: Path, boresight: SkyCoord, cameras, parity=-1, seed=1):
+    def __init__(self, root: Path, boresight: SkyCoord, cameras, parity=-1, seed=1,
+                 n_stars=20, peak_range=(800.0, 3000.0), sep_range_deg=None, config=CONFIG):
+        """
+        n_stars, peak_range : catalogue stars per camera and their peak (ADU above bkg).
+        sep_range_deg       : (min, max) distance of the stars from the chip centre;
+                              None places them anywhere 40 px from the edges.
+        config              : astrometry_params.json to run the guider with.
+        """
         self.root = root
         self.boresight = boresight
         self.cameras = cameras
@@ -156,13 +165,16 @@ class GuidingRig:
         self.radec = (ra_s, dec_s)
         ras, decs, peaks = [], [], []
         for serial, w in layout(boresight, cameras, parity):
-            n = 20
-            px = self.rng.uniform(40, NX - 40, n)
-            py = self.rng.uniform(40, NY - 40, n)
+            n = n_stars
+            if sep_range_deg is None:
+                px = self.rng.uniform(40, NX - 40, n)
+                py = self.rng.uniform(40, NY - 40, n)
+            else:
+                px, py = self._annulus(w, n, sep_range_deg)
             s = w.pixel_to_world(px, py)
             ras.append(s.ra.deg)
             decs.append(s.dec.deg)
-            peaks.append(self.rng.uniform(800.0, 3000.0, n))
+            peaks.append(self.rng.uniform(*peak_range, n))
             hdr = w.to_header()
             hdr["RA"], hdr["DEC"] = ra_s, dec_s
             fits.writeto(
@@ -183,7 +195,19 @@ class GuidingRig:
         log = logging.getLogger("test_gfa_guider_offsets")
         log.addHandler(logging.NullHandler())
         log.propagate = False
-        self.guider = gg.GFAGuider(config=str(CONFIG), logger=log, save_root=root)
+        self.guider = gg.GFAGuider(config=str(config), logger=log, save_root=root)
+
+    def _annulus(self, w, n, sep_range_deg):
+        """n pixel positions (40 px from the edges) at the given distance from the chip centre."""
+        centre = w.pixel_to_world((NX - 1) / 2, (NY - 1) / 2)
+        px, py = [], []
+        while len(px) < n:
+            x, y = self.rng.uniform(40, NX - 40), self.rng.uniform(40, NY - 40)
+            sep = centre.separation(w.pixel_to_world(x, y)).deg
+            if sep_range_deg[0] <= sep <= sep_range_deg[1]:
+                px.append(x)
+                py.append(y)
+        return np.array(px), np.array(py)
 
     def measure(self, pointing: SkyCoord):
         for p in (self.root / "raw").glob("*.fits"):
@@ -238,3 +262,35 @@ def test_closed_loop_converges(tmp_path, dec, ncam):
     # One cycle removes the drift (no overshoot); later cycles stay inside the deadband
     assert errors[0] < 0.1
     assert max(errors) < 0.25
+
+
+@pytest.mark.parametrize("cuts", ["shipped", "previous"])
+def test_faint_off_centre_guide_stars(tmp_path, monkeypatch, cuts):
+    """
+    Full-size chips (1332 x 1152), five cameras, only faint stars (peak 120-280 ADU)
+    between 0.065 and 0.095 deg from each chip centre. The previous cuts (peak and
+    catalogue flux >= 300, within 0.06 deg) leave no guide star; the shipped ones
+    (>= 100, within 0.10 deg, i.e. the whole chip) recover the drift.
+    """
+    mod = sys.modules[__name__]
+    monkeypatch.setattr(mod, "NX", 1332)
+    monkeypatch.setattr(mod, "NY", 1152)
+    config = CONFIG
+    if cuts == "previous":
+        inpar = json.loads(CONFIG.read_text())
+        inpar["detection"]["peak_detection"]["min"] = 300
+        inpar["catalog_matching"]["tolerance"].update(angular_distance=0.06, mag_flux_min=300)
+        config = tmp_path / "previous_cuts.json"
+        config.write_text(json.dumps(inpar))
+
+    bore = SkyCoord(87.4 * u.deg, -46.0 * u.deg)
+    rig = GuidingRig(tmp_path / "rig", bore, CAMERAS[:5], n_stars=12,
+                     peak_range=(120.0, 280.0), sep_range_deg=(0.065, 0.095), config=config)
+    cur = bore.spherical_offsets_by(3.0 * u.arcsec, -2.0 * u.arcsec)
+    fdx, fdy, _ = rig.measure(cur)
+
+    if cuts == "previous":
+        assert math.isnan(fdx) and math.isnan(fdy)
+    else:
+        assert fdx == pytest.approx(-3.0, abs=0.1)
+        assert fdy == pytest.approx(2.0, abs=0.1)
