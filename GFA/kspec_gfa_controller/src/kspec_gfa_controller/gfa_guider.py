@@ -151,6 +151,20 @@ class GFAGuider:
                 "dao", {}
             ).get("sigma_threshold", 5.0)
 
+        # Windowed centroid (cal_centroid_offset): starting PSF FWHM in pixels,
+        # whether to measure the FWHM per frame, and the largest centroid shift
+        # (px) a neighbour may cause before the guide star is rejected.
+        centroid_par = self.inpar["detection"].get("centroid", {})
+        self.centroid_fwhm = float(centroid_par.get("fwhm_px", 8.0))
+        self.neighbour_max_bias = float(
+            centroid_par.get("neighbour_max_bias_px", 0.05)
+        )
+        self.measure_fwhm = bool(centroid_par.get("measure_fwhm", True))
+        if not (np.isfinite(self.centroid_fwhm) and self.centroid_fwhm > 0):
+            raise ValueError(
+                f"detection.centroid.fwhm_px must be > 0, got {self.centroid_fwhm}"
+            )
+
         self.logger.info("GFAGuider setup complete.")
 
     def _astro_to_raw_path(self, astro_file: str) -> Optional[str]:
@@ -550,6 +564,280 @@ class GFAGuider:
         self.logger.debug("Conversion to X/Y positions completed (vectorized).")
         return dra, ddec, dra_f, ddec_f
 
+    @staticmethod
+    def _local_background(cutout: np.ndarray) -> float:
+        """
+        Sigma-clipped median (3 sigma, 5 iterations) of the finite pixels of a cutout.
+
+        Stars and zeroed (hot) pixels are clipped, so this is the sky level next to
+        the guide star. Returns 0.0 if the cutout has no finite pixel.
+        """
+        finite = cutout[np.isfinite(cutout)]
+        if finite.size == 0:
+            return 0.0
+        clipped = sigma_clip(finite, sigma=3, maxiters=5, masked=True)
+        level = float(np.ma.median(clipped))
+        return level if np.isfinite(level) else 0.0
+
+    @staticmethod
+    def _window(image: np.ndarray, x: float, y: float, sigma_w: float):
+        """
+        Gaussian window (truncated at 4 sigma_w) centred on (x, y) and the pixel
+        values under it (NaN -> 0), with offsets from (x, y); None at the edge.
+        """
+        ny, nx = image.shape
+        half = int(math.ceil(4.0 * sigma_w))
+        ix, iy = int(round(x)), int(round(y))
+        if ix - half < 0 or iy - half < 0 or ix + half >= nx or iy + half >= ny:
+            return None
+        cut = image[iy - half: iy + half + 1, ix - half: ix + half + 1]
+        yy, xx = np.mgrid[iy - half: iy + half + 1, ix - half: ix + half + 1]
+        ddx = xx - x
+        ddy = yy - y
+        r2 = ddx**2 + ddy**2
+        w = np.exp(-r2 / (2.0 * sigma_w**2))
+        w[r2 > (4.0 * sigma_w) ** 2] = 0.0
+        wi = w * np.nan_to_num(cut, nan=0.0, posinf=0.0, neginf=0.0)
+        return wi, ddx, ddy
+
+    @classmethod
+    def windowed_centroid(
+        cls,
+        image: np.ndarray,
+        x0: float,
+        y0: float,
+        sigma_w: float,
+        max_shift: float,
+        niter: int = 30,
+        tol: float = 1e-3,
+    ) -> Tuple[float, float]:
+        """
+        Iterative Gaussian-weighted (windowed) centroid, like SExtractor XWIN/YWIN.
+
+        ``image`` is background-subtracted; NaN pixels get zero weight. The window
+        is a circular Gaussian of width ``sigma_w`` truncated at 4 sigma_w,
+        re-centred on each iteration with x <- x + 2 sum(w I dx) / sum(w I). The
+        fixed point is the centre of any symmetric PSF, and a constant background
+        error cancels to first order.
+
+        Parameters
+        ----------
+        image : 2-D array, background-subtracted.
+        x0, y0 : start position (0-based pixel coordinates).
+        sigma_w : window sigma in pixels (PSF FWHM / 2.355).
+        max_shift : the centroid may not wander further than this from (x0, y0).
+
+        Returns
+        -------
+        (x, y) in 0-based pixel coordinates, or (nan, nan) if the window leaves
+        the image, the weighted flux is not positive, or the centroid wanders off.
+        """
+        x, y = float(x0), float(y0)
+        for _ in range(niter):
+            win = cls._window(image, x, y, sigma_w)
+            if win is None:
+                return math.nan, math.nan
+            wi, ddx, ddy = win
+            s = float(wi.sum())
+            if not np.isfinite(s) or s <= 0:
+                return math.nan, math.nan
+            xn = x + 2.0 * float((wi * ddx).sum()) / s
+            yn = y + 2.0 * float((wi * ddy).sum()) / s
+            if math.hypot(xn - x0, yn - y0) > max_shift:
+                return math.nan, math.nan
+            done = math.hypot(xn - x, yn - y) < tol
+            x, y = xn, yn
+            if done:
+                break
+        return x, y
+
+    @classmethod
+    def windowed_psf_sigma(
+        cls, image: np.ndarray, x: float, y: float, sigma_w: float
+    ) -> float:
+        """
+        PSF sigma (px) from the windowed second moment at a centroid (x, y).
+
+        For a Gaussian PSF of width s under a Gaussian window of width sigma_w the
+        weighted second moment per axis is m = s^2 sigma_w^2 / (s^2 + sigma_w^2),
+        so s^2 = m sigma_w^2 / (sigma_w^2 - m). NaN if m >= 0.9 sigma_w^2 (PSF far
+        wider than the window) or the window leaves the image.
+        """
+        win = cls._window(image, x, y, sigma_w)
+        if win is None:
+            return math.nan
+        wi, ddx, ddy = win
+        s = float(wi.sum())
+        if not np.isfinite(s) or s <= 0:
+            return math.nan
+        m = 0.5 * float((wi * (ddx**2 + ddy**2)).sum()) / s
+        sw2 = sigma_w**2
+        if not (0.0 < m < 0.9 * sw2):
+            return math.nan
+        return math.sqrt(m * sw2 / (sw2 - m))
+
+    def _centroid_star(
+        self,
+        image_data: np.ndarray,
+        stddev: float,
+        thr_val: float,
+        i: int,
+        dra: np.ndarray,
+        ddec: np.ndarray,
+        dra_f: np.ndarray,
+        ddec_f: np.ndarray,
+        fwhm: float,
+    ) -> dict:
+        """
+        Measure catalogue star ``i`` (see ``cal_centroid_offset``).
+
+        Returns a dict with ``status`` (ok, oob, edge, nopeak, neighbour, badflux)
+        and, for ``ok``, the 1-based centroid ``fra``/``fdec``, the seed ``peak``
+        above the local background and the PSF ``sigma`` from the windowed
+        second moment.
+        """
+        boxsize = self.boxsize
+        ny, nx = image_data.shape
+        sigma_w = fwhm / (2.0 * math.sqrt(2.0 * math.log(2.0)))
+        peak_footprint = 2 * int(fwhm / 2.0) + 1
+
+        # 1. Validate expected catalog position (dra/ddec are 1-based)
+        if not (
+            np.isfinite(dra[i])
+            and np.isfinite(ddec[i])
+            and np.isfinite(dra_f[i])
+            and np.isfinite(ddec_f[i])
+        ):
+            return {"status": "oob"}
+        x0 = int(dra[i] - 1)
+        y0 = int(ddec[i] - 1)
+        if x0 < 0 or x0 >= nx or y0 < 0 or y0 >= ny:
+            return {"status": "oob"}
+
+        # 2. Cutout around the predicted position, local background
+        y1 = int(ddec[i] - 1 - boxsize / 2)
+        y2 = int(ddec[i] - 1 + boxsize / 2 + 1)
+        x1 = int(dra[i] - 1 - boxsize / 2)
+        x2 = int(dra[i] - 1 + boxsize / 2 + 1)
+        if y1 < 0 or x1 < 0 or y2 > ny or x2 > nx:
+            return {"status": "edge"}
+
+        cutout = image_data[y1:y2, x1:x2].astype(float)
+        if cutout.size == 0 or not np.any(np.isfinite(cutout)):
+            return {"status": "nopeak"}
+
+        local_bkg = self._local_background(cutout)
+        cutout_sub = np.nan_to_num(
+            cutout - local_bkg, nan=0.0, posinf=0.0, neginf=0.0
+        )
+
+        # 3. Sources in the box; seed on the one nearest the prediction
+        threshold = np.full(cutout.shape, thr_val, dtype=float)
+        peaks = pd.find_peaks(
+            cutout_sub,
+            threshold,
+            box_size=peak_footprint,
+            npeaks=50,
+        )
+        if peaks is None or len(peaks) == 0:
+            return {"status": "nopeak"}
+
+        px = np.asarray(peaks["x_peak"], dtype=float)
+        py = np.asarray(peaks["y_peak"], dtype=float)
+        pv = np.asarray(peaks["peak_value"], dtype=float)
+        good = np.isfinite(px) & np.isfinite(py) & np.isfinite(pv) & (pv > 0)
+        px, py, pv = px[good] + x1, py[good] + y1, pv[good]
+        if px.size == 0:
+            return {"status": "nopeak"}
+
+        xp_cat = float(dra_f[i]) - 1.0
+        yp_cat = float(ddec_f[i]) - 1.0
+        dist = np.hypot(px - xp_cat, py - yp_cat)
+        j = int(np.argmin(dist))
+        x_peak, y_peak, peak_val = float(px[j]), float(py[j]), float(pv[j])
+
+        # 4. Neighbour check. Peaks within 1 FWHM, or at the seed's value
+        #    (saturated plateau), belong to the same source.
+        sep = np.hypot(px - x_peak, py - y_peak)
+        other = (sep > fwhm) & (np.abs(pv - peak_val) > 0.5)
+        nb_bias = np.where(
+            other,
+            (pv / peak_val) * sep * np.exp(-(sep**2) / (4.0 * sigma_w**2)),
+            0.0,
+        )
+        if np.any(nb_bias > self.neighbour_max_bias):
+            k = int(np.argmax(nb_bias))
+            self.logger.debug(
+                f"[centroid] star {i + 1} rejected (neighbour): source at "
+                f"{sep[k]:.1f} px with peak {pv[k]:.0f} vs {peak_val:.0f} "
+                f"(expected shift {nb_bias[k]:.2f} px)"
+            )
+            return {"status": "neighbour"}
+
+        cat_x = np.asarray(dra_f, dtype=float) - 1.0
+        cat_y = np.asarray(ddec_f, dtype=float) - 1.0
+        d_cat = np.hypot(cat_x - x_peak, cat_y - y_peak)
+        # this star and its catalogue duplicates (within 0.5 FWHM) do not count
+        d_cat[np.hypot(cat_x - xp_cat, cat_y - yp_cat) < 0.5 * fwhm] = np.inf
+        d_cat[~np.isfinite(d_cat)] = np.inf
+        if d_cat.size and float(np.min(d_cat)) < float(dist[j]):
+            self.logger.debug(
+                f"[centroid] star {i + 1} rejected (neighbour): seed nearer "
+                f"another catalogue star ({np.min(d_cat):.1f} px vs "
+                f"{dist[j]:.1f} px)"
+            )
+            return {"status": "neighbour"}
+
+        # 5. Windowed centroid on the local-background-subtracted image. The
+        #    window may move up to max_shift = FWHM from the seed.
+        half = int(math.ceil(4.0 * sigma_w)) + int(math.ceil(fwhm)) + 1
+        ixp, iyp = int(round(x_peak)), int(round(y_peak))
+        wy1, wy2 = iyp - half, iyp + half + 1
+        wx1, wx2 = ixp - half, ixp + half + 1
+        if wy1 < 0 or wx1 < 0 or wy2 > ny or wx2 > nx:
+            return {"status": "edge"}
+
+        win = image_data[wy1:wy2, wx1:wx2].astype(float) - local_bkg
+        win[~np.isfinite(win)] = np.nan
+        # Zeroed hot pixels sit far below the sky: no weight.
+        win[win < -5.0 * stddev] = np.nan
+
+        xc_w, yc_w = self.windowed_centroid(
+            win, x_peak - wx1, y_peak - wy1, sigma_w, max_shift=fwhm
+        )
+        if not np.isfinite(xc_w) or not np.isfinite(yc_w):
+            self.logger.debug(
+                f"[centroid] star {i + 1}: windowed centroid failed "
+                f"(seed {x_peak:.0f},{y_peak:.0f}, peak {peak_val:.0f})"
+            )
+            return {"status": "badflux"}
+
+        return {
+            "status": "ok",
+            "fra": xc_w + wx1 + 1.0,
+            "fdec": yc_w + wy1 + 1.0,
+            "peak": peak_val,
+            "sigma": self.windowed_psf_sigma(win, xc_w, yc_w, sigma_w),
+        }
+
+    def _measured_fwhm(self, results: List[dict], stddev: float) -> float:
+        """
+        Median PSF FWHM (px) of the well-measured, unsaturated stars, NaN if
+        fewer than 3 (peak within peak_detection min/max and >= 10 sigma).
+        """
+        sig = [
+            r["sigma"]
+            for r in results
+            if r.get("status") == "ok"
+            and np.isfinite(r.get("sigma", math.nan))
+            and self.peakmin <= r["peak"] <= self.peakmax
+            and r["peak"] >= 10.0 * stddev
+        ]
+        if len(sig) < 3:
+            return math.nan
+        fwhm = 2.0 * math.sqrt(2.0 * math.log(2.0)) * float(np.median(sig))
+        return float(np.clip(fwhm, 2.0, max(2.0, self.boxsize / 2.0)))
+
     def cal_centroid_offset(
         self,
         dra: np.ndarray,
@@ -563,52 +851,68 @@ class GFAGuider:
         cutoutn_stack: List[np.ndarray],
         image_data: np.ndarray,
     ) -> Tuple[List[float], List[float], List[float], List[np.ndarray]]:
+        """
+        Centroid every catalogue star and return its on-sky offset from the
+        catalogue position.
+
+        Per star, in a (box_size + 1)^2 box around the predicted position:
+
+        1. The box's sigma-clipped median (local background) is subtracted.
+        2. ``find_peaks`` (sigma_threshold x stddev, footprint ~ FWHM) lists the
+           sources in the box; the seed is the peak nearest the predicted
+           position, not the brightest.
+        3. Neighbour check (``neighbour`` counter). Peaks within 1 FWHM of the
+           seed, or at the seed's value (a saturated plateau), are the same
+           source. Any other peak with peak ratio q to the seed at distance d
+           shifts a windowed centroid by about q d exp(-d^2 / (4 sigma_w^2))
+           (Gaussian PSF of width sigma_w); the star is rejected if that exceeds
+           ``detection.centroid.neighbour_max_bias_px`` (0.05 px: q = 0.3 within
+           1.9 FWHM, q = 1 within 2.1 FWHM, q = 3 within 2.3 FWHM). It is also
+           rejected if the seed is nearer another catalogue star's predicted
+           position than this one's.
+        4. Windowed centroid (``windowed_centroid``, sigma_w = FWHM / 2.355)
+           started at the seed. Pixels more than 5 sigma below the local
+           background (zeroed hot pixels) get zero weight.
+
+        FWHM starts at ``detection.centroid.fwhm_px`` (default 8 px). With
+        ``detection.centroid.measure_fwhm`` (default true) the PSF FWHM is then
+        measured from the stars' windowed second moments (``_measured_fwhm``);
+        if it differs from the value used by more than 20 %, the stars are
+        measured again with it (at most two more passes).
+
+        Returns dx, dy (arcsec, east / north), the seed peak above the local
+        background (-1 for failed stars), and ``cutoutn_stack`` with the
+        normalized cutout of the brightest catalogue star appended.
+        """
         self.logger.debug("==== Starting centroid offset calculation ====")
 
-        dx: List[float] = []
-        dy: List[float] = []
-        peakc: List[float] = []
-
+        n_stars = len(dra)
         finite_flux = [
             float(value)
             for value in fluxn
             if np.isfinite(value) and float(value) < 30000
         ]
         max_flux = max(finite_flux, default=None)
-
         boxsize = self.boxsize
 
-        # Peak detection threshold: 5 × background standard deviation
+        # Peak detection threshold: sigma_threshold x background standard deviation
         thr_val = float(self.sigma_threshold * stddev)
 
-        # Per-file diagnostic counters
-        cnt_ok = 0
-        cnt_nopeak = 0
-        cnt_oob = 0
-        cnt_edge = 0
-        cnt_badflux = 0
-        cnt_exc = 0
-
-        # Peak values from successfully measured stars
-        ok_peak_values: List[float] = []
-
-        self.logger.debug(f"Number of input stars: {len(dra)}")
-        self.logger.debug(
-            f"Standard deviation for thresholding: {stddev:.3f}"
-        )
+        self.logger.debug(f"Number of input stars: {n_stars}")
+        self.logger.debug(f"Standard deviation for thresholding: {stddev:.3f}")
         self.logger.debug(f"Peak detection threshold: {thr_val:.3f}")
-        self.logger.debug(f"Box size: {boxsize}")
         self.logger.debug(
-            f"Max catalog flux among stars (cutoff 30000): {max_flux}"
+            f"Box size: {boxsize}, FWHM: {self.centroid_fwhm:.2f} px "
+            f"(measure: {self.measure_fwhm}), "
+            f"neighbour max bias: {self.neighbour_max_bias} px"
         )
+        self.logger.debug(f"Max catalog flux among stars (cutoff 30000): {max_flux}")
 
         if not np.isfinite(stddev) or stddev <= 0:
             self.logger.error(
                 f"Invalid background standard deviation: {stddev}. "
                 "Returning failed measurements."
             )
-
-            n_stars = len(dra)
             return (
                 [0.0] * n_stars,
                 [0.0] * n_stars,
@@ -623,138 +927,66 @@ class GFAGuider:
 
         ny, nx = image_data.shape
 
-        for i in range(len(dra)):
-            # Record list lengths before processing this star.
-            # This prevents duplicate append operations if an exception occurs
-            # after one or more values have already been added.
-            dx_len_before = len(dx)
-            dy_len_before = len(dy)
-            peak_len_before = len(peakc)
+        def measure_all(fwhm: float) -> List[dict]:
+            out = []
+            for i in range(n_stars):
+                try:
+                    out.append(
+                        self._centroid_star(
+                            image_data, stddev, thr_val, i,
+                            dra, ddec, dra_f, ddec_f, fwhm,
+                        )
+                    )
+                except Exception as exc:
+                    self.logger.debug(
+                        f"Finding peaks/centroid exception for star {i + 1}: {exc}"
+                    )
+                    out.append({"status": "exc"})
+            return out
 
+        fwhm = float(self.centroid_fwhm)
+        results = measure_all(fwhm)
+        if self.measure_fwhm:
+            for _ in range(2):
+                fwhm_meas = self._measured_fwhm(results, stddev)
+                if not np.isfinite(fwhm_meas) or abs(fwhm_meas / fwhm - 1.0) <= 0.2:
+                    break
+                self.logger.info(
+                    f"[centroid][file#{file_counter}] measured FWHM "
+                    f"{fwhm_meas:.2f} px (window was {fwhm:.2f} px): re-measuring"
+                )
+                fwhm = fwhm_meas
+                results = measure_all(fwhm)
+
+        dx: List[float] = []
+        dy: List[float] = []
+        peakc: List[float] = []
+        counts = {
+            k: 0
+            for k in ("ok", "nopeak", "oob", "edge", "badflux", "neighbour", "exc")
+        }
+        ok_peak_values: List[float] = []
+
+        for i, res in enumerate(results):
+            status = res["status"]
+            if status != "ok":
+                counts[status] += 1
+                dx.append(0.0)
+                dy.append(0.0)
+                peakc.append(-1.0)
+                continue
             try:
-                # -------------------------------------------------------------
-                # 1. Validate expected catalog position
-                # -------------------------------------------------------------
-                if not (
-                    np.isfinite(dra[i])
-                    and np.isfinite(ddec[i])
-                    and np.isfinite(dra_f[i])
-                    and np.isfinite(ddec_f[i])
-                ):
-                    cnt_oob += 1
-                    dx.append(0.0)
-                    dy.append(0.0)
-                    peakc.append(-1.0)
-                    continue
+                fra, fdec, peak_val = res["fra"], res["fdec"], res["peak"]
 
-                # dra and ddec are stored as 1-based positions.
-                x0 = int(dra[i] - 1)
-                y0 = int(ddec[i] - 1)
-
-                if x0 < 0 or x0 >= nx or y0 < 0 or y0 >= ny:
-                    cnt_oob += 1
-                    dx.append(0.0)
-                    dy.append(0.0)
-                    peakc.append(-1.0)
-                    continue
-
-                # -------------------------------------------------------------
-                # 2. Create first cutout for peak detection
-                # -------------------------------------------------------------
-                y1 = int(ddec[i] - 1 - boxsize / 2)
-                y2 = int(ddec[i] - 1 + boxsize / 2 + 1)
-                x1 = int(dra[i] - 1 - boxsize / 2)
-                x2 = int(dra[i] - 1 + boxsize / 2 + 1)
-
-                if y1 < 0 or x1 < 0 or y2 > ny or x2 > nx:
-                    cnt_edge += 1
-                    dx.append(0.0)
-                    dy.append(0.0)
-                    peakc.append(-1.0)
-                    continue
-
-                cutout = image_data[y1:y2, x1:x2]
-
-                if cutout.size == 0 or not np.any(np.isfinite(cutout)):
-                    cnt_nopeak += 1
-                    dx.append(0.0)
-                    dy.append(0.0)
-                    peakc.append(-1.0)
-                    continue
-
-                threshold = np.full(
-                    cutout.shape,
-                    thr_val,
-                    dtype=float,
-                )
-
-                peaks = pd.find_peaks(
-                    cutout,
-                    threshold,
-                    box_size=max(1, int(boxsize / 4)),
-                    npeaks=1,
-                )
-
-                if peaks is None or len(peaks) == 0:
-                    cnt_nopeak += 1
-                    dx.append(0.0)
-                    dy.append(0.0)
-                    peakc.append(-1.0)
-                    continue
-
-                x_peak = float(peaks["x_peak"][0])
-                y_peak = float(peaks["y_peak"][0])
-                peak_val = float(peaks["peak_value"][0])
-
-                if not (
-                    np.isfinite(x_peak)
-                    and np.isfinite(y_peak)
-                    and np.isfinite(peak_val)
-                ):
-                    cnt_nopeak += 1
-                    dx.append(0.0)
-                    dy.append(0.0)
-                    peakc.append(-1.0)
-                    continue
-
-                # Do not append peakc yet.
-                # It is appended only after all calculations for this star
-                # complete successfully.
-                nra = int(dra[i] - (0.5 * boxsize - x_peak))
-                ndec = int(ddec[i] - (0.5 * boxsize - y_peak))
-
-                # -------------------------------------------------------------
-                # 3. Create second cutout for centroid calculation
-                # -------------------------------------------------------------
-                y1b = int(ndec - 1 - boxsize / 4)
-                y2b = int(ndec - 1 + boxsize / 4 + 1)
-                x1b = int(nra - 1 - boxsize / 4)
-                x2b = int(nra - 1 + boxsize / 4 + 1)
-
-                if y1b < 0 or x1b < 0 or y2b > ny or x2b > nx:
-                    cnt_edge += 1
-                    dx.append(0.0)
-                    dy.append(0.0)
-                    peakc.append(-1.0)
-                    continue
-
-                cutout2 = image_data[y1b:y2b, x1b:x2b]
-
-                if cutout2.size == 0 or not np.any(np.isfinite(cutout2)):
-                    cnt_badflux += 1
-                    dx.append(0.0)
-                    dy.append(0.0)
-                    peakc.append(-1.0)
-                    continue
-
-                # -------------------------------------------------------------
-                # 4. Save normalized cutout of the brightest catalog star
-                # -------------------------------------------------------------
+                # Normalized cutout of the brightest catalog star (centred on the
+                # centroid pixel) for cal_seeing
                 if (
                     max_flux is not None
                     and np.isfinite(fluxn[i])
                     and np.isclose(float(fluxn[i]), max_flux)
                 ):
+                    nra = int(round(fra))
+                    ndec = int(round(fdec))
                     y1n = int(ndec - 1 - boxsize / 2)
                     y2n = int(ndec - 1 + boxsize / 2 + 1)
                     x1n = int(nra - 1 - boxsize / 2)
@@ -762,27 +994,16 @@ class GFAGuider:
 
                     if y1n >= 0 and x1n >= 0 and y2n <= ny and x2n <= nx:
                         cutoutnp = image_data[y1n:y2n, x1n:x2n]
-
-                        if (
-                            cutoutnp.size > 0
-                            and np.any(np.isfinite(cutoutnp))
-                        ):
+                        if cutoutnp.size > 0 and np.any(np.isfinite(cutoutnp)):
                             cutout_max = float(np.nanmax(cutoutnp))
-
                             if np.isfinite(cutout_max) and cutout_max > 0:
                                 cutoutn = cutoutnp / cutout_max * 1000.0
-
                                 fits_file = os.path.join(
                                     self.cutout_path,
                                     f"cutout_fluxmax_{file_counter}.fits",
                                 )
-
                                 try:
-                                    fits.writeto(
-                                        fits_file,
-                                        cutoutn,
-                                        overwrite=True,
-                                    )
+                                    fits.writeto(fits_file, cutoutn, overwrite=True)
                                     cutoutn_stack.append(cutoutn)
                                 except Exception as exc:
                                     # Failure to save a seeing cutout should not
@@ -792,49 +1013,7 @@ class GFAGuider:
                                         f"star {i + 1}: {exc}"
                                     )
 
-                # -------------------------------------------------------------
-                # 5. Calculate flux-weighted centroid
-                # -------------------------------------------------------------
-                finite_cutout2 = np.nan_to_num(
-                    cutout2.astype(float, copy=False),
-                    nan=0.0,
-                    posinf=0.0,
-                    neginf=0.0,
-                )
-
-                total_flux = float(np.sum(finite_cutout2))
-
-                if not np.isfinite(total_flux) or total_flux <= 0:
-                    cnt_badflux += 1
-                    dx.append(0.0)
-                    dy.append(0.0)
-                    peakc.append(-1.0)
-                    continue
-
-                row_indices, col_indices = np.indices(
-                    finite_cutout2.shape,
-                    dtype=float,
-                )
-
-                xcs = float(np.sum(finite_cutout2 * col_indices))
-                ycs = float(np.sum(finite_cutout2 * row_indices))
-
-                xc = xcs / total_flux
-                yc = ycs / total_flux
-
-                if not np.isfinite(xc) or not np.isfinite(yc):
-                    cnt_badflux += 1
-                    dx.append(0.0)
-                    dy.append(0.0)
-                    peakc.append(-1.0)
-                    continue
-
-                fra = nra - (boxsize / 4 - xc)
-                fdec = ndec - (boxsize / 4 - yc)
-
-                # -------------------------------------------------------------
-                # 6. Convert pixel offset to on-sky angular offset
-                # -------------------------------------------------------------
+                # Pixel offset -> on-sky angular offset.
                 # Map both the measured centroid and the expected catalog
                 # position to the sky through the reference WCS and take
                 # their difference. fra/fdec and dra_f/ddec_f are 1-based.
@@ -845,90 +1024,49 @@ class GFAGuider:
                 ra_c, dec_c = wcs.pixel_to_world_values(
                     dra_f[i] - 1.0, ddec_f[i] - 1.0
                 )
-
                 dra_deg = (float(ra_m) - float(ra_c) + 180.0) % 360.0 - 180.0
-
                 dx_val = dra_deg * math.cos(math.radians(float(dec_c))) * 3600.0
                 dy_val = (float(dec_m) - float(dec_c)) * 3600.0
-
                 if not np.isfinite(dx_val) or not np.isfinite(dy_val):
-                    raise ValueError(
-                        f"Non-finite offset: dx={dx_val}, dy={dy_val}"
-                    )
-
-                # Append all three outputs together only after successful
-                # completion of this star.
-                dx.append(float(dx_val))
-                dy.append(float(dy_val))
-                peakc.append(float(peak_val))
-
-                cnt_ok += 1
-                ok_peak_values.append(float(peak_val))
-
+                    raise ValueError(f"Non-finite offset: dx={dx_val}, dy={dy_val}")
             except Exception as exc:
-                cnt_exc += 1
+                counts["exc"] += 1
+                self.logger.debug(f"Offset exception for star {i + 1}: {exc}")
+                dx.append(0.0)
+                dy.append(0.0)
+                peakc.append(-1.0)
+                continue
 
-                # Ensure exactly one dx, dy, and peakc value per input star.
-                if len(dx) == dx_len_before:
-                    dx.append(0.0)
-                elif len(dx) > dx_len_before + 1:
-                    del dx[dx_len_before + 1:]
-
-                if len(dy) == dy_len_before:
-                    dy.append(0.0)
-                elif len(dy) > dy_len_before + 1:
-                    del dy[dy_len_before + 1:]
-
-                if len(peakc) == peak_len_before:
-                    peakc.append(-1.0)
-                elif len(peakc) == peak_len_before + 1:
-                    peakc[-1] = -1.0
-                elif len(peakc) > peak_len_before + 1:
-                    del peakc[peak_len_before + 1:]
-                    peakc[-1] = -1.0
-
-                self.logger.debug(
-                    f"Finding peaks/centroid exception for star {i + 1}: {exc}"
-                )
-
-        # Final length validation
-        if not (len(dx) == len(dy) == len(peakc) == len(dra)):
-            self.logger.error(
-                "Centroid output length mismatch after processing: "
-                f"stars={len(dra)}, dx={len(dx)}, dy={len(dy)}, "
-                f"peakc={len(peakc)}"
-            )
-            raise RuntimeError(
-                "cal_centroid_offset() produced inconsistent output lengths."
-            )
+            dx.append(float(dx_val))
+            dy.append(float(dy_val))
+            peakc.append(float(peak_val))
+            counts["ok"] += 1
+            ok_peak_values.append(float(peak_val))
 
         if ok_peak_values:
-            pmin = float(np.min(ok_peak_values))
-            pmed = float(np.median(ok_peak_values))
-            pmax = float(np.max(ok_peak_values))
             peak_stats = (
                 f"peak(min/med/max)="
-                f"{pmin:.2f}/{pmed:.2f}/{pmax:.2f}"
+                f"{np.min(ok_peak_values):.2f}/{np.median(ok_peak_values):.2f}/"
+                f"{np.max(ok_peak_values):.2f}"
             )
         else:
             peak_stats = "peak(min/med/max)=NA"
 
         self.logger.info(
             f"[peaks][file#{file_counter}] "
-            f"stars={len(dra)} "
-            f"ok={cnt_ok} "
-            f"nopeak={cnt_nopeak} "
-            f"oob={cnt_oob} "
-            f"edge={cnt_edge} "
-            f"badflux={cnt_badflux} "
-            f"exc={cnt_exc} "
+            f"stars={n_stars} "
+            f"ok={counts['ok']} "
+            f"nopeak={counts['nopeak']} "
+            f"oob={counts['oob']} "
+            f"edge={counts['edge']} "
+            f"badflux={counts['badflux']} "
+            f"neighbour={counts['neighbour']} "
+            f"exc={counts['exc']} "
             f"thr={thr_val:.2f} "
+            f"fwhm={fwhm:.2f}px "
             f"{peak_stats}"
         )
-
-        self.logger.debug(
-            "==== Finished centroid offset calculation ===="
-        )
+        self.logger.debug("==== Finished centroid offset calculation ====")
 
         return dx, dy, peakc, cutoutn_stack
 

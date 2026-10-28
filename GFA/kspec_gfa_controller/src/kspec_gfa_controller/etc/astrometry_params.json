@@ -52,6 +52,11 @@
     },
     "detection": {
         "box_size": 40,
+        "centroid": {
+            "fwhm_px": 8.0,
+            "measure_fwhm": true,
+            "neighbour_max_bias_px": 0.05
+        },
         "criteria": {
             "critical_outlier": 0.25
         },
