@@ -799,6 +799,14 @@ class MainWindow(QMainWindow):
                             del self._pending_spec_cmdlog[func]
                         if status == 'success':
                             try:
+                                details = response_data.get('cmdlog') or {}
+                                paths = response_data.get('filenames') or [response_data.get('filename')]
+                                row['file'] = details.get('file') or ', '.join(
+                                    str(path).replace('\\', '/').rsplit('/', 1)[-1]
+                                    for path in paths if path not in (None, '', 'None')
+                                )
+                                row['grating'] = details.get('grating', '')
+                                row['central_wave'] = details.get('central_wave', '')
                                 self.obslog = await asyncio.to_thread(
                                     self._append_spec_cmdlog, row)
                                 self.scriptrun.obslog = self.obslog
@@ -2369,6 +2377,7 @@ class MainWindow(QMainWindow):
         log.add_log(
             row['ut'], row['projid'], row['tile_id'], row['objtype'],
             row['object_name'], row['exposure'], row['exp_num'], row['comments'],
+            row.get('file', ''), row.get('grating', ''), row.get('central_wave', ''),
             value_input_option='RAW',
         )
         return log

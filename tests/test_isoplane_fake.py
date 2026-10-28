@@ -140,7 +140,11 @@ class IsoplaneFakeTest(unittest.TestCase):
         self.assertTrue(all(row['ut'].startswith('2026-') for row in rows))
         self.assertTrue(all(row['projid'] == row['tile_id'] == row['object_name'] == ''
                             for row in rows))
-        self.assertTrue(all(row['comments'].endswith('.fits') for row in rows))
+        self.assertTrue(all(row['comments'] == '' for row in rows))
+        self.assertEqual(rows[0]['file'], ', '.join(os.path.basename(path)
+                                                  for path in replies[0]['filenames']))
+        self.assertTrue(all(row['grating'] == '[500nm,600][0][0]' and
+                            row['central_wave'] == 430.0 for row in rows))
 
     def test_ics_records_reply_and_sheet_failure_does_not_fail_frames(self):
         from Lib.updatelog import add_isoplane_reply
@@ -157,7 +161,8 @@ class IsoplaneFakeTest(unittest.TestCase):
         log_class.assert_called_once_with('20261101')
         log.add_log.assert_called_once_with(
             reply['cmdlog']['ut'], 'P1', '0123', 'Bias', 'NGC 1', 0.0, 1,
-            reply['filename'], value_input_option='RAW')
+            '', os.path.basename(reply['filename']), '[500nm,600][0][0]', 430.0,
+            value_input_option='RAW')
         self.assertIs(add_isoplane_reply(log, {**reply, 'status': 'error'}), log)
         log.add_log.assert_called_once()
         with patch('Lib.updatelog.obslog', side_effect=RuntimeError('sheet unavailable')):
@@ -179,7 +184,23 @@ class IsoplaneFakeTest(unittest.TestCase):
             add_isoplane_reply(None, reply)
         row = log_class.return_value.add_log.call_args.args
         self.assertEqual(row[1:7], ('Calib', '0001', 'Object', '0001', 300.0, 3))
-        self.assertEqual(row[7], reply['filename'])
+        self.assertEqual(row[7], '')
+        self.assertEqual(row[8], ', '.join(os.path.basename(path)
+                                          for path in reply['filenames']))
+        self.assertEqual(row[9:11], ('[500nm,600][0][0]', 430.0))
+
+    def test_cmdlog_uses_current_specinitial_setup(self):
+        lf = FakeLightField(time_scale=0.001, shape=(1, 8, 10),
+                            grating='[500nm,150][0][0]', center_nm=620.5)
+        iso = self.make(lf=lf)
+        self.run_cmds(iso, body('specinitial', dirname='20261101',
+                                experiment='KSPEC_150_620'),
+                      body('getflat', time=2, numframe=2, header=HEADER))
+        reply, = self.server.done('getflat')
+        self.assertEqual(reply['cmdlog']['grating'], '[500nm,150][0][0]')
+        self.assertEqual(reply['cmdlog']['central_wave'], 620.5)
+        self.assertEqual(reply['cmdlog']['file'], ', '.join(
+            os.path.basename(path) for path in reply['filenames']))
 
     def test_exposure_numbers_and_unknown_values(self):
         iso = self.make()

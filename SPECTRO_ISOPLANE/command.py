@@ -460,6 +460,13 @@ class Isoplane:
         def known(value):
             return "" if value is None or str(value).strip() in ("", "None") else value
 
+        center_nm = known(lf.get("center_nm"))
+        if center_nm != "":
+            try:
+                center_nm = float(center_nm)
+            except (TypeError, ValueError):
+                pass
+
         cmdlog = {
             "night": self.night,
             "ut": known(ut_start),
@@ -470,7 +477,10 @@ class Isoplane:
             "object_name": known(header.get("OBJECT")),
             "exposure": exptime,
             "exp_num": n,
-            "comments": paths[-1],
+            "comments": "",
+            "file": ", ".join(os.path.basename(path) for path in paths),
+            "grating": known(lf.get("grating")),
+            "central_wave": center_nm,
         }
         await self.reply(server, func, f"{n} {kind} frame(s) obtained.", filename=paths[-1],
                          filenames=paths, backend="ISOPLANE", cmdlog=cmdlog)

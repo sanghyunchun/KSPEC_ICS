@@ -18,7 +18,8 @@ the GUI and the observing scripts work unchanged:
 
 After a frame command saves all its images, its `Done` reply includes `cmdlog`: observing
 night, UT (first frame start), PROJID, TILE ID, OBJTYPE, OBJECT, EXPOSURE (seconds), EXP #
-(frames in the command), and Comments (last saved FITS path). Unknown header values are blank.
+(frames in the command), File (all saved FITS names), grating, central wave (nm) from the
+LightField setup used for the exposure, and Comment. Unknown values are blank.
 The ICS receives this reply and appends the row to the `CMDLOG` spreadsheet. Google credentials
 are needed on the ICS machine only; a sheet failure does not change the exposure reply.
 
