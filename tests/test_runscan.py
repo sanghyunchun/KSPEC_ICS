@@ -32,11 +32,15 @@ class FakeClient:
         self.fail_fbpoffset_at = fail_fbpoffset_at
         self.trial_json = trial_json
         self.offsets = []           # the 'offsets' of every fbpoffset, in order
+        self.gfa_queue = None       # GFA guide replies go here (the ICS GFA_response_queue)
+        self.guide_during = {}      # frame number -> GFA reply delivered while it exposes
 
     async def send_message(self, queue, message):
         msg = json.loads(message)
         func = msg['func']
         self.sent.append((queue, func))
+        if queue == 'GFA':          # guide replies are fed to gfa_queue by the test
+            return
         inst = {'ISOPLANE': 'SPEC'}.get(queue, queue)     # servers reply as themselves
         reply = {'inst': inst, 'func': func, 'process': 'Done', 'status': 'success',
                  'message': f'{func} done'}
@@ -55,6 +59,10 @@ class FakeClient:
                          zoflux={'ok': True, 'nfib': 43,
                                  'fibres': {'label': labels,
                                             'flux': [1000.0 + i for i in range(len(labels))]}})
+            guide = self.guide_during.get(len(self.offsets))
+            if guide is not None:
+                await self.gfa_queue.put(guide)
+                await asyncio.sleep(0.05)       # the guide task applies it mid-exposure
         await self.response_queue.put(reply)
 
 
@@ -226,6 +234,50 @@ class RunscanTests(unittest.IsolatedAsyncioTestCase):
         steps = [json.loads(line) for line in
                  (self.outdir / 'ZOSCAN_0007_scan.jsonl').read_text().splitlines()]
         self.assertTrue(all(s['guiding'] for s in steps if s['kind'] == 'step'))
+
+    async def test_guide_cycles_are_recorded(self):
+        """The real handle_autoguide, a fake telescope and GFA: every cycle in the record."""
+        obs = self.scriptrun()
+        self.client.gfa_queue = obs.GFA_response_queue
+
+        def guide_reply(fdx, fdy):
+            return {'inst': 'GFA', 'func': 'gfaguide', 'process': 'ING', 'status': 'success',
+                    'fdx': fdx, 'fdy': fdy, 'fwhm': 1.2, 'save_path': 'guiding_save/2026-10-28',
+                    'astrometry_files': ['g1.fits']}
+        obs.GFA_response_queue.put_nowait(guide_reply(0.0, 0.0))    # deadband: resent as is
+        self.client.guide_during = {2: guide_reply(0.4, -0.3)}      # moves during frame 2
+        obs.send_telcom_command = AsyncMock(
+            side_effect=lambda cmd: b'ra 043000.00' if cmd == 'getra' else b'dec -300000.0')
+        obs.send_udp_message = AsyncMock()
+        obs.autoguidestop = AsyncMock()
+        params = [str(self.assign), str(self.path), '--zenith-angle', '0', '--arms', 'design',
+                  '--guide-settle', '0.05', '--npts', '3', '--pattern', 'line-x',
+                  '--no-centre-repeats',
+                  '--monitors', MONITOR, '--outdir', str(self.outdir)]
+        with redirect_stdout(io.StringIO()) as out:
+            await obs.handle_scan(obs, None, cli.parse_scan_args(params))
+        obs.autoguide_task.cancel()
+        self.assertIn(('GFA', 'gfaguide'), self.client.sent)
+        self.assertIsNone(obs.guide_listener)
+        records = [json.loads(line) for line in
+                   (self.outdir / 'ZOSCAN_0007_scan.jsonl').read_text().splitlines()]
+        guides = [r for r in records if r['kind'] == 'guide']
+        self.assertEqual([(g['seq'], g['event']) for g in guides],
+                         [(1, 'start'), (2, 'correction'), (3, 'correction')])
+        self.assertEqual((guides[0]['tel_ra'], guides[0]['tel_dec']), ('04:30:00.00',
+                                                                       '-30:00:00.00'))
+        self.assertTrue(guides[0]['save'])                  # guide frames kept by default
+        self.assertFalse(guides[1]['nonzero'])
+        self.assertEqual((guides[2]['fdx'], guides[2]['fdy']), (0.4, -0.3))
+        self.assertEqual(guides[2]['reply']['astrometry_files'], ['g1.fits'])
+        self.assertEqual(obs.send_udp_message.await_args.args[0],
+                         'KSPEC>TC tmradec ' + guides[2]['tmradec'])
+        steps = [r for r in records if r['kind'] == 'step']
+        self.assertEqual([s['guide_last'] for s in steps], [2, 2, 3])
+        self.assertEqual([s['guide_moved_during'] for s in steps], [[], [3], []])
+        self.assertLess(steps[1]['ut_start'], steps[1]['ut_end'])
+        self.assertIn('guide correction during the exposure', out.getvalue())
+        self.assertEqual((records[-1]['guide_cycles'], records[-1]['guide_corrections']), (3, 1))
 
     def test_bad_options_do_not_exit(self):
         for params in ([], ['a', 'b', '--npts', '4'], ['a', 'b', '--bogus'], ['-h']):

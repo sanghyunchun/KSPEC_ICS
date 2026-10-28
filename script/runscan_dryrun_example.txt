@@ -13,7 +13,7 @@ Input command: runscan <tile_planner>/ZOSCAN_2627_0005.assign.txt <tile_planner>
 [ICS] [dry-run] metrology loop (runmtl): fiducialon, illuon, mtltrial / fbpoffset until converged, illuoff, fiducialoff
 [ICS] [dry-run] scan centre = the path end (stand-in for the converged MTL trial JSON)
 [ICS] Plan: 27 poses within 99 um of the centre; largest axis turn 2.301 deg (K3).
-[ICS] [dry-run] autoguide 5 1, settle 30 s
+[ICS] [dry-run] autoguide 5 1 save=True, settle 30 s
 [ICS] Scan 1/27: dx +0.0 um, dy +0.0 um (E +0.00", N +0.00")
 [ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan000.json
 [ICS] [dry-run] SPEC getobj 4 1

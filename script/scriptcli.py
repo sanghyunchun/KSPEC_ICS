@@ -125,6 +125,9 @@ def parse_scan_args(params):
     p.add_argument('--no-guide', dest='guide', action='store_false', help='no GFA guiding')
     p.add_argument('--guide-settle', type=float, default=30.0,
                    help='seconds of guiding before the first scan frame')
+    p.add_argument('--no-guide-save', dest='guide_save', action='store_false',
+                   help='do not keep the GFA guide frames (default: kept, for re-solving the '
+                   'pointing of every guide cycle offline)')
     p.add_argument('--arms', default='mtl', choices=('mtl', 'design'),
                    help='arm lengths for the offsets: kspec_metrology (measured where known) '
                    'or design 5.2 / 11.6 mm')
@@ -266,6 +269,7 @@ async def clear_queue(queue):
 class script():
     def __init__(self):
         self.autoguide_task = None
+        self.guide_listener = None    # callable(dict) for each GFA guide reply (runscan records)
         self.script_task = None
         self.fwhm = None
         self.ra = None
@@ -777,6 +781,12 @@ class script():
         Every offset is computed before the first move, so a pose the kinematics refuse
         stops the scan before anything moves. After an FBP failure nothing else moves.
         Records: <outdir>/<project>_<tile>_scan.jsonl and one JSON per step.
+
+        Guiding is recorded per cycle (kind 'guide': GFA fdx/fdy/fwhm, telescope RA/Dec before,
+        tmradec sent, the GFA reply with its frame paths; frames kept unless --no-guide-save).
+        Each step carries its UT window, the last guide seq before it and the seqs of nonzero
+        corrections sent while it exposed: the fibres share one offset pattern, so a pointing
+        change between frames is only separable from the scan with these.
         """
         log = logging if logging is not None else (lambda message, level='normal': printing(message))
         night = datetime.now(timezone.utc).strftime('%Y%m%d')
@@ -863,17 +873,31 @@ class script():
                                 ('filename', 'itrial', 'err_max', 'err_median', 'converged',
                                  'offsetx', 'offsety')} if not opts.centre else None)
 
+        # Every guide cycle goes to the record (kind 'guide', numbered by seq): the GFA offsets,
+        # the telescope coordinate before and the tmradec sent, and the guide-frame paths. The
+        # fibres share one offset pattern, so a pointing change between frames is degenerate
+        # with the scan offsets; these records (and the saved GFA frames) are what separates it.
+        guides = []
+
+        def on_guide(event):
+            guides.append(event)
+            record.write(kind='guide', seq=len(guides), **event)
+
         guiding = False
         if opts.guide:
             if opts.dry_run:
-                log_or_print(logging, f'[dry-run] autoguide {self.GFAexpT:g} {self.GFAexpN}, '
-                             f'settle {opts.guide_settle:g} s', 'send')
+                log_or_print(logging, f'[dry-run] autoguide {self.GFAexpT:g} {self.GFAexpN} '
+                             f'save={opts.guide_save}, settle {opts.guide_settle:g} s', 'send')
             else:
-                await self.run_autoguide(scriptrun, self.GFAexpT, self.GFAexpN, False, logging=log)
+                self.guide_listener = on_guide
+                await self.run_autoguide(scriptrun, self.GFAexpT, self.GFAexpN, opts.guide_save,
+                                         logging=log)
                 guiding = True
                 await asyncio.sleep(opts.guide_settle)
                 if self.autoguide_task is None or self.autoguide_task.done():
                     log_or_print(logging, 'GFA guiding is not running; scan not started.', 'error')
+                    self.guide_listener = None
+                    await self.autoguidestop(scriptrun, logging)
                     record.write(kind='end', status='guiding failed')
                     return
 
@@ -890,6 +914,7 @@ class script():
                     fbp_failed, status = True, 'fbpoffset failed'
                     break
                 self.object = f'{stem} scan {k + 1}/{n}'
+                guide_before, ut_start = len(guides), starscan.utc_now('milliseconds')
                 if opts.dry_run:
                     log_or_print(logging, f'[dry-run] SPEC getobj {opts.exptime:g} 1', 'send')
                     spec = {'status': 'success', 'dry_run': True}
@@ -897,6 +922,13 @@ class script():
                     spec = await self.send_spec_and_log(f'getobj {opts.exptime:g} 1', 'Object',
                                                         opts.exptime, f'{k + 1}/{n}', scriptrun,
                                                         logging=logging)
+                ut_end = starscan.utc_now('milliseconds')
+                # telescope moves sent while getobj ran (window includes readout: conservative)
+                moved_during = [guide_before + i + 1 for i, g in enumerate(guides[guide_before:])
+                                if g['event'] == 'correction' and g.get('nonzero')]
+                if moved_during:
+                    log_or_print(logging, f'Scan {k + 1}/{n}: guide correction during the '
+                                 f'exposure (guide seq {moved_during}).', 'warning')
                 zoflux = spec.get('zoflux')
                 if spec.get('status') == 'success' and not opts.dry_run and zoflux is None:
                     log_or_print(logging, 'getobj reply has no zoflux: is the IsoPlane at zero '
@@ -908,8 +940,10 @@ class script():
                              max_turn_deg=s['max_turn'],
                              achieved_um=achieved, fbp_status=fbp.get('status'),
                              spec_status=spec.get('status'), filename=spec.get('filename'),
+                             ut_start=ut_start, ut_end=ut_end, spec_ut_start=spec.get('ut_start'),
                              fwhm=self.fwhm, guiding=bool(self.autoguide_task
                                                           and not self.autoguide_task.done()),
+                             guide_last=guide_before or None, guide_moved_during=moved_during,
                              flux=fluxes, zoflux=zoflux)
                 if spec.get('status') != 'success':
                     status = f"getobj failed: {spec.get('message')}"
@@ -933,7 +967,10 @@ class script():
                              f'before any move (centre: fbpoffset {centre_json}).', 'error')
             if guiding:
                 await self.autoguidestop(scriptrun, logging)
-            record.write(kind='end', status=status)
+            self.guide_listener = None
+            record.write(kind='end', status=status, guide_cycles=len(guides),
+                         guide_corrections=sum(1 for g in guides if g['event'] == 'correction'
+                                               and g.get('nonzero')))
             self.script_task = None
             log_or_print(logging, f'###### Star scan finished ({status}); records in '
                          f'{record.path} ######', 'comment')
@@ -988,6 +1025,16 @@ class script():
         except (TypeError, ValueError):
             return False
 
+    def _guide_event(self, event, **fields):
+        """Hand one guide cycle to self.guide_listener (if set); never stops the guiding."""
+        if self.guide_listener is None:
+            return
+        try:
+            self.guide_listener({'event': event, 'ut': starscan.utc_now('milliseconds'),
+                                 **fields})
+        except Exception as error:
+            printing(f'guide listener failed: {error}')
+
     async def handle_autoguide(self, exptime, expnum, save, scriptrun, logging):
         try:
             ra_bytes = await scriptrun.send_telcom_command('getra')
@@ -996,6 +1043,8 @@ class script():
             decdms_t=bytes_to_sexagesimal(dec_bytes)                 ## Current Telescope pointing position
 #            print(rahms_t)
             logging(f'Current Telescope pointing position = (RA,DEC)=({rahms_t}, {decdms_t})', level='normal')
+            self._guide_event('start', tel_ra=rahms_t, tel_dec=decdms_t, exptime=exptime,
+                              expnum=expnum, save=save)
             await handle_gfa(f'gfaguide {exptime} {expnum} {save} {rahms_t} {decdms_t}',scriptrun.ICSclient, logging=logging)
             while True:
                 try:
@@ -1009,6 +1058,7 @@ class script():
                     msg = response_data.get('message', 'GFA guiding stopped.')
                     level = 'error' if status == 'error' else 'warning'
                     logging(f'Autoguiding stopped without applying offset: {msg}', level=level)
+                    self._guide_event('stop', status=status, reply=response_data)
                     return
 
                 if "fdx" not in response_data:
@@ -1023,6 +1073,7 @@ class script():
                         'Autoguiding stopped without applying offset: invalid guiding values received.',
                         level='warning',
                     )
+                    self._guide_event('stop', status='invalid values', reply=response_data)
                     return
 
                 fdx = float(fdx)
@@ -1057,6 +1108,10 @@ class script():
                 logging(f'Applied Offset. New (RA,DEC) = {new_coord}', level='normal')
                 messagetcs = 'KSPEC>TC ' + 'tmradec ' + new_coord
                 await scriptrun.send_udp_message(messagetcs)
+                # 'nonzero' False: below the GFA deadband (critical_outlier), same coordinate resent
+                self._guide_event('correction', fdx=fdx, fdy=fdy, nonzero=bool(fdx or fdy),
+                                  fwhm=self.fwhm, tel_ra=rahms,
+                                  tel_dec=decdms, tmradec=new_coord, reply=response_data)
 
         except asyncio.CancelledError:
             print("Autoguide task was cancelled.")

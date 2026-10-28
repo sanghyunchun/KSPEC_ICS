@@ -116,6 +116,7 @@ runmtl          : Metrology loop after loadtile: illuon, then mtltrial (light on
                   (light off) until converged, then illuoff.
 runscan         : Zero-order star scan: runscan <assign> <path> [--pattern grid|cross|line-x|line-y]
                   [--step 1.4 --unit arcsec|um --npts 5 --exptime 4 --monitors H5,J3 --centre <json>
-                  --no-move --no-guide --mtl-check --quantum DEG --dry-run ...]. loadtile, fbpmoveall,
-                  metrology loop, guiding, then fbpoffset + getobj per offset (zero-order fluxes
-                  recorded), back to the centre. Records in ../DATA/STARSCAN/<UTC date>/.
+                  --no-move --no-guide --no-guide-save --mtl-check --quantum DEG --dry-run ...].
+                  loadtile, fbpmoveall, metrology loop, guiding, then fbpoffset + getobj per offset
+                  (zero-order fluxes and every guide cycle recorded), back to the centre. Records in
+                  ../DATA/STARSCAN/<UTC date>/.

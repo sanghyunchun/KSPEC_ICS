@@ -260,8 +260,8 @@ def sky_offset(dx_um, dy_um, um_per_arcsec=UM_PER_ARCSEC):
 
 
 # -------------------------------------------------------------- records
-def utc_now():
-    return dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')
+def utc_now(timespec='seconds'):
+    return dt.datetime.now(dt.timezone.utc).isoformat(timespec=timespec)
 
 
 class JsonLog:
