@@ -1,42 +1,49 @@
 {
   "description": "GFA boresight geometry per camera serial: sep_deg = chip centre to boresight, theta_deg = boresight direction in the camera pixel frame (+x towards +y).",
-  "method": "boresight of each set = vector mean of all camera centres",
-  "created_utc": "2026-10-27T11:55:12Z",
+  "method": "boresight of each set = centre of the camera ring",
+  "created_utc": "2026-10-28T16:56:49Z",
   "calibration_sets": [
-    "D20260123_T152557_40103667_exp5s.wcs",
-    "D20260123_T173011_40103651_exp5s.wcs",
-    "D20260124_T100006_40103834_exp1s.wcs"
+    "D20261028_T103804_40103651_exp10s.wcs",
+    "D20261028_T103831_40103651_exp10s.wcs",
+    "D20261028_T103858_40103651_exp10s.wcs",
+    "D20261028_T105041_40103651_exp10s.wcs",
+    "D20261028_T105107_40103651_exp10s.wcs",
+    "D20261028_T105135_40103651_exp10s.wcs",
+    "D20261028_T110106_40103651_combined.wcs",
+    "D20261028_T110155_40103651_combined.wcs",
+    "D20261028_T110244_40103651_combined.wcs",
+    "D20261028_T111717_40103651_exp10s.wcs",
+    "D20261028_T112617_40103651_exp10s.wcs",
+    "D20261028_T122351_40103651_exp10s.wcs",
+    "D20261028_T122433_40103651_exp10s.wcs",
+    "D20261028_T124707_40103651_exp5s.wcs",
+    "D20261028_T125957_40103651_exp5s.wcs"
   ],
   "cameras": {
     "40103651": {
-      "sep_deg": 1.4731025715800585,
-      "theta_deg": 89.58311803281055,
-      "n_sets": 3
+      "sep_deg": 1.473285394322656,
+      "theta_deg": 89.80231105327124,
+      "n_sets": 15
     },
     "40103663": {
-      "sep_deg": 1.4730586501401313,
-      "theta_deg": 88.77107939849266,
-      "n_sets": 3
-    },
-    "40103667": {
-      "sep_deg": 1.4723669079852642,
-      "theta_deg": 89.75692738771741,
-      "n_sets": 3
+      "sep_deg": 1.4740636438528738,
+      "theta_deg": 89.97170298959374,
+      "n_sets": 13
     },
     "40103831": {
-      "sep_deg": 1.4733664010095417,
-      "theta_deg": 90.0160726973882,
-      "n_sets": 3
+      "sep_deg": 1.4743180451874787,
+      "theta_deg": 90.09635069107297,
+      "n_sets": 15
     },
     "40103833": {
-      "sep_deg": 1.4751318919767111,
-      "theta_deg": 89.72748415704079,
-      "n_sets": 3
+      "sep_deg": 1.4732523473154642,
+      "theta_deg": 89.92679279567706,
+      "n_sets": 15
     },
     "40103834": {
-      "sep_deg": 1.4745504649462242,
-      "theta_deg": 90.0041736795296,
-      "n_sets": 3
+      "sep_deg": 1.4750482393982751,
+      "theta_deg": 89.80772999912053,
+      "n_sets": 15
     }
   }
 }

@@ -26,8 +26,13 @@ warnings.simplefilter('ignore', FITSFixedWarning)
 
 ROOT = Path(__file__).resolve().parents[1]
 GEOMETRY = ROOT / 'GFA' / 'etc' / BORESIGHT_GEOMETRY_FILE
+# Geometry of the January 2026 installation, kept for the commissioning tests below.
+GEOMETRY_JAN = ROOT / 'GFA' / 'etc' / 'boresight_geometry_2026-01.json'
 COMMISSIONING = (ROOT / 'GFA' / 'Simul' / 'kspec_gfa_controller' / 'src'
                  / 'kspec_gfa_controller' / 'img' / 'tempfiles')
+# solve-field .wcs of three 5-camera sets after the October 2026 reinstall (2026-10-28,
+# three fields; camera 40103667 dead)
+OCTOBER = ROOT / 'tests' / 'data' / 'gfa_wcs_20261028'
 RING_DEG = 1.473
 SCALE = 0.418 / 3600.0
 NX, NY = 1332, 1152
@@ -185,9 +190,16 @@ class RingCalibrationTests(unittest.TestCase):
             calib.calibrate([files, files], center='radec', boresight=offset)
 
 
+def camera_serials():
+    return {c['SerialNumber'] for c in json.loads(
+        (ROOT / 'GFA' / 'kspec_gfa_controller' / 'src' / 'kspec_gfa_controller'
+         / 'etc' / 'cams.json').read_text()
+    )['GfaController']['Elements']['Cameras']['Elements'].values()}
+
+
 @unittest.skipUnless(COMMISSIONING.is_dir(), 'commissioning solve-field outputs not present')
 class CommissioningGeometryTests(unittest.TestCase):
-    """The committed geometry on the 2026-01-23/24 solve-field outputs."""
+    """The January 2026 geometry on the 2026-01-23/24 solve-field outputs."""
 
     @staticmethod
     def frame_sets():
@@ -198,16 +210,12 @@ class CommissioningGeometryTests(unittest.TestCase):
                 fits.getheader(f))
         return [s for s in sets.values() if len(s) == 6]
 
-    def test_committed_geometry_covers_all_cameras(self):
-        geometry = load_boresight_geometry(GEOMETRY)
-        serials = {c['SerialNumber'] for c in json.loads(
-            (ROOT / 'GFA' / 'kspec_gfa_controller' / 'src' / 'kspec_gfa_controller'
-             / 'etc' / 'cams.json').read_text()
-        )['GfaController']['Elements']['Cameras']['Elements'].values()}
-        self.assertEqual(set(geometry), serials)
+    def test_january_geometry_covers_all_cameras(self):
+        geometry = load_boresight_geometry(GEOMETRY_JAN)
+        self.assertEqual(set(geometry), camera_serials())
 
     def test_five_cameras_match_six_camera_centre(self):
-        geometry = load_boresight_geometry(GEOMETRY)
+        geometry = load_boresight_geometry(GEOMETRY_JAN)
         sets = self.frame_sets()
         self.assertEqual(len(sets), 3)
         for headers in sets:
@@ -290,7 +298,7 @@ class ComputeBoresightTests(unittest.TestCase):
                         / 'kspec_gfa_controller' / 'img' / 'tempfiles').glob(
                             'D20260124_T10000*/*.wcs'))
         self.assertEqual(len(files), 6)
-        geometry_path = str(ROOT / 'GFA' / 'etc' / command.BORESIGHT_GEOMETRY_FILE)
+        geometry_path = str(GEOMETRY_JAN)
         ra6, dec6, method6, _ = command.compute_boresight(
             '', [str(f) for f in files], [], [], geometry_path)
         ra5, dec5, method5, info5 = command.compute_boresight(
@@ -300,6 +308,52 @@ class ComputeBoresightTests(unittest.TestCase):
         self.assertFalse(info5['stale'])
         sep = command.get_separation(ra6, dec6, ra5, dec5)
         self.assertLess(sep, 5.0)
+
+
+@unittest.skipUnless(OCTOBER.is_dir(), 'October 2026 solve-field outputs not present')
+class OctoberGeometryTests(unittest.TestCase):
+    """The committed geometry on 2026-10-28 frame sets, after the reinstall."""
+
+    @staticmethod
+    def frame_sets():
+        sets = {}
+        for f in sorted(OCTOBER.glob('*.wcs')):
+            stamp = re.match(r'(D\d{8}_T\d{6})', f.name).group(1)
+            sets.setdefault(stamp, {})[re.search(r'_T\d{6}_(\d+)_', f.name).group(1)] = f
+        return sets
+
+    def test_committed_geometry_covers_the_live_cameras(self):
+        geometry = load_boresight_geometry(GEOMETRY)
+        self.assertLessEqual(set(geometry), camera_serials())
+        live = {s for files in self.frame_sets().values() for s in files}
+        self.assertLessEqual(live, set(geometry))
+
+    def test_committed_geometry_matches_ring_centre(self):
+        geometry = load_boresight_geometry(GEOMETRY)
+        sets = self.frame_sets()
+        self.assertEqual(len(sets), 3)
+        for stamp, files in sets.items():
+            headers = {s: fits.getheader(f) for s, f in files.items()}
+            ring, _ = ring_centre([SkyCoord(*WCS(h).wcs.crval, unit='deg')
+                                   for h in headers.values()])
+            ra, dec, info = boresight_from_wcs(headers, geometry)
+            self.assertEqual(info['rejected'], [], stamp)
+            self.assertLess(info['rms_arcsec'], 5.0, stamp)
+            self.assertLess(ring.separation(SkyCoord(ra * u.deg, dec * u.deg)).arcsec, 3.0, stamp)
+            for drop in headers:
+                ra, dec, _ = boresight_from_wcs(
+                    {s: h for s, h in headers.items() if s != drop}, geometry)
+                sep = ring.separation(SkyCoord(ra * u.deg, dec * u.deg)).arcsec
+                self.assertLess(sep, 5.0, f'{stamp} drop {drop}: {sep:.1f}"')
+
+    def test_january_geometry_is_stale_after_the_reinstall(self):
+        for stamp, files in self.frame_sets().items():
+            paths = [str(f) for f in files.values()]
+            _, _, method, info = command.compute_boresight('', paths, [], [], str(GEOMETRY_JAN))
+            self.assertEqual(method, 'geometry')
+            self.assertTrue(info['stale'], stamp)
+            _, _, _, info = command.compute_boresight('', paths, [], [], str(GEOMETRY))
+            self.assertFalse(info['stale'], stamp)
 
 
 if __name__ == '__main__':
