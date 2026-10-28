@@ -707,7 +707,7 @@ def _all_hole_ids(nfib, fid_flag):
 
 
 def measure_fibers(head, x, y, nfib, coeff, data_dir, nexposure, max_dist=None, n_extra=0,
-                   exclude=None, mode='Raw', leftover=None, **pk):
+                   exclude=None, mode='Raw', leftover=None, origins=None, **pk):
     """fiber 노출에서 peak 을 찾아 (fiducial 로 맞춘) 변환으로 focal 좌표로 옮기고
     목표 위치에 가장 가까운 것을 그 fiber 로 본다. x, y 는 fiber + fiducial 전체
     목표 (fiducial 은 그 자리의 검출을 fiber 로 잘못 잡지 않게 하려고 넣는다).
@@ -787,6 +787,29 @@ def measure_fibers(head, x, y, nfib, coeff, data_dir, nexposure, max_dist=None, 
                     ", ".join(f"{alive[k]}" + (f" (nearest {D[k].min():.1f} mm)" if xf.size else "")
                               for k in np.where(lost)[0]))
         j[lost] = -1; dist[lost] = np.nan
+        # 목표 9 mm 안에 검출이 없는 fiber (positioner 가 크게 어긋났거나 안 움직인 경우): 그 positioner 의 arm
+        # 도달 범위 (중심에서 |a2-a1| .. a1+a2, 여유 1 mm) 안에 남은 검출이 **하나뿐** 이면 그것을 그 fiber 로 본다.
+        # 그래야 몇 도를 돌려야 제자리로 가는지(회전량) 가 나온다. 후보가 없거나 둘 이상이면 그대로 NaN (애매).
+        # 다른 살아 있는 fiber 에 이미 할당된 검출은 후보에서 뺀다. (2026-10-28)
+        a1_all, a2_all = cfg.arm_lengths()
+        arm = {i: (a, b) for i, a, b in zip(ids, a1_all, a2_all)}
+        if origins is not None:
+            ox, oy = np.asarray(origins[0], float), np.asarray(origins[1], float)
+        else:
+            oxy = cfg.hole_xy(alive); ox, oy = oxy[:, 0], oxy[:, 1]
+        taken = set(int(j[k]) for k in range(nrow) if j[k] >= 0)
+        for k in np.where(lost)[0]:
+            aa, bb = arm[alive[k]]
+            r = np.hypot(xf - ox[k], yf - oy[k])
+            cand = [q for q in range(xf.size) if q not in taken and (abs(bb - aa) - 1.0) <= r[q] <= (aa + bb + 1.0)]
+            if len(cand) == 1:
+                q = cand[0]; j[k] = q; dist[k] = D[k, q]; lost[k] = False; taken.add(q)
+                log.warning("%s: no detection near the target, but exactly one unassigned detection within its arm "
+                            "reach (%.1f mm from the centre, %.1f mm from the target) -- taken as this fiber "
+                            "(check the image before trusting the rotation)", alive[k], r[q], dist[k])
+            elif len(cand) > 1:
+                log.warning("%s: %d unassigned detections within its arm reach (%s mm from the centre) -- ambiguous, "
+                            "left NaN", alive[k], len(cand), ", ".join(f"{r[q]:.1f}" for q in cand))
     for i in np.setdiff1d(np.arange(nfib, x.size), rows):   # fiducial 행 (단일 이미지일 때만 쓰임): 가장 가까운 것
         if xf.size:
             j[i] = int(np.argmin(D[i])); dist[i] = D[i, j[i]]
@@ -1042,9 +1065,10 @@ def mtlcal(data_dir='./MTL/data/'
         xo_fid = np.where(fid_used, xo_fid, np.nan); yo_fid = np.where(fid_used, yo_fid, np.nan)
         ok_fid = np.isfinite(xo_fid)
 
+        origins_a = (xorigin[~dead][:nfib_a], yorigin[~dead][:nfib_a])      # 살아 있는 positioner 의 회전 중심
         xf_a, yf_a, _, (xo_fib, yo_fib) = measure_fibers(
             head, xa, ya, nfib_a, coeff, data_dir, nexposure, n_extra=n_extra,
-            exclude=(xo_fid[ok_fid], yo_fid[ok_fid]) if cross_exclude else None, mode=mode, **pk)
+            exclude=(xo_fid[ok_fid], yo_fid[ok_fid]) if cross_exclude else None, mode=mode, origins=origins_a, **pk)
         if cross_exclude:
             # fiber 자리를 지우고 fiducial 을 다시 찾아 변환을 다시 맞춘다 (fiducial 가까이 있는 fiber 의 빛이
             # 무게중심을 끌지 않게). 이 2차 탐색은 다듬기일 뿐이므로 여기서 fiducial 을 잃으면 (예: 어두운
@@ -1075,7 +1099,7 @@ def mtlcal(data_dir='./MTL/data/'
                 ok_fid = np.isfinite(xo_fid)
                 xf_a, yf_a, _, _ = measure_fibers(
                     head, xa, ya, nfib_a, coeff, data_dir, nexposure, n_extra=n_extra,
-                    exclude=(xo_fid[ok_fid], yo_fid[ok_fid]), mode=mode, **pk)
+                    exclude=(xo_fid[ok_fid], yo_fid[ok_fid]), mode=mode, origins=origins_a, **pk)
         xf_a[fa], yf_a[fa] = xf_fid, yf_fid                      # fiducial 은 전용 노출 값 (안 쓴 fiducial 은 NaN)
         save_fid_ref(json_dir, target_name, itrial, xo_fid, yo_fid)   # 다음 trial 의 fiducial 찾기 기준
 
