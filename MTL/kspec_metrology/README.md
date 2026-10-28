@@ -256,7 +256,12 @@ INFO Measured geometry /경로/Measured_Geometry.txt: 2/103 holes replaced
   offset 표, `lab.xy2ab` 의 출력과 target 파일의 alpha/beta, 각도 json, `lab.make_target(angles=)`
   의 입력은 모두 명령각이다 (초기 위치 = `angles=(0, 0)`). 이번 trial 회전량(dalpha, dbeta)은
   차이라서 영점과 무관하다.
-- 출력 alpha 는 (−180°, 180°] 로 접는다.
+- 출력하는 **절대** alpha(Trial 0, `lab.xy2ab`)는 기하각을 [0°, 360°) 로 둔 뒤 명령각으로 바꾼다
+  (`fiber_config.command_alpha`; 명령 alpha 는 (−330°, 30°], FBP 경로 끝각과 같은 범위). 회전량(dalpha)은 차이라서
+  (−180°, 180°]. 2026-10-29 이전에는 (−180°, 180°] 로 접어 기하각 210..360° 인 자세가 +30..+180° 로 나갔고,
+  fbpoffset 은 절대각으로 움직이므로 그 positioner 가 반대 방향으로 한 바퀴 돌았다 (KSPEC_ICS 836ea99 에서 수정).
+- beta 명령각은 positioner raw −180..0 에 FBP 영점 150 을 더한 −30..150 이고, 이 패키지의 elbow-down 해(기하각
+  0..180°)가 그대로 그 범위다.
 - 부호가 틀리면 positioner 가 trial 마다 목표에서 **멀어진다** (오차가 1, 2, 3 배로 는다). 영점이
   틀리면 Trial 0 json 이 (0, 0) 이 아니다. 다른 규약이면 `KSPEC_ANGLE_SIGN`, `KSPEC_ANGLE_ZERO`
   또는 `fiber_config` 의 값.
