@@ -118,10 +118,8 @@ def xy2ab(xorigin, yorigin, x, y, arm1, arm2):
         th.flat[i], ph.flat[i] = find_angle_double_method2_select_elbow(
             xo.flat[i], yo.flat[i], x.flat[i], y.flat[i], a1.flat[i], a2.flat[i],
             elbow=cfg.ELBOW, clockwise=cfg.CLOCKWISE)
-    sa, sb = cfg.ANGLE_SIGN
-    za, zb = cfg.ANGLE_ZERO
-    alpha = sa*th*rtod - za
-    return (alpha + 180.) % 360. - 180., sb*ph*rtod - zb
+    sb, zb = cfg.ANGLE_SIGN[1], cfg.ANGLE_ZERO[1]
+    return cfg.command_alpha(th), sb*ph*rtod - zb
 
 
 def read_spec(path):

@@ -480,6 +480,20 @@ if os.environ.get(ANGLE_ZERO_ENV, '').strip():
     if len(ANGLE_ZERO) != 2:
         raise ValueError(f"{ANGLE_ZERO_ENV} must be two values (alpha, beta) in deg, e.g. '30,150'")
 
+
+
+def command_alpha(theta):
+    """기하각 theta [rad] -> alpha 명령각 [deg] (절대각).
+
+    기하각을 타일 경로 계획기 (.path.txt) 와 같은 [0, 360) 로 둔 뒤 명령각으로 바꾼다. 기본 규약에서는
+    명령 alpha 가 (-330, 30] 이고, FBP 경로 끝각도 같은 범위다 (예: ASPECS_2627_0005 끝각 -329.3 ~ 28.0).
+    (-180, 180] 로 접으면 안 된다: 기하각 210 도 넘는 positioner 가 360 도 다른 명령각 (-220 -> 140) 을
+    받고, fbpoffset 은 절대각으로 움직이므로 그 positioner 가 반대 방향으로 한 바퀴 돈다 (2026-10-29).
+    """
+    sa, za = ANGLE_SIGN[0], ANGLE_ZERO[0]
+    return sa*(np.degrees(np.asarray(theta, dtype=float)) % 360.) - za
+
+
 ELBOW = "down"
 CLOCKWISE = False
 
