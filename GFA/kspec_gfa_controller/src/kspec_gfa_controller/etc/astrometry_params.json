@@ -17,6 +17,7 @@
         }
       },
     "pointing_filter": {
+        "enabled": false,
         "min_valid_images": 5,
         "min_std_bg": 0.3,
         "min_peaks": 10,

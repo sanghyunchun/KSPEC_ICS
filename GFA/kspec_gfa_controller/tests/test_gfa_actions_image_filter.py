@@ -7,6 +7,9 @@ frame; the method had been dropped from GFAActions while the call stayed, so the
 filter raised AttributeError and every guide/pointing cycle failed. These tests run
 the real filter (real photutils DAOStarFinder, no stubs) on synthetic GFA frames.
 
+The check is optional: pointing_filter.enabled (false in astrometry_params.json)
+turns it on; when off, every raw frame passes and astrometry decides.
+
 min_brightest_flux (3000 in astrometry_params.json) is compared with DAOStarFinder's
 "flux", whose meaning depends on the photutils version: a summed flux in photutils 2.x
 (22269 for a 2500-ADU-peak star here) but a peak-to-threshold ratio in 1.3 (67). The
@@ -113,8 +116,8 @@ def make_actions(**pointing_filter):
 
 @pytest.fixture
 def actions():
-    """Config cuts, with the version-dependent brightest-flux cut off."""
-    return make_actions(min_brightest_flux=0.0)
+    """Filter enabled with the config cuts, minus the version-dependent brightest-flux cut."""
+    return make_actions(enabled=True, min_brightest_flux=0.0)
 
 
 def _photutils_major():
@@ -174,12 +177,39 @@ def test_cube_and_unreadable_are_rejected(actions, tmp_path):
     assert not res["passed"] and res["reasons"][0].startswith("filter_error")
 
 
-def test_filter_keeps_good_frames_and_moves_bad_ones(actions, tmp_path):
-    raw, unclean = tmp_path / "raw", tmp_path / "unclean"
+def three_frames(tmp_path):
+    raw = tmp_path / "raw"
     raw.mkdir()
     write(raw / "D20261027_T000000_40103651_exp5s.fits", frame(25, seed=2))
     write(raw / "D20261027_T000000_40103667_exp5s.fits", frame(25, seed=3))
     write(raw / "D20261027_T000000_40103831_exp5s.fits", frame(0, seed=4))  # clouded out
+    return raw, tmp_path / "unclean"
+
+
+def test_filter_is_off_in_shipped_config(tmp_path, monkeypatch):
+    assert json.loads(CONFIG.read_text())["pointing_filter"]["enabled"] is False
+    act = make_actions()
+    monkeypatch.setattr(act, "_evaluate_pointing_image_quality",
+                        lambda *a, **k: pytest.fail("quality check ran while disabled"))
+    raw, unclean = three_frames(tmp_path)
+
+    res = act._filter_pointing_raw_images(raw_path=raw, unclean_path=unclean, label="pointing")
+
+    assert res["n_passed"] == 3 and res["n_failed"] == 0
+    assert res["passed_files"] == sorted(str(p) for p in raw.iterdir())
+    assert not unclean.exists()
+
+
+def test_filter_off_when_key_missing(tmp_path):
+    act = make_actions()
+    del act.env.astrometry.inpar["pointing_filter"]["enabled"]
+    raw, unclean = three_frames(tmp_path)
+    res = act._filter_pointing_raw_images(raw_path=raw, unclean_path=unclean)
+    assert res["n_passed"] == 3
+
+
+def test_filter_keeps_good_frames_and_moves_bad_ones(actions, tmp_path):
+    raw, unclean = three_frames(tmp_path)
 
     res = actions._filter_pointing_raw_images(raw_path=raw, unclean_path=unclean, label="guiding")
 
