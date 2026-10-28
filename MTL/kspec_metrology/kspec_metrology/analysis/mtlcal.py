@@ -1165,6 +1165,16 @@ def mtlcal(data_dir='./MTL/data/'
         log.warning("cumulative beta outside the positioner range %s for %s -- clipped (arm at its end stop)",
                     cfg.BETA_RANGE, ", ".join(f"{ids_b[i]} ({angle_cum[2*i+1]:.1f})" for i in np.where(out_b)[0]))
         angle_cum[1::2] = cfg.clip_beta(angle_cum[1::2])
+    # 그래도 범위 밖인 fiber (정상 경로에서는 없어야 한다) 는 그 fiber 만 직전 각도로 되돌리고 (회전 0) 나머지는
+    # 그대로 내보낸다. fiber 하나 때문에 trial 전체를 버리지 않는다.
+    bad = cfg.out_of_range_mask(angle_cum)
+    if bad.any():
+        ids_b = list(cfg.fiber_ids())
+        log.error("command angles outside the positioner range for %s -- these fibers keep their previous "
+                  "angles this trial (rotation 0); the others are written normally",
+                  ", ".join(f"{ids_b[i]} ({angle_cum[2*i]:.1f}, {angle_cum[2*i+1]:.1f})" for i in np.where(bad)[0]))
+        for i in np.where(bad)[0]:
+            angle_cum[2*i:2*i+2] = prev[2*i:2*i+2]; angle_rot[2*i:2*i+2] = 0.
 
     if json_dir is not None and target_name is not None:
         np.save(naming.coeff_path(json_dir, target_name, itrial), coeff)   # 다음 trial 의 Predict 가 읽는다

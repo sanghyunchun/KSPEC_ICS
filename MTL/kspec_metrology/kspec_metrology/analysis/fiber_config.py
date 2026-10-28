@@ -525,9 +525,20 @@ def alpha_cmd_range():
     return (ends[0], ends[1]) if sa > 0 else (ends[0], ends[1])
 
 
+def out_of_range_mask(angles):
+    """fiber 순서로, (alpha, beta) 가운데 하나라도 positioner 범위 밖이면 True (NaN 은 False)."""
+    a = np.asarray(angles, float)[0::2]; b = np.asarray(angles, float)[1::2]
+    lo, hi = alpha_cmd_range()
+    bad_a = np.isfinite(a) & ((a <= lo - 1e-9) | (a > hi + 1e-9))
+    bad_b = np.isfinite(b) & ((b < BETA_RANGE[0] - 1e-9) | (b > BETA_RANGE[1] + 1e-9))
+    return bad_a | bad_b
+
+
 def check_command_angles(angles, where=''):
     """내보낼 (alpha, beta, alpha, beta, ...) 가 positioner 범위 안인지 확인한다. 밖이면 ValueError.
-    alpha 는 (lo, hi] 한 바퀴 범위, beta 는 BETA_RANGE. NaN 은 (끊어진 fiber) 통과."""
+    alpha 는 (lo, hi] 한 바퀴 범위, beta 는 BETA_RANGE. NaN 은 (끊어진 fiber) 통과.
+    (정상 경로에서는 wrap_alpha_cmd / clip_beta 가 먼저 적용되고, mtlcal 은 그래도 밖인 fiber 를 직전 각도로
+    되돌리므로 여기까지 오지 않는다. 마지막 방어선.)"""
     a = np.asarray(angles, float)[0::2]; b = np.asarray(angles, float)[1::2]
     lo, hi = alpha_cmd_range()
     bad_a = np.isfinite(a) & ((a <= lo - 1e-9) | (a > hi + 1e-9))
