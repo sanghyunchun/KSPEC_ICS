@@ -311,8 +311,10 @@ class BrokerLink:
         await self.exchange.publish(self._aio_pika.Message(body=body.encode()),
                                     routing_key=routing_key)
 
-    async def wait_done(self, inst, func, timeout, on_reply=None):
-        """The Done reply of inst/func; {'status': 'error', ...} after timeout."""
+    async def wait_done(self, inst, func, timeout, on_reply=None, match=None):
+        """The Done reply of inst/func (and match(reply), if given); {'status': 'error', ...}
+        after timeout. match lets a caller skip the late Done of an abandoned earlier request
+        of the same func (e.g. mtltest by its image names)."""
         import asyncio
         try:
             async with asyncio.timeout(timeout):
@@ -320,11 +322,11 @@ class BrokerLink:
                     async for m in it:
                         async with m.process():
                             d = json.loads(m.body)
-                        if d.get('inst') != inst or d.get('func') not in (func, None, 'None'):
+                        if d.get('inst') != inst or d.get('func') != func:
                             continue
                         if on_reply is not None:
                             on_reply(d)
-                        if d.get('process') == 'Done':
+                        if d.get('process') == 'Done' and (match is None or match(d)):
                             return d
         except TimeoutError:
             return {'inst': inst, 'func': func, 'process': 'Done', 'status': 'error',

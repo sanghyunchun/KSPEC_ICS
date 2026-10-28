@@ -1,0 +1,87 @@
+# Example with --every 8 to show the warning: skipped rows make straight moves the planner did not check.
+# Use the default --every 1 for the real collision test.
+$ python script/pathtest.py --path <tile_planner>/ZOSCAN_2627_0005.coarse.path.txt --assign <tile_planner>/ZOSCAN_2627_0005.assign.txt --every 8 --backlight --dry-run --outdir <TEMP>/pathtest_dryrun
+# <tile_planner> = proj-kspecdr/outputs/tile_planner, <TEMP> = %TEMP%
+
+==============================================================================
+DRY RUN: nothing is sent to the broker or the lamps; no positioner moves.
+path   <tile_planner>\ZOSCAN_2627_0005.coarse.path.txt  (ZOSCAN tile 5)
+rows   7: [0, 8, 16, 24, 32, 40, 47]
+MTL    mtltest 0.5 s x 1 per row; back light on (IsoPlane stage); fiducials off
+return yes; prompts no; lit (class 1) 37
+outdir <TEMP>\pathtest_dryrun
+Before the first move the positioners must be at row 0: the power-on pose (command 0 for all, FBP state 'initial').
+WARNING: the path rows skipped between visited rows leave the direct moves by up to 15.73 deg: those moves are NOT the planner-checked path (--every 1 follows it row by row).
+==============================================================================
+[dry-run] would send ISOPLANE illuon
+[dry-run] would send ISOPLANE illulightoff
+[dry-run] would send FBP fbpoffset ZOSCAN_2627_0005_coarse_r000.json (146 angles)
+[dry-run] would send ISOPLANE illulighton
+[dry-run] would send MTL mtltest exptime 0.5 s x 1, file ZOSCAN_2627_0005_coarse_r000
+[dry-run] would send ISOPLANE illulightoff
+[fwd 1/7] row 000 <- 000: 0 move (0 lit); FBP success; MTL ZOSCAN_2627_0005_coarse_r000 success (1 image)
+[dry-run] would send FBP fbpoffset ZOSCAN_2627_0005_coarse_r008.json (146 angles)
+[dry-run] would send ISOPLANE illulighton
+[dry-run] would send MTL mtltest exptime 0.5 s x 1, file ZOSCAN_2627_0005_coarse_r008
+[dry-run] would send ISOPLANE illulightoff
+[fwd 2/7] row 008 <- 000: 37 move (37 lit), max 62.95 deg L3_a; WARNING: skipped rows leave this straight move by up to 15.20 deg; FBP success; MTL ZOSCAN_2627_0005_coarse_r008 success (1 image)
+[dry-run] would send FBP fbpoffset ZOSCAN_2627_0005_coarse_r016.json (146 angles)
+[dry-run] would send ISOPLANE illulighton
+[dry-run] would send MTL mtltest exptime 0.5 s x 1, file ZOSCAN_2627_0005_coarse_r016
+[dry-run] would send ISOPLANE illulightoff
+[fwd 3/7] row 016 <- 008: 31 move (31 lit), max 62.95 deg L3_a; WARNING: skipped rows leave this straight move by up to 15.41 deg; FBP success; MTL ZOSCAN_2627_0005_coarse_r016 success (1 image)
+[dry-run] would send FBP fbpoffset ZOSCAN_2627_0005_coarse_r024.json (146 angles)
+[dry-run] would send ISOPLANE illulighton
+[dry-run] would send MTL mtltest exptime 0.5 s x 1, file ZOSCAN_2627_0005_coarse_r024
+[dry-run] would send ISOPLANE illulightoff
+[fwd 4/7] row 024 <- 016: 15 move (15 lit), max 62.91 deg H4_a; WARNING: skipped rows leave this straight move by up to 15.45 deg; FBP success; MTL ZOSCAN_2627_0005_coarse_r024 success (1 image)
+[dry-run] would send FBP fbpoffset ZOSCAN_2627_0005_coarse_r032.json (146 angles)
+[dry-run] would send ISOPLANE illulighton
+[dry-run] would send MTL mtltest exptime 0.5 s x 1, file ZOSCAN_2627_0005_coarse_r032
+[dry-run] would send ISOPLANE illulightoff
+[fwd 5/7] row 032 <- 024: 9 move (9 lit), max 62.90 deg D5_a; WARNING: skipped rows leave this straight move by up to 15.73 deg; FBP success; MTL ZOSCAN_2627_0005_coarse_r032 success (1 image)
+[dry-run] would send FBP fbpoffset ZOSCAN_2627_0005_coarse_r040.json (146 angles)
+[dry-run] would send ISOPLANE illulighton
+[dry-run] would send MTL mtltest exptime 0.5 s x 1, file ZOSCAN_2627_0005_coarse_r040
+[dry-run] would send ISOPLANE illulightoff
+[fwd 6/7] row 040 <- 032: 4 move (4 lit), max 62.90 deg D5_a; WARNING: skipped rows leave this straight move by up to 13.79 deg; FBP success; MTL ZOSCAN_2627_0005_coarse_r040 success (1 image)
+[dry-run] would send FBP fbpoffset ZOSCAN_2627_0005_coarse_r047.json (146 angles)
+[dry-run] would send ISOPLANE illulighton
+[dry-run] would send MTL mtltest exptime 0.5 s x 1, file ZOSCAN_2627_0005_coarse_r047
+[dry-run] would send ISOPLANE illulightoff
+[fwd 7/7] row 047 <- 040: 2 move (2 lit), max 50.74 deg D5_b; WARNING: skipped rows leave this straight move by up to 6.14 deg; FBP success; MTL ZOSCAN_2627_0005_coarse_r047 success (1 image)
+Returning to row 0 through [40, 32, 24, 16, 8, 0].
+[dry-run] would send FBP fbpoffset ZOSCAN_2627_0005_coarse_r040.json (146 angles)
+[dry-run] would send ISOPLANE illulighton
+[dry-run] would send MTL mtltest exptime 0.5 s x 1, file ZOSCAN_2627_0005_coarse_r040_ret
+[dry-run] would send ISOPLANE illulightoff
+[ret 1/6] row 040 <- 047: 2 move (2 lit), max 50.74 deg D5_b; WARNING: skipped rows leave this straight move by up to 6.14 deg; FBP success; MTL ZOSCAN_2627_0005_coarse_r040_ret success (1 image)
+[dry-run] would send FBP fbpoffset ZOSCAN_2627_0005_coarse_r032.json (146 angles)
+[dry-run] would send ISOPLANE illulighton
+[dry-run] would send MTL mtltest exptime 0.5 s x 1, file ZOSCAN_2627_0005_coarse_r032_ret
+[dry-run] would send ISOPLANE illulightoff
+[ret 2/6] row 032 <- 040: 4 move (4 lit), max 62.90 deg D5_a; WARNING: skipped rows leave this straight move by up to 13.79 deg; FBP success; MTL ZOSCAN_2627_0005_coarse_r032_ret success (1 image)
+[dry-run] would send FBP fbpoffset ZOSCAN_2627_0005_coarse_r024.json (146 angles)
+[dry-run] would send ISOPLANE illulighton
+[dry-run] would send MTL mtltest exptime 0.5 s x 1, file ZOSCAN_2627_0005_coarse_r024_ret
+[dry-run] would send ISOPLANE illulightoff
+[ret 3/6] row 024 <- 032: 9 move (9 lit), max 62.90 deg D5_a; WARNING: skipped rows leave this straight move by up to 15.73 deg; FBP success; MTL ZOSCAN_2627_0005_coarse_r024_ret success (1 image)
+[dry-run] would send FBP fbpoffset ZOSCAN_2627_0005_coarse_r016.json (146 angles)
+[dry-run] would send ISOPLANE illulighton
+[dry-run] would send MTL mtltest exptime 0.5 s x 1, file ZOSCAN_2627_0005_coarse_r016_ret
+[dry-run] would send ISOPLANE illulightoff
+[ret 4/6] row 016 <- 024: 15 move (15 lit), max 62.91 deg H4_a; WARNING: skipped rows leave this straight move by up to 15.45 deg; FBP success; MTL ZOSCAN_2627_0005_coarse_r016_ret success (1 image)
+[dry-run] would send FBP fbpoffset ZOSCAN_2627_0005_coarse_r008.json (146 angles)
+[dry-run] would send ISOPLANE illulighton
+[dry-run] would send MTL mtltest exptime 0.5 s x 1, file ZOSCAN_2627_0005_coarse_r008_ret
+[dry-run] would send ISOPLANE illulightoff
+[ret 5/6] row 008 <- 016: 31 move (31 lit), max 62.95 deg L3_a; WARNING: skipped rows leave this straight move by up to 15.41 deg; FBP success; MTL ZOSCAN_2627_0005_coarse_r008_ret success (1 image)
+[dry-run] would send FBP fbpoffset ZOSCAN_2627_0005_coarse_r000.json (146 angles)
+[dry-run] would send ISOPLANE illulighton
+[dry-run] would send MTL mtltest exptime 0.5 s x 1, file ZOSCAN_2627_0005_coarse_r000_ret
+[dry-run] would send ISOPLANE illulightoff
+[ret 6/6] row 000 <- 008: 37 move (37 lit), max 62.95 deg L3_a; WARNING: skipped rows leave this straight move by up to 15.20 deg; FBP success; MTL ZOSCAN_2627_0005_coarse_r000_ret success (1 image)
+[dry-run] would send ISOPLANE illuoff
+Positioners are at row 0 (the start row).
+Outcome (DRY RUN): done, returned. Records: <TEMP>\pathtest_dryrun\ZOSCAN_2627_0005_coarse_pathtest.jsonl
+# exit code 0
