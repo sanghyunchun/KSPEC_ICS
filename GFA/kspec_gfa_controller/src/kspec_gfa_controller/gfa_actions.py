@@ -720,6 +720,13 @@ class GFAActions:
 
         Passed files remain in raw_path.
         Failed files are moved to unclean_path.
+
+        The quality check (_evaluate_pointing_image_quality) runs only when
+        pointing_filter.enabled is true in astrometry_params.json. It is off by
+        default: its absolute cuts (min_brightest_flux, min_peaks) rejected too
+        many usable frames, and with five cameras one rejected frame fails the
+        whole pointing / guiding cycle. When off, every raw FITS file passes and
+        astrometry decides.
         """
         exts = (".fits", ".fit", ".fts")
 
@@ -735,6 +742,20 @@ class GFAActions:
         self.env.logger.info(
             f"[{label} filter] found {len(fits_files)} raw FITS files"
         )
+
+        cfg = self.env.astrometry.inpar.get("pointing_filter", {})
+        if not cfg.get("enabled", False):
+            passed_files = [str(f) for f in sorted(fits_files)]
+            self.env.logger.info(
+                f"[{label} filter] disabled (pointing_filter.enabled = false): "
+                f"passing all {len(passed_files)} raw FITS files"
+            )
+            return {
+                "passed_files": passed_files,
+                "failed_files": failed_files,
+                "n_passed": len(passed_files),
+                "n_failed": 0,
+            }
 
         for fits_file in sorted(fits_files):
             result = self._evaluate_pointing_image_quality(fits_file)
