@@ -494,6 +494,25 @@ if os.environ.get(ALPHA_RANGE_ENV, '').strip():
         raise ValueError(f"{ALPHA_RANGE_ENV} must be 'lo,hi' with hi - lo = 360, e.g. '-330,30'")
 
 
+# beta 명령각 범위 (2026-10-29 확정): positioner 의 raw beta 는 -180 .. 0 이고 FBP 가 영점 150 을 더해 명령각으로
+# 쓰므로 명령각으로는 -30 .. +150 (= 기하각 180 .. 0, elbow-down). 이 패키지의 beta 출력은 elbow-down 해
+# (기하각 0 .. 180) 라 구조상 이 범위 안이지만, 누적각 (직전 json + 회전량) 은 끝 (완전히 펴짐 / 접힘)
+# 근처에서 측정 잡음만큼 넘을 수 있어 범위로 자른다 (경고). beta 는 주기가 없으므로 접지 않는다.
+#   환경변수 : KSPEC_BETA_RANGE="-30,150"
+BETA_RANGE_ENV = 'KSPEC_BETA_RANGE'
+BETA_RANGE = (-30., 150.)
+if os.environ.get(BETA_RANGE_ENV, '').strip():
+    BETA_RANGE = tuple(float(t) for t in os.environ[BETA_RANGE_ENV].replace(';', ',').split(','))
+    if len(BETA_RANGE) != 2 or BETA_RANGE[1] <= BETA_RANGE[0]:
+        raise ValueError(f"{BETA_RANGE_ENV} must be 'lo,hi' with hi > lo, e.g. '-30,150'")
+
+
+def clip_beta(beta):
+    """절대 beta 명령각을 positioner 범위 [BETA_RANGE[0], BETA_RANGE[1]] 로 자른다 (NaN 은 그대로)."""
+    lo, hi = BETA_RANGE
+    return np.clip(np.asarray(beta, float), lo, hi)
+
+
 def wrap_alpha(alpha):
     """절대 alpha 명령각을 positioner 범위 [ALPHA_RANGE[0], ALPHA_RANGE[1]) 로 접는다 (NaN 은 그대로)."""
     lo, hi = ALPHA_RANGE

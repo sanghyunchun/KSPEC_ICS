@@ -1142,6 +1142,12 @@ def mtlcal(data_dir='./MTL/data/'
 
     angle_cum = prev + angle_rot
     angle_cum[0::2] = cfg.wrap_alpha(angle_cum[0::2])          # 누적 alpha 도 positioner 범위 [-330, 30) 로
+    out_b = np.isfinite(angle_cum[1::2]) & ((angle_cum[1::2] < cfg.BETA_RANGE[0]) | (angle_cum[1::2] > cfg.BETA_RANGE[1]))
+    if out_b.any():
+        ids_b = list(cfg.fiber_ids())
+        log.warning("cumulative beta outside the positioner range %s for %s -- clipped (arm at its end stop)",
+                    cfg.BETA_RANGE, ", ".join(f"{ids_b[i]} ({angle_cum[2*i+1]:.1f})" for i in np.where(out_b)[0]))
+        angle_cum[1::2] = cfg.clip_beta(angle_cum[1::2])
 
     if json_dir is not None and target_name is not None:
         np.save(naming.coeff_path(json_dir, target_name, itrial), coeff)   # 다음 trial 의 Predict 가 읽는다
