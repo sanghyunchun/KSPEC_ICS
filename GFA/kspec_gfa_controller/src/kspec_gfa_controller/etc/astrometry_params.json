@@ -46,7 +46,8 @@
     },
     "astrometry": {
         "scale_range": ["0.03", "0.16"],
-        "radius": 5
+        "radius": 5,
+        "cpulimit_s": 60
     },
     "detection": {
         "box_size": 40,

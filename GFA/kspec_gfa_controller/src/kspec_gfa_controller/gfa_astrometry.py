@@ -336,7 +336,10 @@ class GFAAstrometry:
 
         scale_low, scale_high = self.inpar["astrometry"]["scale_range"]
         radius = self.inpar["astrometry"]["radius"]
-        cpu_limit = self.inpar["settings"]["cpu"]["limit"]
+        # CPU-time limit per solve [s]. settings.cpu.limit is the number of parallel
+        # solves (preproc max_workers), not a time: passing it as --cpulimit gave up
+        # after 6 s.
+        cpulimit_s = int(self.inpar["astrometry"].get("cpulimit_s", 60))
 
         raw_fits_path = os.path.abspath(raw_fits_path)
         if not os.path.exists(raw_fits_path):
@@ -385,14 +388,12 @@ class GFAAstrometry:
             str(dec_in),
             "--radius",
             str(radius),
-            "-l",
-            "120",
             "-c",
             "0.1",
             "-E",
             "2",
             "--cpulimit",
-            str(cpu_limit),
+            str(cpulimit_s),
         ]
 
         self.logger.info(f"[{stem}] Running command: {' '.join(cmd)}")
