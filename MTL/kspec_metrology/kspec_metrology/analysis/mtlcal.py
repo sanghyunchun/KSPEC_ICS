@@ -315,7 +315,8 @@ def json_path(json_dir, target_name, itrial):
 
 
 def save_angles(json_dir, target_name, itrial, angles):
-    """각도 배열을 trial별 json으로 저장한다."""
+    """각도 배열을 trial별 json으로 저장한다. positioner 범위 밖의 각도가 있으면 쓰지 않고 ValueError."""
+    cfg.check_command_angles(angles, where=f"(trial {itrial})")      # 범위 밖 명령은 절대 내보내지 않는다
     os.makedirs(json_dir, exist_ok=True)
 
     path = json_path(json_dir, target_name, itrial)
@@ -1157,6 +1158,7 @@ def mtlcal(data_dir='./MTL/data/'
         prev = _flatten_angles(theta_true, phi_true)
 
     angle_cum = prev + angle_rot
+    angle_cum[0::2] = cfg.wrap_alpha_cmd(angle_cum[0::2])      # 누적 alpha 도 positioner 의 한 바퀴 범위 (-330, 30] 로
     out_b = np.isfinite(angle_cum[1::2]) & ((angle_cum[1::2] < cfg.BETA_RANGE[0]) | (angle_cum[1::2] > cfg.BETA_RANGE[1]))
     if out_b.any():                                             # positioner 가 실행할 수 없는 beta: 범위로 자른다
         ids_b = list(cfg.fiber_ids())

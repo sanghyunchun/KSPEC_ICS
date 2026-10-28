@@ -509,6 +509,37 @@ REACH_MARGIN = float(os.environ.get(REACH_MARGIN_ENV, '0.3') or 0.3)
 BETA_RANGE = (-30., 150.)
 
 
+def wrap_alpha_cmd(alpha):
+    """절대 alpha 명령각을 positioner 가 받는 한 바퀴 범위로 접는다 (기본 규약에서 (-330, 30]).
+    command_alpha 와 같은 범위다: 명령각 -> 기하각 [0, 360) -> 명령각."""
+    sa, za = ANGLE_SIGN[0], ANGLE_ZERO[0]
+    a = np.asarray(alpha, float)
+    geom = (sa*(a + za)) % 360.                              # 기하각 [0, 360)
+    return sa*geom - za
+
+
+def alpha_cmd_range():
+    """positioner 가 받는 alpha 명령각 범위 (lo, hi] (기본 (-330, 30])."""
+    sa, za = ANGLE_SIGN[0], ANGLE_ZERO[0]
+    ends = sorted([sa*0. - za, sa*360. - za])
+    return (ends[0], ends[1]) if sa > 0 else (ends[0], ends[1])
+
+
+def check_command_angles(angles, where=''):
+    """내보낼 (alpha, beta, alpha, beta, ...) 가 positioner 범위 안인지 확인한다. 밖이면 ValueError.
+    alpha 는 (lo, hi] 한 바퀴 범위, beta 는 BETA_RANGE. NaN 은 (끊어진 fiber) 통과."""
+    a = np.asarray(angles, float)[0::2]; b = np.asarray(angles, float)[1::2]
+    lo, hi = alpha_cmd_range()
+    bad_a = np.isfinite(a) & ((a <= lo - 1e-9) | (a > hi + 1e-9))
+    bad_b = np.isfinite(b) & ((b < BETA_RANGE[0] - 1e-9) | (b > BETA_RANGE[1] + 1e-9))
+    if bad_a.any() or bad_b.any():
+        ids = fiber_ids()
+        what = [f"{ids[i]} alpha {a[i]:.1f}" for i in np.where(bad_a)[0]] + \
+               [f"{ids[i]} beta {b[i]:.1f}" for i in np.where(bad_b)[0]]
+        raise ValueError(f"command angles outside the positioner range (alpha ({lo:g}, {hi:g}], beta "
+                         f"[{BETA_RANGE[0]:g}, {BETA_RANGE[1]:g}]) {where}: {', '.join(what)} -- not written")
+
+
 def clip_beta(beta):
     """절대 beta 명령각을 positioner 범위 [BETA_RANGE[0], BETA_RANGE[1]] 로 자른다 (NaN 은 그대로)."""
     lo, hi = BETA_RANGE
