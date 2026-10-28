@@ -59,7 +59,7 @@ class PointingRetryTests(CommandTestCase):
             await command.identify_execute(self.server, actions, cmd)
 
     async def test_outputs_cleared_before_every_attempt(self):
-        await self.run_pointing([pointing_result(3), pointing_result(4), pointing_result(5)])
+        await self.run_pointing([pointing_result(2), pointing_result(2), pointing_result(3)])
         names = [c[0] for c in self.calls.mock_calls if c[0] in ('clear', 'pointing')]
         self.assertEqual(names, ['clear', 'pointing'] * 3)
         for c in self.calls.clear.call_args_list:
@@ -67,6 +67,17 @@ class PointingRetryTests(CommandTestCase):
         final = self.replies()[-1]
         self.assertEqual(final['status'], 'success')
         self.assertEqual(final['bsmethod'], 'geometry')
+
+    async def test_three_solved_cameras_are_enough(self):
+        await self.run_pointing([pointing_result(3)])
+        self.assertEqual([c[0] for c in self.calls.mock_calls if c[0] == 'pointing'], ['pointing'])
+        self.assertEqual(self.replies()[-1]['status'], 'success')
+
+    async def test_two_solved_cameras_fail_after_retries(self):
+        await self.run_pointing([pointing_result(2)] * 3)
+        final = self.replies()[-1]
+        self.assertEqual(final['status'], 'fail')
+        self.assertIn('less than 3', final['message'])
 
     async def test_valid_images_go_to_boresight(self):
         res = pointing_result(6)

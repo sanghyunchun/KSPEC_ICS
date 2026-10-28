@@ -197,6 +197,46 @@ def test_astrometry_raw_new_not_created_raises_runtimeerror(tmp_path, monkeypatc
         ast.astrometry_raw(str(raw))
 
 
+@pytest.mark.parametrize("cpulimit_s, expected", [(None, "60"), (45, "45")])
+def test_astrometry_raw_cpulimit_is_a_time_not_the_worker_count(
+    tmp_path, monkeypatch, cpulimit_s, expected
+):
+    """--cpulimit comes from astrometry.cpulimit_s (default 60 s), given once;
+    settings.cpu.limit (parallel solves) must not end up as the time limit."""
+    cfgp = tmp_path / "cfg.json"
+    _write_config(cfgp, tmp_path)
+    if cpulimit_s is not None:
+        cfg = json.loads(cfgp.read_text())
+        cfg["astrometry"]["cpulimit_s"] = cpulimit_s
+        cfgp.write_text(json.dumps(cfg))
+    _patch_solve_field_ok(monkeypatch)
+    ast = GFAAstrometry(config=str(cfgp), logger=_get_default_logger())
+
+    raw = Path(ast.dir_path) / "img.fits"
+    raw.parent.mkdir(parents=True, exist_ok=True)
+    _write_raw_fits(raw, np.zeros((4, 4), dtype=np.float32))
+
+    seen = {}
+
+    class R:
+        returncode = 1
+        stdout = ""
+        stderr = ""
+
+    def fake_run(cmd, *a, **k):
+        seen["cmd"] = list(cmd)
+        return R()
+
+    monkeypatch.setattr("kspec_gfa_controller.gfa_astrometry.subprocess.run", fake_run)
+    with pytest.raises(RuntimeError):
+        ast.astrometry_raw(str(raw))
+
+    cmd = seen["cmd"]
+    assert "-l" not in cmd
+    assert cmd.count("--cpulimit") == 1
+    assert cmd[cmd.index("--cpulimit") + 1] == expected
+
+
 def test_astrometry_raw_success_reads_crval_and_moves_and_writes_header(
     tmp_path, monkeypatch
 ):

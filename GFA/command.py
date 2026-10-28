@@ -349,7 +349,9 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
         )
 
         max_try = 3
-        min_required = 5
+        # Solved cameras needed. compute_boresight works from 2 cameras (geometry) or 3
+        # (ring centre), so one unsolved or broken camera no longer fails the pointing.
+        min_required = 3
 
         for attempt in range (1, max_try+1):
             # Clear before every attempt: astrometry outputs that are still there are
@@ -454,7 +456,7 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
             printing(f"Only {len(valid_crval1)} valid CRVAL pairs (try {attempt}/{max_try}) → retrying...")
 
             if attempt == max_try:
-                msg = "Astrometry failed: insufficient valid CRVAL pairs (less than 5). Increase exposure time or Wait for good weather."
+                msg = f"Astrometry failed: insufficient valid CRVAL pairs (less than {min_required}). Increase exposure time or Wait for good weather."
                 await send_gfa_response(
                     GFA_server,
                     message=msg,

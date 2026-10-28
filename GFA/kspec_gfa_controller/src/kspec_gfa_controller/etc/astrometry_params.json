@@ -18,7 +18,7 @@
       },
     "pointing_filter": {
         "enabled": false,
-        "min_valid_images": 5,
+        "min_valid_images": 3,
         "min_std_bg": 0.3,
         "min_peaks": 10,
         "min_brightest_flux": 3000,
@@ -46,7 +46,8 @@
     },
     "astrometry": {
         "scale_range": ["0.03", "0.16"],
-        "radius": 5
+        "radius": 5,
+        "cpulimit_s": 60
     },
     "detection": {
         "box_size": 40,
