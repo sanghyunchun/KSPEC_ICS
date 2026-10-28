@@ -1,6 +1,8 @@
 import os, sys
+import argparse
 import json
 import redis
+import shutil
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import asyncio
 import math
@@ -14,7 +16,7 @@ from astropy.io import fits
 from datetime import datetime, timezone
 
 from GFA.gfacli import handle_gfa
-from MTL.mtlcli import handle_mtl
+from MTL.mtlcli import handle_mtl, mtl_start
 from FBP.fbpcli import handle_fbp
 from ADC.adccli import handle_adc
 from LAMP.lampcli import handle_lamp
@@ -24,6 +26,7 @@ import Lib.process as processes
 from Lib.make_spec_header import set_header_info
 from Lib.reply import wait_reply
 from TCS.tcscli import handle_telcom
+from script import starscan
 
 
 SPEC_FRAME_OVERHEAD_S = 180.     # readout, export and copy per frame, on top of the exposure
@@ -31,6 +34,8 @@ ILLUMINATION_TIMEOUT_S = 120.    # IsoPlane stage move (~15-20 s) and light swit
 MTL_TRIAL_TIMEOUT_S = 600.
 FBP_OFFSET_TIMEOUT_S = 600.
 MAX_MTL_TRIALS = 20              # backstop only: the MTL run stops at its own max_trial
+FBP_MOVEALL_TIMEOUT_S = 1800.    # a planner path of ~50-800 steps
+TILE_LOAD_TIMEOUT_S = 300.
 
 
 def printing(message):
@@ -77,6 +82,106 @@ def load_obsplan_tile(sciobs, filename, tile_id):
         tile_id, invert_motion_angles=True,
         zenith_angle_override=0.0 if calibration_plan else None,
     )
+
+
+class ScanArgsError(ValueError):
+    pass
+
+
+class _ScanArgumentParser(argparse.ArgumentParser):
+    def error(self, message):              # a bad option must not close the ICS
+        raise ScanArgsError(f'{self.format_usage().strip()}\nrunscan: {message}')
+
+    def exit(self, status=0, message=None):
+        raise ScanArgsError(message or self.format_help())
+
+
+def parse_scan_args(params):
+    """Options of runscan (see Lib/command.txt and handle_scan)."""
+    p = _ScanArgumentParser(prog='runscan', allow_abbrev=False,
+                            description='Zero-order star scan of a tile.')
+    p.add_argument('assign', help='<project>_2627_<tile>.assign.txt (class 1 = on a star)')
+    p.add_argument('path', help='planner .path.txt of the same tile (geometric angles)')
+    p.add_argument('--info', help='<project>_2627.info.txt with the tile RA/Dec '
+                   '(default: next to the assign file)')
+    p.add_argument('--pattern', default='grid', choices=('grid', 'cross', 'line-x', 'line-y'))
+    p.add_argument('--step', type=float, default=1.4, help='step size (default 1.4 = half the '
+                   '2.80" fibre core)')
+    p.add_argument('--unit', default='arcsec', choices=('arcsec', 'um'))
+    p.add_argument('--npts', type=int, default=5, help='points per axis (odd)')
+    p.add_argument('--no-centre-repeats', dest='centre_repeats', action='store_false',
+                   help='do not repeat the centre at the start, middle and end')
+    p.add_argument('--scale', type=float, default=starscan.UM_PER_ARCSEC,
+                   help='focal-plane scale [um/arcsec]')
+    p.add_argument('--exptime', type=float, default=4.0, help='getobj exposure [s]')
+    p.add_argument('--fibres', help='comma-separated holes to scan (default: class 1 of the '
+                   'assign file)')
+    p.add_argument('--monitors', default='', help='comma-separated holes on stars kept at the '
+                   'centre (transparency / seeing monitors)')
+    p.add_argument('--centre', help='command-angle JSON of the scan centre; skips tile load, '
+                   'fbpmoveall and the MTL loop (default: the converged MTL trial JSON)')
+    p.add_argument('--no-move', dest='move', action='store_false',
+                   help='skip fbpmoveall (positioners already at the path end)')
+    p.add_argument('--no-guide', dest='guide', action='store_false', help='no GFA guiding')
+    p.add_argument('--guide-settle', type=float, default=30.0,
+                   help='seconds of guiding before the first scan frame')
+    p.add_argument('--arms', default='mtl', choices=('mtl', 'design'),
+                   help='arm lengths for the offsets: kspec_metrology (measured where known) '
+                   'or design 5.2 / 11.6 mm')
+    p.add_argument('--quantum', type=float, default=0.0,
+                   help='round command angles to multiples of this [deg] (PLC step; 0 = off)')
+    p.add_argument('--max-offset-um', type=float, default=150.0,
+                   help='refuse patterns reaching farther than this from the centre')
+    p.add_argument('--max-delta-deg', type=float, default=3.0,
+                   help='refuse offsets turning any axis more than this from the centre')
+    p.add_argument('--mtl-check', action='store_true',
+                   help='after the return: back illumination IN, one mtltest image, OUT')
+    p.add_argument('--mtl-exptime', type=float, default=0.03, help='mtltest exposure [s]')
+    p.add_argument('--zenith-angle', type=float, help='zenith angle for MTL (default: from '
+                   'the tile RA/Dec now)')
+    p.add_argument('--outdir', help='scan records (default ../DATA/STARSCAN/<UTC date>)')
+    p.add_argument('--dry-run', action='store_true',
+                   help='print what would be sent and write the JSON files; send nothing')
+    opts = p.parse_args(params)
+    if opts.npts < 1 or opts.npts % 2 == 0:
+        raise ScanArgsError('runscan: --npts must be odd and positive')
+    if opts.step <= 0 or opts.exptime <= 0:
+        raise ScanArgsError('runscan: --step and --exptime must be positive')
+    return opts
+
+
+def stage_scan_tile(assign_file, path_file, info_file, workdir):
+    """Copy a tile's files under the names sciobscli.loadtile reads; return (sciobs, tile_id).
+
+    The planner's files keep their own names (ZOSCAN_2627_0005.coarse.path.txt,
+    ASPECS_2627.0005.assign.txt); loadtile wants <project>_2627_<tile:04d>.assign.txt /
+    .path.txt and <project>_2627.info.txt in its targetpath / motionpath.
+    """
+    project, tile_id = starscan.parse_tile_name(assign_file)
+    if starscan.parse_tile_name(path_file) != (project, tile_id):
+        raise ValueError(f'{path_file} is not the path of {project} tile {tile_id}')
+    if info_file is None:
+        info_file = os.path.join(os.path.dirname(os.path.abspath(assign_file)),
+                                 f'{project}_2627.info.txt')
+    os.makedirs(workdir, exist_ok=True)
+    for source, name in ((assign_file, f'{project}_2627_{tile_id:04d}.assign.txt'),
+                         (path_file, f'{project}_2627_{tile_id:04d}.path.txt'),
+                         (info_file, f'{project}_2627.info.txt')):
+        shutil.copyfile(source, os.path.join(workdir, name))
+    sciobs = sciobscli()
+    sciobs.project = project
+    sciobs.filename = os.path.basename(assign_file)
+    sciobs.targetpath = sciobs.motionpath = workdir
+    return sciobs, tile_id
+
+
+def zero_order_fluxes(zoflux, holes):
+    """{hole: flux} of a zoflux reply (None for a hole not on the slit or a failed frame)."""
+    if not isinstance(zoflux, dict) or not zoflux.get('ok'):
+        return {h: None for h in holes}
+    fib = zoflux.get('fibres') or {}
+    table = dict(zip(fib.get('label', []), fib.get('flux', [])))
+    return {h: table.get(h) for h in holes}
 
 
 def convert_to_sexagesimal(ra_deg, dec_deg):
@@ -180,6 +285,7 @@ class script():
         self.MTLimgname = None
         self.uttime = None
         self.obslog = None
+        self.last_mtl_trial = None     # Done reply of the last successful mtltrial (runscan)
 
     def configure_cordinate(self, project, obsdate, tileid, value1, value2, obsnum, expT, object_name=None):
         self.project = project
@@ -542,6 +648,7 @@ class script():
                 if trial.get('status') != 'success':
                     log_or_print(logging, f"MTL trial failed: {trial.get('message')}", 'error')
                     return False
+                self.last_mtl_trial = trial
                 log_or_print(logging, f"MTL trial {trial.get('itrial')}: error max "
                              f"{trial.get('err_max')}, median {trial.get('err_median')}.",
                              'receive')
@@ -574,6 +681,290 @@ class script():
                 log_or_print(logging, f'fiducialoff failed: {error}', 'error')
             log_or_print(logging, f'###### Metrology loop finished (converged: {converged}) ######',
                          'comment')
+
+    async def run_scan(self, scriptrun, params, logging):
+        """Starts the zero-order star scan asynchronously (runscan <assign> <path> [options])."""
+        try:
+            opts = parse_scan_args(params)
+        except ScanArgsError as error:
+            log_or_print(logging, str(error), 'error')
+            return
+        self.script_task = asyncio.create_task(self.handle_scan(scriptrun, logging, opts))
+
+    async def _scan_request(self, scriptrun, logging, opts, inst, func, send, timeout, what=''):
+        """send() and wait for the Done reply of inst/func; in a dry run only say so."""
+        if opts.dry_run:
+            log_or_print(logging, f'[dry-run] {inst} {func} {what}'.rstrip(), 'send')
+            return {'inst': inst, 'func': func, 'process': 'Done', 'status': 'success',
+                    'dry_run': True}
+        await send()
+        return await wait_reply(scriptrun.response_queue, inst, func, timeout=timeout,
+                                logging=logging)
+
+    async def _scan_fbpoffset(self, scriptrun, logging, opts, json_file):
+        """fbpoffset with a command-angle JSON on this ICS; True when FBP replied success."""
+        async def send():
+            if not await handle_fbp(f'fbpoffset {shlex.quote(json_file)}', scriptrun.ICSclient,
+                                    logging=logging):
+                raise RuntimeError(f'could not send fbpoffset {json_file}')
+        rsp = await self._scan_request(scriptrun, logging, opts, 'FBP', 'fbpoffset', send,
+                                       FBP_OFFSET_TIMEOUT_S, os.path.basename(json_file))
+        if rsp.get('status') != 'success':
+            log_or_print(logging, f"fbpoffset {os.path.basename(json_file)} failed: "
+                         f"{rsp.get('message')}", 'error')
+        return rsp
+
+    async def _scan_setup(self, scriptrun, logging, opts, sciobs, tile_id):
+        """loadtile (motion inverted, as the GUI Deploy) -> MTL loadobj, mtlstart, FBP
+        loadmotion -> fbpmoveall -> metrology loop. Returns the centre angles or None."""
+        tilemsg, objmsg, motionmsg1, motionmsg2 = sciobs.loadtile(
+            tile_id, invert_motion_angles=True, zenith_angle_override=opts.zenith_angle)
+        tile = json.loads(tilemsg)
+        self.ra, self.dec = convert_to_sexagesimal(tile['ra'], tile['dec'])
+        obj = json.loads(objmsg)
+        log_or_print(logging, f"Tile {sciobs.project} {tile_id}: RA {self.ra}, Dec {self.dec}, "
+                     f"{len(obj['xp'])} targets, zenith angle {obj['zenith_angle']:.2f} deg. "
+                     'The telescope must already point at the tile and track.', 'normal')
+
+        client = scriptrun.ICSclient if not opts.dry_run else None
+        steps = [('MTL', 'loadobj', lambda: client.send_message('MTL', objmsg), 60),
+                 ('MTL', 'mtlstart',
+                  lambda: client.send_message('MTL', mtl_start(exptime=self.MTLexpT,
+                                                               nexposure=self.MTLexpN)),
+                  TILE_LOAD_TIMEOUT_S),
+                 ('FBP', 'loadmotion', lambda: client.send_message('FBP', motionmsg1), 60),
+                 ('FBP', 'loadmotion', lambda: client.send_message('FBP', motionmsg2), 60)]
+        if opts.move:
+            steps.append(('FBP', 'fbpmoveall',
+                          lambda: handle_fbp('fbpmoveall', client, logging=logging),
+                          FBP_MOVEALL_TIMEOUT_S))
+        for inst, func, send, timeout in steps:
+            rsp = await self._scan_request(scriptrun, logging, opts, inst, func, send, timeout)
+            if rsp.get('status') != 'success':
+                log_or_print(logging, f"{inst} {func} failed: {rsp.get('message')}; "
+                             'scan not started.', 'error')
+                return None
+
+        if opts.dry_run:
+            log_or_print(logging, '[dry-run] metrology loop (runmtl): fiducialon, illuon, '
+                         'mtltrial / fbpoffset until converged, illuoff, fiducialoff', 'send')
+            path_end = starscan.read_path(opts.path)[1][-1]
+            log_or_print(logging, '[dry-run] scan centre = the path end (stand-in for the '
+                         'converged MTL trial JSON)', 'normal')
+            return starscan.to_command(path_end, starscan.motion_offsets())
+
+        self.last_mtl_trial = None
+        if not await self.handle_metrology(scriptrun, logging):
+            log_or_print(logging, 'Metrology did not converge; scan not started.', 'error')
+            return None
+        trial_json = mtl_json_on_ics(self.last_mtl_trial.get('filename'))
+        log_or_print(logging, f'Scan centre: converged MTL trial {self.last_mtl_trial.get("itrial")}'
+                     f' ({trial_json}).', 'normal')
+        return starscan.read_angles(trial_json)
+
+    async def handle_scan(self, scriptrun, logging, opts):
+        """Zero-order star scan of one tile (design: proj-kspecdr research note
+        2026-10-27-star-scan-design).
+
+            loadtile (invert_motion_angles=True) -> MTL loadobj, mtlstart -> FBP loadmotion
+            -> fbpmoveall -> metrology loop to convergence (centre A0 = last trial JSON)
+            -> GFA guiding on
+            -> for each offset (dx, dy) of the pattern: fbpoffset (absolute command angles of
+               every positioner: A0, with the scanned fibres moved by inverse kinematics of
+               their A0 position + (dx, dy)), getobj (IsoPlane at zero order), one record line
+               with the per-fibre zero-order fluxes of the reply
+            -> fbpoffset A0 [-> mtltest check] -> guiding off
+
+        Every offset is computed before the first move, so a pose the kinematics refuse
+        stops the scan before anything moves. After an FBP failure nothing else moves.
+        Records: <outdir>/<project>_<tile>_scan.jsonl and one JSON per step.
+        """
+        log = logging if logging is not None else (lambda message, level='normal': printing(message))
+        night = datetime.now(timezone.utc).strftime('%Y%m%d')
+        outdir = os.path.abspath(opts.outdir or os.path.join('..', 'DATA', 'STARSCAN', night))
+        log_or_print(logging, '###### Star scan starts' + (' (DRY RUN: nothing is sent)'
+                     if opts.dry_run else '') + ' ######', 'comment')
+        try:
+            sciobs, tile_id = stage_scan_tile(opts.assign, opts.path, opts.info,
+                                              os.path.join(outdir, 'tile'))
+            if opts.dry_run:
+                sciobs.obsinfofile = os.path.join(outdir, 'tile', 'obs_info.json')
+            stem = f'{sciobs.project}_{tile_id:04d}'
+            self.project, self.TileID, self.obsdate = sciobs.project, str(tile_id), night
+            positioners = starscan.axis_map_positioners()
+            assign = starscan.read_assign(opts.assign)
+            monitors = [h for h in opts.monitors.split(',') if h]
+            scanned = ([h for h in opts.fibres.split(',') if h] if opts.fibres
+                       else [h for h, row in assign.items() if row['cls'] == 1])
+            scanned = [h for h in scanned if h not in monitors]
+            unknown = sorted(set(scanned + monitors) - set(positioners))
+            if unknown or not scanned:
+                raise ValueError(f'no fibres to scan, or not positioners: {unknown}')
+            arms = starscan.mtl_arms(scanned) if opts.arms == 'mtl' else None
+            if arms is None:
+                if opts.arms == 'mtl':
+                    log_or_print(logging, 'kspec_metrology does not import here: design arms '
+                                 '5.2 / 11.6 mm.', 'warning')
+                arms = starscan.DESIGN_ARMS
+            step_um = opts.step * (opts.scale if opts.unit == 'arcsec' else 1.0)
+            pattern = starscan.scan_pattern(opts.pattern, step_um, opts.npts, opts.centre_repeats)
+            reach = max(math.hypot(s['dx'], s['dy']) for s in pattern)
+            if reach > opts.max_offset_um:
+                raise ValueError(f'pattern reaches {reach:.0f} um > --max-offset-um '
+                                 f'{opts.max_offset_um:g}')
+        except (OSError, ValueError) as error:
+            log_or_print(logging, f'runscan: {error}', 'error')
+            return
+
+        record = starscan.JsonLog(os.path.join(outdir, f'{stem}_scan.jsonl'))
+        record.write(kind='start', dry_run=opts.dry_run, assign=os.path.abspath(opts.assign),
+                     path=os.path.abspath(opts.path), scanned=scanned, monitors=monitors,
+                     pattern=opts.pattern, step_um=step_um, npts=opts.npts,
+                     scale_um_per_arcsec=opts.scale, exptime=opts.exptime, quantum=opts.quantum,
+                     arms=arms if isinstance(arms, tuple) else {h: arms[h] for h in scanned},
+                     nsteps=len(pattern))
+        log_or_print(logging, f'{len(scanned)} fibres scanned, {len(monitors)} monitors, '
+                     f'{opts.pattern} {opts.npts} x {step_um:.1f} um ({step_um / opts.scale:.2f}"),'
+                     f' {len(pattern)} frames of {opts.exptime:g} s.', 'normal')
+
+        if opts.centre:
+            centre = starscan.read_angles(opts.centre)
+            log_or_print(logging, f'Scan centre from {opts.centre}; no tile load, move or MTL.',
+                         'normal')
+        else:
+            centre = await self._scan_setup(scriptrun, logging, opts, sciobs, tile_id)
+            if centre is None:
+                record.write(kind='end', status='setup failed')
+                return
+        try:
+            starscan.check_complete(centre, positioners)
+            plan = []
+            for k, s in enumerate(pattern):
+                angles, achieved = starscan.offset_command(
+                    centre, scanned, s['dx'], s['dy'], arms, offsets=starscan.motion_offsets(),
+                    quantum=opts.quantum, max_delta_deg=opts.max_delta_deg)
+                json_file = starscan.write_angles(
+                    os.path.join(outdir, f'{stem}_scan{k:03d}.json'), angles)
+                plan.append((k, s, achieved, json_file))
+                turn = max(scanned, key=lambda h: max(abs(angles[f'{h}_{a}'] - centre[f'{h}_{a}'])
+                                                      for a in ('a', 'b')))
+                s['max_turn'] = (turn, max(abs(angles[f'{turn}_{a}'] - centre[f'{turn}_{a}'])
+                                           for a in ('a', 'b')))
+            centre_json = starscan.write_angles(os.path.join(outdir, f'{stem}_centre.json'),
+                                                centre)
+        except (OSError, ValueError) as error:
+            log_or_print(logging, f'runscan: {error}; nothing moved for the scan.', 'error')
+            record.write(kind='end', status=f'plan refused: {error}')
+            return
+        turn = max((s['max_turn'] for s in pattern), key=lambda t: t[1])
+        log_or_print(logging, f'Plan: {len(plan)} poses within {reach:.0f} um of the centre; '
+                     f'largest axis turn {turn[1]:.3f} deg ({turn[0]}).', 'normal')
+        record.write(kind='centre', json=centre_json,
+                     mtl_trial={k: (self.last_mtl_trial or {}).get(k) for k in
+                                ('filename', 'itrial', 'err_max', 'err_median', 'converged',
+                                 'offsetx', 'offsety')} if not opts.centre else None)
+
+        guiding = False
+        if opts.guide:
+            if opts.dry_run:
+                log_or_print(logging, f'[dry-run] autoguide {self.GFAexpT:g} {self.GFAexpN}, '
+                             f'settle {opts.guide_settle:g} s', 'send')
+            else:
+                await self.run_autoguide(scriptrun, self.GFAexpT, self.GFAexpN, False, logging=log)
+                guiding = True
+                await asyncio.sleep(opts.guide_settle)
+                if self.autoguide_task is None or self.autoguide_task.done():
+                    log_or_print(logging, 'GFA guiding is not running; scan not started.', 'error')
+                    record.write(kind='end', status='guiding failed')
+                    return
+
+        moved, fbp_failed, status = False, False, 'interrupted'
+        n = len(plan)
+        try:
+            for k, s, achieved, json_file in plan:
+                d_e, d_n = starscan.sky_offset(s['dx'], s['dy'], opts.scale)
+                log_or_print(logging, f'Scan {k + 1}/{n}: dx {s["dx"]:+.1f} um, dy {s["dy"]:+.1f}'
+                             f' um (E {d_e:+.2f}", N {d_n:+.2f}")', 'normal')
+                moved = True
+                fbp = await self._scan_fbpoffset(scriptrun, logging, opts, json_file)
+                if fbp.get('status') != 'success':
+                    fbp_failed, status = True, 'fbpoffset failed'
+                    break
+                self.object = f'{stem} scan {k + 1}/{n}'
+                if opts.dry_run:
+                    log_or_print(logging, f'[dry-run] SPEC getobj {opts.exptime:g} 1', 'send')
+                    spec = {'status': 'success', 'dry_run': True}
+                else:
+                    spec = await self.send_spec_and_log(f'getobj {opts.exptime:g} 1', 'Object',
+                                                        opts.exptime, f'{k + 1}/{n}', scriptrun,
+                                                        logging=logging)
+                zoflux = spec.get('zoflux')
+                if spec.get('status') == 'success' and not opts.dry_run and zoflux is None:
+                    log_or_print(logging, 'getobj reply has no zoflux: is the IsoPlane at zero '
+                                 'order (specinitial ... KSPEC_150_0) with zero_order set?',
+                                 'warning')
+                fluxes = zero_order_fluxes(zoflux, scanned + monitors)
+                record.write(kind='step', step=k, nsteps=n, dx_um=s['dx'], dy_um=s['dy'],
+                             dE_arcsec=d_e, dN_arcsec=d_n, centre=s['centre'], json=json_file,
+                             max_turn_deg=s['max_turn'],
+                             achieved_um=achieved, fbp_status=fbp.get('status'),
+                             spec_status=spec.get('status'), filename=spec.get('filename'),
+                             fwhm=self.fwhm, guiding=bool(self.autoguide_task
+                                                          and not self.autoguide_task.done()),
+                             flux=fluxes, zoflux=zoflux)
+                if spec.get('status') != 'success':
+                    status = f"getobj failed: {spec.get('message')}"
+                    break
+                got = [f for f in (fluxes[h] for h in scanned) if f is not None]
+                if not opts.dry_run:
+                    log_or_print(logging, f'Scan {k + 1}/{n}: {len(got)}/{len(scanned)} fluxes'
+                                 + (f', median {sorted(got)[len(got) // 2]:.0f} ADU' if got
+                                    else ''), 'receive')
+            else:
+                status = 'done'
+        finally:
+            if moved and not fbp_failed:
+                log_or_print(logging, 'Scan: back to the centre.', 'normal')
+                back = await self._scan_fbpoffset(scriptrun, logging, opts, centre_json)
+                record.write(kind='return', json=centre_json, fbp_status=back.get('status'))
+                if back.get('status') == 'success' and opts.mtl_check:
+                    await self._scan_mtl_check(scriptrun, logging, opts, stem, record)
+            elif fbp_failed:
+                log_or_print(logging, 'Positioners are left where FBP stopped; check fbpstatus '
+                             f'before any move (centre: fbpoffset {centre_json}).', 'error')
+            if guiding:
+                await self.autoguidestop(scriptrun, logging)
+            record.write(kind='end', status=status)
+            self.script_task = None
+            log_or_print(logging, f'###### Star scan finished ({status}); records in '
+                         f'{record.path} ######', 'comment')
+
+    async def _scan_mtl_check(self, scriptrun, logging, opts, stem, record):
+        """One back-illuminated MTL image at the centre (open-loop return check)."""
+        lamp_callback = getattr(scriptrun, 'lamp_state_callback', None)
+        name = f'{stem}_scan_return'
+        if opts.dry_run:
+            log_or_print(logging, f'[dry-run] fiducialon, illuon, MTL mtltest '
+                         f'{opts.mtl_exptime:g} 1 {name}, illuoff, fiducialoff', 'send')
+            return
+        try:
+            await handle_lamp('fiducialon', scriptrun.ICSclient, logging=logging,
+                              state_callback=lamp_callback)
+            if await self.spec_illumination('illuon', scriptrun, logging):
+                await handle_mtl(f'mtltest {opts.mtl_exptime:g} 1 {name}', scriptrun.ICSclient,
+                                 logging=logging)
+                rsp = await wait_reply(scriptrun.response_queue, 'MTL', 'mtltest',
+                                       timeout=MTL_TRIAL_TIMEOUT_S, logging=logging)
+                record.write(kind='mtl_check', status=rsp.get('status'), images=rsp.get('images'))
+        except Exception as error:
+            log_or_print(logging, f'MTL check failed: {error}', 'error')
+        finally:
+            await self.spec_illumination('illuoff', scriptrun, logging)
+            try:
+                await handle_lamp('fiducialoff', scriptrun.ICSclient, logging=logging,
+                                  state_callback=lamp_callback)
+            except Exception as error:
+                log_or_print(logging, f'fiducialoff failed: {error}', 'error')
 
     async def run_autoguide(self, scriptrun, exptime: float = 5.0, expnum: int = 1, save: bool = False, logging = None):
         """Starts the autoguiding process asynchronously."""
@@ -919,5 +1310,13 @@ async def handle_script(arg, scriptrun=None, logging=None):
 
     elif cmd == 'autoguidestop':
         await scriptrun.autoguidestop(scriptrun,logging)
+
+    elif cmd == 'runscan':
+        try:
+            params = shlex.split(arg)[1:]      # file names may hold spaces
+        except ValueError as error:
+            log_or_print(logging, f'runscan: {error}', 'error')
+            return
+        await scriptrun.run_scan(scriptrun, params, logging)
     else:
         print(f"Error: '{cmd}' is not right command for SCRIPT")

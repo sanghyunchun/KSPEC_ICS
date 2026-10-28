@@ -1,0 +1,101 @@
+# runscan --dry-run on draft tile ZOSCAN_2627_0005 (2026-10-28, LightField laptop, ICS Python 3.12)
+# driver: script() + handle_script(<command>) with no broker; nothing is sent in a dry run
+Input command: runscan <tile_planner>/ZOSCAN_2627_0005.assign.txt <tile_planner>/ZOSCAN_2627_0005.coarse.path.txt --monitors H5,J3 --mtl-check --zenith-angle 0 --outdir <outdir> --dry-run
+[ICS] ###### Star scan starts (DRY RUN: nothing is sent) ######
+[ICS] kspec_metrology does not import here: design arms 5.2 / 11.6 mm.
+[ICS] 35 fibres scanned, 2 monitors, grid 5 x 35.0 um (1.40"), 27 frames of 4 s.
+[ICS] Tile ZOSCAN 5: RA 02:49:02.64, Dec -30:00:00.00, 73 targets, zenith angle 0.00 deg. The telescope must already point at the tile and track.
+[ICS] [dry-run] MTL loadobj
+[ICS] [dry-run] MTL mtlstart
+[ICS] [dry-run] FBP loadmotion
+[ICS] [dry-run] FBP loadmotion
+[ICS] [dry-run] FBP fbpmoveall
+[ICS] [dry-run] metrology loop (runmtl): fiducialon, illuon, mtltrial / fbpoffset until converged, illuoff, fiducialoff
+[ICS] [dry-run] scan centre = the path end (stand-in for the converged MTL trial JSON)
+[ICS] Plan: 27 poses within 99 um of the centre; largest axis turn 2.301 deg (K3).
+[ICS] [dry-run] autoguide 5 1, settle 30 s
+[ICS] Scan 1/27: dx +0.0 um, dy +0.0 um (E +0.00", N +0.00")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan000.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 2/27: dx -70.0 um, dy -70.0 um (E -2.80", N +2.80")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan001.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 3/27: dx -35.0 um, dy -70.0 um (E -1.40", N +2.80")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan002.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 4/27: dx +0.0 um, dy -70.0 um (E +0.00", N +2.80")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan003.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 5/27: dx +35.0 um, dy -70.0 um (E +1.40", N +2.80")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan004.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 6/27: dx +70.0 um, dy -70.0 um (E +2.80", N +2.80")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan005.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 7/27: dx -70.0 um, dy -35.0 um (E -2.80", N +1.40")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan006.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 8/27: dx -35.0 um, dy -35.0 um (E -1.40", N +1.40")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan007.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 9/27: dx +0.0 um, dy -35.0 um (E +0.00", N +1.40")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan008.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 10/27: dx +35.0 um, dy -35.0 um (E +1.40", N +1.40")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan009.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 11/27: dx +70.0 um, dy -35.0 um (E +2.80", N +1.40")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan010.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 12/27: dx -70.0 um, dy +0.0 um (E -2.80", N +0.00")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan011.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 13/27: dx -35.0 um, dy +0.0 um (E -1.40", N +0.00")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan012.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 14/27: dx +0.0 um, dy +0.0 um (E +0.00", N +0.00")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan013.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 15/27: dx +35.0 um, dy +0.0 um (E +1.40", N +0.00")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan014.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 16/27: dx +70.0 um, dy +0.0 um (E +2.80", N +0.00")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan015.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 17/27: dx -70.0 um, dy +35.0 um (E -2.80", N -1.40")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan016.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 18/27: dx -35.0 um, dy +35.0 um (E -1.40", N -1.40")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan017.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 19/27: dx +0.0 um, dy +35.0 um (E +0.00", N -1.40")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan018.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 20/27: dx +35.0 um, dy +35.0 um (E +1.40", N -1.40")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan019.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 21/27: dx +70.0 um, dy +35.0 um (E +2.80", N -1.40")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan020.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 22/27: dx -70.0 um, dy +70.0 um (E -2.80", N -2.80")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan021.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 23/27: dx -35.0 um, dy +70.0 um (E -1.40", N -2.80")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan022.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 24/27: dx +0.0 um, dy +70.0 um (E +0.00", N -2.80")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan023.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 25/27: dx +35.0 um, dy +70.0 um (E +1.40", N -2.80")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan024.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 26/27: dx +70.0 um, dy +70.0 um (E +2.80", N -2.80")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan025.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan 27/27: dx +0.0 um, dy +0.0 um (E +0.00", N +0.00")
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_scan026.json
+[ICS] [dry-run] SPEC getobj 4 1
+[ICS] Scan: back to the centre.
+[ICS] [dry-run] FBP fbpoffset ZOSCAN_0005_centre.json
+[ICS] [dry-run] fiducialon, illuon, MTL mtltest 0.03 1 ZOSCAN_0005_scan_return, illuoff, fiducialoff
+[ICS] ###### Star scan finished (done); records in <outdir>\ZOSCAN_0005_scan.jsonl ######

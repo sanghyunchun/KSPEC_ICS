@@ -60,7 +60,7 @@ class KSPECRunner:
 
             "telcom": ["getall", "getra", "getdec", "getha", "getel", "getaz", "getsecz", "mvstow", "mvelaz", "mvstop", "mvra", "mvdec", "track"],
             "utils": ["obsstatus","loadtile","setdir"],
-            "script": ["runcalib", "rundark", "obsinitial", "autoguide", "autoguidestop", "runobs", "runmtl"]
+            "script": ["runcalib", "rundark", "obsinitial", "autoguide", "autoguidestop", "runobs", "runmtl", "runscan"]
             }
     
     def load_config(self):
