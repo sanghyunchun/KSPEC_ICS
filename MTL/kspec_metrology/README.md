@@ -256,7 +256,10 @@ INFO Measured geometry /경로/Measured_Geometry.txt: 2/103 holes replaced
   offset 표, `lab.xy2ab` 의 출력과 target 파일의 alpha/beta, 각도 json, `lab.make_target(angles=)`
   의 입력은 모두 명령각이다 (초기 위치 = `angles=(0, 0)`). 이번 trial 회전량(dalpha, dbeta)은
   차이라서 영점과 무관하다.
-- 출력 alpha 는 (−180°, 180°] 로 접는다.
+- 출력하는 **절대** alpha(Trial 0, 누적각, `lab.xy2ab`)는 positioner 가 받는 범위 `fiber_config.ALPHA_RANGE`
+  = [−330°, 30°) 로 접는다 (영점이 기하각 30° 라 기하각 0..360° 에 해당; `KSPEC_ALPHA_RANGE`). 회전량(dalpha)은
+  차이라서 (−180°, 180°]. 2026-10-29 이전에는 (−180°, 180°] 로 접어 기하각 210..360° 인 자세가 +30..+180° 로
+  나갔고 누적각은 접지 않아, positioner 가 받을 수 없는 값이 나갔다.
 - 부호가 틀리면 positioner 가 trial 마다 목표에서 **멀어진다** (오차가 1, 2, 3 배로 는다). 영점이
   틀리면 Trial 0 json 이 (0, 0) 이 아니다. 다른 규약이면 `KSPEC_ANGLE_SIGN`, `KSPEC_ANGLE_ZERO`
   또는 `fiber_config` 의 값.

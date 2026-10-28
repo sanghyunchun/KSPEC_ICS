@@ -480,6 +480,26 @@ if os.environ.get(ANGLE_ZERO_ENV, '').strip():
     if len(ANGLE_ZERO) != 2:
         raise ValueError(f"{ANGLE_ZERO_ENV} must be two values (alpha, beta) in deg, e.g. '30,150'")
 
+# positioner 가 받는 alpha 명령각 범위 [lo, hi) (2026-10-29 확정): 영점이 기하각 30 도에 있으므로 명령각으로는
+# -330 .. +30 이다 (기하각 0 .. 360). 출력하는 **절대** 명령각 (Trial 0, 누적각, lab.xy2ab) 은 이 범위로 접는다
+# (360 도 주기). 회전량 (dalpha) 은 차이라서 (-180, 180] 그대로. 2026-10-29 이전에는 (-180, 180] 로 접어서
+# 기하각 210 .. 360 도 (명령 -330 .. -180) 인 자세가 +30 .. +180 으로 나가 positioner 가 받을 수 없는
+# 값이었고, 누적각은 아예 접지 않아 30 도를 넘기도 했다 (2026-10-28 L5, M3, D4, L7, K4 ...).
+#   환경변수 : KSPEC_ALPHA_RANGE="-330,30"
+ALPHA_RANGE_ENV = 'KSPEC_ALPHA_RANGE'
+ALPHA_RANGE = (-330., 30.)
+if os.environ.get(ALPHA_RANGE_ENV, '').strip():
+    ALPHA_RANGE = tuple(float(t) for t in os.environ[ALPHA_RANGE_ENV].replace(';', ',').split(','))
+    if len(ALPHA_RANGE) != 2 or abs((ALPHA_RANGE[1] - ALPHA_RANGE[0]) - 360.) > 1e-6:
+        raise ValueError(f"{ALPHA_RANGE_ENV} must be 'lo,hi' with hi - lo = 360, e.g. '-330,30'")
+
+
+def wrap_alpha(alpha):
+    """절대 alpha 명령각을 positioner 범위 [ALPHA_RANGE[0], ALPHA_RANGE[1]) 로 접는다 (NaN 은 그대로)."""
+    lo, hi = ALPHA_RANGE
+    return (np.asarray(alpha, float) - lo) % (hi - lo) + lo
+
+
 ELBOW = "down"
 CLOCKWISE = False
 

@@ -264,7 +264,10 @@ def _flatten_angles(theta, phi, absolute=True):
     za, zb = cfg.ANGLE_ZERO if absolute else (0., 0.)
     angles = np.empty(2*theta.size)
     alpha = sa*theta*rtod - za
-    angles[0::2] = (alpha + 180.) % 360. - 180.           # (-180, 180] 로 접는다 (30 이 -330 으로 안 나오게)
+    if absolute:
+        angles[0::2] = cfg.wrap_alpha(alpha)               # positioner 가 받는 범위 [-330, 30) 로
+    else:
+        angles[0::2] = (alpha + 180.) % 360. - 180.       # 회전량: 가까운 쪽 (-180, 180]
     angles[1::2] = sb*phi*rtod - zb
 
     return angles
@@ -1138,6 +1141,7 @@ def mtlcal(data_dir='./MTL/data/'
         prev = _flatten_angles(theta_true, phi_true)
 
     angle_cum = prev + angle_rot
+    angle_cum[0::2] = cfg.wrap_alpha(angle_cum[0::2])          # 누적 alpha 도 positioner 범위 [-330, 30) 로
 
     if json_dir is not None and target_name is not None:
         np.save(naming.coeff_path(json_dir, target_name, itrial), coeff)   # 다음 trial 의 Predict 가 읽는다

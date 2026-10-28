@@ -121,7 +121,7 @@ def xy2ab(xorigin, yorigin, x, y, arm1, arm2):
     sa, sb = cfg.ANGLE_SIGN
     za, zb = cfg.ANGLE_ZERO
     alpha = sa*th*rtod - za
-    return (alpha + 180.) % 360. - 180., sb*ph*rtod - zb
+    return cfg.wrap_alpha(alpha), sb*ph*rtod - zb
 
 
 def read_spec(path):
