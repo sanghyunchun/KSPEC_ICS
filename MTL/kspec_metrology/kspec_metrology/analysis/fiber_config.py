@@ -494,6 +494,27 @@ def command_alpha(theta):
     return sa*(np.degrees(np.asarray(theta, dtype=float)) % 360.) - za
 
 
+# arm 도달 한계 근처의 보호 (2026-10-29). 목표나 측정 위치가 회전 중심에서 (a1 + a2 - REACH_MARGIN) 보다 멀면
+# 완전히 편 자세 (phi = 0, alpha 는 그 방향) 로 푼다. 이유: 거의 편 자세에서는 반지름이 beta 에 둔감해서
+# (phi 6 도에서 7 um/deg) 수백 um 의 위치 오차가 수십 도의 beta 보정으로 바뀌고, 표의 arm 길이와 실제가
+# 0.1-0.3 mm 만 달라도 "조금 더 펴라" 는 명령이 trial 마다 커져 beta 가 범위를 넘고 positioner 가 날아간다
+# (2026-10-29 9111: 목표가 한계 22-108 um 안쪽이던 G3, M3, L5). 이 보정은 방향(alpha)만 맞추고 radial 오차는
+# 실제 arm 길이 차이만큼 남기는 것이 물리적으로 최선이다.
+#   환경변수 : KSPEC_REACH_MARGIN="0.3"   (mm; 0 이면 끔)
+REACH_MARGIN_ENV = 'KSPEC_REACH_MARGIN'
+REACH_MARGIN = float(os.environ.get(REACH_MARGIN_ENV, '0.3') or 0.3)
+
+# beta 명령각 범위: positioner raw beta -180 .. 0 에 FBP 영점 150 을 더한 -30 .. 150 (= 기하각 180 .. 0,
+# elbow-down). 누적각이 이 밖으로 나가면 positioner 가 실행할 수 없는 명령이라 잘라 둔다 (경고).
+BETA_RANGE = (-30., 150.)
+
+
+def clip_beta(beta):
+    """절대 beta 명령각을 positioner 범위 [BETA_RANGE[0], BETA_RANGE[1]] 로 자른다 (NaN 은 그대로)."""
+    lo, hi = BETA_RANGE
+    return np.clip(np.asarray(beta, float), lo, hi)
+
+
 ELBOW = "down"
 CLOCKWISE = False
 

@@ -225,20 +225,36 @@ def _target_xy(target, xorigin, yorigin, use_measured, target_file=None):
     return xp, yp
 
 
-def _arm_angles(xorigin, yorigin, xtarget, ytarget, use_measured=None):
-    """각 positioner가 (xtarget, ytarget)을 가리키는 (theta, phi)를 구한다."""
+def _arm_angles(xorigin, yorigin, xtarget, ytarget, use_measured=None, what='target'):
+    """각 positioner가 (xtarget, ytarget)을 가리키는 (theta, phi)를 구한다.
+
+    회전 중심에서 (a1 + a2 - cfg.REACH_MARGIN) 보다 먼 점은 완전히 편 자세 (phi = 0, theta = 그 방향) 로
+    푼다 (fiber_config.REACH_MARGIN 참고). what 은 경고 문구용 ('target' / 'measured')."""
     arm1s, arm2s = cfg.arm_lengths(use_measured)
 
     theta = np.full(arm1s.size, np.nan)
     phi = np.full(arm1s.size, np.nan)
+    at_limit = []
     for i in range(arm1s.size):
         if not (np.isfinite(xtarget[i]) and np.isfinite(ytarget[i])):
             continue                                            # 끊어진 fiber: 측정값 없음
+        dx, dy = xtarget[i] - xorigin[i], ytarget[i] - yorigin[i]
+        if cfg.REACH_MARGIN > 0 and np.hypot(dx, dy) > arm1s[i] + arm2s[i] - cfg.REACH_MARGIN:
+            gamma = float(np.arctan2(dy, dx)) % (2*np.pi)       # 완전히 편 자세: solver 의 도달 불가 처리와 같다
+            theta[i], phi[i] = (-gamma if cfg.CLOCKWISE else gamma), 0.0
+            at_limit.append(i)
+            continue
         theta[i], phi[i] = find_angle_double_method2_select_elbow(
             xorigin[i], yorigin[i], xtarget[i], ytarget[i], arm1s[i], arm2s[i],
             elbow=cfg.ELBOW,
             clockwise=cfg.CLOCKWISE,
         )
+    if at_limit:
+        ids = list(cfg.fiber_ids())
+        get_logger().warning("%d %s position(s) within %.2f mm of the arm reach limit -> solved as fully "
+                             "extended (beta at its end, alpha toward the point): %s", len(at_limit), what,
+                             cfg.REACH_MARGIN, ", ".join(f"{ids[i]} ({np.hypot(xtarget[i]-xorigin[i], ytarget[i]-yorigin[i]):.2f}"
+                                                         f"/{arm1s[i]+arm2s[i]:.2f} mm)" for i in at_limit))
     return theta, phi
 
 
@@ -1111,9 +1127,9 @@ def mtlcal(data_dir='./MTL/data/'
     dx, dy = xfocal-x, yfocal-y
 
     #---보정각 계산 (fiber만)---------------------------------------------------
-    theta_true, phi_true = _arm_angles(xorigin, yorigin, x, y, use_measured)
+    theta_true, phi_true = _arm_angles(xorigin, yorigin, x, y, use_measured, what='target')
     theta_obs, phi_obs = _arm_angles(xorigin, yorigin, xfocal, yfocal,
-                                     use_measured)
+                                     use_measured, what='measured')
 
     dtheta, dphi = _wrap(theta_true - theta_obs, phi_true - phi_obs)
     dtheta[dead[:nfib]] = 0.; dphi[dead[:nfib]] = 0.             # 끊어진 fiber 는 안 움직인다
@@ -1141,6 +1157,12 @@ def mtlcal(data_dir='./MTL/data/'
         prev = _flatten_angles(theta_true, phi_true)
 
     angle_cum = prev + angle_rot
+    out_b = np.isfinite(angle_cum[1::2]) & ((angle_cum[1::2] < cfg.BETA_RANGE[0]) | (angle_cum[1::2] > cfg.BETA_RANGE[1]))
+    if out_b.any():                                             # positioner 가 실행할 수 없는 beta: 범위로 자른다
+        ids_b = list(cfg.fiber_ids())
+        log.warning("cumulative beta outside the positioner range %s for %s -- clipped (arm at its end stop)",
+                    cfg.BETA_RANGE, ", ".join(f"{ids_b[i]} ({angle_cum[2*i+1]:.1f})" for i in np.where(out_b)[0]))
+        angle_cum[1::2] = cfg.clip_beta(angle_cum[1::2])
 
     if json_dir is not None and target_name is not None:
         np.save(naming.coeff_path(json_dir, target_name, itrial), coeff)   # 다음 trial 의 Predict 가 읽는다
