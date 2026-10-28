@@ -763,8 +763,7 @@ class script():
         return starscan.read_angles(trial_json)
 
     async def handle_scan(self, scriptrun, logging, opts):
-        """Zero-order star scan of one tile (design: proj-kspecdr research note
-        2026-10-27-star-scan-design).
+        """Zero-order star scan of one tile: where each star lands relative to its fibre.
 
             loadtile (invert_motion_angles=True) -> MTL loadobj, mtlstart -> FBP loadmotion
             -> fbpmoveall -> metrology loop to convergence (centre A0 = last trial JSON)

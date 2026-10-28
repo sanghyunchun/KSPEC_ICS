@@ -1,7 +1,7 @@
 # Example with --every 8 to show the warning: skipped rows make straight moves the planner did not check.
 # Use the default --every 1 for the real collision test.
 $ python script/pathtest.py --path <tile_planner>/ZOSCAN_2627_0005.coarse.path.txt --assign <tile_planner>/ZOSCAN_2627_0005.assign.txt --every 8 --backlight --dry-run --outdir <TEMP>/pathtest_dryrun
-# <tile_planner> = proj-kspecdr/outputs/tile_planner, <TEMP> = %TEMP%
+# <tile_planner> = the tile planner output directory, <TEMP> = %TEMP%
 
 ==============================================================================
 DRY RUN: nothing is sent to the broker or the lamps; no positioner moves.
