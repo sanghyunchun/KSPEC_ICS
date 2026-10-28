@@ -40,6 +40,77 @@ def _make_clean_subprocess_env() -> dict:
     return env
 
 
+def matched_filter_peaks(
+    img: np.ndarray,
+    fwhm: float = 7.0,
+    nsigma: float = 6.0,
+    box_size: int = 64,
+    border: int = 8,
+) -> Tuple[int, float]:
+    """
+    Count stars in a GFA frame with a Gaussian matched filter.
+
+    The local background (photutils Background2D, ``box_size`` px boxes) is
+    subtracted and the image is convolved with a unit-sum Gaussian of FWHM
+    ``fwhm`` px. Dividing by the local rms times sqrt(sum k^2) gives a
+    detection S/N map. That map is rescaled by its own sigma-clipped std,
+    because the pixel noise is correlated (the filtered noise is 1.6-2x the
+    white-noise value on the 2026-10-28 frames). Peaks above ``nsigma``, at
+    most one per ``fwhm`` box and none within ``border`` px of the edge, are
+    the stars. Zero pixels (hot pixels zeroed upstream) are ignored.
+
+    fwhm = 7, nsigma = 6 is the best setting on the 182 frames of
+    2026-10-28: 88-92 % of the reference stars with < 1 spurious peak per
+    frame, against 24-28 % for DAOStarFinder fwhm = 3, 5 sigma. Any fwhm
+    from 5 to 8 px gives >= 97 % of the best S/N for those ~7 px stars.
+
+    Returns (n_peaks, brightest_flux), where brightest_flux is the largest
+    background-subtracted sum within ``fwhm`` px of a peak.
+    """
+    from scipy import ndimage
+    from photutils.aperture import CircularAperture, aperture_photometry
+    from photutils.background import (
+        Background2D, MedianBackground, StdBackgroundRMS,
+    )
+    from photutils.detection import find_peaks
+
+    bad = ~np.isfinite(img) | (img <= 0)
+    bkg = Background2D(
+        img, box_size, filter_size=3, mask=bad,
+        bkg_estimator=MedianBackground(), bkgrms_estimator=StdBackgroundRMS(),
+    )
+    sub = np.where(bad, 0.0, img - bkg.background)
+
+    sig = fwhm / 2.3548
+    delta = np.zeros((81, 81))
+    delta[40, 40] = 1.0
+    knorm = np.sqrt(np.sum(ndimage.gaussian_filter(delta, sig, truncate=4.0) ** 2))
+    with np.errstate(divide="ignore", invalid="ignore"):
+        snr = ndimage.gaussian_filter(sub, sig, truncate=4.0) / (
+            bkg.background_rms * knorm
+        )
+    bad |= ~np.isfinite(snr)
+    snr[bad] = 0.0
+    _, _, renorm = sigma_clipped_stats(
+        snr[::2, ::2], mask=bad[::2, ::2], sigma=3.0, maxiters=5
+    )
+    if not renorm > 0:
+        return 0, 0.0
+    snr /= renorm
+
+    box = max(3, int(round(fwhm)))
+    peaks = find_peaks(
+        snr, nsigma, box_size=box if box % 2 else box + 1,
+        mask=bad, border_width=border,
+    )
+    if peaks is None or len(peaks) == 0:
+        return 0, 0.0
+
+    xy = np.column_stack([peaks["x_peak"], peaks["y_peak"]]).astype(float)
+    flux = aperture_photometry(sub, CircularAperture(xy, r=fwhm))["aperture_sum"]
+    return len(peaks), float(np.max(flux))
+
+
 class GFAActions:
     """
     GFA actions: grab, guiding, pointing, camera status utilities.
@@ -615,6 +686,9 @@ class GFAActions:
         min_peaks = cfg["min_peaks"]
         min_brightest_flux = cfg["min_brightest_flux"]
     
+        # "dao" (DAOStarFinder) or "matched" (matched_filter_peaks)
+        method = cfg.get("method", "dao")
+
         fwhm = cfg["dao"]["fwhm"]
         sigma_threshold = cfg["dao"]["sigma_threshold"]
         # photutils' default 1.0 rejects stars much narrower than fwhm
@@ -648,7 +722,15 @@ class GFAActions:
             n_peaks = 0
             brightest_flux = 0.0
 
-            if std_bg > 0:
+            if method == "matched":
+                n_peaks, brightest_flux = matched_filter_peaks(
+                    img, **cfg.get("matched", {})
+                )
+
+            elif method != "dao":
+                raise ValueError(f"unknown pointing_filter.method {method!r}")
+
+            elif std_bg > 0:
                 finder = DAOStarFinder(
                     fwhm=fwhm,
                     threshold=sigma_threshold * std_bg,
