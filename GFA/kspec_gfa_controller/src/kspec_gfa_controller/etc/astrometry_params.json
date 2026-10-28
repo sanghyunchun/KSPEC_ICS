@@ -23,8 +23,9 @@
         "min_peaks": 10,
         "min_brightest_flux": 3000,
         "dao": {
-          "fwhm": 3.0,
-          "sigma_threshold": 5.0
+          "fwhm": 10.0,
+          "sigma_threshold": 5.0,
+          "sharphi": 2.0
         }
     },
     "settings": {
