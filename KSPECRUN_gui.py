@@ -41,6 +41,7 @@ from script.scriptcli import handle_script, ILLUMINATION_TIMEOUT_S
 from Lib.reply import wait_reply
 from script.scriptcli import script
 from SCIOBS.sciobscli import sciobscli
+from GFA.pointing import apply_offsets, dec_deg_to_dms, ra_deg_to_hms, radec_str_to_deg
 
 
 MTL_TRIAL_NFS_DIR = Path('/home/kspecics/work/DATA/MTLDATA/target')
@@ -205,6 +206,9 @@ class MainWindow(QMainWindow):
         self.msglog_path = None
         self.ra = None
         self.dec = None
+        # Last tmradec sent to the TCS and the target it was for (pointing corrections)
+        self._pointing_command_coordinates = None
+        self._pointing_command_target = None
         self.obstype = None
         self.TileID = None
         self.expT = None
@@ -912,6 +916,13 @@ class MainWindow(QMainWindow):
         self.logging(f'sent TCS message to TCS Agent: {message}',level='send')
         transport.sendto(message.encode())
         transport.close()
+
+        # Remember the telescope command: pointing corrections add to it (a new slew,
+        # including one back to the tile centre, replaces the previous correction).
+        words = message.split()
+        if len(words) >= 4 and words[1] == 'tmradec':
+            self._pointing_command_coordinates = (words[2], words[3])
+            self._pointing_command_target = (self.ra, self.dec)
 
     async def send_telcom_command(self,message):
         """Sends a command to the Telcom system via TCP."""
@@ -1743,8 +1754,34 @@ class MainWindow(QMainWindow):
             self.ui.lineEdit_raoffset.setText(f"{self.delta_ra}")
             self.ui.lineEdit_decoffset.setText(f"{self.delta_dec}")
 
-            self.new_ra = response_data["new_ra"]
-            self.new_dec = response_data["new_dec"]
+            # The server's new_ra/new_dec are tile centre + (dra, ddec): right only while
+            # the telescope still points at the tile centre. After a correction, add the
+            # measured residual to the last command sent for this target instead, so that
+            # repeated corrections converge rather than alternate.
+            target = (self.ra, self.dec)
+            last = self._pointing_command_coordinates
+            if last is not None and self._pointing_command_target == target:
+                base, origin = last, "last command"
+            elif self.ra and self.dec:
+                base, origin = target, "tile centre"
+            else:
+                base, origin = None, "server"
+
+            if base is None:
+                self.new_ra = response_data["new_ra"]
+                self.new_dec = response_data["new_dec"]
+            else:
+                ra_deg, dec_deg = radec_str_to_deg(*base)
+                ra_deg, dec_deg = apply_offsets(
+                    ra_deg, dec_deg, response_data["dra"], response_data["ddec"]
+                )
+                self.new_ra = ra_deg_to_hms(ra_deg)
+                self.new_dec = dec_deg_to_dms(dec_deg)
+            self.logging(
+                f"Pointing correction from the {origin}: "
+                f"new (RA, DEC) = ({self.new_ra}, {self.new_dec})",
+                level="normal",
+            )
 
             await self.response_queue.put(response_data)
             return
