@@ -99,6 +99,21 @@ class PointingTests(unittest.IsolatedAsyncioTestCase):
         ra, _ = radec_str_to_deg(self.gui.new_ra, self.gui.new_dec)
         self.assertAlmostEqual((ra - 165) * 3600, 3, places=2)
 
+    async def test_closed_loop_converges(self):
+        # 2026-10-29: a fixed pointing error of (+9, +10)" made the corrections alternate
+        # between two positions when each one started again from the tile centre.
+        error = (9.0, 10.0)
+        await self.gui.send_udp_message(f'KSPEC>TC tmradec {self.gui.ra} {self.gui.dec}')
+        seps = []
+        for _ in range(4):
+            ra, dec = radec_str_to_deg(*self.gui._pointing_command_coordinates)
+            pointed = ((ra - 150) * 3600 + error[0], dec * 3600 + error[1])
+            await self.calculate(-pointed[0], -pointed[1])
+            await self.gui.pointing_button_clicked()
+            ra, dec = radec_str_to_deg(*self.gui._pointing_command_coordinates)
+            seps.append(abs((ra - 150) * 3600 + error[0]) + abs(dec * 3600 + error[1]))
+        self.assertTrue(all(s < 0.05 for s in seps), seps)
+
     async def test_new_slew_replaces_previous_correction(self):
         await self.calculate(30)
         await self.gui.pointing_button_clicked()
