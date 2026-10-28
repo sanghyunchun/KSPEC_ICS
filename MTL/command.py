@@ -126,7 +126,7 @@ def _exposure_settings(message):
     # Wire exposure time is in microseconds; default fiber exposure is 30 ms.
     # kspec_metrology (MetrologyRun / mtlexp) takes milliseconds since 2026-10-24,
     # so the value is converted here, at the boundary.
-    exptime_us = _value(message, 'time', 30_000.0, float)
+    exptime_us = _value(message, 'time', 10_000.0, float)     # 2026-10-29: fiber 10 ms (30 ms 는 포화)
     count = _value(message, 'nexposure', 1, float)
     if not math.isfinite(exptime_us) or exptime_us <= 0:
         raise ValueError('Exposure time must be finite and greater than zero')

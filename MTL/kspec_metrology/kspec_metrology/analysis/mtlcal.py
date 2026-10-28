@@ -894,6 +894,7 @@ def mtlcal(data_dir='./MTL/data/'
            , cross_exclude=True
            , min_dist=40
            , fid_fallback_fiber=True
+           , fid_fiber_set=False
            , target_file=None
            , json_dir=None
            , target_name=None
@@ -919,6 +920,8 @@ def mtlcal(data_dir='./MTL/data/'
     어두운 검출을 피하는 기준이다. n_extra 는 표에 없는데 이미지에 보이는 밝은 점의 수
     (예: 고정된 sky fiber 9개). 그만큼 검출을 더 허용하고 매칭에서 자연히 빠진다.
     min_dist 는 가까운 검출을 하나로 합치는 거리 [px] (findpeak 참고; 큰 PSF 면 80 정도).
+    fid_fiber_set (기본 False) 이면 fiber 노출을 예비가 아니라 정식 fiducial 세트로 쓴다 (fiber 노출시간이
+    fiducial 노출시간 중 하나와 같아서 그 세트를 따로 찍지 않았을 때; MetrologyRun 이 정한다).
     fid_fallback_fiber (기본 True) 는 fiducial 전용 노출에서 안 보이는 fiducial 을 fiber
     노출(fiducial 이 같이 켜져 있을 때, 보통 포화)에서라도 가져오는 것이다.
     cross_exclude (기본 True) 는 노출을 나눠 찍었을 때 fiber 노출의 fiducial 자리와
@@ -1053,7 +1056,7 @@ def mtlcal(data_dir='./MTL/data/'
         heads_all = fid_heads + ([head] if fid_fallback_fiber else [])
         nexp_all = [fid_nexposure]*len(fid_heads) + ([nexposure] if fid_fallback_fiber else [])
 
-        fb_all = [False]*len(fid_heads) + ([True] if fid_fallback_fiber else [])
+        fb_all = [False]*len(fid_heads) + ([not fid_fiber_set] if fid_fallback_fiber else [])
 
         # fiducial 찾기. 기준 칩 좌표(직전 trial / 기준 파일)가 있으면 그 주변에서만 찾고 (패턴 매칭 없음),
         # 없거나 절반도 못 찾으면 패턴 매칭 (measure_fiducials) 으로 처음부터 찾는다.
