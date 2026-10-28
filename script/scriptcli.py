@@ -4,6 +4,7 @@ import redis
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import asyncio
 import math
+import re
 import shlex
 import numpy as np
 import pandas as pd
@@ -62,6 +63,20 @@ def mtl_json_on_ics(filename):
     with open('./Lib/KSPEC.ini', 'r') as f:
         mtlfilepath = json.load(f)['MTL']['mtlfilepath']
     return os.path.join(os.path.expanduser(mtlfilepath), os.path.basename(str(filename)))
+
+
+def load_obsplan_tile(sciobs, filename, tile_id):
+    """Load a tile of an observation plan as the GUI Deploy does (KSPECRUN_gui.py).
+
+    The .path.txt files hold geometric arm angles starting at (30, 150); FBP takes
+    -angle + (alpha_offset_deg, beta_offset_deg), so the motion plan must be inverted
+    (power-on pose = command (0, 0)). Calibration plans use zenith angle 0.
+    """
+    calibration_plan = re.fullmatch(r'Calib_obsplan_(?:\d{8}|YYYYMMDD)\.txt', filename) is not None
+    return sciobs.loadtile(
+        tile_id, invert_motion_angles=True,
+        zenith_angle_override=0.0 if calibration_plan else None,
+    )
 
 
 #def convert_to_sexagesimal(ra_deg, dec_deg):
@@ -746,7 +761,7 @@ class script():
                     print(f'Tile ID {self.TileID} was not found. Please enter a valid ID.')
 
         
-            tilemsg,objmsg,motionmsg1,motionmsg2=sciobs.loadtile(self.TileID)
+            tilemsg,objmsg,motionmsg1,motionmsg2=load_obsplan_tile(sciobs, filename, self.TileID)
             tile_data=json.loads(tilemsg)
             self.ra,self.dec=convert_to_sexagesimal(tile_data['ra'],tile_data['dec'])
 
