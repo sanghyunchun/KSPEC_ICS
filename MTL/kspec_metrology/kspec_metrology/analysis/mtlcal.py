@@ -257,15 +257,18 @@ def _flatten_angles(theta, phi, absolute=True):
     """fiber 순서의 (theta, phi)를 (alpha, beta)가 번갈아 놓인 degree 배열로 편다.
 
     출력은 positioner 명령각이다: 명령각 = fiber_config.ANGLE_SIGN x 계산각 - fiber_config.ANGLE_ZERO
-    (기본 부호 (1, 1): alpha 반시계 양, beta >= 0; 기본 영점 (30, 150) = positioner 의 (0, 0)).
-    absolute=False 면 회전량(차이)이라 영점을 빼지 않는다.
+    (부호와 영점은 fiber_config 참고; 기하각 (30, 150) = positioner 의 (0, 0)).
+    absolute=True 면 alpha 는 경로 계획기와 같은 범위의 절대각이다 (fiber_config.command_alpha).
+    absolute=False 면 회전량(차이)이라 영점을 빼지 않고 alpha 를 짧은 쪽 (-180, 180] 로 접는다.
     """
     sa, sb = cfg.ANGLE_SIGN
-    za, zb = cfg.ANGLE_ZERO if absolute else (0., 0.)
     angles = np.empty(2*theta.size)
-    alpha = sa*theta*rtod - za
-    angles[0::2] = (alpha + 180.) % 360. - 180.           # (-180, 180] 로 접는다 (30 이 -330 으로 안 나오게)
-    angles[1::2] = sb*phi*rtod - zb
+    if absolute:
+        angles[0::2] = cfg.command_alpha(theta)
+        angles[1::2] = sb*phi*rtod - cfg.ANGLE_ZERO[1]
+    else:
+        angles[0::2] = (sa*theta*rtod + 180.) % 360. - 180.
+        angles[1::2] = sb*phi*rtod
 
     return angles
 

@@ -294,13 +294,107 @@ async def rotate_all(alpha_file: str, beta_file: str) -> dict[str, Any]:
     return await _run_with_plcs(_kspec_main.main, alpha_file=alpha_file, beta_file=beta_file)
 
 
-async def rotate_offset_all(alpha_file: str, beta_file: str) -> dict[str, Any]:
-    """step 없는 offset JSON의 절대각으로 모든 비잠금 축을 이동한다."""
+# offset 이동은 경로 계획 없이 모든 축을 한 번에 절대각으로 옮긴다. metrology 보정은 보통 수 도이므로
+# 현재 위치에서 이보다 멀리 가야 하는 축이 있으면 각도 규약 오류 (예: alpha 360도 차이) 나 fiber
+# 오매칭으로 보고 구동하지 않는다.
+MAX_OFFSET_JUMP_DEG = 45.0
+
+
+async def _find_offset_jumps(
+    plc_connections: dict[str, Any],
+    axis_points: dict[int, list[float]],
+    max_jump_deg: float,
+) -> list[dict[str, Any]]:
+    """비잠금 축 가운데 offset 목표각이 현재 위치에서 max_jump_deg보다 먼 축을 찾는다."""
+    lock_results = await asyncio.gather(
+        _core.read_one_plc_lock_state("PLC1", plc_connections["PLC1"]),
+        _core.read_one_plc_lock_state("PLC2", plc_connections["PLC2"]),
+    )
+    motion_axes = sorted(
+        axis for lock_result in lock_results for axis in lock_result["motion_axes"]
+    )
+    routes = _core.build_global_axis_routes()
+
+    actual_positions = await asyncio.gather(*[
+        asyncio.to_thread(
+            plc_connections[routes[axis]["plc_name"]].read_by_name,
+            f"GVL.gAxisState[{routes[axis]['local_axis']}].ActPos",
+            pyads.PLCTYPE_LREAL,
+        )
+        for axis in motion_axes
+    ])
+
+    jumps = []
+    for axis, actual_position in zip(motion_axes, actual_positions):
+        actual_position = float(actual_position)
+        target_position = float(axis_points[axis][-1])
+        jump = abs(target_position - actual_position)
+        if not math.isfinite(jump) or jump > max_jump_deg:
+            jumps.append({
+                "positioner": routes[axis]["positioner"],
+                "motor": routes[axis]["motor"],
+                "plc_name": routes[axis]["plc_name"],
+                "global_axis": axis,
+                "local_axis": routes[axis]["local_axis"],
+                "actual_position": actual_position,
+                "target_position": target_position,
+                "jump": jump,
+            })
+    return jumps
+
+
+async def _rotate_offset_checked(
+    plc_connections: dict[str, Any],
+    alpha_file: str,
+    beta_file: str,
+    max_jump_deg: float,
+) -> dict[str, Any]:
+    """offset 목표각의 이동량을 검사한 뒤 kspec_main.main(offset_mode=True)을 실행한다."""
+    try:
+        axis_points, _ = _core.read_offset_json(alpha_file, beta_file)
+    except (OSError, KeyError, ValueError):
+        axis_points = None          # 파일 오류는 main()이 같은 형식의 fail result로 알린다
+
+    if axis_points is not None:
+        jumps = await _find_offset_jumps(plc_connections, axis_points, max_jump_deg)
+        if jumps:
+            result = {
+                "status": "fail",
+                "message": (
+                    f"offset 목표각이 현재 위치에서 {max_jump_deg:g}도보다 먼 축이 있어 구동하지 않았습니다: "
+                    + ", ".join(
+                        f"{j['positioner']}-{j['motor']} {j['actual_position']:.1f} -> "
+                        f"{j['target_position']:.1f}"
+                        for j in jumps
+                    )
+                ),
+                "data": {"max_jump_deg": max_jump_deg, "jump_axes": jumps},
+            }
+            print(result["message"])
+            _core.save_result_json(result)
+            return result
+
+    return await _kspec_main.main(
+        plc_connections, alpha_file=alpha_file, beta_file=beta_file, offset_mode=True,
+    )
+
+
+async def rotate_offset_all(
+    alpha_file: str,
+    beta_file: str,
+    max_jump_deg: float = MAX_OFFSET_JUMP_DEG,
+) -> dict[str, Any]:
+    """
+    step 없는 offset JSON의 절대각으로 모든 비잠금 축을 이동한다.
+
+    구동 전에 비잠금 축의 현재 위치(ActPos)와 목표각을 비교해, max_jump_deg보다 멀리 가야 하는
+    축이 하나라도 있으면 아무 축도 움직이지 않고 status "fail"을 반환한다 (data.jump_axes).
+    """
     return await _run_with_plcs(
-        _kspec_main.main,
+        _rotate_offset_checked,
         alpha_file=alpha_file,
         beta_file=beta_file,
-        offset_mode=True,
+        max_jump_deg=max_jump_deg,
     )
 
 
