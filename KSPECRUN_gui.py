@@ -1284,6 +1284,8 @@ class MainWindow(QMainWindow):
                 button, 'FBP Assigned' if assigned else 'FBP Assign',
                 'green' if assigned else 'black', assigned,
             )
+        if state == 'initial':
+            self.reset_fbp_error_labels()
         self.logging(
             f'GUI FBP state changed manually: {previous_state} -> {state}.',
             level='receive', save=self.msglog_path is not None,

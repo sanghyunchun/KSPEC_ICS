@@ -15,6 +15,21 @@ from astropy.utils import iers
 
 iers.conf.auto_download = False
 
+
+def _tile_data_file(directory, project, tile_id, suffix):
+    """Find either Project_2627.tile or Project_2627_tile format."""
+    tile = int(tile_id)
+    names = {
+        f'{project}_2627{separator}{number}.{suffix}.txt'
+        for separator in ('.', '_')
+        for number in (f'{tile:04d}', str(tile))
+    }
+    matches = [os.path.join(directory, name) for name in sorted(names)
+               if os.path.isfile(os.path.join(directory, name))]
+    if len(matches) > 1:
+        raise ValueError(f'Ambiguous {suffix} files for tile {tile}: {matches}')
+    return matches[0] if matches else None
+
 """
 Provide Sky position (RA, DEC) of Tile and target position to TCS computer,
     GFA computer, Metrology computer and Fiber positioner computer.
@@ -83,7 +98,9 @@ class sciobscli:
 # Load science objects from the assignment file for the selected tile.
     def load_target(self, zenith_angle_override=None):
         tile_id=int(self.tile_id)
-        assignfile=os.path.join(self.targetpath, f'{self.project}_2627_{tile_id:04d}.assign.txt')
+        assignfile = _tile_data_file(self.targetpath, self.project, tile_id, 'assign')
+        if assignfile is None:
+            raise FileNotFoundError(f'No {self.project}_2627 tile {tile_id} assign.txt file')
         # File columns: fiberid, xp, yp, mag, class, flag, ra, dec (no header).
         dtype=[('fiber_id','U16'),('xp','f'),('yp','f'),('ra','f'),('dec','f'),('class','U8')]
         obj_fiberid,obj_xp,obj_yp,obj_ra,obj_dec,obj_class=np.loadtxt(
@@ -129,7 +146,9 @@ class sciobscli:
         offsets={'a': float(motion_config['alpha_offset_deg']),
                  'b': float(motion_config['beta_offset_deg'])}
 
-        pathfile=os.path.join(self.motionpath, f'{self.project}_2627_{int(self.tile_id):04d}.path.txt')
+        pathfile = _tile_data_file(self.motionpath, self.project, self.tile_id, 'path')
+        if pathfile is None:
+            raise FileNotFoundError(f'No {self.project}_2627 tile {self.tile_id} path.txt file')
         with open(pathfile, 'r') as fs:
             columns=[column.strip() for column in fs.readline().strip().split(',')]
             angles=np.loadtxt(fs,delimiter=',',ndmin=2)
