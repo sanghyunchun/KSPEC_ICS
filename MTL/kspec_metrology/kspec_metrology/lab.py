@@ -957,8 +957,8 @@ def measure(target_file, fiber_image, fid_images=(), out_dir='./lab_out', tile='
         tmp = os.path.join(out_dir, '_tmp_target.json')
         json.dump(dict(tile_id=tile, xp=[0.]*xp.size, yp=[0.]*yp.size), open(tmp, 'w'))
         try:
-            xo, yo, _, _, _, nfib = load_configuration(tmp, apply_zenith_offset=False,
-                                                       use_measured=use_measured)
+            xo, yo, _, _, _, nfib = load_configuration(tmp, apply_zenith_offset=False, use_measured=use_measured,
+                                                       use_measured_positioners=use_measured_positioners)   # 측정 때와 같은 중심
         finally:
             os.remove(tmp)
         a1, a2 = cfg.arm_lengths(use_measured)

@@ -487,6 +487,7 @@ def command_alpha(theta):
 
     기하각을 타일 경로 계획기 (.path.txt) 와 같은 [0, 360) 로 둔 뒤 명령각으로 바꾼다. 기본 규약에서는
     명령 alpha 가 (-330, 30] 이고, FBP 경로 끝각도 같은 범위다 (예: ASPECS_2627_0005 끝각 -329.3 ~ 28.0).
+    positioner 리밋은 여기에 ALPHA_MARGIN 을 더한 (-360, 60] 이다 (alpha_cmd_range); 누적 alpha 는 그 안에서 wrap 없이 움직인다.
     (-180, 180] 로 접으면 안 된다: 기하각 210 도 넘는 positioner 가 360 도 다른 명령각 (-220 -> 140) 을
     받고, fbpoffset 은 절대각으로 움직이므로 그 positioner 가 반대 방향으로 한 바퀴 돈다 (2026-10-29).
     """
@@ -504,25 +505,57 @@ def command_alpha(theta):
 REACH_MARGIN_ENV = 'KSPEC_REACH_MARGIN'
 REACH_MARGIN = float(os.environ.get(REACH_MARGIN_ENV, '0.3') or 0.3)
 
+# positioner 리밋 여유 [deg] (아래쪽, 위쪽). 2026-10-30 부터 FBP 쪽 리밋을 한 바퀴 범위 양쪽으로 30 도씩 더 열어 두므로
+# 여기도 같이 연다: alpha (-330, 30] -> (-360, 60], beta [-30, 150] -> [-60, 180]. 이유: 누적 alpha 가 30 도를 조금만
+# 넘어도 한 바퀴 wrap 하면 (30.5 -> -329.5) positioner 가 반대로 360 도 도는 명령이 되고, FBP 의 45 도 이동 제한에도
+# 걸린다 (2026-10-29 tile01 J4: 16.50 + 13.98 = 30.48 -> -329.52). 여유 안에서는 wrap 하지 않고 그 값을 그대로 보낸다.
+# 여유를 넘는 누적각은 범위 끝에서 자른다 (clip_alpha_cmd / clip_beta).
+#   환경변수 : KSPEC_ALPHA_MARGIN="30,30", KSPEC_BETA_MARGIN="30,30"   ("0,0" 이면 2026-10-29 까지의 범위)
+def _margin(env, default=(30., 30.)):
+    v = os.environ.get(env, '').strip()
+    if not v:
+        return default
+    m = tuple(float(t) for t in v.replace(';', ',').split(','))
+    if len(m) != 2 or any(x < 0 for x in m):
+        raise ValueError(f"{env} must be two non-negative values (low, high) in deg, e.g. '30,30'")
+    return m
+
+ALPHA_MARGIN_ENV = 'KSPEC_ALPHA_MARGIN'
+ALPHA_MARGIN = _margin(ALPHA_MARGIN_ENV)
+BETA_MARGIN_ENV = 'KSPEC_BETA_MARGIN'
+BETA_MARGIN = _margin(BETA_MARGIN_ENV)
+
 # beta 명령각 범위: positioner raw beta -180 .. 0 에 FBP 영점 150 을 더한 -30 .. 150 (= 기하각 180 .. 0,
-# elbow-down). 누적각이 이 밖으로 나가면 positioner 가 실행할 수 없는 명령이라 잘라 둔다 (경고).
-BETA_RANGE = (-30., 150.)
+# elbow-down) 에 위 여유를 더한 것 (기본 [-60, 180]). 150 을 넘는 beta 는 팔이 곧게 펴진 자세를 지나 elbow-up 으로
+# 접히는 것이라, 2026-10-29 9111 의 발산 (README 참고) 은 도달 한계 보호 (REACH_MARGIN) 가 막아야 한다.
+# 누적각이 이 밖으로 나가면 positioner 가 실행할 수 없는 명령이라 잘라 둔다 (경고).
+BETA_RANGE = (-30. - BETA_MARGIN[0], 150. + BETA_MARGIN[1])
+
+def clip_alpha_cmd(alpha):
+    """절대 alpha 명령각을 positioner 범위 (lo, hi] (여유 포함, 기본 (-360, 60]) 끝에서 자른다 (NaN 은 그대로).
+    범위 끝은 하드 리밋이라 wrap 으로 반대편 값을 주면 한 바퀴 되돌아가는 명령이 되므로, beta 처럼 리밋에 붙여 둔다."""
+    lo, hi = alpha_cmd_range()
+    return np.clip(np.asarray(alpha, float), lo + 1e-6, hi)
 
 
 def wrap_alpha_cmd(alpha):
-    """절대 alpha 명령각을 positioner 가 받는 한 바퀴 범위로 접는다 (기본 규약에서 (-330, 30]).
-    command_alpha 와 같은 범위다: 명령각 -> 기하각 [0, 360) -> 명령각."""
+    """절대 alpha 명령각을 한 바퀴 범위로 접는다 (기본 규약에서 (-330, 30]; 여유 없음).
+    command_alpha 와 같은 범위다: 명령각 -> 기하각 [0, 360) -> 명령각.
+    2026-10-30 부터 누적 alpha 에는 쓰지 않는다 (리밋을 조금 넘은 값이 반대로 한 바퀴 도는 명령이 되므로 clip_alpha_cmd)."""
     sa, za = ANGLE_SIGN[0], ANGLE_ZERO[0]
     a = np.asarray(alpha, float)
     geom = (sa*(a + za)) % 360.                              # 기하각 [0, 360)
     return sa*geom - za
 
 
-def alpha_cmd_range():
-    """positioner 가 받는 alpha 명령각 범위 (lo, hi] (기본 (-330, 30])."""
+def alpha_cmd_range(margin=True):
+    """positioner 가 받는 alpha 명령각 범위 (lo, hi]. 한 바퀴 범위 (기본 (-330, 30]) 에 ALPHA_MARGIN 을 더한
+    (-360, 60] 이 기본이고, margin=False 면 한 바퀴 범위 (command_alpha / wrap_alpha_cmd 의 출력 범위)."""
     sa, za = ANGLE_SIGN[0], ANGLE_ZERO[0]
-    ends = sorted([sa*0. - za, sa*360. - za])
-    return (ends[0], ends[1]) if sa > 0 else (ends[0], ends[1])
+    lo, hi = sorted([sa*0. - za, sa*360. - za])
+    if margin:
+        lo, hi = lo - ALPHA_MARGIN[0], hi + ALPHA_MARGIN[1]
+    return (lo, hi)
 
 
 def out_of_range_mask(angles):
@@ -536,8 +569,8 @@ def out_of_range_mask(angles):
 
 def check_command_angles(angles, where=''):
     """내보낼 (alpha, beta, alpha, beta, ...) 가 positioner 범위 안인지 확인한다. 밖이면 ValueError.
-    alpha 는 (lo, hi] 한 바퀴 범위, beta 는 BETA_RANGE. NaN 은 (끊어진 fiber) 통과.
-    (정상 경로에서는 wrap_alpha_cmd / clip_beta 가 먼저 적용되고, mtlcal 은 그래도 밖인 fiber 를 직전 각도로
+    alpha 는 alpha_cmd_range() (여유 포함), beta 는 BETA_RANGE. NaN 은 (끊어진 fiber) 통과.
+    (정상 경로에서는 clip_alpha_cmd / clip_beta 가 먼저 적용되고, mtlcal 은 그래도 밖인 fiber 를 직전 각도로
     되돌리므로 여기까지 오지 않는다. 마지막 방어선.)"""
     a = np.asarray(angles, float)[0::2]; b = np.asarray(angles, float)[1::2]
     lo, hi = alpha_cmd_range()

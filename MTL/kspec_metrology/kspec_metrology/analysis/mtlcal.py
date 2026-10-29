@@ -1161,7 +1161,13 @@ def mtlcal(data_dir='./MTL/data/'
         prev = _flatten_angles(theta_true, phi_true)
 
     angle_cum = prev + angle_rot
-    angle_cum[0::2] = cfg.wrap_alpha_cmd(angle_cum[0::2])      # 누적 alpha 도 positioner 의 한 바퀴 범위 (-330, 30] 로
+    lo_a, hi_a = cfg.alpha_cmd_range()
+    out_a = np.isfinite(angle_cum[0::2]) & ((angle_cum[0::2] <= lo_a) | (angle_cum[0::2] > hi_a))
+    if out_a.any():                                             # alpha 리밋 (여유 포함): wrap 하면 반대로 한 바퀴 도는 명령이 되므로 리밋에서 자른다
+        ids_a = list(cfg.fiber_ids())
+        log.warning("cumulative alpha outside the positioner range (%g, %g] for %s -- clipped (arm at its end stop)",
+                    lo_a, hi_a, ", ".join(f"{ids_a[i]} ({angle_cum[2*i]:.1f})" for i in np.where(out_a)[0]))
+        angle_cum[0::2] = cfg.clip_alpha_cmd(angle_cum[0::2])
     out_b = np.isfinite(angle_cum[1::2]) & ((angle_cum[1::2] < cfg.BETA_RANGE[0]) | (angle_cum[1::2] > cfg.BETA_RANGE[1]))
     if out_b.any():                                             # positioner 가 실행할 수 없는 beta: 범위로 자른다
         ids_b = list(cfg.fiber_ids())
