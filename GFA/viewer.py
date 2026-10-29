@@ -16,7 +16,7 @@ Live GUI viewer for FITS images from 6 cameras, grouped by acquisition time.
 Extra behavior:
 - If watched directory is empty, show demo images from ./demo_guiding_save
 - If actual images appear, switch from demo to actual and relock references
-- If actual images are all deleted, switch back to demo and relock references
+- If actual images are all deleted, keep the last frame while waiting for new images
 """
 
 import argparse
@@ -386,6 +386,7 @@ class FitsLiveViewer:
 
         # Demo fallback
         self.demo_active: bool = False
+        self.waiting_for_next_frame: bool = False
         self.demo_dir = Path(__file__).resolve().parent / "demo_save"
 
         self._build_gui()
@@ -541,6 +542,7 @@ class FitsLiveViewer:
         return demo_groups
 
     def _activate_demo_mode(self):
+        self.waiting_for_next_frame = False
         demo_groups = self._load_demo_groups()
         if not demo_groups:
             self.demo_active = False
@@ -563,6 +565,7 @@ class FitsLiveViewer:
             self._clear_empty_view("Demo images could not be loaded.")
 
     def _activate_actual_mode(self):
+        self.waiting_for_next_frame = False
         self.demo_active = False
         self.groups = self._copy_groups(self.actual_groups)
         self.keys = sorted_keys(self.groups)
@@ -712,6 +715,7 @@ class FitsLiveViewer:
                 if self.demo_active:
                     self._activate_actual_mode()
                 elif changed:
+                    self.waiting_for_next_frame = False
                     current_key = (
                         self.keys[self.idx]
                         if 0 <= self.idx < len(self.keys) else None
@@ -733,7 +737,12 @@ class FitsLiveViewer:
                 else:
                     self._update_status()
             else:
-                if not self.demo_active:
+                if not self.demo_active and self.keys:
+                    # The raw files may be removed between exposures. Keep the
+                    # rendered image and its guide-star reference until new data arrives.
+                    self.waiting_for_next_frame = True
+                    self._update_status()
+                elif not self.demo_active:
                     self._activate_demo_mode()
                 else:
                     self._update_status()
@@ -754,6 +763,14 @@ class FitsLiveViewer:
 
         key = self.keys[self.idx] if 0 <= self.idx < len(self.keys) else self.keys[-1]
         lock_txt = "LOCKED" if self.reference_locked else "UNLOCKED"
+
+        if self.waiting_for_next_frame:
+            self.status_var.set(
+                f"[{self.source_label}] Waiting for next frame; showing last actual image "
+                f"D{key.date} T{key.t} [ref: {lock_txt}]"
+            )
+            self.win.title(f"FITS Live Viewer - {self.source_label} - waiting for next frame")
+            return
 
         prefix = "[DEMO] " if self.demo_active else f"[{self.source_label}] "
 
@@ -813,6 +830,7 @@ class FitsLiveViewer:
         self.selected_path = path
         self.source_label = day_dir
         self.demo_active = False
+        self.waiting_for_next_frame = False
         self.actual_groups = groups
         self.groups = self._copy_groups(groups)
         self.keys = sorted_keys(groups)
@@ -829,6 +847,8 @@ class FitsLiveViewer:
             self.on_latest()
 
     def on_prev(self):
+        if self.waiting_for_next_frame:
+            return
         self.follow_latest = False
         self.follow_var.set(False)
         if not self.keys:
@@ -837,6 +857,8 @@ class FitsLiveViewer:
         self._render_current()
 
     def on_next(self):
+        if self.waiting_for_next_frame:
+            return
         self.follow_latest = False
         self.follow_var.set(False)
         if not self.keys:
@@ -845,12 +867,16 @@ class FitsLiveViewer:
         self._render_current()
 
     def on_latest(self):
+        if self.waiting_for_next_frame:
+            return
         if not self.keys:
             return
         self.idx = len(self.keys) - 1
         self._render_current()
 
     def on_relock(self):
+        if self.waiting_for_next_frame:
+            return
         if not self.keys:
             return
         self._lock_reference_stars()
