@@ -17,7 +17,7 @@ fiber를 옮기는 일은 이 패키지 밖의 일이므로, 여기서는 trial 
 
     run = MetrologyRun(target_file='/path/to/target.info',
                        data_dir='./MTL/data/', json_dir='./MTL/json/',
-                       exptime=30., fid_exptime=[1., 10.], tolerance=10., max_trial=10)   # [ms]
+                       exptime=10., fid_exptime=[1., 10.], tolerance=10., max_trial=10)   # [ms]
 
     move(run.start())                 # Trial 0 json = 관측 전 목표 각도
 
@@ -147,7 +147,7 @@ class MetrologyRun:
                  , finder_opts=None
                  , background='crop'
                  , background_opts=None
-                 , exptime=30.
+                 , exptime=10.
                  , gain=10
                  , offset=30
                  , readmode=1
@@ -206,6 +206,9 @@ class MetrologyRun:
         else:
             self.fid_exptimes = [float(t) for t in fid_exptime]
         self.fid_nexposure = nexposure if fid_nexposure is None else int(fid_nexposure)
+        # fiducial 전용 노출 가운데 fiber 노출시간과 같은 것은 따로 찍지 않는다: fiber 노출이 그 세트 역할을 한다
+        # (fiber 10 ms + fiducial [1, 10] 이면 1 ms 한 장만 더 찍고, 10 ms fiducial 세트는 fiber 영상이 대신한다).
+        # 노출시간은 mtlset 으로 바뀔 수 있으므로 매 trial 촬영/분석 때 다시 따진다 (active_fid_exptimes).
         self.model = model
         self.magnification = magnification
         self.sat_level = sat_level
@@ -227,14 +230,23 @@ class MetrologyRun:
         """이 trial 이미지의 head. mtlexp와 mtlcal에 같은 값이 들어간다."""
         return naming.image_head(self.tile, itrial)
 
+    def active_fid_exptimes(self):
+        """실제로 따로 찍는 fiducial 전용 노출시간들: fiber 노출시간과 같은 것은 뺀다 (fiber 영상이 대신)."""
+        t_fib = float(self.camera['exptime'])
+        return [t for t in self.fid_exptimes if abs(t - t_fib) > 1e-6]
+
+    def fid_fiber_set(self):
+        """fiber 영상을 fiducial 세트로 (예비가 아니라) 정식으로 쓸지: fiducial 전용 노출 중 하나가 fiber 노출과 같을 때."""
+        return len(self.active_fid_exptimes()) < len(self.fid_exptimes)
+
     def fid_image_heads(self, itrial):
         """fiducial 전용 노출 세트들의 head (없으면 빈 리스트)."""
         return [naming.fid_image_head(self.tile, itrial, k)
-                for k in range(len(self.fid_exptimes))]
+                for k in range(len(self.active_fid_exptimes()))]
 
     def image_paths(self, itrial):
         paths = naming.image_paths(self.data_dir, self.tile, itrial, self.nexposure)
-        for k in range(len(self.fid_exptimes)):
+        for k in range(len(self.active_fid_exptimes())):
             paths += naming.fid_image_paths(self.data_dir, self.tile, itrial, k,
                                             self.fid_nexposure)
         return paths
@@ -301,9 +313,15 @@ class MetrologyRun:
                   'MTLTRIAL': (itrial, 'metrology trial number')}
         paths, self.camera['exptime'] = self._expose_set(
             self.image_head(itrial), self.nexposure, self.camera['exptime'], header)
-        for k, (head, texp) in enumerate(zip(self.fid_image_heads(itrial), self.fid_exptimes)):
-            p, self.fid_exptimes[k] = self._expose_set(
+        active = self.active_fid_exptimes()
+        if self.fid_fiber_set():
+            self.log.info("fiducial exposure %s ms equals the fiber exposure: not taken separately, the fiber "
+                          "frame serves as that fiducial set", [t for t in self.fid_exptimes if t not in active])
+        for k, (head, texp) in enumerate(zip(self.fid_image_heads(itrial), active)):
+            p, t_new = self._expose_set(
                 head, self.fid_nexposure, texp, dict(header, FIDSET=(k, 'fiducial exposure set')))
+            if t_new != texp:                                     # auto_exposure 가 줄인 값을 원래 자리에 반영
+                self.fid_exptimes[self.fid_exptimes.index(texp)] = t_new
             paths += p
         return paths
 
@@ -325,6 +343,7 @@ class MetrologyRun:
                       , nexposure=self.nexposure
                       , fid_head=self.fid_image_heads(itrial) or None
                       , fid_nexposure=self.fid_nexposure
+                      , fid_fiber_set=self.fid_fiber_set()
                       , model=self.model
                       , magnification=self.magnification
                       , sat_level=self.sat_level

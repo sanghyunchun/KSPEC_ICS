@@ -16,9 +16,9 @@ from MTL.mtlcli import mtl_set, mtl_start  # noqa: E402
 
 
 class MTLExposureConfigTest(unittest.IsolatedAsyncioTestCase):
-    async def test_start_uses_30_ms_fiber_and_two_fiducial_frames(self):
+    async def test_start_uses_10_ms_fiber_and_two_fiducial_frames(self):
         message = mtl_start()
-        self.assertEqual(json.loads(message)["time"], 30_000.0)  # wire: microseconds
+        self.assertEqual(json.loads(message)["time"], 10_000.0)  # wire: microseconds
 
         server = SimpleNamespace(send_message=AsyncMock())
         context = MTLContext()
@@ -32,14 +32,14 @@ class MTLExposureConfigTest(unittest.IsolatedAsyncioTestCase):
             await identify_execute(server, message, context)
 
         settings = run_type.call_args.kwargs
-        self.assertEqual(settings["exptime"], 30.0)  # camera: milliseconds
+        self.assertEqual(settings["exptime"], 10.0)  # camera: milliseconds
         self.assertEqual(settings["fid_exptime"], [1.0, 10.0])
         self.assertEqual(settings["nexposure"], 1)
         self.assertIs(context.run, run_type.return_value)
         reply = json.loads(server.send_message.call_args.args[1])
         self.assertEqual((reply["func"], reply["status"]), ("mtlstart", "success"))
 
-    def test_empty_gui_exposure_fields_use_30_ms_and_one_frame(self):
+    def test_empty_gui_exposure_fields_use_10_ms_and_one_frame(self):
         source = ROOT / "KSPECRUN_gui.py"
         tree = ast.parse(source.read_text())
         window = next(n for n in tree.body if isinstance(n, ast.ClassDef)
@@ -59,8 +59,8 @@ class MTLExposureConfigTest(unittest.IsolatedAsyncioTestCase):
         count.text.return_value = ""
         gui.ui = SimpleNamespace(lineEdit_MTL_exptime=exptime,
                                  lineEdit_MTL_expnum=count)
-        self.assertEqual(gui._mtl_exposure_inputs(), (0.03, 1))
-        exptime.setText.assert_called_once_with("0.03")
+        self.assertEqual(gui._mtl_exposure_inputs(), (0.01, 1))
+        exptime.setText.assert_called_once_with("0.01")
         count.setText.assert_called_once_with("1")
 
 

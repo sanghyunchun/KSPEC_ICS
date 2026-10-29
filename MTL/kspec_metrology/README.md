@@ -85,7 +85,7 @@ from kspec_metrology.mtlrun import MetrologyRun
 
 run = MetrologyRun(target_file='/path/to/target.info',
                    data_dir='./MTL/data/', json_dir='./MTL/json/',
-                   exptime=30., fid_exptime=[1., 10.], tolerance=10., max_trial=10)   # [ms]
+                   exptime=10., fid_exptime=[1., 10.], tolerance=10., max_trial=10)   # [ms]
 
 move(run.start())                 # Trial 0 json = 관측 전 목표 각도
 
@@ -256,7 +256,19 @@ INFO Measured geometry /경로/Measured_Geometry.txt: 2/103 holes replaced
   offset 표, `lab.xy2ab` 의 출력과 target 파일의 alpha/beta, 각도 json, `lab.make_target(angles=)`
   의 입력은 모두 명령각이다 (초기 위치 = `angles=(0, 0)`). 이번 trial 회전량(dalpha, dbeta)은
   차이라서 영점과 무관하다.
-- 출력 alpha 는 (−180°, 180°] 로 접는다.
+- 출력하는 **절대** alpha(Trial 0, `lab.xy2ab`)는 기하각을 [0°, 360°) 로 둔 뒤 명령각으로 바꾼다
+  (`fiber_config.command_alpha`; 명령 alpha 는 (−330°, 30°], FBP 경로 끝각과 같은 범위). 회전량(dalpha)은 차이라서
+  (−180°, 180°]. 2026-10-29 이전에는 (−180°, 180°] 로 접어 기하각 210..360° 인 자세가 +30..+180° 로 나갔고,
+  fbpoffset 은 절대각으로 움직이므로 그 positioner 가 반대 방향으로 한 바퀴 돌았다 (KSPEC_ICS 836ea99 에서 수정).
+- beta 명령각은 positioner raw −180..0 에 FBP 영점 150 을 더한 −30..150 이고, 이 패키지의 elbow-down 해(기하각
+  0..180°)가 그대로 그 범위다.
+- **도달 한계 보호** (`fiber_config.REACH_MARGIN`, 기본 0.3 mm; `KSPEC_REACH_MARGIN`): 목표나 측정 위치가 회전
+  중심에서 a₁+a₂−0.3 mm 보다 멀면 완전히 편 자세(beta 끝, alpha 는 그 방향)로 푼다. 거의 편 자세에서는 반지름이
+  beta 에 둔감해서(phi 6° 에서 7 µm/°) 수백 µm 오차가 수십 도의 beta 보정이 되고, 표의 arm 길이와 실제가
+  0.1–0.3 mm 만 달라도 trial 마다 보정이 커져 beta 가 범위를 넘고 positioner 가 날아간다 (2026-10-29 9111 의
+  G3, M3, L5: 목표가 한계 22–108 µm 안쪽). 누적 beta 는 `BETA_RANGE` [−30, 150] 로 잘라 둔다. 한계 근처 목표는
+  남는 radial 오차(실제 arm 과 표의 차이, 0.1–0.2 mm)를 받아들여야 하며, tile 배정 때 도달 한계에서 0.5 mm 이상
+  여유를 두는 것이 낫다.
 - 부호가 틀리면 positioner 가 trial 마다 목표에서 **멀어진다** (오차가 1, 2, 3 배로 는다). 영점이
   틀리면 Trial 0 json 이 (0, 0) 이 아니다. 다른 규약이면 `KSPEC_ANGLE_SIGN`, `KSPEC_ANGLE_ZERO`
   또는 `fiber_config` 의 값.

@@ -225,20 +225,36 @@ def _target_xy(target, xorigin, yorigin, use_measured, target_file=None):
     return xp, yp
 
 
-def _arm_angles(xorigin, yorigin, xtarget, ytarget, use_measured=None):
-    """각 positioner가 (xtarget, ytarget)을 가리키는 (theta, phi)를 구한다."""
+def _arm_angles(xorigin, yorigin, xtarget, ytarget, use_measured=None, what='target'):
+    """각 positioner가 (xtarget, ytarget)을 가리키는 (theta, phi)를 구한다.
+
+    회전 중심에서 (a1 + a2 - cfg.REACH_MARGIN) 보다 먼 점은 완전히 편 자세 (phi = 0, theta = 그 방향) 로
+    푼다 (fiber_config.REACH_MARGIN 참고). what 은 경고 문구용 ('target' / 'measured')."""
     arm1s, arm2s = cfg.arm_lengths(use_measured)
 
     theta = np.full(arm1s.size, np.nan)
     phi = np.full(arm1s.size, np.nan)
+    at_limit = []
     for i in range(arm1s.size):
         if not (np.isfinite(xtarget[i]) and np.isfinite(ytarget[i])):
             continue                                            # 끊어진 fiber: 측정값 없음
+        dx, dy = xtarget[i] - xorigin[i], ytarget[i] - yorigin[i]
+        if cfg.REACH_MARGIN > 0 and np.hypot(dx, dy) > arm1s[i] + arm2s[i] - cfg.REACH_MARGIN:
+            gamma = float(np.arctan2(dy, dx)) % (2*np.pi)       # 완전히 편 자세: solver 의 도달 불가 처리와 같다
+            theta[i], phi[i] = (-gamma if cfg.CLOCKWISE else gamma), 0.0
+            at_limit.append(i)
+            continue
         theta[i], phi[i] = find_angle_double_method2_select_elbow(
             xorigin[i], yorigin[i], xtarget[i], ytarget[i], arm1s[i], arm2s[i],
             elbow=cfg.ELBOW,
             clockwise=cfg.CLOCKWISE,
         )
+    if at_limit:
+        ids = list(cfg.fiber_ids())
+        get_logger().warning("%d %s position(s) within %.2f mm of the arm reach limit -> solved as fully "
+                             "extended (beta at its end, alpha toward the point): %s", len(at_limit), what,
+                             cfg.REACH_MARGIN, ", ".join(f"{ids[i]} ({np.hypot(xtarget[i]-xorigin[i], ytarget[i]-yorigin[i]):.2f}"
+                                                         f"/{arm1s[i]+arm2s[i]:.2f} mm)" for i in at_limit))
     return theta, phi
 
 
@@ -299,7 +315,8 @@ def json_path(json_dir, target_name, itrial):
 
 
 def save_angles(json_dir, target_name, itrial, angles):
-    """각도 배열을 trial별 json으로 저장한다."""
+    """각도 배열을 trial별 json으로 저장한다. positioner 범위 밖의 각도가 있으면 쓰지 않고 ValueError."""
+    cfg.check_command_angles(angles, where=f"(trial {itrial})")      # 범위 밖 명령은 절대 내보내지 않는다
     os.makedirs(json_dir, exist_ok=True)
 
     path = json_path(json_dir, target_name, itrial)
@@ -710,7 +727,7 @@ def _all_hole_ids(nfib, fid_flag):
 
 
 def measure_fibers(head, x, y, nfib, coeff, data_dir, nexposure, max_dist=None, n_extra=0,
-                   exclude=None, mode='Raw', leftover=None, **pk):
+                   exclude=None, mode='Raw', leftover=None, origins=None, **pk):
     """fiber 노출에서 peak 을 찾아 (fiducial 로 맞춘) 변환으로 focal 좌표로 옮기고
     목표 위치에 가장 가까운 것을 그 fiber 로 본다. x, y 는 fiber + fiducial 전체
     목표 (fiducial 은 그 자리의 검출을 fiber 로 잘못 잡지 않게 하려고 넣는다).
@@ -790,6 +807,29 @@ def measure_fibers(head, x, y, nfib, coeff, data_dir, nexposure, max_dist=None, 
                     ", ".join(f"{alive[k]}" + (f" (nearest {D[k].min():.1f} mm)" if xf.size else "")
                               for k in np.where(lost)[0]))
         j[lost] = -1; dist[lost] = np.nan
+        # 목표 9 mm 안에 검출이 없는 fiber (positioner 가 크게 어긋났거나 안 움직인 경우): 그 positioner 의 arm
+        # 도달 범위 (중심에서 |a2-a1| .. a1+a2, 여유 1 mm) 안에 남은 검출이 **하나뿐** 이면 그것을 그 fiber 로 본다.
+        # 그래야 몇 도를 돌려야 제자리로 가는지(회전량) 가 나온다. 후보가 없거나 둘 이상이면 그대로 NaN (애매).
+        # 다른 살아 있는 fiber 에 이미 할당된 검출은 후보에서 뺀다. (2026-10-28)
+        a1_all, a2_all = cfg.arm_lengths()
+        arm = {i: (a, b) for i, a, b in zip(ids, a1_all, a2_all)}
+        if origins is not None:
+            ox, oy = np.asarray(origins[0], float), np.asarray(origins[1], float)
+        else:
+            oxy = cfg.hole_xy(alive); ox, oy = oxy[:, 0], oxy[:, 1]
+        taken = set(int(j[k]) for k in range(nrow) if j[k] >= 0)
+        for k in np.where(lost)[0]:
+            aa, bb = arm[alive[k]]
+            r = np.hypot(xf - ox[k], yf - oy[k])
+            cand = [q for q in range(xf.size) if q not in taken and (abs(bb - aa) - 1.0) <= r[q] <= (aa + bb + 1.0)]
+            if len(cand) == 1:
+                q = cand[0]; j[k] = q; dist[k] = D[k, q]; lost[k] = False; taken.add(q)
+                log.warning("%s: no detection near the target, but exactly one unassigned detection within its arm "
+                            "reach (%.1f mm from the centre, %.1f mm from the target) -- taken as this fiber "
+                            "(check the image before trusting the rotation)", alive[k], r[q], dist[k])
+            elif len(cand) > 1:
+                log.warning("%s: %d unassigned detections within its arm reach (%s mm from the centre) -- ambiguous, "
+                            "left NaN", alive[k], len(cand), ", ".join(f"{r[q]:.1f}" for q in cand))
     for i in np.setdiff1d(np.arange(nfib, x.size), rows):   # fiducial 행 (단일 이미지일 때만 쓰임): 가장 가까운 것
         if xf.size:
             j[i] = int(np.argmin(D[i])); dist[i] = D[i, j[i]]
@@ -854,6 +894,7 @@ def mtlcal(data_dir='./MTL/data/'
            , cross_exclude=True
            , min_dist=40
            , fid_fallback_fiber=True
+           , fid_fiber_set=False
            , target_file=None
            , json_dir=None
            , target_name=None
@@ -879,6 +920,8 @@ def mtlcal(data_dir='./MTL/data/'
     어두운 검출을 피하는 기준이다. n_extra 는 표에 없는데 이미지에 보이는 밝은 점의 수
     (예: 고정된 sky fiber 9개). 그만큼 검출을 더 허용하고 매칭에서 자연히 빠진다.
     min_dist 는 가까운 검출을 하나로 합치는 거리 [px] (findpeak 참고; 큰 PSF 면 80 정도).
+    fid_fiber_set (기본 False) 이면 fiber 노출을 예비가 아니라 정식 fiducial 세트로 쓴다 (fiber 노출시간이
+    fiducial 노출시간 중 하나와 같아서 그 세트를 따로 찍지 않았을 때; MetrologyRun 이 정한다).
     fid_fallback_fiber (기본 True) 는 fiducial 전용 노출에서 안 보이는 fiducial 을 fiber
     노출(fiducial 이 같이 켜져 있을 때, 보통 포화)에서라도 가져오는 것이다.
     cross_exclude (기본 True) 는 노출을 나눠 찍었을 때 fiber 노출의 fiducial 자리와
@@ -1013,7 +1056,7 @@ def mtlcal(data_dir='./MTL/data/'
         heads_all = fid_heads + ([head] if fid_fallback_fiber else [])
         nexp_all = [fid_nexposure]*len(fid_heads) + ([nexposure] if fid_fallback_fiber else [])
 
-        fb_all = [False]*len(fid_heads) + ([True] if fid_fallback_fiber else [])
+        fb_all = [False]*len(fid_heads) + ([not fid_fiber_set] if fid_fallback_fiber else [])
 
         # fiducial 찾기. 기준 칩 좌표(직전 trial / 기준 파일)가 있으면 그 주변에서만 찾고 (패턴 매칭 없음),
         # 없거나 절반도 못 찾으면 패턴 매칭 (measure_fiducials) 으로 처음부터 찾는다.
@@ -1045,9 +1088,10 @@ def mtlcal(data_dir='./MTL/data/'
         xo_fid = np.where(fid_used, xo_fid, np.nan); yo_fid = np.where(fid_used, yo_fid, np.nan)
         ok_fid = np.isfinite(xo_fid)
 
+        origins_a = (xorigin[~dead][:nfib_a], yorigin[~dead][:nfib_a])      # 살아 있는 positioner 의 회전 중심
         xf_a, yf_a, _, (xo_fib, yo_fib) = measure_fibers(
             head, xa, ya, nfib_a, coeff, data_dir, nexposure, n_extra=n_extra,
-            exclude=(xo_fid[ok_fid], yo_fid[ok_fid]) if cross_exclude else None, mode=mode, **pk)
+            exclude=(xo_fid[ok_fid], yo_fid[ok_fid]) if cross_exclude else None, mode=mode, origins=origins_a, **pk)
         if cross_exclude:
             # fiber 자리를 지우고 fiducial 을 다시 찾아 변환을 다시 맞춘다 (fiducial 가까이 있는 fiber 의 빛이
             # 무게중심을 끌지 않게). 이 2차 탐색은 다듬기일 뿐이므로 여기서 fiducial 을 잃으면 (예: 어두운
@@ -1078,7 +1122,7 @@ def mtlcal(data_dir='./MTL/data/'
                 ok_fid = np.isfinite(xo_fid)
                 xf_a, yf_a, _, _ = measure_fibers(
                     head, xa, ya, nfib_a, coeff, data_dir, nexposure, n_extra=n_extra,
-                    exclude=(xo_fid[ok_fid], yo_fid[ok_fid]), mode=mode, **pk)
+                    exclude=(xo_fid[ok_fid], yo_fid[ok_fid]), mode=mode, origins=origins_a, **pk)
         xf_a[fa], yf_a[fa] = xf_fid, yf_fid                      # fiducial 은 전용 노출 값 (안 쓴 fiducial 은 NaN)
         save_fid_ref(json_dir, target_name, itrial, xo_fid, yo_fid)   # 다음 trial 의 fiducial 찾기 기준
 
@@ -1087,9 +1131,9 @@ def mtlcal(data_dir='./MTL/data/'
     dx, dy = xfocal-x, yfocal-y
 
     #---보정각 계산 (fiber만)---------------------------------------------------
-    theta_true, phi_true = _arm_angles(xorigin, yorigin, x, y, use_measured)
+    theta_true, phi_true = _arm_angles(xorigin, yorigin, x, y, use_measured, what='target')
     theta_obs, phi_obs = _arm_angles(xorigin, yorigin, xfocal, yfocal,
-                                     use_measured)
+                                     use_measured, what='measured')
 
     dtheta, dphi = _wrap(theta_true - theta_obs, phi_true - phi_obs)
     dtheta[dead[:nfib]] = 0.; dphi[dead[:nfib]] = 0.             # 끊어진 fiber 는 안 움직인다
@@ -1117,6 +1161,23 @@ def mtlcal(data_dir='./MTL/data/'
         prev = _flatten_angles(theta_true, phi_true)
 
     angle_cum = prev + angle_rot
+    angle_cum[0::2] = cfg.wrap_alpha_cmd(angle_cum[0::2])      # 누적 alpha 도 positioner 의 한 바퀴 범위 (-330, 30] 로
+    out_b = np.isfinite(angle_cum[1::2]) & ((angle_cum[1::2] < cfg.BETA_RANGE[0]) | (angle_cum[1::2] > cfg.BETA_RANGE[1]))
+    if out_b.any():                                             # positioner 가 실행할 수 없는 beta: 범위로 자른다
+        ids_b = list(cfg.fiber_ids())
+        log.warning("cumulative beta outside the positioner range %s for %s -- clipped (arm at its end stop)",
+                    cfg.BETA_RANGE, ", ".join(f"{ids_b[i]} ({angle_cum[2*i+1]:.1f})" for i in np.where(out_b)[0]))
+        angle_cum[1::2] = cfg.clip_beta(angle_cum[1::2])
+    # 그래도 범위 밖인 fiber (정상 경로에서는 없어야 한다) 는 그 fiber 만 직전 각도로 되돌리고 (회전 0) 나머지는
+    # 그대로 내보낸다. fiber 하나 때문에 trial 전체를 버리지 않는다.
+    bad = cfg.out_of_range_mask(angle_cum)
+    if bad.any():
+        ids_b = list(cfg.fiber_ids())
+        log.error("command angles outside the positioner range for %s -- these fibers keep their previous "
+                  "angles this trial (rotation 0); the others are written normally",
+                  ", ".join(f"{ids_b[i]} ({angle_cum[2*i]:.1f}, {angle_cum[2*i+1]:.1f})" for i in np.where(bad)[0]))
+        for i in np.where(bad)[0]:
+            angle_cum[2*i:2*i+2] = prev[2*i:2*i+2]; angle_rot[2*i:2*i+2] = 0.
 
     if json_dir is not None and target_name is not None:
         np.save(naming.coeff_path(json_dir, target_name, itrial), coeff)   # 다음 trial 의 Predict 가 읽는다
