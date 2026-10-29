@@ -167,6 +167,33 @@ def test_shipped_config_passes_star_field(tmp_path, star_fwhm):
     assert res["n_peaks"] >= 20
 
 
+@pytest.mark.parametrize("star_fwhm", [3.0, 7.0])
+def test_matched_filter_passes_star_field(tmp_path, star_fwhm):
+    act = make_actions(method="matched")
+    res = act._evaluate_pointing_image_quality(
+        write(tmp_path / "stars.fits", frame(25, star_fwhm=star_fwhm)))
+    assert res["passed"], res["reasons"]
+    assert 20 <= res["n_peaks"] <= 25
+
+
+def test_matched_filter_ignores_gradient_and_hot_pixels(tmp_path):
+    """No stars, a strong sky gradient and zeroed hot pixels: no peaks."""
+    img = frame(0).astype(float)
+    yy, xx = np.mgrid[0:img.shape[0], 0:img.shape[1]]
+    img += 0.5 * xx + 200.0 * np.exp(-((xx - 300) ** 2 + (yy - 250) ** 2) / (2 * 60.0**2))
+    img[::17, ::23] = 0.0
+    res = make_actions(method="matched")._evaluate_pointing_image_quality(
+        write(tmp_path / "gradient.fits", img.astype(np.float32)))
+    assert not res["passed"]
+    assert res["n_peaks"] <= 1
+
+
+def test_unknown_method_is_rejected(tmp_path):
+    res = make_actions(method="sep")._evaluate_pointing_image_quality(
+        write(tmp_path / "stars.fits", frame(25)))
+    assert not res["passed"] and res["reasons"][0].startswith("filter_error")
+
+
 def test_blank_frame_fails_on_peaks(actions, tmp_path):
     res = actions._evaluate_pointing_image_quality(write(tmp_path / "blank.fits", frame(0)))
     assert not res["passed"]

@@ -22,10 +22,17 @@
         "min_std_bg": 0.3,
         "min_peaks": 10,
         "min_brightest_flux": 3000,
+        "method": "dao",
         "dao": {
           "fwhm": 10.0,
           "sigma_threshold": 5.0,
           "sharphi": 2.0
+        },
+        "matched": {
+          "fwhm": 7.0,
+          "nsigma": 6.0,
+          "box_size": 64,
+          "border": 8
         }
     },
     "settings": {
