@@ -1,0 +1,152 @@
+"""metrology 시점의 하늘 보정: assign 목표 (xp, yp) 를 초점면 원점 둘레로 돌린다.
+
+assign 파일 (planner) 의 xp, yp 는 ICRS RA/Dec 를 고정 회전각 (예: 15.00 deg) 으로 초점면에
+옮긴 값이다. 실제로 필요한 회전은 두 가지가 더 있다.
+
+1. 세차 (precession): 적도의 마운트는 관측 시점의 참 천구 북극을 따른다 (TETE). ICRS 북쪽과
+   TETE 북쪽은 타일 위치에서 약 0.149 deg x sin(RA) / cos(Dec) (2026 년) 만큼 어긋나므로,
+   초점면에서 그만큼 (-PA) 돌려야 한다. 날짜만 몇 주 정확하면 된다 (하룻밤 안에는 1e-5 deg).
+2. 기기 회전 오프셋 (instrument offset): GFA 로 잰 기기 회전 (TETE) 에서 planner 가 쓴
+   회전을 뺀 값. 2026-10-28 GFA 측정 15.18 deg - planner 15.00 deg = 0.18 deg.
+   재설치하면 GFA 로 다시 재서 KSPEC.ini 의 MTL.sky_correction.instrument_offset_deg 를 고친다.
+
+둘을 더한 각을 초점면 원점 둘레 회전 하나로 쓴다 (planner 규약 x = +E, y = -N 에서
+반시계, +x -> +y). 타일별 정확한 TETE 매핑과의 차이는 r = 98 mm 에서 최대 3-5 um (대부분
+광행차의 1e-4 배율) 이다 (proj-kspecdr note 2026-10-28-assign-rotation-correction).
+
+보정 파일에는 planner 원래 값을 xp_planner / yp_planner 로 같이 남기고, 이미 보정된
+파일을 다시 넣으면 그 원래 값에서 다시 계산한다 (보정이 두 번 들어가지 않는다).
+"""
+
+import json
+import logging
+import os
+from datetime import datetime, timezone
+
+import numpy as np
+
+from kspec_metrology.analysis import fiber_config as cfg
+
+log = logging.getLogger(__name__)
+
+SUFFIX = '_skycorr'
+
+
+def precession_rotation_deg(ra_deg, dec_deg, time):
+    """ICRS 로 만든 목표를 TETE 에 맞추는 초점면 회전 [deg] (planner 규약). = -PA(TETE 북쪽, ICRS)."""
+    import astropy.units as u
+    from astropy.coordinates import TETE, SkyCoord
+    from astropy.time import Time
+
+    frame = TETE(obstime=Time(time))
+    c = SkyCoord(ra_deg * u.deg, dec_deg * u.deg)
+    ct = c.transform_to(frame)
+    north = SkyCoord(ct.ra, ct.dec + 1 * u.arcmin, frame=frame).transform_to('icrs')
+    pa = c.position_angle(north).wrap_at(180 * u.deg).deg
+    return -float(pa)
+
+
+def field_centre(target):
+    """타일 중심 (RA, Dec) [deg]. tile_ra / tile_dec 가 있으면 그것, 없으면 목표들의 벡터 평균.
+
+    목표 평균은 타일 중심에서 0.1 deg 안쪽이라 세차 회전 차이는 1e-3 deg 미만이다.
+    """
+    if target.get('tile_ra') is not None and target.get('tile_dec') is not None:
+        return float(target['tile_ra']), float(target['tile_dec'])
+    ra = np.radians(np.asarray(target['ra'], float))
+    dec = np.radians(np.asarray(target['dec'], float))
+    v = np.array([np.cos(dec) * np.cos(ra), np.cos(dec) * np.sin(ra), np.sin(dec)]).mean(axis=1)
+    return (float(np.degrees(np.arctan2(v[1], v[0])) % 360.),
+            float(np.degrees(np.arcsin(v[2] / np.linalg.norm(v)))))
+
+
+def _reach(xp, yp, use_measured=None):
+    """목표의 positioner 도달 여유 [mm] (음수면 닿지 않음). 설계 홀 중심, arm 길이."""
+    ids = cfg.fiber_ids()
+    if len(ids) != len(xp):
+        return None
+    hole = cfg.hole_xy(ids)
+    a1, a2 = cfg.arm_lengths(use_measured)
+    r = np.hypot(xp - hole[:, 0], yp - hole[:, 1])
+    rmin, rmax = np.abs(a1 - a2), a1 + a2
+    return np.minimum(r - rmin, rmax - r), hole, rmin, rmax
+
+
+def correct_target(target, time=None, precession=True, instrument_offset_deg=0.0,
+                   use_measured=None):
+    """보정한 target dict 과 요약 (dict) 을 돌려준다. target 은 바꾸지 않는다.
+
+    time : 관측 시각 (UTC; astropy Time 이 받는 값). None 이면 지금.
+    닿지 않게 된 목표: class 9 (목표 없음) 는 planner 값을 그대로 두고, 나머지는 닿는
+    끝까지만 옮기고 요약의 clipped 에 적는다 (그 fiber 는 다시 배정해야 한다).
+    """
+    time = time or datetime.now(timezone.utc).isoformat(timespec='seconds')
+    xp0 = np.asarray(target.get('xp_planner', target['xp']), float)
+    yp0 = np.asarray(target.get('yp_planner', target['yp']), float)
+
+    ra0, dec0 = field_centre(target)
+    prec = precession_rotation_deg(ra0, dec0, time) if precession else 0.0
+    rot = prec + float(instrument_offset_deg)
+    c, s = np.cos(np.radians(rot)), np.sin(np.radians(rot))
+    xp, yp = c * xp0 - s * yp0, s * xp0 + c * yp0
+
+    kept, clipped = [], []
+    reach = _reach(xp, yp, use_measured)
+    if reach is None:
+        log.warning("target 개수 (%d) 가 fiber 표 (%d) 와 달라 도달 검사를 건너뜁니다",
+                    len(xp), len(cfg.fiber_ids()))
+    else:
+        margin, hole, rmin, rmax = reach
+        cls = [str(v) for v in target.get('class', [''] * len(xp))]
+        ids = cfg.fiber_ids()
+        for k in np.flatnonzero(margin < 0):
+            if cls[k] == '9':
+                xp[k], yp[k] = xp0[k], yp0[k]
+                kept.append(ids[k])
+                continue
+            dx, dy = xp[k] - hole[k, 0], yp[k] - hole[k, 1]
+            r = np.hypot(dx, dy)
+            lim = rmax[k] - 1e-3 if r > rmax[k] else rmin[k] + 1e-3
+            xp[k], yp[k] = hole[k, 0] + dx * lim / r, hole[k, 1] + dy * lim / r
+            clipped.append({'fiber': ids[k], 'class': cls[k], 'miss_um': round(float(abs(r - lim)) * 1e3, 1)})
+
+    d = np.hypot(xp - xp0, yp - yp0)
+    summary = {
+        'time_utc': str(time),
+        'centre_deg': [round(ra0, 6), round(dec0, 6)],
+        'precession': bool(precession),
+        'precession_deg': round(prec, 5),
+        'instrument_offset_deg': float(instrument_offset_deg),
+        'rotation_deg': round(rot, 5),
+        'shift_max_um': round(float(d.max()) * 1e3, 1),
+        'kept_class9': kept,
+        'clipped': clipped,
+    }
+    out = dict(target)
+    out['xp'], out['yp'] = xp.tolist(), yp.tolist()
+    out['xp_planner'], out['yp_planner'] = xp0.tolist(), yp0.tolist()
+    out['sky_correction'] = summary
+    return out, summary
+
+
+def corrected_path(target_file):
+    """<이름>.json -> <이름>_skycorr.json (이미 보정 파일이면 같은 이름)."""
+    stem, ext = os.path.splitext(target_file)
+    if stem.endswith(SUFFIX):
+        return target_file
+    return f'{stem}{SUFFIX}{ext or ".json"}'
+
+
+def write_corrected_target(target_file, out_file=None, **kwargs):
+    """target 파일을 읽어 보정 파일을 쓰고 (경로, 요약) 을 돌려준다. kwargs 는 correct_target 로."""
+    with open(target_file, 'r') as f:
+        target = json.load(f)
+    out, summary = correct_target(target, **kwargs)
+    out_file = out_file or corrected_path(target_file)
+    with open(out_file, 'w', encoding='utf-8') as f:
+        json.dump(out, f)
+    log.info("Sky correction %s -> %s: rotation %.4f deg (precession %.4f + instrument %.4f), "
+             "max shift %.0f um, clipped %s", target_file, out_file, summary['rotation_deg'],
+             summary['precession_deg'], summary['instrument_offset_deg'],
+             summary['shift_max_um'], [c['fiber'] for c in summary['clipped']])
+    return out_file, summary

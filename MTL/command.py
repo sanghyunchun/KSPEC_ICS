@@ -10,6 +10,7 @@ from kspec_metrology.exposure.mtlexp import mtlexp as take_test_exposure
 from kspec_metrology.mtlrun import MetrologyRun
 from kspec_metrology.analysis.mtlcal import mtlcal as analyze_images, json_path
 from kspec_metrology.analysis import utils as mtl_utils
+from kspec_metrology.analysis.sky_correction import write_corrected_target
 
 
 # 분석 설정. kspec_metrology 의 노트북(Calibration_Run, Metrology_Debug 등)과 run_trial.py 에서
@@ -93,6 +94,33 @@ def _load_mtl_config():
         config[key] = _expand_path(config[key])
 
     return config
+
+
+def _sky_corrected_target(target_file, config, message):
+    """mtlstart 시점의 하늘 보정 파일 (<이름>_skycorr.json) 과 요약. 꺼져 있으면 (target_file, None).
+
+    KSPEC.ini MTL.sky_correction: enabled, precession (TETE 세차 회전), instrument_offset
+    (+ instrument_offset_deg: GFA 로 잰 기기 회전 - planner 회전; 재설치 후 다시 잰다).
+    mtlstart 메시지의 sky_correction / precession / instrument_offset / instrument_offset_deg /
+    obs_time 이 있으면 그 값이 우선한다.
+    """
+    sc = dict(config.get("sky_correction") or {})
+    if not _flag(message, "sky_correction", bool(sc.get("enabled", False))):
+        return target_file, None
+    precession = _flag(message, "precession", bool(sc.get("precession", True)))
+    use_offset = _flag(message, "instrument_offset", bool(sc.get("instrument_offset", True)))
+    offset = _value(message, "instrument_offset_deg", sc.get("instrument_offset_deg", 0.0), float)
+    out, summary = write_corrected_target(
+        target_file,
+        time=_value(message, "obs_time", None, str),
+        precession=precession,
+        instrument_offset_deg=offset if use_offset else 0.0,
+    )
+    print(f"MTL sky correction: {os.path.basename(target_file)} -> {os.path.basename(out)}, "
+          f"rotation {summary['rotation_deg']:+.4f} deg (precession {summary['precession_deg']:+.4f}"
+          f", instrument {summary['instrument_offset_deg']:+.4f}), max shift "
+          f"{summary['shift_max_um']:.0f} um, clipped {[c['fiber'] for c in summary['clipped']]}")
+    return out, summary
 
 
 def _target_filename(data):
@@ -185,6 +213,8 @@ async def identify_execute(MTL_server, cmd, context):
                     _value(receive_msg, "json_dir", config["mtlfilepath"])
                 )
                 tile = _value(receive_msg, "tile", None)
+                # 하늘 보정 (세차 + 기기 회전 오프셋): Trial 0 각도와 이후 trial 의 목표가 같은 파일을 쓴다
+                target_file, sky = _sky_corrected_target(target_file, config, receive_msg)
 
                 analysis = _analysis_options(receive_msg)
                 info = _package_info()
@@ -215,6 +245,7 @@ async def identify_execute(MTL_server, cmd, context):
 
                 # 생성과 start가 모두 성공한 경우에만 현재 run을 교체한다.
                 context.run = run
+                context.target_file = target_file  # mtlcal 도 보정된 목표를 쓴다
 
                 await _send_response(
                     MTL_server,
@@ -228,6 +259,8 @@ async def identify_execute(MTL_server, cmd, context):
                     nexposure=run.nexposure,
                     tolerance=run.tolerance,
                     metric=run.metric,
+                    target_file=target_file,
+                    sky_correction=sky,
                     **info,
                 )
                 return
