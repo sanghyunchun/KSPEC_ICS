@@ -39,9 +39,11 @@ def tile_target(n_out=False):
             t = np.array([-hole[k, 1], hole[k, 0]]) / r[k]
             xp[k], yp[k] = hole[k] + (a1[k] + a2[k] - 0.002) * t
             cls[k] = c
-    return {"tile_id": 9140, "project": "ASPECS", "ra": [CENTRE[0]] * len(ids),
-            "dec": [CENTRE[1]] * len(ids), "xp": xp.tolist(), "yp": yp.tolist(), "class": cls,
-            "zenith_angle": 9.1}
+    # sky positions of the targets, planner convention (x = +E, y = -N, 5160 mm/rad)
+    dec = CENTRE[1] - np.degrees(yp / 5160.0)
+    ra = CENTRE[0] + np.degrees(xp / 5160.0) / np.cos(np.radians(CENTRE[1]))
+    return {"tile_id": 9140, "project": "ASPECS", "ra": ra.tolist(), "dec": dec.tolist(),
+            "xp": xp.tolist(), "yp": yp.tolist(), "class": cls, "zenith_angle": 9.1}
 
 
 class SkyCorrectionTest(unittest.TestCase):
@@ -55,10 +57,13 @@ class SkyCorrectionTest(unittest.TestCase):
         out, s = correct_target(t, TIME, precession=True, instrument_offset_deg=0.18,
                                 use_measured=False)
         self.assertAlmostEqual(s["rotation_deg"], s["precession_deg"] + 0.18, places=5)
-        a = np.radians(s["rotation_deg"])
+        # the fitted sky rotation is the TETE-north PA term, the scale the ~5e-5 aberration
+        self.assertAlmostEqual(s["precession_deg"], precession_rotation_deg(*CENTRE, TIME), delta=2e-3)
+        self.assertLess(abs(s["scale"] - 1), 2e-4)
+        a, k = np.radians(s["rotation_deg"]), s["scale"]
         x0, y0 = np.array(t["xp"]), np.array(t["yp"])
-        np.testing.assert_allclose(out["xp"], np.cos(a) * x0 - np.sin(a) * y0, atol=1e-4)  # 0.1 um
-        np.testing.assert_allclose(out["yp"], np.sin(a) * x0 + np.cos(a) * y0, atol=1e-4)
+        np.testing.assert_allclose(out["xp"], k * (np.cos(a) * x0 - np.sin(a) * y0), atol=1e-4)  # 0.1 um
+        np.testing.assert_allclose(out["yp"], k * (np.sin(a) * x0 + np.cos(a) * y0), atol=1e-4)
         self.assertEqual(out["xp_planner"], t["xp"])
         self.assertEqual(out["zenith_angle"], 9.1)  # other keys kept
         self.assertEqual(s["clipped"], [])

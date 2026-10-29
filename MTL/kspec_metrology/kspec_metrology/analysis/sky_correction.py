@@ -10,9 +10,13 @@ assign 파일 (planner) 의 xp, yp 는 ICRS RA/Dec 를 고정 회전각 (예: 15
    회전을 뺀 값. 2026-10-28 GFA 측정 15.18 deg - planner 15.00 deg = 0.18 deg.
    재설치하면 GFA 로 다시 재서 KSPEC.ini 의 MTL.sky_correction.instrument_offset_deg 를 고친다.
 
-둘을 더한 각을 초점면 원점 둘레 회전 하나로 쓴다 (planner 규약 x = +E, y = -N 에서
-반시계, +x -> +y). 타일별 정확한 TETE 매핑과의 차이는 r = 98 mm 에서 최대 3-5 um (대부분
-광행차의 1e-4 배율) 이다 (proj-kspecdr note 2026-10-28-assign-rotation-correction).
+세차 쪽은 회전 하나가 아니라, 목표들의 ICRS 와 TETE gnomonic 좌표 (타일 중심 둘레) 를 잇는
+닮음 변환 (회전 + 배율; 배율은 광행차의 ~5e-5) 을 목표들로 맞춰서 쓴다. planner 의 하늘 ->
+초점면 매핑 (2x2 행렬, 반경 왜곡) 은 필요 없다. 초점면은 하늘의 거울상이라 (planner x = +E,
+y = -N) 하늘에서의 회전은 초점면에서 반대 부호가 된다. 여기에 기기 오프셋 회전을 더해
+초점면 원점 둘레로 적용한다 (planner 규약에서 반시계, +x -> +y). 타일별 정확한 TETE 매핑
+(planner 매핑으로 다시 투영) 과의 차이는 9111 / 9140 에서 최대 0.2 um (회전만 쓰면 3-5 um)
+이다 (proj-kspecdr note 2026-10-28-assign-rotation-correction). 계산은 ~30 ms.
 
 보정 파일에는 planner 원래 값을 xp_planner / yp_planner 로 같이 남기고, 이미 보정된
 파일을 다시 넣으면 그 원래 값에서 다시 계산한다 (보정이 두 번 들어가지 않는다).
@@ -44,6 +48,31 @@ def precession_rotation_deg(ra_deg, dec_deg, time):
     north = SkyCoord(ct.ra, ct.dec + 1 * u.arcmin, frame=frame).transform_to('icrs')
     pa = c.position_angle(north).wrap_at(180 * u.deg).deg
     return -float(pa)
+
+
+def icrs_to_tete_focal(ra_deg, dec_deg, centre, time):
+    """ICRS 목표를 TETE 에 맞추는 초점면 (회전 [deg], 배율). planner 규약 (x = +E, y = -N).
+
+    목표들의 gnomonic 좌표 z = xi + i eta 를 ICRS (타일 중심 둘레) 와 TETE (TETE 로 옮긴 타일
+    중심 둘레) 에서 구해 z_tete = a z_icrs 로 맞춘다. 초점면 w = x + i y 는 conj(z) 에 비례하므로
+    w_tete = conj(a) w_icrs: 회전 -arg(a), 배율 |a|.
+    """
+    import astropy.units as u
+    from astropy.coordinates import TETE, SkyCoord, SkyOffsetFrame
+    from astropy.time import Time
+
+    frame = TETE(obstime=Time(time))
+    s = SkyCoord(np.asarray(ra_deg, float) * u.deg, np.asarray(dec_deg, float) * u.deg)
+    c = SkyCoord(centre[0] * u.deg, centre[1] * u.deg)
+    oi = s.transform_to(SkyOffsetFrame(origin=c))
+    st, ct = s.transform_to(frame), c.transform_to(frame)
+    # TETE 좌표를 같은 방식으로 투영하려고 icrs 이름표만 붙인다 (값은 TETE RA/Dec)
+    ot = SkyCoord(st.ra, st.dec, frame='icrs').transform_to(
+        SkyOffsetFrame(origin=SkyCoord(ct.ra, ct.dec, frame='icrs')))
+    zi = oi.lon.rad + 1j * oi.lat.rad
+    zt = ot.lon.rad + 1j * ot.lat.rad
+    a = np.vdot(zi, zt) / np.vdot(zi, zi)
+    return float(-np.degrees(np.angle(a))), float(abs(a))
 
 
 def field_centre(target):
@@ -85,9 +114,12 @@ def correct_target(target, time=None, precession=True, instrument_offset_deg=0.0
     yp0 = np.asarray(target.get('yp_planner', target['yp']), float)
 
     ra0, dec0 = field_centre(target)
-    prec = precession_rotation_deg(ra0, dec0, time) if precession else 0.0
+    if precession:
+        prec, scale = icrs_to_tete_focal(target['ra'], target['dec'], (ra0, dec0), time)
+    else:
+        prec, scale = 0.0, 1.0
     rot = prec + float(instrument_offset_deg)
-    c, s = np.cos(np.radians(rot)), np.sin(np.radians(rot))
+    c, s = scale * np.cos(np.radians(rot)), scale * np.sin(np.radians(rot))
     xp, yp = c * xp0 - s * yp0, s * xp0 + c * yp0
 
     kept, clipped = [], []
@@ -116,6 +148,7 @@ def correct_target(target, time=None, precession=True, instrument_offset_deg=0.0
         'centre_deg': [round(ra0, 6), round(dec0, 6)],
         'precession': bool(precession),
         'precession_deg': round(prec, 5),
+        'scale': round(scale, 8),
         'instrument_offset_deg': float(instrument_offset_deg),
         'rotation_deg': round(rot, 5),
         'shift_max_um': round(float(d.max()) * 1e3, 1),
