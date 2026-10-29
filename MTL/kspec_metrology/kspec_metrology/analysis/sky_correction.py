@@ -159,8 +159,10 @@ def correct_target(target, time=None, precession=True, instrument_offset_deg=0.0
 
     time : 관측 시각 (UTC; astropy Time 이 받는 값, 또는 '+09:00' 같은 시간대가 붙은 ISO
         문자열). None 이면 지금.
-    닿지 않게 된 목표: class 9 (목표 없음) 는 planner 값을 그대로 두고, 나머지는 닿는
-    끝까지만 옮기고 요약의 clipped 에 적는다 (그 fiber 는 다시 배정해야 한다).
+    class 9 (목표 없음) 는 보정하지 않고 planner 값을 그대로 둔다 (요약의 kept_class9). 옮길 목표가
+    없고, 팔 끝 근처나 alpha 범위 경계 근처의 class 9 를 옮기면 큰 회전이나 ~360 도 점프가 된다
+    (2026-10-29 tile 9162 G11). 닿지 않게 된 나머지 목표는 닿는 끝까지만 옮기고 요약의 clipped 에
+    적는다 (그 fiber 는 다시 배정해야 한다).
     calibration target 이나 하늘 좌표가 없는 target (no_sky_reason; target_file 은 이름 검사용)
     은 그대로 돌려주고 요약에 skipped 를 적는다.
     """
@@ -184,20 +186,20 @@ def correct_target(target, time=None, precession=True, instrument_offset_deg=0.0
         raise ValueError(f"sky correction gave non-finite targets (rotation {rot}, scale {scale}); "
                          "the target file is not written")
 
+    cls = [str(v) for v in target.get('class', [''] * len(xp))]
+    ids = cfg.fiber_ids() if len(cfg.fiber_ids()) == len(xp) else [str(k) for k in range(len(xp))]
     kept, clipped = [], []
+    for k in range(len(xp)):
+        if cls[k] == '9':
+            xp[k], yp[k] = xp0[k], yp0[k]
+            kept.append(ids[k])
     reach = _reach(xp, yp, use_measured)
     if reach is None:
         log.warning("target 개수 (%d) 가 fiber 표 (%d) 와 달라 도달 검사를 건너뜁니다",
                     len(xp), len(cfg.fiber_ids()))
     else:
         margin, hole, rmin, rmax = reach
-        cls = [str(v) for v in target.get('class', [''] * len(xp))]
-        ids = cfg.fiber_ids()
         for k in np.flatnonzero(margin < 0):
-            if cls[k] == '9':
-                xp[k], yp[k] = xp0[k], yp0[k]
-                kept.append(ids[k])
-                continue
             dx, dy = xp[k] - hole[k, 0], yp[k] - hole[k, 1]
             r = np.hypot(dx, dy)
             lim = rmax[k] - 1e-3 if r > rmax[k] else rmin[k] + 1e-3

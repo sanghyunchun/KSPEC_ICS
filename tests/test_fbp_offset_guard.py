@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 sys.modules.setdefault('pyads', MagicMock())    # PLC library; only read_by_name of the fake PLC is used
+sys.modules.setdefault('aio_pika', MagicMock())  # RabbitMQ client, imported by FBP.command / fbpcli
 
 from FBP.kspec_positioner_controller import position_action  # noqa: E402
 
@@ -95,6 +96,48 @@ class OffsetGuardTest(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(result['status'], 'success')
         self.main.assert_awaited_once()
+
+    async def test_null_axis_is_held_at_its_position(self):
+        """MTL sends NaN (null) for fibres it did not measure: FBP keeps them where they are."""
+        held, other = list(self.map)[:2]
+        alpha_file, beta_file = self.offset_files({(held, 'alpha'): None, (held, 'beta'): None,
+                                                   (other, 'alpha'): 3.})
+        # the held axis stands 350 deg from what a stale command would ask: it must not count
+        plcs = self.plcs({(held, 'alpha'): -328.5, (held, 'beta'): 120., (other, 'alpha'): 1.})
+
+        result = await position_action._rotate_offset_checked(plcs, alpha_file, beta_file, 45.)
+
+        self.assertEqual(result['status'], 'success')
+        self.main.assert_awaited_once()
+        alpha = json.loads(Path(alpha_file).read_text())
+        beta = json.loads(Path(beta_file).read_text())
+        self.assertEqual((alpha[held], beta[held]), (-328.5, 120.))   # target = ActPos: no motion
+        self.assertEqual(alpha[other], 3.)
+        self.assertEqual({(h['positioner'], h['motor']) for h in result['data']['held_axes']},
+                         {(held, 'alpha'), (held, 'beta')})
+        self.assertIn(held, result['message'])
+
+
+class OffsetMessageTest(unittest.TestCase):
+    def test_nan_in_the_mtl_json_becomes_null(self):
+        from FBP.fbpcli import fbp_offset
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / '9162_MetrologyTrial_1.json'
+            path.write_text('{"C4_a": NaN, "C4_b": NaN, "C5_a": -12.5, "C5_b": 40.0}')
+            message = json.loads(fbp_offset(str(path)))     # standard JSON on the wire
+        self.assertEqual(message['offsets'], {'C4_a': None, 'C4_b': None, 'C5_a': -12.5, 'C5_b': 40.0})
+
+    def test_saveoffset_keeps_null(self):
+        from FBP import command
+
+        positioners = list(core.POSITIONER_AXIS_MAP)
+        offsets = {f'{p}_{m}': 1.0 for p in positioners for m in ('a', 'b')}
+        offsets[f'{positioners[0]}_a'] = None
+        with tempfile.TemporaryDirectory() as tmp,              patch.object(command, 'load_config', return_value={'FBP': {'fbpfilepath': tmp}}):
+            status, _, alpha_file, _ = command.saveoffset({'offsets': offsets, 'source_name': 't.json'})
+            self.assertEqual(status, 'success')
+            self.assertIsNone(json.loads(Path(alpha_file).read_text())[positioners[0]])
 
 
 if __name__ == '__main__':
