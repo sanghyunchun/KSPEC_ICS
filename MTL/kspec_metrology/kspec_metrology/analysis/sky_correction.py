@@ -36,13 +36,33 @@ log = logging.getLogger(__name__)
 SUFFIX = '_skycorr'
 
 
+def obs_time(time=None):
+    """관측 시각을 astropy Time (UTC) 으로. None 이면 지금.
+
+    astropy 는 '+00:00' / 'Z' 같은 시간대 꼬리가 붙은 ISO 문자열을 못 읽어서
+    (datetime.isoformat() 의 기본 출력), 그런 문자열은 datetime 으로 읽어 UTC 로 바꾼다.
+    """
+    from astropy.time import Time
+
+    if time is None:
+        return Time(datetime.now(timezone.utc))
+    if isinstance(time, str):
+        try:
+            return Time(time, scale='utc')
+        except ValueError:
+            t = datetime.fromisoformat(time.strip().replace('Z', '+00:00'))
+            if t.tzinfo is not None:
+                t = t.astimezone(timezone.utc)
+            return Time(t.replace(tzinfo=None), scale='utc')
+    return Time(time)
+
+
 def precession_rotation_deg(ra_deg, dec_deg, time):
     """ICRS 로 만든 목표를 TETE 에 맞추는 초점면 회전 [deg] (planner 규약). = -PA(TETE 북쪽, ICRS)."""
     import astropy.units as u
     from astropy.coordinates import TETE, SkyCoord
-    from astropy.time import Time
 
-    frame = TETE(obstime=Time(time))
+    frame = TETE(obstime=obs_time(time))
     c = SkyCoord(ra_deg * u.deg, dec_deg * u.deg)
     ct = c.transform_to(frame)
     north = SkyCoord(ct.ra, ct.dec + 1 * u.arcmin, frame=frame).transform_to('icrs')
@@ -59,9 +79,8 @@ def icrs_to_tete_focal(ra_deg, dec_deg, centre, time):
     """
     import astropy.units as u
     from astropy.coordinates import TETE, SkyCoord, SkyOffsetFrame
-    from astropy.time import Time
 
-    frame = TETE(obstime=Time(time))
+    frame = TETE(obstime=obs_time(time))
     s = SkyCoord(np.asarray(ra_deg, float) * u.deg, np.asarray(dec_deg, float) * u.deg)
     c = SkyCoord(centre[0] * u.deg, centre[1] * u.deg)
     oi = s.transform_to(SkyOffsetFrame(origin=c))
@@ -105,11 +124,12 @@ def correct_target(target, time=None, precession=True, instrument_offset_deg=0.0
                    use_measured=None):
     """보정한 target dict 과 요약 (dict) 을 돌려준다. target 은 바꾸지 않는다.
 
-    time : 관측 시각 (UTC; astropy Time 이 받는 값). None 이면 지금.
+    time : 관측 시각 (UTC; astropy Time 이 받는 값, 또는 '+09:00' 같은 시간대가 붙은 ISO
+        문자열). None 이면 지금.
     닿지 않게 된 목표: class 9 (목표 없음) 는 planner 값을 그대로 두고, 나머지는 닿는
     끝까지만 옮기고 요약의 clipped 에 적는다 (그 fiber 는 다시 배정해야 한다).
     """
-    time = time or datetime.now(timezone.utc).isoformat(timespec='seconds')
+    time = obs_time(time or None)
     xp0 = np.asarray(target.get('xp_planner', target['xp']), float)
     yp0 = np.asarray(target.get('yp_planner', target['yp']), float)
 
@@ -144,7 +164,7 @@ def correct_target(target, time=None, precession=True, instrument_offset_deg=0.0
 
     d = np.hypot(xp - xp0, yp - yp0)
     summary = {
-        'time_utc': str(time),
+        'time_utc': time.utc.isot,
         'centre_deg': [round(ra0, 6), round(dec0, 6)],
         'precession': bool(precession),
         'precession_deg': round(prec, 5),

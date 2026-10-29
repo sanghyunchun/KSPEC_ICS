@@ -68,6 +68,18 @@ class SkyCorrectionTest(unittest.TestCase):
         self.assertEqual(out["zenith_angle"], 9.1)  # other keys kept
         self.assertEqual(s["clipped"], [])
 
+    def test_time_with_timezone_and_default_now(self):
+        # astropy cannot read '+00:00' / 'Z' (datetime.isoformat() output); the server default is now
+        t = tile_target()
+        ref = correct_target(t, TIME, use_measured=False)[1]
+        for time in ("2026-10-29T12:00:00+00:00", "2026-10-29T23:00:00+11:00",
+                     "2026-10-29T12:00:00Z", "2026-10-29 12:00:00"):
+            s = correct_target(t, time, use_measured=False)[1]
+            self.assertEqual(s["time_utc"], "2026-10-29T12:00:00.000")
+            self.assertEqual(s["rotation_deg"], ref["rotation_deg"])
+        s = correct_target(t, None, use_measured=False)[1]
+        self.assertAlmostEqual(s["rotation_deg"], ref["rotation_deg"], delta=0.01)
+
     def test_options_off(self):
         t = tile_target()
         out, s = correct_target(t, TIME, precession=False, instrument_offset_deg=0.0,
