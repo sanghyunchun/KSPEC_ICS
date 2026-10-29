@@ -29,7 +29,8 @@ from matplotlib.figure import Figure
 import numpy as np
 from Lib.AMQ import AMQclass, UDPClientProtocol, TCPClient
 from ADC.adccli import handle_adc
-from GFA.gfacli import handle_gfa
+from GFA.gfacli import handle_gfa, bytes_to_sexagesimal
+from GFA.pointing import apply_offsets, radec_str_to_deg, ra_deg_to_hms, dec_deg_to_dms
 from FBP.fbpcli import handle_fbp
 from MTL.mtlcli import handle_mtl, mtl_start, mtl_set
 from LAMP.lampcli import handle_lamp
@@ -205,6 +206,10 @@ class MainWindow(QMainWindow):
         self.msglog_path = None
         self.ra = None
         self.dec = None
+        self.delta_ra = None
+        self.delta_dec = None
+        self.new_ra = None
+        self.new_dec = None
         self.obstype = None
         self.TileID = None
         self.expT = None
@@ -1736,12 +1741,12 @@ class MainWindow(QMainWindow):
                 return
 
             sepsec = round(response_data["sepsec"], 2)
-            self.delta_ra = round(response_data["dra"], 2)
-            self.delta_dec = round(response_data["ddec"], 2)
+            self.delta_ra = float(response_data["dra"])
+            self.delta_dec = float(response_data["ddec"])
 
             self.ui.lineEdit_offset.setText(f"{sepsec}")
-            self.ui.lineEdit_raoffset.setText(f"{self.delta_ra}")
-            self.ui.lineEdit_decoffset.setText(f"{self.delta_dec}")
+            self.ui.lineEdit_raoffset.setText(f"{self.delta_ra:.2f}")
+            self.ui.lineEdit_decoffset.setText(f"{self.delta_dec:.2f}")
 
             self.new_ra = response_data["new_ra"]
             self.new_dec = response_data["new_dec"]
@@ -1914,6 +1919,7 @@ class MainWindow(QMainWindow):
            self.logging(f'Please load Tile or slew telescope.',level='error')
            return
        
+        self.delta_ra = self.delta_dec = self.new_ra = self.new_dec = None
         gfasave = self.ui.gfa_checkBox.isChecked()
         await handle_gfa(f'caloffset {self.gfaexpt} {self.gfaexpnum} {gfasave} {self.ra} {self.dec}',self.ICS_client, logging=self.logging)
 
@@ -1926,27 +1932,37 @@ class MainWindow(QMainWindow):
 
     @asyncSlot()
     async def pointing_button_clicked(self):
+        if self.delta_ra is None or self.delta_dec is None or not self.new_ra or not self.new_dec:
+            self.logging('Calculate a valid GFA pointing offset before Pointing.', level='error')
+            return
 
-        ### Apply offset value for telescope offset ###
-    #    self.delta_ra = 0.34
-    #    self.delta_dec = -1.23
-    #    self.logging(f'Apply Offsets in (RA, DEC) = ({self.delta_ra}, {self.delta_dec})',level='normal')
-    #    xx = self.format_decimal(self.delta_ra)
-    #    msg = f'stepra {xx}'
-    #    result = await self.send_telcom_command(msg)
-    #    print('\033[94m' + '[ICS] received: ', result.decode() + '\033[0m', flush=True)
-    #    self.logging(f'RA offset {self.delta_ra} finished', level='receive')
-    #    await asyncio.sleep(1)
-    #    yy = self.format_decimal(self.delta_dec)
-    #    msg = f'stepdec {yy}'
-    #    result = await self.send_telcom_command(msg)
-    #    print('\033[94m' + '[ICS] received: ', result.decode() + '\033[0m', flush=True)
-    #    self.logging(f'DEC offset {self.delta_dec} finished', level='receive')
+        try:
+            with open('./Lib/KSPEC.ini', 'r') as config_file:
+                use_tcs = json.load(config_file)['GFA'].get('pointing_use_tcs_coordinates', True)
+            if not isinstance(use_tcs, bool):
+                raise ValueError('GFA.pointing_use_tcs_coordinates must be true or false')
 
-    ### Use  New pointing coordinate for telescope offset ###
-        self.logging(f'Applied Offsets {self.delta_ra}, {self.delta_dec}. New (RA,DEC)=({self.new_ra},{self.new_dec})',level='normal')
-        self.logging(f'Slew Telescope to (RA,DEC)=({self.new_ra},{self.new_dec})',level='send')
-        messagetcs = 'KSPEC>TC ' + 'tmradec ' + self.new_ra +' '+ self.new_dec
+            if use_tcs:
+                ra_reply = await self.send_telcom_command('getra')
+                dec_reply = await self.send_telcom_command('getdec')
+                tcs_ra = bytes_to_sexagesimal(ra_reply)
+                tcs_dec = bytes_to_sexagesimal(dec_reply)
+                ra_deg, dec_deg = radec_str_to_deg(tcs_ra, tcs_dec)
+                corrected_ra, corrected_dec = apply_offsets(
+                    ra_deg, dec_deg, self.delta_ra, self.delta_dec
+                )
+                new_ra = ra_deg_to_hms(corrected_ra)
+                new_dec = dec_deg_to_dms(corrected_dec)
+                self.logging(f'TCS reported (RA,DEC)=({tcs_ra},{tcs_dec})', level='normal')
+            else:
+                new_ra, new_dec = self.new_ra, self.new_dec
+        except Exception as error:
+            self.logging(f'Pointing aborted: unable to calculate TCS command coordinates: {error}', level='error')
+            return
+
+        self.logging(f'Applied Offsets {self.delta_ra}, {self.delta_dec}. New (RA,DEC)=({new_ra},{new_dec})',level='normal')
+        self.logging(f'Slew Telescope to (RA,DEC)=({new_ra},{new_dec})',level='send')
+        messagetcs = 'KSPEC>TC ' + 'tmradec ' + new_ra +' '+ new_dec
         await self.send_udp_message(messagetcs)
 
     # endregion GFA guiding and pointing
