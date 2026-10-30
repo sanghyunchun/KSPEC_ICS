@@ -294,3 +294,164 @@ def test_faint_off_centre_guide_stars(tmp_path, monkeypatch, cuts):
     else:
         assert fdx == pytest.approx(-3.0, abs=0.1)
         assert fdy == pytest.approx(2.0, abs=0.1)
+
+
+# ---------------------------------------------------------------------------
+# Windowed centroid and neighbour handling (cal_centroid_offset)
+# ---------------------------------------------------------------------------
+PIX_DEG = 0.4 / 3600.0
+
+
+class _LinearWCS:
+    """x, y (0-based pixels) -> (ra, dec) in degrees near (0, 0): 1 px = 0.4 arcsec."""
+
+    def pixel_to_world_values(self, x, y):
+        return (np.asarray(x) * PIX_DEG, np.asarray(y) * PIX_DEG)
+
+
+def _gauss_image(shape, stars, fwhm, sky=100.0, noise=0.0, seed=0):
+    """stars: (x, y, peak) in 0-based pixels; returns sky + stars (+ noise), minus sky."""
+    rng = np.random.default_rng(seed)
+    yy, xx = np.mgrid[: shape[0], : shape[1]].astype(float)
+    sig = fwhm / 2.3548
+    img = np.full(shape, sky)
+    for x, y, a in stars:
+        img += a * np.exp(-((xx - x) ** 2 + (yy - y) ** 2) / (2 * sig**2))
+    if noise:
+        img += rng.normal(0.0, noise, shape)
+    return img - sky
+
+
+def _guider(tmp_path, fwhm_px=None):
+    config = CONFIG
+    if fwhm_px is not None:
+        inpar = json.loads(CONFIG.read_text())
+        inpar["detection"]["centroid"]["fwhm_px"] = fwhm_px
+        config = tmp_path / "cfg_fwhm.json"
+        config.write_text(json.dumps(inpar))
+    log = logging.getLogger("test_gfa_guider_centroid")
+    log.addHandler(logging.NullHandler())
+    log.propagate = False
+    return gg.GFAGuider(config=str(config), logger=log, save_root=tmp_path / "rig")
+
+
+def _measure(g, img, pred_xy, noise=5.0):
+    """Run cal_centroid_offset for 0-based predicted positions; return (x, y, peak) per star."""
+    pred = np.asarray(pred_xy, float).reshape(-1, 2)
+    dra_f, ddec_f = pred[:, 0] + 1.0, pred[:, 1] + 1.0
+    dx, dy, peakc, _ = g.cal_centroid_offset(
+        np.round(dra_f).astype(int), np.round(ddec_f).astype(int), dra_f, ddec_f,
+        noise, _LinearWCS(), np.ones(len(pred)), 1, [], img,
+    )
+    x = pred[:, 0] + np.asarray(dx) / 0.4
+    y = pred[:, 1] + np.asarray(dy) / 0.4
+    return x, y, np.asarray(peakc)
+
+
+def test_windowed_centroid_recovers_subpixel_position():
+    img = _gauss_image((61, 61), [(30.37, 28.81, 1000.0)], fwhm=8.0)
+    x, y = gg.GFAGuider.windowed_centroid(img, 30.0, 29.0, 8.0 / 2.3548, max_shift=8.0)
+    assert abs(x - 30.37) < 0.01 and abs(y - 28.81) < 0.01
+
+
+@pytest.mark.parametrize("fwhm", [3.0, 8.0])
+def test_cal_centroid_offset_subpixel_accuracy(tmp_path, fwhm):
+    """Noisy stars at sub-pixel positions, predicted 3 px off: < 0.05 px error."""
+    # sub-pixel phases all over; no star within 2.5 FWHM of another
+    true = np.array([[40.3, 40.7], [100.6, 45.2], [160.1, 40.9],
+                     [45.8, 150.4], [105.45, 155.55], [158.2, 100.75]])
+    stars = [(x, y, 2000.0) for x, y in true]
+    img = _gauss_image((200, 200), stars, fwhm=fwhm, noise=5.0, seed=4)
+    g = _guider(tmp_path)  # shipped fwhm_px (8) for both PSFs
+    x, y, peak = _measure(g, img, true + [2.0, -2.0])
+    assert np.all(peak > 0)
+    assert np.max(np.hypot(x - true[:, 0], y - true[:, 1])) < 0.05
+
+
+def test_brighter_neighbour_in_box_does_not_capture(tmp_path):
+    """
+    A star 3x brighter 25 px away (inside the 41 px box, outside 2.5 FWHM): the
+    old guider took the brightest peak in the box; the seed must be the nearest.
+    """
+    target = (100.3, 100.6)
+    img = _gauss_image((200, 200), [(*target, 800.0), (118.0, 117.8, 2400.0)],
+                       fwhm=8.0, noise=5.0)
+    g = _guider(tmp_path)
+    x, y, peak = _measure(g, img, [(101.5, 99.5)])
+    assert 600 < peak[0] < 900
+    assert math.hypot(x[0] - target[0], y[0] - target[1]) < 0.1
+
+
+@pytest.mark.parametrize("fwhm, rejected", [(8.0, True), (4.0, False)])
+def test_close_brighter_neighbour(tmp_path, fwhm, rejected):
+    """
+    A star 3x brighter 12 px away. At FWHM 8 (12 px = 1.5 FWHM) it would shift the
+    windowed centroid by ~1.6 px: the guide star is rejected instead of being
+    pulled to the neighbour. At FWHM 4 (3 FWHM) the guide star is measured.
+    """
+    target = (100.4, 100.3)
+    img = _gauss_image((200, 200), [(*target, 800.0), (112.4, 100.3, 2400.0)],
+                       fwhm=fwhm, noise=5.0)
+    g = _guider(tmp_path, fwhm_px=fwhm)
+    x, y, peak = _measure(g, img, [(100.0, 101.0)])
+    if rejected:
+        assert peak[0] == -1
+    else:
+        assert peak[0] > 0
+        assert math.hypot(x[0] - target[0], y[0] - target[1]) < 0.1
+
+
+def test_faint_neighbour_is_tolerated(tmp_path):
+    """A 0.2x neighbour 15 px away (expected shift 0.02 px) keeps the star."""
+    target = (100.0, 100.0)
+    img = _gauss_image((200, 200), [(*target, 2000.0), (115.0, 100.0, 400.0)],
+                       fwhm=7.0, noise=5.0)
+    g = _guider(tmp_path)
+    x, y, peak = _measure(g, img, [target])
+    assert peak[0] > 0
+    assert math.hypot(x[0] - target[0], y[0] - target[1]) < 0.1
+
+
+def test_saturated_plateau_is_one_source(tmp_path):
+    """
+    A clipped (saturated) star has a flat top wider than 1 FWHM: find_peaks reports
+    several equal peaks on it. They are one source, not neighbours.
+    """
+    target = (100.2, 99.7)
+    img = _gauss_image((200, 200), [(*target, 20000.0)], fwhm=8.0, noise=5.0)
+    img = np.minimum(img, 3800.0)
+    g = _guider(tmp_path)
+    x, y, peak = _measure(g, img, [(101.0, 101.0)])
+    assert peak[0] == pytest.approx(3800.0, abs=30)
+    assert math.hypot(x[0] - target[0], y[0] - target[1]) < 0.2
+
+
+@pytest.mark.parametrize("fwhm", [3.0, 8.0, 13.0])
+def test_windowed_psf_sigma(fwhm):
+    """The windowed second moment under an 8 px window gives the PSF FWHM back."""
+    img = _gauss_image((121, 121), [(60.3, 59.6, 1000.0)], fwhm=fwhm)
+    s = gg.GFAGuider.windowed_psf_sigma(img, 60.3, 59.6, 8.0 / 2.3548)
+    assert 2.3548 * s == pytest.approx(fwhm, rel=0.03)
+
+
+@pytest.mark.parametrize("measure", [True, False])
+def test_fwhm_measured_per_frame(tmp_path, measure):
+    """
+    3 px stars, config FWHM 8 px. A 0.5x neighbour 10 px from the guide star
+    shifts an 8 px window by ~0.6 px but a 3 px one by nothing. With
+    measure_fwhm the frame FWHM is measured from the isolated stars, the window
+    shrinks and the guide star is kept and measured; without, it is rejected.
+    """
+    iso = [(40.4, 40.2), (160.7, 40.5), (40.1, 160.6), (160.3, 159.8)]
+    target = (100.35, 100.65)
+    stars = [(x, y, 1500.0) for x, y in iso] + [(*target, 1500.0), (110.35, 100.65, 750.0)]
+    img = _gauss_image((200, 200), stars, fwhm=3.0, noise=5.0)
+    g = _guider(tmp_path)
+    g.measure_fwhm = measure
+    x, y, peak = _measure(g, img, iso + [target])
+    assert np.all(peak[:4] > 0)
+    if measure:
+        assert peak[4] > 0
+        assert math.hypot(x[4] - target[0], y[4] - target[1]) < 0.05
+    else:
+        assert peak[4] == -1
