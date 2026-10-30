@@ -33,6 +33,11 @@ class KSPECRunner:
         self.command_list = self.load_command_list()
         self.tcsagentIP, self.tcsagentPort, self.telcomIP, self.telcomPort = self.load_config()
         self.scriptrun = script()
+        self.scriptrun.initialize_dependencies(
+            ICS_client, self.send_udp_message, self.send_telcom_command,
+            self.response_queue, self.GFA_response_queue, self.ADC_response_queue,
+            self.SPEC_response_queue, show_status=None, dir_name=None,
+        )
         
     def load_command_list(self):
         return {
@@ -55,7 +60,7 @@ class KSPECRunner:
 
             "telcom": ["getall", "getra", "getdec", "getha", "getel", "getaz", "getsecz", "mvstow", "mvelaz", "mvstop", "mvra", "mvdec", "track"],
             "utils": ["obsstatus","loadtile","setdir"],
-            "script": ["runcalib", "rundark", "obsinitial", "autoguide", "autoguidestop", "runobs", "runmtl"]
+            "script": ["runcalib", "rundark", "obsinitial", "autoguide", "autoguidestop", "runobs", "runmtl", "runscan"]
             }
     
     def load_config(self):
@@ -84,6 +89,7 @@ class KSPECRunner:
         current_dir=os.getcwd()
         parent_dir = os.path.dirname(current_dir)
 
+        self.scriptrun.dir_name = dir_name
         msglogfile = 'MSGLOG_'+dir_name+'.txt'
         self.msglog_path=os.path.join(parent_dir,"DATA/MSGLOG",msglogfile)
         if os.path.exists(self.msglog_path):

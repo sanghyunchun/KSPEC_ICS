@@ -47,6 +47,13 @@ calibrated for (ADC speed, gain and quality, temperature lock, readout rows, ROI
 exposure reads the camera state first and is refused when any value differs, so a mode changed
 by hand in the LightField window never reaches the data. specinitial and specstatus report the
 differences.
+
+Zero order: with ``zero_order.command`` configured and the grating at zero order (centre within
+``zero_order.max_center_nm`` of 0 nm, e.g. experiment KSPEC_150_0), every light frame (getflat,
+getarc, getobj) is measured right after it is saved: the command (the kspecdr environment,
+``python -m kspecdr.extract.zero_order_frame``) gets the frame and prints the fibre fluxes as
+one JSON line, which the frame's ING reply and the Done reply carry as ``zoflux``. A failed
+measurement never fails the frame: ``zoflux`` then holds ``ok: false`` and the error.
 """
 
 import asyncio
@@ -55,6 +62,8 @@ import json
 import os
 import re
 import shutil
+import statistics
+import subprocess
 import time
 
 import Lib.mkmessage as mkmsg
@@ -72,6 +81,7 @@ FRAME_TYPES = {
 }
 PROGRESS_EVERY_S = 10
 AUTO_OFF = "light auto-off"  # self.busy while the timer switches the light off
+ZO_FUNCS = ("getflat", "getarc", "getobj")  # frames measured at zero order (shutter open)
 
 
 class Refused(RuntimeError):
@@ -104,6 +114,24 @@ def camera_problems(expected, lf):
     return out
 
 
+def at_zero_order(setup, max_center_nm=1.0):
+    """True when the grating centre wavelength is within max_center_nm of 0 nm."""
+    try:
+        return abs(float(str(setup.get("center_nm")))) <= max_center_nm
+    except (TypeError, ValueError):
+        return False
+
+
+def zero_order_note(result):
+    """One sentence on a zoflux result for the reply message."""
+    if not result.get("ok"):
+        return f" Zero-order fluxes failed: {result.get('error')}."
+    flux = [f for f in result["fibres"]["flux"] if f is not None]
+    median = f", median flux {statistics.median(flux):.0f}" if flux else ""
+    return (f" Zero order: {result.get('ndet')}/{result.get('nfib')} fibres found "
+            f"({result.get('method')}){median}.")
+
+
 class Isoplane:
     def __init__(self, cfg, lightfield=None, backillum=None):
         lf_cfg = cfg.get("lightfield", {})
@@ -120,6 +148,7 @@ class Isoplane:
         self.light_max_on_s = float(bl_cfg.get("light_max_on_s", 300.0))
         self.camera = dict(cfg.get("camera") or {})  # expected camera mode; empty: no check
         self.experiments = cfg.get("experiments")  # allowed experiments; None: any
+        self.zero_order = dict(cfg.get("zero_order") or {})  # no command: no measurement
         self.night = None
         self.lock = asyncio.Lock()
         self.busy = "idle"
@@ -337,13 +366,16 @@ class Isoplane:
         if self.light_off_at is not None:
             bl["auto_off_in_s"] = round(max(0.0, self.light_off_at - time.monotonic()))
         problems = camera_problems(self.camera, lf)
+        zero_order = self.measures_zero_order("getobj", lf)
         details = {"night": self.night, "busy": self.busy, "lightfield": lf,
                    "lightfield_read_at": self.lf_status_time, "backillum": bl,
-                   "camera_problems": problems}
+                   "camera_problems": problems, "zero_order": zero_order}
         msg = (f"IsoPlane: {'busy (' + self.busy + ')' if busy else 'ready'}, "
                f"night {self.night}, {setup_summary(lf)}"
                f"{' (as of ' + str(self.lf_status_time) + ')' if busy else ''}, back illumination "
                f"{bl['state']}{' light ON' if bl.get('light') else ''}.")
+        if zero_order:
+            msg += " Zero order: light frames get fibre fluxes (zoflux)."
         if problems:
             msg += " Camera not in the configured mode: " + "; ".join(problems) + "."
         return msg, details
@@ -439,7 +471,7 @@ class Isoplane:
             raise Refused("camera is not in the configured mode: " + "; ".join(problems))
 
         directory = os.path.join(self.datapath, self.night)
-        paths = []
+        paths, zofluxes, note = [], [], ""
         ut_start = None
         for i in range(n):
             basename = self.next_basename(directory, kind)
@@ -455,8 +487,14 @@ class Isoplane:
                           "back-illumination stage state"))
             await asyncio.to_thread(append_cards, frame.path, cards)
             paths.append(await asyncio.to_thread(self.publish, frame.path))
-            await self.reply(server, func, f"{kind} {i + 1}/{n} saved: {paths[-1]}",
-                             process="ING")
+            extra = {}
+            if self.measures_zero_order(func, frame.setup):
+                zofluxes.append(await self.measure_zero_order(frame.path))
+                note = zero_order_note(zofluxes[-1])
+                extra = {"zoflux": zofluxes[-1]}
+            await self.reply(server, func, f"{kind} {i + 1}/{n} saved: {paths[-1]}{note}",
+                             process="ING", **extra)
+
         def known(value):
             return "" if value is None or str(value).strip() in ("", "None") else value
 
@@ -482,8 +520,49 @@ class Isoplane:
             "grating": known(lf.get("grating")),
             "central_wave": center_nm,
         }
-        await self.reply(server, func, f"{n} {kind} frame(s) obtained.", filename=paths[-1],
-                         filenames=paths, backend="ISOPLANE", cmdlog=cmdlog)
+        # like filename / filenames: the last frame's, and every frame's
+        extra = {"zoflux": zofluxes[-1], "zofluxes": zofluxes} if zofluxes else {}
+        await self.reply(server, func, f"{n} {kind} frame(s) obtained.{note}",
+                         filename=paths[-1], filenames=paths, backend="ISOPLANE", cmdlog=cmdlog,
+                         **extra)
+
+    # -------------------------------------------------- zero order
+    def measures_zero_order(self, func, setup):
+        return (bool(self.zero_order.get("command")) and func in ZO_FUNCS
+                and at_zero_order(setup, float(self.zero_order.get("max_center_nm", 1.0))))
+
+    async def measure_zero_order(self, path):
+        """Fibre fluxes of a zero-order frame from ``zero_order.command`` (kspecdr).
+
+        The command gets ``<path> --outdir <dir> [--ref <reference>] [--set KEY=VALUE ...]``
+        and prints the result as one JSON line (``ok``, ``nfib``, ``ndet``, ``method``,
+        ``pitch``, ``fibres``: one list per column in slit order, ...). Returns that dict, or
+        ``{"ok": False, "error": ...}`` when the command fails, prints no result, or runs past
+        ``timeout_s``. The products go to ``outdir`` (default ``<datapath>/<night>/zero_order``).
+        """
+        zo = self.zero_order
+        outdir = zo.get("outdir") or os.path.join(self.datapath, self.night, "zero_order")
+        cmd = [*zo["command"], path, "--outdir", outdir]
+        if zo.get("reference"):
+            cmd += ["--ref", zo["reference"]]
+        for key, value in (zo.get("args") or {}).items():
+            cmd += ["--set", f"{key}={json.dumps(value)}"]
+        timeout = float(zo.get("timeout_s", 60.0))
+        try:
+            proc = await asyncio.to_thread(subprocess.run, cmd, capture_output=True, text=True,
+                                           timeout=timeout)
+        except subprocess.TimeoutExpired:
+            return {"ok": False, "error": f"no result within {timeout:g} s (timeout_s)"}
+        except OSError as e:
+            return {"ok": False, "error": f"cannot run {cmd[0]}: {e}"}
+        results = [line for line in proc.stdout.splitlines() if line.startswith("{")]
+        if results:
+            try:
+                return json.loads(results[-1])
+            except json.JSONDecodeError:
+                pass
+        tail = (proc.stderr.strip().splitlines() or ["no output"])[-1]
+        return {"ok": False, "error": f"exit {proc.returncode}, no result: {tail}"}
 
     # -------------------------------------------------- helpers
     async def with_progress(self, server, func, exptime, fn, *args):

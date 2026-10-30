@@ -593,7 +593,7 @@ class MainWindow(QMainWindow):
 
             "telcom": ["getall", "getra", "getdec", "getha", "getel", "getaz", "getsecz", "mvstow", "mvelaz", "mvstop", "mvra", "mvdec", "track", "stepra", "stepdec"],
             "utils": ["?","obsstatus","loadtile","setdir", "ADC?", "GFA?", "LAMP?", "MTL?", "FBP?", "SPEC?"],
-            "script": ["runcalib", "rundark", "obsinitial", "autoguide", "autoguidestop", "runobs", "runmtl"]
+            "script": ["runcalib", "rundark", "obsinitial", "autoguide", "autoguidestop", "runobs", "runmtl", "runscan"]
             }
 
     def load_config(self):

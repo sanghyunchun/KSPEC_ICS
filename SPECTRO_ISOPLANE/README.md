@@ -93,6 +93,46 @@ the extra rows last, so they follow the sensor rows.
   `BIASSEC = '[1:1340,1300:1330]'` (raw orientation).
 - The 8-pixel left and right margins of the sensor are not read.
 
+## Zero order: fibre fluxes in the reply
+With the grating at zero order (a saved experiment with centre wavelength 0 nm, e.g.
+`KSPEC_150_0`) the IsoPlane images its slit, one spot per fibre. For focal-plane mapping
+(positioners stepped around a star) the server measures every fibre right after each light frame
+(`getflat`, `getarc`, `getobj`; not bias or dark) and returns the fluxes in the replies, so the
+ICS script can decide the next step without the reduction.
+
+The measurement runs kspecdr (`python -m kspecdr.extract.zero_order_frame`) as a separate process
+in its own environment; nothing else on the ICS side needs kspecdr. It converts the frame, removes
+the overscan (`DATASEC`/`BIASSEC` above), and measures each fibre in a box aperture (kspecdr
+`make_zo`). It is on when `zero_order.command` is set and the centre wavelength is within
+`zero_order.max_center_nm` (default 1) of 0 nm; `specstatus` then says so (`zero_order: true`).
+
+| key | meaning |
+|---|---|
+| `command` | the kspecdr command as a list, e.g. `["<conda.exe>", "run", "-n", "kspecdr", "--no-capture-output", "python", "-m", "kspecdr.extract.zero_order_frame"]`. On Windows run it through `conda run`: the environment's `python.exe` alone fails at its first BLAS call. |
+| `reference` | `*_zo.fits` of a zero-order flat (all fibres lit). Star frames need one: a few lit fibres cannot fix the slit, so their positions come from the reference, shifted by the spots found. Without it every fibre is detected on the frame itself. |
+| `args` | more `make_zo` keys, e.g. `{"ISO_FIB1_YPOS": 891.1, "ZO_APHW_X": 6}` |
+| `outdir` | products (`c<frame>_im.fits`, `c<frame>_zo.fits`); default `<datapath>/<night>/zero_order` |
+| `max_center_nm` | default 1.0 |
+| `timeout_s` | default 60; a measurement still running then is abandoned |
+
+Each frame's `saved` ING reply carries `zoflux`, and the Done reply carries `zoflux` (last frame)
+and `zofluxes` (every frame), like `filename` / `filenames`. A `zoflux` is:
+
+```json
+{"ok": true, "raw": "...", "zofile": "..._zo.fits", "nfib": 43, "ndet": 43, "method": "DETECT",
+ "pitch": 6.74, "xpos": 644.9,
+ "fibres": {"fibno": [1, ...], "label": ["C4", ...], "type": ["P", ...], "flux": [21646.0, ...],
+            "flux_err": [146.3, ...], "snr": [148.0, ...], "bkg": [...], "peak": [...],
+            "xpos": [...], "ypos": [...], "detected": [true, ...], "zoflag": [0, ...]}}
+```
+
+Fluxes are in counts (ADU) in the aperture after the local background, one value per slit fibre
+in slit order (`label` is the positioner hole). `zoflag` bits: 1 no spot found, 2 bad pixels, 4
+aperture at the edge, 8 no background. A failed measurement does not fail the frame: the frame is
+saved, the reply stays `success`, and `zoflux` is `{"ok": false, "error": "..."}` (also in the
+message). A measurement takes ~6 s on the LightField laptop, mostly `conda run` and imports, and
+holds the command lock like the exposure.
+
 ## Deadlines
 An exposure still running `lightfield.expose_timeout_s` (default 120 s) after its exposure time
 is stopped and fails with `error`; an experiment load fails after `lightfield.load_timeout_s`
@@ -161,6 +201,8 @@ without a command (firmware watchdog). The stage stays where it is: restart the 
 - `backillum.py`: Uno link, stage operations, `FakeUno`.
 - `fitsio.py`: adds the ICS cards ("Header cards" above) to the LightField FITS. LightField's
   own cards are kept byte for byte; its EXPTIME stays in ms and the ICS request goes to EXPREQ.
+- `sendcmd.py`: sends one command to the running server through RabbitMQ and prints its
+  replies (`zoflux` summarised; `--save` keeps the Done reply).
 - `probe_lightfield.py`: run once on the LightField PC; reports setting names, devices, and
   whether one acquisition with time stamps works.
 
@@ -171,8 +213,8 @@ to `<sharepath>/<night>/` when `sharepath` is set; the reply carries the shared 
 1. Copy `isoplane_local.example.json` to `isoplane_local.json` (gitignored) and edit it:
    `lightfield.driver` (`fake` or `lightfield`), the LightField `root`, the Uno `port`
    (`fake`, `COM5`, ...), the stage `in_depth_mm` / `in_limit_mm`, `datapath`, `sharepath`,
-   the `camera` mode and `experiments` list, and optionally the timeouts and light settings
-   above. `lightfield.shape` and `overscan_rows` shape the fake frames only.
+   the `camera` mode and `experiments` list, and optionally the timeouts, light settings, and
+   `zero_order` block above. `lightfield.shape` and `overscan_rows` shape the fake frames only.
    Leave out `backillum` (or set it to `null`) when no unit is installed.
 2. In `Lib/KSPEC.ini` set `SPEC.queue` to `ISOPLANE` on the ICS side, and the broker
    `RabbitMQ.ip_addr` on the LightField PC.
