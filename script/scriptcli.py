@@ -308,13 +308,19 @@ class script():
             handle_adc('adcconnect', scriptrun.ICSclient, logging=logging),
             'ADC', 'adcconnect', timeout=120, logging=logging,
         )
-        # await asyncio.sleep(2)
-        # await handle_adc('adchome 1',scriptrun.ICSclient, logging=logging)
-        # await scriptrun.response_queue.get()
-        # await asyncio.sleep(2)
-        # await handle_adc('adczero 4',scriptrun.ICSclient, logging=logging)
-        # await scriptrun.response_queue.get()
-        # await asyncio.sleep(2)
+        await asyncio.sleep(2)
+        await send_and_wait_reply(
+            scriptrun.response_queue,
+            handle_adc('adchome 1', scriptrun.ICSclient, logging=logging),
+            'ADC', 'adchome', timeout=120, logging=logging,
+        )
+        await asyncio.sleep(2)
+        await send_and_wait_reply(
+            scriptrun.response_queue,
+            handle_adc('adczero 4', scriptrun.ICSclient, logging=logging),
+            'ADC', 'adczero', timeout=120, logging=logging,
+        )
+        await asyncio.sleep(2)
         # await handle_adc('adcstatus',scriptrun.ICSclient, logging=logging)
         # await scriptrun.response_queue.get()
         # await asyncio.sleep(2)
@@ -767,29 +773,42 @@ class script():
         
             tilemsg,objmsg,motionmsg1,motionmsg2=sciobs.loadtile(self.TileID)
             tile_data=json.loads(tilemsg)
-            self.ra,self.dec=convert_to_sexagesimal(tile_data['ra'],tile_data['dec'])
+            ra = Angle(tile_data['ra'], unit=u.degree)
+            dec = Angle(tile_data['dec'], unit=u.degree)
+            self.ra = ra.to_string(unit=u.hour, sep=':', precision=2, pad=True)
+            self.dec = dec.to_string(unit=u.degree, sep=':', alwayssign=True, precision=2)
 
             printing(f'RA and DEC of Tile ID {self.TileID}: {self.ra} {self.dec}')
 
-            await scriptrun.ICSclient.send_message("GFA", guidemsg)
-            await scriptrun.response_queue.get()
-            await asyncio.sleep(2)
-
-            await scriptrun.ICSclient.send_message("MTL", objmsg)
-            await scriptrun.response_queue.get()
+            await send_and_wait_reply(
+                scriptrun.response_queue,
+                scriptrun.ICSclient.send_message('MTL', objmsg),
+                'MTL', 'loadobj', timeout=60, logging=logging,
+            )
             await asyncio.sleep(2)
 
             ##### In commission, FBP is not ready. #####
-            await scriptrun.ICSclient.send_message("FBP", objmsg)
-            await scriptrun.response_queue.get()
+            await send_and_wait_reply(
+                scriptrun.response_queue,
+                scriptrun.ICSclient.send_message('FBP', objmsg),
+                'FBP', 'loadobj', timeout=60, logging=logging,
+            )
             await asyncio.sleep(2)
 
-            await scriptrun.ICSclient.send_message("FBP", motionmsg1)
-            await scriptrun.response_queue.get()
+            await send_and_wait_reply(
+                scriptrun.response_queue,
+                scriptrun.ICSclient.send_message('FBP', motionmsg1),
+                'FBP', 'loadmotion', timeout=60, logging=logging,
+                match={'arm': 'alpha'},
+            )
             await asyncio.sleep(2)
 
-            await scriptrun.ICSclient.send_message("FBP", motionmsg2)
-            await scriptrun.response_queue.get()
+            await send_and_wait_reply(
+                scriptrun.response_queue,
+                scriptrun.ICSclient.send_message('FBP', motionmsg2),
+                'FBP', 'loadmotion', timeout=60, logging=logging,
+                match={'arm': 'beta'},
+            )
             await asyncio.sleep(2)
 
             printing(f'All accessary files for observation of Tile ID {self.TileID} are successfully loaded')

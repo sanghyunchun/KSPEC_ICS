@@ -2,11 +2,42 @@
 
 import asyncio
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from Lib.reply import ReplyRouter, send_and_wait_reply
 
 
 class ReplyRouterTests(unittest.IsolatedAsyncioTestCase):
+    async def test_obs_initial_routes_adc_replies_by_command(self):
+        from script.scriptcli import script
+
+        replies = ReplyRouter()
+        run = SimpleNamespace(
+            response_queue=replies,
+            GFA_response_queue=asyncio.Queue(),
+            ADC_response_queue=asyncio.Queue(),
+            SPEC_response_queue=asyncio.Queue(),
+            ICSclient=object(),
+        )
+        sent = []
+
+        async def handle_adc(command, client, logging=None):
+            sent.append(command)
+            replies.put_nowait(dict(inst='FBP', func='fbpstatus', process='Done'))
+            replies.put_nowait(dict(inst='ADC', func=command.split()[0],
+                                     process='Done', status='success'))
+
+        async def no_sleep(_):
+            pass
+
+        with patch('script.scriptcli.handle_adc', handle_adc), \
+                patch('script.scriptcli.asyncio.sleep', no_sleep):
+            await asyncio.wait_for(script().obs_initial(run, None), timeout=1)
+
+        self.assertEqual(sent, ['adcconnect', 'adchome 1', 'adczero 4'])
+        self.assertEqual(replies._waiters, [])
+
     async def test_unclaimed_fbp_reply_does_not_interrupt_mtl(self):
         replies = ReplyRouter()
         replies.put_nowait(dict(inst='FBP', func='fbpinitial', process='Done'))
