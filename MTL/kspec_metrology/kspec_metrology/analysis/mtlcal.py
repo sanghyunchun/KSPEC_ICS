@@ -1161,13 +1161,21 @@ def mtlcal(data_dir='./MTL/data/'
         prev = _flatten_angles(theta_true, phi_true)
 
     angle_cum = prev + angle_rot
+    # alpha: 360 도 돌면 같은 위치라 해가 여럿이다. 직전 각도에서 가장 적게 도는 해가 리밋 (여유 포함) 안이면 그대로, 밖이면
+    # 반대로 도는 해, 그것도 밖이면 리밋에서 자른다. 한 바퀴로 wrap 하지 않는다 (30.5 -> -329.5 는 반대로 360 도 도는 명령).
+    a_new, other_way, clipped = cfg.alpha_cum_in_range(prev[0::2], angle_rot[0::2])
     lo_a, hi_a = cfg.alpha_cmd_range()
-    out_a = np.isfinite(angle_cum[0::2]) & ((angle_cum[0::2] <= lo_a) | (angle_cum[0::2] > hi_a))
-    if out_a.any():                                             # alpha 리밋 (여유 포함): wrap 하면 반대로 한 바퀴 도는 명령이 되므로 리밋에서 자른다
+    if other_way.any():
+        ids_a = list(cfg.fiber_ids())
+        log.warning("alpha goes the other way around to stay inside the positioner range (%g, %g] for %s",
+                    lo_a, hi_a, ", ".join(f"{ids_a[i]} ({prev[2*i]:.1f} {angle_rot[2*i]:+.1f} -> {a_new[i]:.1f})"
+                                          for i in np.where(other_way)[0]))
+    if clipped.any():
         ids_a = list(cfg.fiber_ids())
         log.warning("cumulative alpha outside the positioner range (%g, %g] for %s -- clipped (arm at its end stop)",
-                    lo_a, hi_a, ", ".join(f"{ids_a[i]} ({angle_cum[2*i]:.1f})" for i in np.where(out_a)[0]))
-        angle_cum[0::2] = cfg.clip_alpha_cmd(angle_cum[0::2])
+                    lo_a, hi_a, ", ".join(f"{ids_a[i]} ({angle_cum[2*i]:.1f} -> {a_new[i]:.1f})" for i in np.where(clipped)[0]))
+    angle_cum[0::2] = a_new
+    angle_rot[0::2] = np.where(np.isfinite(a_new), a_new - prev[0::2], angle_rot[0::2])   # offset 표의 dalpha = 실제 보낸 회전량
     out_b = np.isfinite(angle_cum[1::2]) & ((angle_cum[1::2] < cfg.BETA_RANGE[0]) | (angle_cum[1::2] > cfg.BETA_RANGE[1]))
     if out_b.any():                                             # positioner 가 실행할 수 없는 beta: 범위로 자른다
         ids_b = list(cfg.fiber_ids())
