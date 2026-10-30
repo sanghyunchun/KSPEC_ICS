@@ -502,9 +502,13 @@ def command_alpha(theta):
 # 0.1-0.3 mm 만 달라도 "조금 더 펴라" 는 명령이 trial 마다 커져 beta 가 범위를 넘고 positioner 가 날아간다
 # (2026-10-29 9111: 목표가 한계 22-108 um 안쪽이던 G3, M3, L5). 이 보정은 방향(alpha)만 맞추고 radial 오차는
 # 실제 arm 길이 차이만큼 남기는 것이 물리적으로 최선이다.
-#   환경변수 : KSPEC_REACH_MARGIN="0.3"   (mm; 0 이면 끔)
+# 기본 0.3 -> 0.05 mm (2026-10-30): 0.3 mm 는 beta 127 보다 큰 목표 (phi < 21 도) 를 모두 150 으로 명령해서 최대
+# 0.2-0.3 mm 오차를 그냥 남겼다 (beta 140 목표 55 um, 135 123 um, 130 218 um). 지금은 누적 beta 를 150 에서 자르므로
+# (BETA_MARGIN 위쪽 0) 발산은 그것이 막고, 이 보호는 측정 위치가 arm 오차로 도달 한계 밖에 찍히는 경우 (해가 없음) 만
+# 받으면 된다. 0.05 mm 는 phi 약 9.6 도 (beta 140.4) 안쪽이다.
+#   환경변수 : KSPEC_REACH_MARGIN="0.05"   (mm; 0 이면 끔)
 REACH_MARGIN_ENV = 'KSPEC_REACH_MARGIN'
-REACH_MARGIN = float(os.environ.get(REACH_MARGIN_ENV, '0.3') or 0.3)
+REACH_MARGIN = float(os.environ.get(REACH_MARGIN_ENV, '0.05') or 0.05)
 
 # positioner 리밋 여유 [deg] (아래쪽, 위쪽). 한 바퀴 범위 alpha (-330, 30], beta [-30, 150] 에 더해 positioner 가
 # 실제로 갈 수 있는 범위다 (FBP 쪽 리밋과 같아야 한다).

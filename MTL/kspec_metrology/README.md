@@ -274,13 +274,15 @@ INFO Measured geometry /경로/Measured_Geometry.txt: 2/103 holes replaced
   elbow-down 목표에 도움이 되지 않는다. 그래서 beta 위쪽 여유는 0 이고 (기본 `BETA_MARGIN` (30, 0)), 150 을 넘는 보정은
   150 에서 잘린다. 잘린 fiber 는 팔을 곧게 편 채 radial 오차(목표가 도달 한계 안쪽인 만큼 + 실제 arm 과 표의 차이)를
   남기고, 다른 fiber 와 trial 은 그대로 진행된다 (프로그램이 멈추지 않는다).
-- **도달 한계 보호** (`fiber_config.REACH_MARGIN`, 기본 0.3 mm; `KSPEC_REACH_MARGIN`): 목표나 측정 위치가 회전
-  중심에서 a₁+a₂−0.3 mm 보다 멀면 완전히 편 자세(beta 끝, alpha 는 그 방향)로 푼다. 거의 편 자세에서는 반지름이
+- **도달 한계 보호** (`fiber_config.REACH_MARGIN`, 기본 0.05 mm; `KSPEC_REACH_MARGIN`): 목표나 측정 위치가 회전
+  중심에서 a₁+a₂−0.05 mm 보다 멀면 완전히 편 자세(beta 150, alpha 는 그 방향)로 푼다. 거의 편 자세에서는 반지름이
   beta 에 둔감해서(phi 6° 에서 7 µm/°) 수백 µm 오차가 수십 도의 beta 보정이 되고, 표의 arm 길이와 실제가
   0.1–0.3 mm 만 달라도 trial 마다 보정이 커져 beta 가 범위를 넘고 positioner 가 날아간다 (2026-10-29 9111 의
-  G3, M3, L5: 목표가 한계 22–108 µm 안쪽). 누적 beta 는 `BETA_RANGE` (기본 [−60, 150]) 로 잘라 둔다. 한계 근처 목표는
-  남는 radial 오차(실제 arm 과 표의 차이, 0.1–0.2 mm)를 받아들여야 하며, tile 배정 때 도달 한계에서 0.5 mm 이상
-  여유를 두는 것이 낫다.
+  G3, M3, L5: 목표가 한계 22–108 µm 안쪽). 2026-10-29 에는 이 보호가 발산을 막는 유일한 수단이어서 0.3 mm 로 두었는데,
+  그러면 beta 127 보다 큰 목표(phi < 21°)가 모두 150 으로 명령되어 최대 0.2–0.3 mm 오차가 남았다 (beta 140 목표 55 µm,
+  135 123 µm, 130 218 µm). 지금은 누적 beta 를 150 에서 자르므로(위) 발산은 그것이 막고, 이 보호는 측정 위치가 arm
+  오차로 도달 한계 밖에 찍히는(해가 없는) 경우만 받는다. 0.05 mm 는 phi 약 9.6°(beta 140.4) 안쪽이다. 한계 근처 목표는
+  남는 radial 오차(실제 arm 과 표의 차이)를 받아들여야 하며, tile 배정 때 도달 한계에서 0.5 mm 이상 여유를 두는 것이 낫다.
 - 부호가 틀리면 positioner 가 trial 마다 목표에서 **멀어진다** (오차가 1, 2, 3 배로 는다). 영점이
   틀리면 Trial 0 json 이 (0, 0) 이 아니다. 다른 규약이면 `KSPEC_ANGLE_SIGN`, `KSPEC_ANGLE_ZERO`
   또는 `fiber_config` 의 값.
