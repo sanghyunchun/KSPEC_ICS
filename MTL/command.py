@@ -142,8 +142,9 @@ def _sky_corrected_target(target_file, config, message):
     theta_model (enabled, model, coef, file_theta_deg, offset_deg: 켜면 기기 오프셋을 지향에
     따른 모형 회전 - 파일의 회전으로 바꾼다; sky_correction.py 참고).
     mtlstart 메시지의 sky_correction / precession / instrument_offset / instrument_offset_deg /
-    theta_model / theta_coef / file_theta_deg / theta_offset_deg / obs_time 이 있으면 그 값이
-    우선한다.
+    theta_model / theta_coef / file_theta_deg / theta_offset_deg / hold_classes / obs_time 이
+    있으면 그 값이 우선한다. hold_classes (기본 ["0"]): 이 class 의 목표는 옮기지 않는다
+    (고정 포지셔너); 메시지에서는 "0,9" 처럼, 모두 옮기려면 "none".
     """
     sc = dict(config.get("sky_correction") or {})
     if not _flag(message, "sky_correction", bool(sc.get("enabled", False))):
@@ -152,12 +153,18 @@ def _sky_corrected_target(target_file, config, message):
     use_offset = _flag(message, "instrument_offset", bool(sc.get("instrument_offset", True)))
     offset = _value(message, "instrument_offset_deg", sc.get("instrument_offset_deg", 0.0), float)
     theta_model = _theta_model_options(sc, message)
+    hold = message.get("hold_classes", None)
+    if _is_missing(hold):
+        hold = sc.get("hold_classes", ["0"])
+    elif isinstance(hold, str):
+        hold = [h for h in hold.replace(",", " ").split() if h.lower() != "none"]
     out, summary = write_corrected_target(
         target_file,
         time=_value(message, "obs_time", None, str),
         precession=precession,
         instrument_offset_deg=offset if use_offset else 0.0,
         theta_model=theta_model,
+        hold_classes=tuple(str(h) for h in hold),
     )
     tm = summary.get("theta_model")
     model = (f", theta_model {tm['model']} {tm['theta_deg']:.4f} at HA {tm['ha_h']:+.2f} h alt "
@@ -165,7 +172,8 @@ def _sky_corrected_target(target_file, config, message):
     print(f"MTL sky correction: {os.path.basename(target_file)} -> {os.path.basename(out)}, "
           f"rotation {summary['rotation_deg']:+.4f} deg (precession {summary['precession_deg']:+.4f}"
           f", instrument {summary['instrument_offset_deg']:+.4f}{model}), max shift "
-          f"{summary['shift_max_um']:.0f} um, clipped {[c['fiber'] for c in summary['clipped']]}")
+          f"{summary['shift_max_um']:.0f} um, clipped {[c['fiber'] for c in summary['clipped']]}, "
+          f"held (class {','.join(summary['hold_classes'])}) {len(summary['held'])}")
     return out, summary
 
 

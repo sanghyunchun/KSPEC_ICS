@@ -26,6 +26,9 @@ y = -N) 하늘에서의 회전은 초점면에서 반대 부호가 된다. 여�
    file_theta_deg 는 파일에 들어 있는 회전: planner 파일 (ICRS, 세차 보정 켬) 은 15.00,
    proj-kspecdr tile_planner 파일 (TETE, 세차 보정 끔) 은 15.2006 (tilt 모형의 천정값).
 
+고정 포지셔너: class 0 (planner 의 움직이지 않는 포지셔너, proj-kspecdr 타일의 할당 없음 /
+fiducial 근처라 세워 둔 포지셔너) 은 보정하지 않고 파일의 xp, yp 그대로 둔다 (hold_classes).
+
 보정 파일에는 planner 원래 값을 xp_planner / yp_planner 로 같이 남기고, 이미 보정된
 파일을 다시 넣으면 그 원래 값에서 다시 계산한다 (보정이 두 번 들어가지 않는다).
 """
@@ -171,8 +174,11 @@ def _reach(xp, yp, use_measured=None):
     return np.minimum(r - rmin, rmax - r), hole, rmin, rmax
 
 
+HOLD_CLASSES = ('0',)
+
+
 def correct_target(target, time=None, precession=True, instrument_offset_deg=0.0,
-                   use_measured=None, theta_model=None):
+                   use_measured=None, theta_model=None, hold_classes=HOLD_CLASSES):
     """보정한 target dict 과 요약 (dict) 을 돌려준다. target 은 바꾸지 않는다.
 
     time : 관측 시각 (UTC; astropy Time 이 받는 값, 또는 '+09:00' 같은 시간대가 붙은 ISO
@@ -181,6 +187,7 @@ def correct_target(target, time=None, precession=True, instrument_offset_deg=0.0
         model_theta_deg(타일 중심, time) - file_theta_deg + offset_deg 로 바꾼다. 키: model
         ('tilt'), coef (없으면 기본 계수), file_theta_deg (파일의 회전, 기본 15.0),
         offset_deg (그날 밤 오프셋, 기본 0), site (기본 SITE).
+    hold_classes : 이 class 의 목표는 옮기지 않는다 (기본 '0': 고정 포지셔너). 빈 값이면 모두 옮긴다.
     닿지 않게 된 목표: class 9 (목표 없음) 는 planner 값을 그대로 두고, 나머지는 닿는
     끝까지만 옮기고 요약의 clipped 에 적는다 (그 fiber 는 다시 배정해야 한다).
     """
@@ -203,6 +210,9 @@ def correct_target(target, time=None, precession=True, instrument_offset_deg=0.0
     rot = prec + float(instrument_offset_deg)
     c, s = scale * np.cos(np.radians(rot)), scale * np.sin(np.radians(rot))
     xp, yp = c * xp0 - s * yp0, s * xp0 + c * yp0
+    cls = [str(v) for v in target.get('class', [''] * len(xp))]
+    hold = np.array([k in {str(h) for h in (hold_classes or ())} for k in cls], bool)
+    xp[hold], yp[hold] = xp0[hold], yp0[hold]
 
     kept, clipped = [], []
     reach = _reach(xp, yp, use_measured)
@@ -211,9 +221,8 @@ def correct_target(target, time=None, precession=True, instrument_offset_deg=0.0
                     len(xp), len(cfg.fiber_ids()))
     else:
         margin, hole, rmin, rmax = reach
-        cls = [str(v) for v in target.get('class', [''] * len(xp))]
         ids = cfg.fiber_ids()
-        for k in np.flatnonzero(margin < 0):
+        for k in np.flatnonzero((margin < 0) & ~hold):
             if cls[k] == '9':
                 xp[k], yp[k] = xp0[k], yp0[k]
                 kept.append(ids[k])
@@ -225,6 +234,12 @@ def correct_target(target, time=None, precession=True, instrument_offset_deg=0.0
             clipped.append({'fiber': ids[k], 'class': cls[k], 'miss_um': round(float(abs(r - lim)) * 1e3, 1)})
 
     d = np.hypot(xp - xp0, yp - yp0)
+    try:
+        fiber_names = cfg.fiber_ids()
+    except Exception:  # noqa: BLE001 - the names are only for the summary
+        fiber_names = None
+    held = ([fiber_names[k] for k in np.flatnonzero(hold)] if fiber_names and len(fiber_names) == len(xp)
+            else np.flatnonzero(hold).tolist())
     summary = {
         'time_utc': time.utc.isot,
         'centre_deg': [round(ra0, 6), round(dec0, 6)],
@@ -236,6 +251,8 @@ def correct_target(target, time=None, precession=True, instrument_offset_deg=0.0
         'rotation_deg': round(rot, 5),
         'shift_max_um': round(float(d.max()) * 1e3, 1),
         'kept_class9': kept,
+        'hold_classes': [str(h) for h in (hold_classes or ())],
+        'held': held,
         'clipped': clipped,
     }
     out = dict(target)

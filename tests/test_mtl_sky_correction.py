@@ -114,6 +114,24 @@ class SkyCorrectionTest(unittest.TestCase):
         self.assertLessEqual(r, a1[kc] + a2[kc])
 
 
+class HoldTest(unittest.TestCase):
+    def test_class0_stays_put_unless_asked(self):
+        t = tile_target()
+        k0 = [3, 10, 40]
+        for k in k0:
+            t["class"][k] = "0"
+        out, s = correct_target(t, TIME, instrument_offset_deg=0.18, use_measured=False)
+        for k in k0:
+            self.assertEqual((out["xp"][k], out["yp"][k]), (t["xp"][k], t["yp"][k]))
+        self.assertEqual(s["held"], [cfg.fiber_ids()[k] for k in k0])
+        moved = np.hypot(np.array(out["xp"]) - t["xp"], np.array(out["yp"]) - t["yp"])
+        self.assertTrue((np.delete(moved, k0) > 0).all())
+        out, s = correct_target(t, TIME, instrument_offset_deg=0.18, use_measured=False,
+                                hold_classes=())
+        self.assertNotEqual(out["xp"][k0[0]], t["xp"][k0[0]])
+        self.assertEqual(s["held"], [])
+
+
 class ThetaModelTest(unittest.TestCase):
     def test_tilt_model_matches_proj_kspecdr(self):
         # tile 6666 at its exposure mid-time: proj_kspecdr.theta_model gives HA +0.45 h, alt 84.0,
@@ -206,6 +224,16 @@ class MtlStartSkyCorrectionTest(unittest.IsolatedAsyncioTestCase):
         sc_off = {"sky_correction": {"enabled": True, "precession": False, "instrument_offset_deg": 0.18}}
         _, _, reply, _ = await self.run_start(sc_off, theta_model="tilt", file_theta_deg=15.20062)
         self.assertAlmostEqual(reply["sky_correction"]["rotation_deg"], theta - 15.20062, places=4)
+
+    async def test_hold_classes_from_message(self):
+        sc = {"sky_correction": {"enabled": True, "instrument_offset_deg": 0.18}}
+        _, _, reply, _ = await self.run_start(sc)
+        self.assertEqual(reply["sky_correction"]["hold_classes"], ["0"])
+        _, _, reply, _ = await self.run_start(sc, hold_classes="2,9")
+        self.assertEqual(reply["sky_correction"]["hold_classes"], ["2", "9"])
+        self.assertEqual(len(reply["sky_correction"]["held"]), len(cfg.fiber_ids()))
+        _, _, reply, _ = await self.run_start(sc, hold_classes="none")
+        self.assertEqual(reply["sky_correction"]["hold_classes"], [])
 
     async def test_off_without_config(self):
         used, _, reply, target = await self.run_start({})
