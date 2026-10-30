@@ -260,14 +260,18 @@ INFO Measured geometry /경로/Measured_Geometry.txt: 2/103 holes replaced
   (`fiber_config.command_alpha`; 명령 alpha 는 (−330°, 30°], FBP 경로 끝각과 같은 범위). 회전량(dalpha)은 차이라서
   (−180°, 180°]. 2026-10-29 이전에는 (−180°, 180°] 로 접어 기하각 210..360° 인 자세가 +30..+180° 로 나갔고,
   fbpoffset 은 절대각으로 움직이므로 그 positioner 가 반대 방향으로 한 바퀴 돌았다 (KSPEC_ICS 836ea99 에서 수정).
-- **리밋 여유** (2026-10-30, `fiber_config.ALPHA_MARGIN`/`BETA_MARGIN`, 기본 30° 씩; `KSPEC_ALPHA_MARGIN`,
-  `KSPEC_BETA_MARGIN`="30,30"): positioner 리밋을 FBP 와 같이 한 바퀴 범위 양쪽으로 30° 씩 열어 alpha (−360°, 60°],
-  beta [−60°, 180°] 로 둔다 (`alpha_cmd_range`, `BETA_RANGE`). 누적 alpha 는 이 안에서 **wrap 하지 않고** 그대로
-  보내고, 넘으면 끝에서 자른다 (`clip_alpha_cmd`, 경고). 이전에는 누적 alpha 를 (−330°, 30°] 로 wrap 해서 리밋을 조금만
-  넘어도 (tile01 J4: 16.50 + 13.98 = 30.48 → −329.52) positioner 가 반대로 한 바퀴 도는 명령이 되었고 FBP 의 45°
-  이동 제한에도 걸렸다. Trial 0 의 절대 alpha(`command_alpha`, `lab.xy2ab`)는 그대로 (−330°, 30°] 다.
+- **리밋 여유와 alpha 해 선택** (2026-10-30, `fiber_config.ALPHA_MARGIN`/`BETA_MARGIN`; `KSPEC_ALPHA_MARGIN`="90,90",
+  `KSPEC_BETA_MARGIN`="30,30"): positioner 리밋을 한 바퀴 범위에 여유를 더한 alpha (−420°, 120°], beta [−60°, 180°] 로
+  둔다 (`alpha_cmd_range`, `BETA_RANGE`; FBP 쪽 리밋과 같아야 한다). alpha 는 360° 돌면 같은 위치라 한 xy 에 해가 여럿이므로
+  (5 = 365 = −355), 누적 alpha 는 직전 각도에서 **가장 적게 도는 해**를 고르고, 그 해가 리밋 밖이면 리밋에서 자른다
+  (`alpha_cum_in_range`, 경고; offset 표의 dalpha 는 실제 보낸 회전량). 반대로 도는 해(회전 180° 이상)를 대신 쓰는 선택은
+  `KSPEC_ALPHA_OTHER_WAY=1` 로 켤 수 있지만 FBP 의 45° 이동 제한에 걸리므로 기본은 끔. 이전에는 누적 alpha 를
+  (−330°, 30°] 로 wrap 해서 리밋을 조금만 넘어도 (tile01 J4: 16.50 + 13.98 = 30.48 → −329.52) positioner 가 반대로 한 바퀴
+  도는 명령이 되었고 FBP 의 45° 이동 제한에도 걸렸다. Trial 0 의 절대 alpha(`command_alpha`, `lab.xy2ab`)는 그대로
+  (−330°, 30°] 이므로 여유 구간에는 보정으로만 들어가고, 집으로 갈 때는 온 길대로 0 으로 간다.
 - beta 명령각은 positioner raw −180..0 에 FBP 영점 150 을 더한 −30..150 이고, 이 패키지의 elbow-down 해(기하각
-  0..180°)가 그대로 그 범위다. 여유를 더한 150..180 은 팔이 곧게 펴진 자세를 지나 elbow-up 으로 접히는 것이라, 아래
+  0..180°)가 그대로 그 범위다. 여유를 더한 150..180 은 팔이 곧게 펴진 자세를 지나 elbow-up 으로 접히는 것이라
+  elbow-down 목표에 도움이 되지 않는다. 위쪽 여유는 0 으로 두는 것이 안전하다 (`KSPEC_BETA_MARGIN`="30,0"); 아니면 아래
   도달 한계 보호가 그 쪽으로 가는 보정을 막아야 한다.
 - **도달 한계 보호** (`fiber_config.REACH_MARGIN`, 기본 0.3 mm; `KSPEC_REACH_MARGIN`): 목표나 측정 위치가 회전
   중심에서 a₁+a₂−0.3 mm 보다 멀면 완전히 편 자세(beta 끝, alpha 는 그 방향)로 푼다. 거의 편 자세에서는 반지름이
