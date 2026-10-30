@@ -1,4 +1,4 @@
-"""MTL sky correction at mtlstart: precession (TETE) + instrument rotation offset."""
+"""MTL sky correction at mtlstart: precession (TETE) + instrument rotation offset or model."""
 
 import json
 import sys
@@ -15,7 +15,8 @@ sys.path.insert(0, str(ROOT / "MTL" / "kspec_metrology"))
 
 from kspec_metrology.analysis import fiber_config as cfg  # noqa: E402
 from kspec_metrology.analysis.sky_correction import (  # noqa: E402
-    correct_target, corrected_path, precession_rotation_deg, write_corrected_target,
+    correct_target, corrected_path, model_theta_deg, precession_rotation_deg,
+    write_corrected_target,
 )
 from MTL.command import MTLContext, identify_execute  # noqa: E402
 from MTL.mtlcli import mtl_start  # noqa: E402
@@ -113,6 +114,57 @@ class SkyCorrectionTest(unittest.TestCase):
         self.assertLessEqual(r, a1[kc] + a2[kc])
 
 
+class HoldTest(unittest.TestCase):
+    def test_class0_stays_put_unless_asked(self):
+        t = tile_target()
+        k0 = [3, 10, 40]
+        for k in k0:
+            t["class"][k] = "0"
+        out, s = correct_target(t, TIME, instrument_offset_deg=0.18, use_measured=False)
+        for k in k0:
+            self.assertEqual((out["xp"][k], out["yp"][k]), (t["xp"][k], t["yp"][k]))
+        self.assertEqual(s["held"], [cfg.fiber_ids()[k] for k in k0])
+        moved = np.hypot(np.array(out["xp"]) - t["xp"], np.array(out["yp"]) - t["yp"])
+        self.assertTrue((np.delete(moved, k0) > 0).all())
+        out, s = correct_target(t, TIME, instrument_offset_deg=0.18, use_measured=False,
+                                hold_classes=())
+        self.assertNotEqual(out["xp"][k0[0]], t["xp"][k0[0]])
+        self.assertEqual(s["held"], [])
+
+
+class ThetaModelTest(unittest.TestCase):
+    def test_tilt_model_matches_proj_kspecdr(self):
+        # tile 6666 at its exposure mid-time: proj_kspecdr.theta_model gives HA +0.45 h, alt 84.0,
+        # theta 15.2012 (GFA measured 15.2007)
+        theta, info = model_theta_deg(57.303, -30.0, "2026-10-29T15:49:18")
+        self.assertAlmostEqual(theta, 15.2012, delta=3e-4)
+        self.assertAlmostEqual(info["ha_h"], 0.45, delta=0.01)
+        self.assertAlmostEqual(info["alt_deg"], 84.0, delta=0.1)
+        # at the zenith the lean terms vanish: theta = c0
+        self.assertAlmostEqual(model_theta_deg(57.303, -31.27, "2026-10-29T15:21:00")[0], 15.2006,
+                               delta=2e-4)
+        self.assertAlmostEqual(model_theta_deg(0, 0, TIME, "const", [15.3])[0], 15.3, places=9)
+        with self.assertRaises(ValueError):
+            model_theta_deg(0, 0, TIME, "tilt", [15.2])
+
+    def test_model_replaces_the_fixed_offset(self):
+        t = tile_target()
+        out, s = correct_target(t, TIME, precession=True, instrument_offset_deg=0.18,
+                                use_measured=False, theta_model={"file_theta_deg": 15.0})
+        # the correction uses the targets' mean as the centre (field_centre), ~0.1 deg off CENTRE
+        theta = model_theta_deg(*CENTRE, TIME)[0]
+        self.assertAlmostEqual(s["theta_model"]["theta_deg"], theta, delta=3e-4)
+        theta = s["theta_model"]["theta_deg"]
+        self.assertAlmostEqual(s["instrument_offset_deg"], theta - 15.0, places=4)
+        self.assertAlmostEqual(s["rotation_deg"], s["precession_deg"] + theta - 15.0, places=4)
+        self.assertEqual(s["theta_model"]["model"], "tilt")
+        # a TETE tile made at the reference theta: only the model - reference rotation remains
+        _, s = correct_target(t, TIME, precession=False, use_measured=False,
+                              theta_model={"file_theta_deg": 15.20062, "offset_deg": 0.002})
+        self.assertAlmostEqual(s["rotation_deg"], theta - 15.20062 + 0.002, places=4)
+        self.assertLess(abs(s["rotation_deg"]), 0.06)
+
+
 class MtlStartSkyCorrectionTest(unittest.IsolatedAsyncioTestCase):
     async def run_start(self, config, **message):
         tmp = tempfile.mkdtemp()
@@ -152,6 +204,36 @@ class MtlStartSkyCorrectionTest(unittest.IsolatedAsyncioTestCase):
         used, _, reply, target = await self.run_start(sc, sky_correction="false")
         self.assertEqual(used, str(target))
         self.assertIsNone(reply["sky_correction"])
+
+    async def test_theta_model_from_config_and_message(self):
+        sc = {"sky_correction": {"enabled": True, "precession": True, "instrument_offset": True,
+                                 "instrument_offset_deg": 0.18,
+                                 "theta_model": {"enabled": True, "file_theta_deg": 15.0}}}
+        _, _, reply, _ = await self.run_start(sc)
+        s = reply["sky_correction"]
+        theta = s["theta_model"]["theta_deg"]
+        self.assertAlmostEqual(theta, model_theta_deg(*CENTRE, TIME)[0], delta=3e-4)
+        self.assertAlmostEqual(s["instrument_offset_deg"], theta - 15.0, places=4)
+        # the message switches it off (back to the fixed 0.18) or sets the coefficients
+        _, _, reply, _ = await self.run_start(sc, theta_model="false")
+        self.assertIsNone(reply["sky_correction"]["theta_model"])
+        self.assertAlmostEqual(reply["sky_correction"]["instrument_offset_deg"], 0.18)
+        _, _, reply, _ = await self.run_start(sc, theta_coef="15.3, 0, 0", file_theta_deg=15.2)
+        self.assertAlmostEqual(reply["sky_correction"]["instrument_offset_deg"], 0.1, places=6)
+        # a model name in the message turns it on when the config has it off
+        sc_off = {"sky_correction": {"enabled": True, "precession": False, "instrument_offset_deg": 0.18}}
+        _, _, reply, _ = await self.run_start(sc_off, theta_model="tilt", file_theta_deg=15.20062)
+        self.assertAlmostEqual(reply["sky_correction"]["rotation_deg"], theta - 15.20062, places=4)
+
+    async def test_hold_classes_from_message(self):
+        sc = {"sky_correction": {"enabled": True, "instrument_offset_deg": 0.18}}
+        _, _, reply, _ = await self.run_start(sc)
+        self.assertEqual(reply["sky_correction"]["hold_classes"], ["0"])
+        _, _, reply, _ = await self.run_start(sc, hold_classes="2,9")
+        self.assertEqual(reply["sky_correction"]["hold_classes"], ["2", "9"])
+        self.assertEqual(len(reply["sky_correction"]["held"]), len(cfg.fiber_ids()))
+        _, _, reply, _ = await self.run_start(sc, hold_classes="none")
+        self.assertEqual(reply["sky_correction"]["hold_classes"], [])
 
     async def test_off_without_config(self):
         used, _, reply, target = await self.run_start({})

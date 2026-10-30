@@ -18,6 +18,17 @@ y = -N) 하늘에서의 회전은 초점면에서 반대 부호가 된다. 여�
 (planner 매핑으로 다시 투영) 과의 차이는 9111 / 9140 에서 최대 0.2 um (회전만 쓰면 3-5 um)
 이다 (proj-kspecdr note 2026-10-28-assign-rotation-correction). 계산은 ~30 ms.
 
+3. 기기 회전 모형 (theta_model, 선택): 기기 회전은 망원경 지향에 따라 0.05 deg 까지 변한다.
+   GFA 522 세트 (2026-10-28/29, proj-kspecdr note 2026-10-30-gfa-rotation-all) 로 맞춘 'tilt'
+   모형 theta_TETE = c0 + a sin z sin A + b sin z cos A (z, A: 타일 중심의 천정거리, 방위각
+   (북 -> 동); 경통이 천정에서 기운 방향과 크기) 가 새 지향을 0.002 deg 로 맞춘다. 켜면 고정
+   오프셋 대신 theta_model(관측 시각, 타일 중심) - file_theta_deg 를 기기 오프셋으로 쓴다.
+   file_theta_deg 는 파일에 들어 있는 회전: planner 파일 (ICRS, 세차 보정 켬) 은 15.00,
+   proj-kspecdr tile_planner 파일 (TETE, 세차 보정 끔) 은 15.2006 (tilt 모형의 천정값).
+
+고정 포지셔너: class 0 (planner 의 움직이지 않는 포지셔너, proj-kspecdr 타일의 할당 없음 /
+fiducial 근처라 세워 둔 포지셔너) 은 보정하지 않고 파일의 xp, yp 그대로 둔다 (hold_classes).
+
 보정 파일에는 planner 원래 값을 xp_planner / yp_planner 로 같이 남기고, 이미 보정된
 파일을 다시 넣으면 그 원래 값에서 다시 계산한다 (보정이 두 번 들어가지 않는다).
 """
@@ -94,6 +105,49 @@ def icrs_to_tete_focal(ra_deg, dec_deg, centre, time):
     return float(-np.degrees(np.angle(a))), float(abs(a))
 
 
+# 기기 회전 모형 (proj-kspecdr proj_kspecdr/theta_model.py 와 같은 정의와 계수, 2026-10-30)
+THETA_MODEL_COEF = {
+    'tilt': [15.20062, -0.01714, -0.05672],     # c0, sin z sin A, sin z cos A [deg]
+    'const': [15.19458],
+}
+# 관측소 (Lib/KSPEC.ini SITE); 메시지나 설정이 없을 때
+SITE = {'latitude_deg': -31.273361, 'longitude_deg': 149.061194, 'elevation_m': 1149.0}
+
+
+def pointing(ra_deg, dec_deg, time, site=None):
+    """ICRS 타일 중심의 시각 HA [h], 적위, 천정거리, 방위각 (북 -> 동) [deg] (대기 굴절 없음).
+
+    모형을 맞출 때 쓴 정의 (astropy HADec, 굴절 없음) 와 같다.
+    """
+    import astropy.units as u
+    from astropy.coordinates import EarthLocation, HADec, SkyCoord
+
+    site = dict(SITE, **(site or {}))
+    loc = EarthLocation(lat=site['latitude_deg'] * u.deg, lon=site['longitude_deg'] * u.deg,
+                        height=site['elevation_m'] * u.m)
+    hd = SkyCoord(ra_deg * u.deg, dec_deg * u.deg).transform_to(
+        HADec(obstime=obs_time(time), location=loc))
+    H, d, p = hd.ha.wrap_at(180 * u.deg).rad, hd.dec.rad, np.radians(site['latitude_deg'])
+    z = np.arccos(np.clip(np.sin(p) * np.sin(d) + np.cos(p) * np.cos(d) * np.cos(H), -1, 1))
+    A = np.arctan2(-np.cos(d) * np.sin(H), np.sin(d) * np.cos(p) - np.cos(d) * np.cos(H) * np.sin(p))
+    return float(np.degrees(H) / 15), float(np.degrees(d)), float(np.degrees(z)),         float(np.degrees(A) % 360)
+
+
+def model_theta_deg(ra_deg, dec_deg, time, model='tilt', coef=None, site=None):
+    """기기 회전 모형의 theta_TETE [deg] 와 지향 (dict). coef 가 없으면 THETA_MODEL_COEF[model]."""
+    if model not in THETA_MODEL_COEF:
+        raise ValueError(f"unknown theta model {model!r} (known: {sorted(THETA_MODEL_COEF)})")
+    coef = [float(c) for c in (coef if coef is not None else THETA_MODEL_COEF[model])]
+    ha, dec, z, A = pointing(ra_deg, dec_deg, time, site)
+    zr, Ar = np.radians(z), np.radians(A)
+    terms = {'tilt': [1.0, np.sin(zr) * np.sin(Ar), np.sin(zr) * np.cos(Ar)], 'const': [1.0]}[model]
+    if len(coef) != len(terms):
+        raise ValueError(f"theta model {model!r} needs {len(terms)} coefficients, got {len(coef)}")
+    theta = float(np.dot(coef, terms))
+    return theta, {'model': model, 'coef': coef, 'theta_deg': round(theta, 5), 'ha_h': round(ha, 4),
+                   'alt_deg': round(90 - z, 3), 'az_deg': round(A, 3)}
+
+
 def field_centre(target):
     """타일 중심 (RA, Dec) [deg]. tile_ra / tile_dec 가 있으면 그것, 없으면 목표들의 벡터 평균.
 
@@ -120,12 +174,20 @@ def _reach(xp, yp, use_measured=None):
     return np.minimum(r - rmin, rmax - r), hole, rmin, rmax
 
 
+HOLD_CLASSES = ('0',)
+
+
 def correct_target(target, time=None, precession=True, instrument_offset_deg=0.0,
-                   use_measured=None):
+                   use_measured=None, theta_model=None, hold_classes=HOLD_CLASSES):
     """보정한 target dict 과 요약 (dict) 을 돌려준다. target 은 바꾸지 않는다.
 
     time : 관측 시각 (UTC; astropy Time 이 받는 값, 또는 '+09:00' 같은 시간대가 붙은 ISO
         문자열). None 이면 지금.
+    theta_model : None 이면 instrument_offset_deg 를 그대로 쓴다. dict 이면 기기 오프셋을
+        model_theta_deg(타일 중심, time) - file_theta_deg + offset_deg 로 바꾼다. 키: model
+        ('tilt'), coef (없으면 기본 계수), file_theta_deg (파일의 회전, 기본 15.0),
+        offset_deg (그날 밤 오프셋, 기본 0), site (기본 SITE).
+    hold_classes : 이 class 의 목표는 옮기지 않는다 (기본 '0': 고정 포지셔너). 빈 값이면 모두 옮긴다.
     닿지 않게 된 목표: class 9 (목표 없음) 는 planner 값을 그대로 두고, 나머지는 닿는
     끝까지만 옮기고 요약의 clipped 에 적는다 (그 fiber 는 다시 배정해야 한다).
     """
@@ -138,9 +200,19 @@ def correct_target(target, time=None, precession=True, instrument_offset_deg=0.0
         prec, scale = icrs_to_tete_focal(target['ra'], target['dec'], (ra0, dec0), time)
     else:
         prec, scale = 0.0, 1.0
+    tm = None
+    if theta_model:
+        theta, tm = model_theta_deg(ra0, dec0, time, theta_model.get('model') or 'tilt',
+                                    theta_model.get('coef'), theta_model.get('site'))
+        tm['file_theta_deg'] = float(theta_model.get('file_theta_deg', 15.0))
+        tm['offset_deg'] = float(theta_model.get('offset_deg') or 0.0)
+        instrument_offset_deg = theta + tm['offset_deg'] - tm['file_theta_deg']
     rot = prec + float(instrument_offset_deg)
     c, s = scale * np.cos(np.radians(rot)), scale * np.sin(np.radians(rot))
     xp, yp = c * xp0 - s * yp0, s * xp0 + c * yp0
+    cls = [str(v) for v in target.get('class', [''] * len(xp))]
+    hold = np.array([k in {str(h) for h in (hold_classes or ())} for k in cls], bool)
+    xp[hold], yp[hold] = xp0[hold], yp0[hold]
 
     kept, clipped = [], []
     reach = _reach(xp, yp, use_measured)
@@ -149,9 +221,8 @@ def correct_target(target, time=None, precession=True, instrument_offset_deg=0.0
                     len(xp), len(cfg.fiber_ids()))
     else:
         margin, hole, rmin, rmax = reach
-        cls = [str(v) for v in target.get('class', [''] * len(xp))]
         ids = cfg.fiber_ids()
-        for k in np.flatnonzero(margin < 0):
+        for k in np.flatnonzero((margin < 0) & ~hold):
             if cls[k] == '9':
                 xp[k], yp[k] = xp0[k], yp0[k]
                 kept.append(ids[k])
@@ -163,16 +234,25 @@ def correct_target(target, time=None, precession=True, instrument_offset_deg=0.0
             clipped.append({'fiber': ids[k], 'class': cls[k], 'miss_um': round(float(abs(r - lim)) * 1e3, 1)})
 
     d = np.hypot(xp - xp0, yp - yp0)
+    try:
+        fiber_names = cfg.fiber_ids()
+    except Exception:  # noqa: BLE001 - the names are only for the summary
+        fiber_names = None
+    held = ([fiber_names[k] for k in np.flatnonzero(hold)] if fiber_names and len(fiber_names) == len(xp)
+            else np.flatnonzero(hold).tolist())
     summary = {
         'time_utc': time.utc.isot,
         'centre_deg': [round(ra0, 6), round(dec0, 6)],
         'precession': bool(precession),
         'precession_deg': round(prec, 5),
         'scale': round(scale, 8),
-        'instrument_offset_deg': float(instrument_offset_deg),
+        'instrument_offset_deg': round(float(instrument_offset_deg), 6),
+        'theta_model': tm,
         'rotation_deg': round(rot, 5),
         'shift_max_um': round(float(d.max()) * 1e3, 1),
         'kept_class9': kept,
+        'hold_classes': [str(h) for h in (hold_classes or ())],
+        'held': held,
         'clipped': clipped,
     }
     out = dict(target)

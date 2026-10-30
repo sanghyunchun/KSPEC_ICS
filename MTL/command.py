@@ -96,13 +96,55 @@ def _load_mtl_config():
     return config
 
 
+def _site():
+    """Lib/KSPEC.ini SITE (위도, 경도, 고도). 없으면 None (sky_correction.SITE 를 쓴다)."""
+    try:
+        with open("./Lib/KSPEC.ini", "r", encoding="utf-8") as file:
+            site = json.load(file).get("SITE")
+    except (OSError, ValueError):
+        return None
+    keys = ("latitude_deg", "longitude_deg", "elevation_m")
+    return {k: float(site[k]) for k in keys} if site and all(k in site for k in keys) else None
+
+
+def _theta_model_options(sc, message):
+    """기기 회전 모형 설정 (KSPEC.ini MTL.sky_correction.theta_model + 메시지). 꺼져 있으면 None.
+
+    메시지 키: theta_model ('true'/'false' 또는 모형 이름 'tilt'), theta_coef (리스트 또는
+    '15.2006,-0.0171,-0.0567'), file_theta_deg, theta_offset_deg.
+    """
+    tm = dict(sc.get("theta_model") or {})
+    raw = message.get("theta_model", None)
+    model = tm.get("model", "tilt")
+    if isinstance(raw, str) and raw.strip().lower() not in ("", "none", "1", "0", "true", "false",
+                                                            "yes", "no", "on", "off"):
+        enabled, model = True, raw.strip()
+    else:
+        enabled = _flag(message, "theta_model", bool(tm.get("enabled", False)))
+    if not enabled:
+        return None
+    coef = message.get("theta_coef", None)
+    if _is_missing(coef):
+        coef = tm.get("coef")
+    elif isinstance(coef, str):
+        coef = [float(c) for c in coef.replace(",", " ").split()]
+    return dict(model=model, coef=coef,
+                file_theta_deg=_value(message, "file_theta_deg", tm.get("file_theta_deg", 15.0), float),
+                offset_deg=_value(message, "theta_offset_deg", tm.get("offset_deg", 0.0), float),
+                site=_site())
+
+
 def _sky_corrected_target(target_file, config, message):
     """mtlstart 시점의 하늘 보정 파일 (<이름>_skycorr.json) 과 요약. 꺼져 있으면 (target_file, None).
 
     KSPEC.ini MTL.sky_correction: enabled, precession (TETE 세차 회전), instrument_offset
-    (+ instrument_offset_deg: GFA 로 잰 기기 회전 - planner 회전; 재설치 후 다시 잰다).
+    (+ instrument_offset_deg: GFA 로 잰 기기 회전 - planner 회전; 재설치 후 다시 잰다),
+    theta_model (enabled, model, coef, file_theta_deg, offset_deg: 켜면 기기 오프셋을 지향에
+    따른 모형 회전 - 파일의 회전으로 바꾼다; sky_correction.py 참고).
     mtlstart 메시지의 sky_correction / precession / instrument_offset / instrument_offset_deg /
-    obs_time 이 있으면 그 값이 우선한다.
+    theta_model / theta_coef / file_theta_deg / theta_offset_deg / hold_classes / obs_time 이
+    있으면 그 값이 우선한다. hold_classes (기본 ["0"]): 이 class 의 목표는 옮기지 않는다
+    (고정 포지셔너); 메시지에서는 "0,9" 처럼, 모두 옮기려면 "none".
     """
     sc = dict(config.get("sky_correction") or {})
     if not _flag(message, "sky_correction", bool(sc.get("enabled", False))):
@@ -110,16 +152,28 @@ def _sky_corrected_target(target_file, config, message):
     precession = _flag(message, "precession", bool(sc.get("precession", True)))
     use_offset = _flag(message, "instrument_offset", bool(sc.get("instrument_offset", True)))
     offset = _value(message, "instrument_offset_deg", sc.get("instrument_offset_deg", 0.0), float)
+    theta_model = _theta_model_options(sc, message)
+    hold = message.get("hold_classes", None)
+    if _is_missing(hold):
+        hold = sc.get("hold_classes", ["0"])
+    elif isinstance(hold, str):
+        hold = [h for h in hold.replace(",", " ").split() if h.lower() != "none"]
     out, summary = write_corrected_target(
         target_file,
         time=_value(message, "obs_time", None, str),
         precession=precession,
         instrument_offset_deg=offset if use_offset else 0.0,
+        theta_model=theta_model,
+        hold_classes=tuple(str(h) for h in hold),
     )
+    tm = summary.get("theta_model")
+    model = (f", theta_model {tm['model']} {tm['theta_deg']:.4f} at HA {tm['ha_h']:+.2f} h alt "
+             f"{tm['alt_deg']:.1f} - file {tm['file_theta_deg']:.4f}" if tm else "")
     print(f"MTL sky correction: {os.path.basename(target_file)} -> {os.path.basename(out)}, "
           f"rotation {summary['rotation_deg']:+.4f} deg (precession {summary['precession_deg']:+.4f}"
-          f", instrument {summary['instrument_offset_deg']:+.4f}), max shift "
-          f"{summary['shift_max_um']:.0f} um, clipped {[c['fiber'] for c in summary['clipped']]}")
+          f", instrument {summary['instrument_offset_deg']:+.4f}{model}), max shift "
+          f"{summary['shift_max_um']:.0f} um, clipped {[c['fiber'] for c in summary['clipped']]}, "
+          f"held (class {','.join(summary['hold_classes'])}) {len(summary['held'])}")
     return out, summary
 
 
