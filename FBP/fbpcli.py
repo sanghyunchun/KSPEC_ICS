@@ -31,16 +31,22 @@ def fbp_offset(offset_file):
     if not isinstance(offsets, dict) or not offsets:
         raise ValueError('MTL trial JSON은 비어 있지 않은 object 형식이어야 합니다.')
 
-    for key, value in offsets.items():
+    # NaN / null = 잡아 둘 축 (MTL 이 끊어졌거나 못 잰 fiber 에 쓴다): FBP 가 현재 위치에 둔다.
+    # 메시지는 표준 JSON 이어야 하므로 null 로 보낸다.
+    for key, value in list(offsets.items()):
         if not isinstance(key, str) or not key.endswith(('_a', '_b')):
             raise ValueError(f'잘못된 MTL offset key입니다: {key}')
+        if value is None:
+            continue
         if isinstance(value, bool):
             raise ValueError(f'{key} offset 각도는 숫자여야 합니다.')
         try:
             angle = float(value)
         except (TypeError, ValueError) as error:
             raise ValueError(f'{key} offset 각도는 숫자여야 합니다.') from error
-        if not math.isfinite(angle):
+        if math.isnan(angle):
+            offsets[key] = None
+        elif not math.isfinite(angle):
             raise ValueError(f'{key} offset 각도는 유한한 값이어야 합니다.')
 
     return create_fbp_command(

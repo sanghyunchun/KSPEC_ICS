@@ -571,8 +571,11 @@ def saveoffset(dict_data):
             positioner, suffix = key.rsplit('_', 1)
             if isinstance(value, bool):
                 raise ValueError(f'{key} offset 각도는 숫자여야 합니다.')
-            angle = float(value)
-            if not np.isfinite(angle):
+            # null / NaN = 잡아 둘 축: rotate_offset_all 이 현재 위치 (ActPos) 로 바꿔 움직이지 않는다
+            angle = None if value is None else float(value)
+            if angle is not None and np.isnan(angle):
+                angle = None
+            if angle is not None and not np.isfinite(angle):
                 raise ValueError(f'{key} offset 각도는 유한한 값이어야 합니다.')
 
             destination = alpha_data if suffix == 'a' else beta_data

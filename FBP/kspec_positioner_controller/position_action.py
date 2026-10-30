@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import math
 import sys
 from pathlib import Path
@@ -343,13 +344,66 @@ async def _find_offset_jumps(
     return jumps
 
 
+async def _resolve_offset_holds(
+    plc_connections: dict[str, Any],
+    alpha_file: str,
+    beta_file: str,
+) -> list[dict[str, Any]]:
+    """offset JSON 에서 null (잡아 둘 축) 을 그 축의 현재 위치 ActPos 로 바꿔 다시 쓴다.
+
+    MTL 은 끊어졌거나 그 trial 에 못 잰 fiber 를 NaN 으로 보낸다 (fbpcli / saveoffset 이 null 로 바꾼다).
+    목표를 현재 위치로 두면 그 축은 움직이지 않고, 이동량 검사에서도 0 이 된다.
+    파일이 없거나 형식이 틀리면 아무것도 하지 않는다 (read_offset_json 이 같은 오류를 낸다).
+    """
+    try:
+        data = {}
+        for motor, path in (("alpha", alpha_file), ("beta", beta_file)):
+            with open(path, "r", encoding="utf-8") as f:
+                data[motor] = json.load(f)
+    except (OSError, ValueError):
+        return []
+    if not all(isinstance(v, dict) for v in data.values()):
+        return []
+
+    held = []
+    for motor, values in data.items():
+        for positioner, angle in values.items():
+            if angle is not None:
+                continue
+            entry = _core.POSITIONER_AXIS_MAP.get(positioner)
+            if not entry or motor not in entry:
+                continue
+            info = entry[motor]
+            actual = await asyncio.to_thread(
+                plc_connections[entry["plc"]].read_by_name,
+                f"GVL.gAxisState[{info['local_axis']}].ActPos",
+                pyads.PLCTYPE_LREAL,
+            )
+            values[positioner] = float(actual)
+            held.append({"positioner": positioner, "motor": motor,
+                         "global_axis": info["global_axis"], "position": float(actual)})
+    if held:
+        for motor, path in (("alpha", alpha_file), ("beta", beta_file)):
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(data[motor], f, ensure_ascii=False, indent=2, allow_nan=False)
+                f.write("\n")
+        print("offset 에서 잡아 둔 축 (현재 위치 유지): "
+              + ", ".join(f"{h['positioner']}-{h['motor']}" for h in held))
+    return held
+
+
 async def _rotate_offset_checked(
     plc_connections: dict[str, Any],
     alpha_file: str,
     beta_file: str,
     max_jump_deg: float,
 ) -> dict[str, Any]:
-    """offset 목표각의 이동량을 검사한 뒤 kspec_main.main(offset_mode=True)을 실행한다."""
+    """offset 목표각의 이동량을 검사한 뒤 kspec_main.main(offset_mode=True)을 실행한다.
+
+    null 인 축 (MTL 이 잡아 둔 fiber) 은 먼저 현재 위치로 바꿔 움직이지 않게 한다 (_resolve_offset_holds).
+    """
+    held = await _resolve_offset_holds(plc_connections, alpha_file, beta_file)
+    held_names = sorted({h["positioner"] for h in held})
     try:
         axis_points, _ = _core.read_offset_json(alpha_file, beta_file)
     except (OSError, KeyError, ValueError):
@@ -368,15 +422,22 @@ async def _rotate_offset_checked(
                         for j in jumps
                     )
                 ),
-                "data": {"max_jump_deg": max_jump_deg, "jump_axes": jumps},
+                "data": {"max_jump_deg": max_jump_deg, "jump_axes": jumps, "held_axes": held},
             }
             print(result["message"])
             _core.save_result_json(result)
             return result
 
-    return await _kspec_main.main(
+    result = await _kspec_main.main(
         plc_connections, alpha_file=alpha_file, beta_file=beta_file, offset_mode=True,
     )
+    if held and isinstance(result, dict):
+        result.setdefault("data", {})
+        if isinstance(result["data"], dict):
+            result["data"]["held_axes"] = held
+        result["message"] = (f"{result.get('message', '')} "
+                             f"Held (not moved): {', '.join(held_names)}.").strip()
+    return result
 
 
 async def rotate_offset_all(
