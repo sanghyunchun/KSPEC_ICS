@@ -565,6 +565,9 @@ class FitsLiveViewer:
             self._clear_empty_view("Demo images could not be loaded.")
 
     def _activate_actual_mode(self):
+        if self.demo_active:
+            # A demo frame is not a previous observation frame.
+            self.img_artists = [None] * 6
         self.waiting_for_next_frame = False
         self.demo_active = False
         self.groups = self._copy_groups(self.actual_groups)
@@ -914,6 +917,18 @@ class FitsLiveViewer:
                 pass
         self.overlay_artists = []
 
+    def _keep_previous_image(self, ax, iax, serial: str, index: int, reason: str) -> bool:
+        """Keep a rendered camera image if its raw file vanished during a scan."""
+        previous = self.img_artists[index]
+        if previous is None or previous not in ax.images:
+            return False
+        ax.set_title(f"{serial}\n(previous image)", pad=2)
+        iax.clear()
+        iax.axis("off")
+        iax.text(0.5, 0.55, reason, transform=iax.transAxes,
+                 ha="center", va="center", fontsize=8)
+        return True
+
 
     def _render_current(self):
         if not self.keys:
@@ -932,6 +947,47 @@ class FitsLiveViewer:
             self.info_axes.flatten(),
             self.camera_serials,
         )):
+            path = frame.get(serial)
+            ax.set_title(serial, pad=2)
+            ax.set_xticks([])
+            ax.set_yticks([])
+            ax.set_anchor("E")
+
+            if path is None or not os.path.isfile(path):
+                if self._keep_previous_image(ax, iax, serial, i, "Waiting for next image"):
+                    continue
+                cax.clear()
+                tax.clear()
+                iax.clear()
+                iax.axis("off")
+                ax.clear()
+                ax.set_title(f"{serial}\n(missing)")
+                ax.set_xticks([])
+                ax.set_yticks([])
+                self.img_artists[i] = None
+                iax.text(0.5, 0.55, "missing", transform=iax.transAxes, ha="center", va="center", fontsize=8)
+                cax.text(0.5, 0.5, "missing", transform=cax.transAxes, ha="center", va="center", fontsize=7)
+                tax.text(0.5, 0.5, "missing", transform=tax.transAxes, ha="center", va="center", fontsize=7)
+                continue
+
+            img = read_fits_2d(path)
+            if img is None:
+                if self._keep_previous_image(ax, iax, serial, i, "Image not ready; showing previous"):
+                    continue
+                cax.clear()
+                tax.clear()
+                iax.clear()
+                iax.axis("off")
+                ax.clear()
+                ax.set_title(f"{serial}\n(read error)")
+                ax.set_xticks([])
+                ax.set_yticks([])
+                self.img_artists[i] = None
+                iax.text(0.5, 0.55, "read error", transform=iax.transAxes, ha="center", va="center", fontsize=8)
+                cax.text(0.5, 0.5, "err", transform=cax.transAxes, ha="center", va="center", fontsize=7)
+                tax.text(0.5, 0.5, "err", transform=tax.transAxes, ha="center", va="center", fontsize=7)
+                continue
+
             cax.clear()
             tax.clear()
             iax.clear()
@@ -945,34 +1001,6 @@ class FitsLiveViewer:
             cax.set_anchor("S")
             tax.set_anchor("N")
             iax.axis("off")
-            path = frame.get(serial)
-            ax.set_title(serial, pad=2)
-            ax.set_xticks([])
-            ax.set_yticks([])
-            ax.set_anchor("E")
-
-            if path is None or not os.path.isfile(path):
-                ax.clear()
-                ax.set_title(f"{serial}\n(missing)")
-                ax.set_xticks([])
-                ax.set_yticks([])
-                self.img_artists[i] = None
-                iax.text(0.5, 0.55, "missing", transform=iax.transAxes, ha="center", va="center", fontsize=8)
-                cax.text(0.5, 0.5, "missing", transform=cax.transAxes, ha="center", va="center", fontsize=7)
-                tax.text(0.5, 0.5, "missing", transform=tax.transAxes, ha="center", va="center", fontsize=7)
-                continue
-
-            img = read_fits_2d(path)
-            if img is None:
-                ax.clear()
-                ax.set_title(f"{serial}\n(read error)")
-                ax.set_xticks([])
-                ax.set_yticks([])
-                self.img_artists[i] = None
-                iax.text(0.5, 0.55, "read error", transform=iax.transAxes, ha="center", va="center", fontsize=8)
-                cax.text(0.5, 0.5, "err", transform=cax.transAxes, ha="center", va="center", fontsize=7)
-                tax.text(0.5, 0.5, "err", transform=tax.transAxes, ha="center", va="center", fontsize=7)
-                continue
 
             vmin, vmax = autoscale_limits(img)
 
