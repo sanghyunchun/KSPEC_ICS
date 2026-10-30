@@ -844,5 +844,38 @@ class FrameCommandTest(unittest.TestCase):
                 frame_command(*args)
 
 
+class AckOnReceiptTest(unittest.TestCase):
+    def test_command_is_acked_before_it_runs(self):
+        """A command longer than the broker's consumer_timeout must not be requeued."""
+        from SPECTRO_ISOPLANE import ISOPLANE_server
+
+        events = []
+
+        class Message:
+            body = json.dumps({'func': 'getobj', 'message': 'getobj 1800 1'}).encode()
+
+            async def ack(self):
+                events.append('ack')
+
+        class Handler:
+            async def handle(self, server, body):
+                events.append('handle')
+                raise RuntimeError('exposure failed')  # reported, not requeued
+
+        class Server:
+            async def define_consumer(self, key, callback):
+                self.callback = callback
+
+        async def run():
+            server = Server()
+            task = asyncio.ensure_future(ISOPLANE_server.serve(Handler(), server))
+            await asyncio.sleep(0)
+            await server.callback(Message())
+            task.cancel()
+
+        asyncio.run(run())
+        self.assertEqual(events, ['ack', 'handle'])
+
+
 if __name__ == '__main__':
     unittest.main()
