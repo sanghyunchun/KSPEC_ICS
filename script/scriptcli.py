@@ -4,6 +4,7 @@ import redis
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import asyncio
 import math
+import re
 import shlex
 import numpy as np
 import pandas as pd
@@ -64,14 +65,28 @@ def mtl_json_on_ics(filename):
     return os.path.join(os.path.expanduser(mtlfilepath), os.path.basename(str(filename)))
 
 
-#def convert_to_sexagesimal(ra_deg, dec_deg):
-#    """Converts RA and DEC from degrees to sexagesimal format."""
-#    ra = Angle(ra_deg, unit=u.degree)
-#    dec = Angle(dec_deg, unit=u.degree)
+def load_obsplan_tile(sciobs, filename, tile_id):
+    """Load a tile of an observation plan as the GUI Deploy does (KSPECRUN_gui.py).
 
-#    ra_hms = ra.to_string(unit=u.hour, sep=':', precision=2, pad=True)
-#    dec_dms = dec.to_string(unit=u.degree, sep=':', alwayssign=True, precision=2)
-#    return ra_hms, dec_dms
+    The .path.txt files hold geometric arm angles starting at (30, 150); FBP takes
+    -angle + (alpha_offset_deg, beta_offset_deg), so the motion plan must be inverted
+    (power-on pose = command (0, 0)). Calibration plans use zenith angle 0.
+    """
+    calibration_plan = re.fullmatch(r'Calib_obsplan_(?:\d{8}|YYYYMMDD)\.txt', filename) is not None
+    return sciobs.loadtile(
+        tile_id, invert_motion_angles=True,
+        zenith_angle_override=0.0 if calibration_plan else None,
+    )
+
+
+def convert_to_sexagesimal(ra_deg, dec_deg):
+    """Converts RA and DEC from degrees to sexagesimal format."""
+    ra = Angle(ra_deg, unit=u.degree)
+    dec = Angle(dec_deg, unit=u.degree)
+
+    ra_hms = ra.to_string(unit=u.hour, sep=':', precision=2, pad=True)
+    dec_dms = dec.to_string(unit=u.degree, sep=':', alwayssign=True, precision=2)
+    return ra_hms, dec_dms
 
 
 def bytes_to_sexagesimal(value: bytes, encoding='ascii') -> str:
@@ -683,78 +698,83 @@ class script():
             printing("No Autoguiding task is currently running.")
 
     async def run_obs(self, scriptrun, logging):
-        self.script_task = asyncio.create_task(self.handle_obs(scriptrun, logging))
+        # CLI: ask for the plan and tile before KSPECRUN.py prompts for the next command,
+        # so the two never read stdin at the same time.
+        obsplan = await self.select_obsplan_tile() if logging == None else None
+        self.script_task = asyncio.create_task(self.handle_obs(scriptrun, logging, obsplan))
 
-    async def handle_obs(self,scriptrun,logging):
+    async def select_obsplan_tile(self):
+        """CLI: ask for an observation plan file and a Tile ID in it; return (sciobs, filename)."""
+        loop = asyncio.get_running_loop()
+        ask = lambda prompt: loop.run_in_executor(None, input, prompt)
+
+        printing('###### Observation Script Start!!! ######')
+        with open('./Lib/KSPEC.ini','r') as fs:
+            kspecinfo=json.load(fs)
+        obsplanpath=kspecinfo['SCIOBS']['obsplanpath']
+
+        while True:
+            filename=await ask('\nPlease insert Observation sequence file (ex. ASPECS_obs_250217.txt): ')
+            filepath=os.path.join(obsplanpath,filename)
+            if not filename:
+                continue
+            if os.path.exists(filepath):
+                break
+            print(f'These is no {filename} in observation plan directory.')
+
+        sciobs=sciobscli()
+        wild=filename.split('_')
+        sciobs.project=wild[0]
+        sciobs.obsdate=wild[-1].split('.')[0]
+        self.project=wild[0]
+        self.obsdate=wild[-1].split('.')[0]
+
+        printing(f'Project Name: {self.project}')
+        printing(f'Observation Date: {self.obsdate}')
+
+        with open(obsplanpath+filename,'r') as f:
+            header = f.readline().strip().split()
+
+        data=np.loadtxt(obsplanpath+filename,skiprows=1,dtype=str,ndmin=2)
+
+        print('### Load tile information ###')
+        print("\t".join(header))
+        for row in data:
+            print("\t".join(row), flush=True)
+
+        tile_ids = set(row[0] for row in data)
+        while True:
+            self.TileID=(await ask('\nPlease select Tile ID above you want to runscript.: ')).strip()
+            if self.TileID in tile_ids:
+                printing(f'Tile ID {self.TileID} is selected from observation plan.')
+                for row in data:
+                    if row[0] == self.TileID:
+                        print(row)
+                        obs_num=row[2]
+                        print(f'Observation number of exposure: {obs_num}')
+                break
+            else:
+                print(f'Tile ID {self.TileID} was not found. Please enter a valid ID.')
+        return sciobs, filename
+
+    async def handle_obs(self,scriptrun,logging,obsplan=None):
         await clear_queue(scriptrun.response_queue)
         await clear_queue(scriptrun.GFA_response_queue)
         await clear_queue(scriptrun.ADC_response_queue)
         await clear_queue(scriptrun.SPEC_response_queue)
 
-        logging(f'###### Observation for Tile ID {self.TileID} starts ######',level='comment')
+        if logging != None:
+            logging(f'###### Observation for Tile ID {self.TileID} starts ######',level='comment')
         printing(f'###### Observation for Tile ID {self.TileID} starts ######')
         
         if logging == None:
-            printing('###### Observation Script Start!!! ######')
-            with open('./Lib/KSPEC.ini','r') as fs:
-                kspecinfo=json.load(fs)
-            fs.close()
-            obsplanpath=kspecinfo['SCIOBS']['obsplanpath']
-
-            ### Start CLI version ###
-            while True:
-                filename=input('\nPlease insert Observation sequence file (ex. ASPECS_obs_250217.txt): ')
-                filepath=os.path.join(obsplanpath,filename)
-                if not filename:
-                    continue
-                if os.path.exists(filepath):
-                    break
-                print(f'These is no {filename} in observation plan directory.')
-
-            sciobs=sciobscli()
-            wild=filename.split('_')
-            sciobs.project=wild[0]
-            sciobs.obsdate=wild[-1].split('.')[0]
-            self.project=wild[0]
-            self.obsdate=wild[-1].split('.')[0]
-
-            printing(f'Project Name: {self.project}')
-            printing(f'Observation Date: {self.obsdate}')
-        
-            with open(obsplanpath+filename,'r') as f:
-                header = f.readline().strip().split()
-
-            data=np.loadtxt(obsplanpath+filename,skiprows=1,dtype=str)
-
-            print('### Load tile information ###')
-            print("\t".join(header))
-            for row in data:
-                print("\t".join(row), flush=True)
-
-            tile_ids = set(row[0] for row in data)
-            while True:
-                self.TileID=input('\nPlease select Tile ID above you want to runscript.: ')
-                if self.TileID.strip() in tile_ids:
-                    printing(f'Tile ID {self.TileID} is selected from observation plan.')
-                    for row in data:
-                        if row[0] == self.TileID:
-                            print(row)
-                            obs_num=row[2]
-                            print(f'Observation number of exposure: {obs_num}')
-                    break
-                else:
-                    print(f'Tile ID {self.TileID} was not found. Please enter a valid ID.')
-
-        
-            tilemsg,objmsg,motionmsg1,motionmsg2=sciobs.loadtile(self.TileID)
+            ### Start CLI version: plan and tile from select_obsplan_tile ###
+            sciobs, filename = obsplan
+            tilemsg,objmsg,motionmsg1,motionmsg2=load_obsplan_tile(sciobs, filename, self.TileID)
             tile_data=json.loads(tilemsg)
             self.ra,self.dec=convert_to_sexagesimal(tile_data['ra'],tile_data['dec'])
 
             printing(f'RA and DEC of Tile ID {self.TileID}: {self.ra} {self.dec}')
-
-            await scriptrun.ICSclient.send_message("GFA", guidemsg)
-            await scriptrun.response_queue.get()
-            await asyncio.sleep(2)
 
             await scriptrun.ICSclient.send_message("MTL", objmsg)
             await scriptrun.response_queue.get()
@@ -790,7 +810,8 @@ class script():
 
         while True:
             print('Telescope is slewing......')
-            logging('Telescope is slewing.....', level='receive')
+            if logging != None:
+                logging('Telescope is slewing.....', level='receive')
         #    r=redis.Redis(host='192.168.15.121',port=6379,decode_responses=True)     # Set IP address of KMTNet redis server
             r=redis.Redis(host='127.0.0.1',port=6379,decode_responses=True)     # For simulation. Remove or comment in real observation
 
@@ -799,7 +820,8 @@ class script():
 
             if value != '0002':
                 print('Telescope slew finished')
-                logging('Telescope slew finished.', level='receive')
+                if logging != None:
+                    logging('Telescope slew finished.', level='receive')
                 break
             print('.',end=' ', flush=True)
             await asyncio.sleep(5)
@@ -870,7 +892,8 @@ class script():
         
 
         printing(f'###### Observation Script for Tile ID {self.TileID} END!!! ######')
-        logging(f'###### Observation Script for Tile ID {self.TileID} END!!! ######',level='comment')
+        if logging != None:
+            logging(f'###### Observation Script for Tile ID {self.TileID} END!!! ######',level='comment')
         
         
 
