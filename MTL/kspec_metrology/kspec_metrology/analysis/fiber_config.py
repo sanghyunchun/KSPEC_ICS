@@ -513,9 +513,10 @@ REACH_MARGIN = float(os.environ.get(REACH_MARGIN_ENV, '0.3') or 0.3)
 #   positioner 가 반대로 360 도 도는 명령이 되었다. 이제는 직전 각도에서 가장 적게 도는 해를 고르고 (alpha_cum_in_range),
 #   그 해가 리밋 밖이면 반대로 도는 해, 그것도 밖이면 리밋에서 자른다. 여유는 리밋 근처 목표를 넘어가는 보정을 받아 주는
 #   폭이고 (한없이 돌지 않게 하는 한계), 되돌아올 때는 온 길대로 0 으로 간다.
-# beta (기본 30 도씩 -> [-60, 180]): 150 을 넘는 beta 는 팔이 곧게 펴진 자세를 지나 elbow-up 으로 접히는 것이라
-#   elbow-down 목표에 도움이 되지 않는다. 위쪽 여유는 0 으로 두는 것이 안전하다 (KSPEC_BETA_MARGIN="30,0").
-#   환경변수 : KSPEC_ALPHA_MARGIN="90,90", KSPEC_BETA_MARGIN="30,30"   ("0,0" 이면 2026-10-29 까지의 범위)
+# beta (기본 아래 30, 위 0 -> [-60, 150]): 150 을 넘는 beta 는 팔이 곧게 펴진 자세를 지나 elbow-up 으로 접히는 것이라
+#   elbow-down 목표에 도움이 되지 않는다. 그래서 위쪽 여유는 0 이고, 150 을 넘는 보정은 150 에서 잘린다 (그 fiber 는 팔을
+#   곧게 편 채 radial 오차를 남기고, 다른 fiber 와 trial 은 그대로 진행된다. 멈추는 것이 아니다).
+#   환경변수 : KSPEC_ALPHA_MARGIN="90,90", KSPEC_BETA_MARGIN="30,0"   ("0,0" 이면 2026-10-29 까지의 범위)
 def _margin(env, default):
     v = os.environ.get(env, '').strip()
     if not v:
@@ -528,7 +529,7 @@ def _margin(env, default):
 ALPHA_MARGIN_ENV = 'KSPEC_ALPHA_MARGIN'
 ALPHA_MARGIN = _margin(ALPHA_MARGIN_ENV, (90., 90.))
 BETA_MARGIN_ENV = 'KSPEC_BETA_MARGIN'
-BETA_MARGIN = _margin(BETA_MARGIN_ENV, (30., 30.))
+BETA_MARGIN = _margin(BETA_MARGIN_ENV, (30., 0.))
 
 # 가장 적게 도는 alpha 해가 리밋 밖일 때 반대로 도는 해 (회전 180 도 넘음) 를 쓸지. FBP 의 한 번 이동 제한 (45 도) 에
 # 걸리므로 기본은 끔 (리밋에서 자름). 환경변수 KSPEC_ALPHA_OTHER_WAY=1 로 켠다.
@@ -536,7 +537,7 @@ ALPHA_OTHER_WAY_ENV = 'KSPEC_ALPHA_OTHER_WAY'
 ALPHA_OTHER_WAY = os.environ.get(ALPHA_OTHER_WAY_ENV, '0').strip().lower() in ('1', 'true', 'yes', 'on')
 
 # beta 명령각 범위: positioner raw beta -180 .. 0 에 FBP 영점 150 을 더한 -30 .. 150 (= 기하각 180 .. 0,
-# elbow-down) 에 위 여유를 더한 것 (기본 [-60, 180]). 150 을 넘는 beta 는 팔이 곧게 펴진 자세를 지나 elbow-up 으로
+# elbow-down) 에 위 여유를 더한 것 (기본 [-60, 150]). 150 을 넘는 beta 는 팔이 곧게 펴진 자세를 지나 elbow-up 으로
 # 접히는 것이라, 2026-10-29 9111 의 발산 (README 참고) 은 도달 한계 보호 (REACH_MARGIN) 가 막아야 한다.
 # 누적각이 이 밖으로 나가면 positioner 가 실행할 수 없는 명령이라 잘라 둔다 (경고).
 BETA_RANGE = (-30. - BETA_MARGIN[0], 150. + BETA_MARGIN[1])
