@@ -21,7 +21,7 @@ from SPECTRO.speccli import handle_spec, spec_queue
 from SCIOBS.sciobscli import sciobscli
 import Lib.process as processes
 from Lib.make_spec_header import set_header_info
-from Lib.reply import wait_reply
+from Lib.reply import send_and_wait_reply
 from TCS.tcscli import handle_telcom
 
 
@@ -265,9 +265,12 @@ class script():
         comments="",
     ):
         header = self.make_spec_header(obstype, exptime, expnum)
-        await handle_spec(command, scriptrun.ICSclient, header)
-        spec_rsp = await wait_reply(scriptrun.response_queue, 'SPEC', command.split()[0],
-                                    timeout=spec_command_timeout(command), logging=logging)
+        spec_rsp = await send_and_wait_reply(
+            scriptrun.response_queue,
+            handle_spec(command, scriptrun.ICSclient, header),
+            'SPEC', command.split()[0],
+            timeout=spec_command_timeout(command), logging=logging,
+        )
 
         if spec_rsp.get("status") != "success":
             log_or_print(logging, f"{command} did not succeed ({spec_rsp.get('status')}): "
@@ -300,8 +303,11 @@ class script():
         # await handle_mtl('mtlstatus',scriptrun.ICSclient, logging=logging)
         # await scriptrun.response_queue.get()
         # await asyncio.sleep(2)
-        await handle_adc('adcconnect',scriptrun.ICSclient, logging=logging)
-        await scriptrun.response_queue.get()
+        await send_and_wait_reply(
+            scriptrun.response_queue,
+            handle_adc('adcconnect', scriptrun.ICSclient, logging=logging),
+            'ADC', 'adcconnect', timeout=120, logging=logging,
+        )
         # await asyncio.sleep(2)
         # await handle_adc('adchome 1',scriptrun.ICSclient, logging=logging)
         # await scriptrun.response_queue.get()
@@ -469,14 +475,16 @@ class script():
     async def spec_illumination(self, cmd, scriptrun, logging=None):
         """illuon / illuoff / illulighton / illulightoff; True when the reply says success."""
         try:
-            await handle_spec(cmd, scriptrun.ICSclient)
+            if spec_queue() == 'SPEC':
+                await handle_spec(cmd, scriptrun.ICSclient)
+                return True
+            rsp = await send_and_wait_reply(
+                scriptrun.response_queue, handle_spec(cmd, scriptrun.ICSclient),
+                'SPEC', cmd, timeout=ILLUMINATION_TIMEOUT_S, logging=logging,
+            )
         except Exception as error:   # WebRelay (main spectrograph) answers synchronously
             log_or_print(logging, f'{cmd} failed: {error}', 'error')
             return False
-        if spec_queue() == 'SPEC':
-            return True
-        rsp = await wait_reply(scriptrun.response_queue, 'SPEC', cmd,
-                               timeout=ILLUMINATION_TIMEOUT_S, logging=logging)
         ok = rsp.get('status') == 'success'
         log_or_print(logging, f"{cmd}: {rsp.get('message')}", 'receive' if ok else 'error')
         return ok
@@ -517,9 +525,12 @@ class script():
                         return False
                     light_on = True
 
-                await handle_mtl('mtltrial', scriptrun.ICSclient, logging=logging)
-                trial = await wait_reply(scriptrun.response_queue, 'MTL', 'mtltrial',
-                                         timeout=MTL_TRIAL_TIMEOUT_S, logging=logging)
+                trial = await send_and_wait_reply(
+                    scriptrun.response_queue,
+                    handle_mtl('mtltrial', scriptrun.ICSclient, logging=logging),
+                    'MTL', 'mtltrial', timeout=MTL_TRIAL_TIMEOUT_S,
+                    logging=logging,
+                )
                 if not await self.spec_illumination('illulightoff', scriptrun, logging):
                     return False
                 light_on = False
@@ -539,13 +550,21 @@ class script():
                     break
 
                 trial_json = mtl_json_on_ics(trial.get('filename'))
-                sent = await handle_fbp(f'fbpoffset {shlex.quote(trial_json)}',
-                                        scriptrun.ICSclient, logging=logging)
-                if not sent:
+                offset_command = f'fbpoffset {shlex.quote(trial_json)}'
+                async def send_offset():
+                    if not await handle_fbp(offset_command, scriptrun.ICSclient,
+                                            logging=logging):
+                        raise RuntimeError(f'Could not send fbpoffset with {trial_json}.')
+
+                try:
+                    moved = await send_and_wait_reply(
+                        scriptrun.response_queue, send_offset(),
+                        'FBP', 'fbpoffset', timeout=FBP_OFFSET_TIMEOUT_S,
+                        logging=logging,
+                    )
+                except RuntimeError:
                     log_or_print(logging, f'Could not send fbpoffset with {trial_json}.', 'error')
                     return False
-                moved = await wait_reply(scriptrun.response_queue, 'FBP', 'fbpoffset',
-                                         timeout=FBP_OFFSET_TIMEOUT_S, logging=logging)
                 if moved.get('status') != 'success':
                     log_or_print(logging, f"fbpoffset failed: {moved.get('message')}", 'error')
                     return False

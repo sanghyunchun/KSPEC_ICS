@@ -39,7 +39,7 @@ from SPECTRO_ISOPLANE.specisocli import (handle_speciso, make_speciso_command,
                                          make_frame_header)
 from TCS.tcscli import handle_telcom
 from script.scriptcli import handle_script, ILLUMINATION_TIMEOUT_S
-from Lib.reply import wait_reply
+from Lib.reply import ReplyRouter, send_and_wait_reply
 from script.scriptcli import script
 from SCIOBS.sciobscli import sciobscli
 
@@ -183,7 +183,7 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(0, self.adjust_window_size_by_screen)
 
         ### All Response queue of asyncio ###
-        self.response_queue = asyncio.Queue()
+        self.response_queue = ReplyRouter()
         self.GFA_response_queue = asyncio.Queue()
         self.ADC_response_queue = asyncio.Queue()
         self.SPEC_response_queue = asyncio.Queue()
@@ -924,8 +924,6 @@ class MainWindow(QMainWindow):
         await telcom_client.connect()
         result = await handle_telcom(message,telcom_client)
         await telcom_client.close()
-        self.ui.lineEdit_cmd.clear()
-        self.ui.lineEdit_cmd_2.clear()
         return result
 
     async def send_command(self, category, message):
@@ -1032,20 +1030,19 @@ class MainWindow(QMainWindow):
             print(f'Command Category is {category}', flush=True)
 
             if category:
+                # Clear the submitted command before awaiting a response. A new
+                # draft entered while this command is in flight must survive.
+                self.ui.lineEdit_cmd.clear()
+                self.ui.lineEdit_cmd_2.clear()
                 if category.lower() == 'tcs':
                     messagetcs = 'KSPEC>TC ' + message
                     await self.send_udp_message(messagetcs)
-                    self.ui.lineEdit_cmd.clear()
-                    self.ui.lineEdit_cmd_2.clear()
                 elif category.lower() == 'telcom':
                     telcom_result = await self.send_telcom_command(message)
                     print('\033[94m' + '[ICS] received: ', telcom_result.decode() + '\033[0m', flush=True)
                     self.logging(telcom_result.decode(), level='receive')
                 else:
                     await self.send_command(category, message)
-
-                self.ui.lineEdit_cmd.clear()
-                self.ui.lineEdit_cmd_2.clear()
             else:
                 print("Invalid command. Please enter a valid command.\n", flush=True)
         except Exception as e:
@@ -2573,9 +2570,10 @@ class MainWindow(QMainWindow):
     #    await asyncio.sleep(2)
 
         self.logging('Sent Target information to MTL',level='send')
-        await self.ICS_client.send_message("MTL", self.objmsg)
-        loadobj_response = await wait_reply(self.response_queue, 'MTL', 'loadobj',
-                                            timeout=60, logging=self.logging)
+        loadobj_response = await send_and_wait_reply(
+            self.response_queue, self.ICS_client.send_message("MTL", self.objmsg),
+            'MTL', 'loadobj', timeout=60, logging=self.logging,
+        )
 
         loadobj_succeeded = (
             loadobj_response.get('inst') == 'MTL'
@@ -2592,11 +2590,13 @@ class MainWindow(QMainWindow):
             return
 
         self.logging('Sent MTL run initialization command', level='send')
-        await self.ICS_client.send_message(
-            'MTL', mtl_start(exptime=exptime, nexposure=nexposure)
+        mtlstart_response = await send_and_wait_reply(
+            self.response_queue,
+            self.ICS_client.send_message(
+                'MTL', mtl_start(exptime=exptime, nexposure=nexposure)
+            ),
+            'MTL', 'mtlstart', timeout=300, logging=self.logging,
         )
-        mtlstart_response = await wait_reply(self.response_queue, 'MTL', 'mtlstart',
-                                             timeout=300, logging=self.logging)
 
         mtlstart_succeeded = (
             mtlstart_response.get('inst') == 'MTL'
@@ -2616,9 +2616,11 @@ class MainWindow(QMainWindow):
 
         for arm, motionmsg in (('alpha', self.motionmsg1), ('beta', self.motionmsg2)):
             self.logging(f'Sent Motion plan of {arm} motor to FBP', level='send')
-            await self.ICS_client.send_message("FBP", motionmsg)
-            response = await wait_reply(self.response_queue, 'FBP', 'loadmotion',
-                                        timeout=60, logging=self.logging)
+            response = await send_and_wait_reply(
+                self.response_queue, self.ICS_client.send_message("FBP", motionmsg),
+                'FBP', 'loadmotion', timeout=60, logging=self.logging,
+                match={'arm': arm},
+            )
             if not (
                 response.get('inst') == 'FBP'
                 and response.get('func') == 'loadmotion'

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'KSPECGUI2.ui'
+## Form generated from reading UI file 'KSPECGUI.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -5389,14 +5389,15 @@ class Ui_MainWindow(object):
         self.group_spectrograph.setObjectName(u"group_spectrograph")
         self.group_spectrograph.setGeometry(QRect(0, 358, 521, 151))
         self.group_spectrograph.setFont(font1)
-        self.pushbtn_GFA_set_2 = QPushButton(self.group_spectrograph)
-        self.pushbtn_GFA_set_2.setObjectName(u"pushbtn_GFA_set_2")
-        self.pushbtn_GFA_set_2.setGeometry(QRect(20, 30, 71, 31))
         self.lineEdit_cmd_2 = QLineEdit(self.tab_status)
         self.lineEdit_cmd_2.setObjectName(u"lineEdit_cmd_2")
         self.lineEdit_cmd_2.setGeometry(QRect(50, 900, 391, 30))
         sizePolicy1.setHeightForWidth(self.lineEdit_cmd_2.sizePolicy().hasHeightForWidth())
         self.lineEdit_cmd_2.setSizePolicy(sizePolicy1)
+        font21 = QFont()
+        font21.setPointSize(19)
+        font21.setStrikeOut(False)
+        self.lineEdit_cmd_2.setFont(font21)
         self.lineEdit_cmd_2.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignTrailing|Qt.AlignmentFlag.AlignVCenter)
         self.label_cmd_2 = QLabel(self.tab_status)
         self.label_cmd_2.setObjectName(u"label_cmd_2")
@@ -5417,9 +5418,9 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
         self.tabWidget_2.setCurrentIndex(0)
-        self.group_obs.setCurrentIndex(0)
+        self.group_obs.setCurrentIndex(1)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -6624,7 +6625,7 @@ class Ui_MainWindow(object):
         self.pushbtn_adc_connect.setText(QCoreApplication.translate("MainWindow", u"Connect", None))
         self.group_metrology.setTitle(QCoreApplication.translate("MainWindow", u"Metrology", None))
         self.label_MTL_exptime.setText(QCoreApplication.translate("MainWindow", u"Time", None))
-        self.lineEdit_MTL_exptime.setPlaceholderText(QCoreApplication.translate("MainWindow", u"ex) 0.03", None))
+        self.lineEdit_MTL_exptime.setPlaceholderText(QCoreApplication.translate("MainWindow", u"ex) 4", None))
         self.pushbtn_MTL_trial.setText(QCoreApplication.translate("MainWindow", u"Trial", None))
         self.pushbtn_MTL_set.setText(QCoreApplication.translate("MainWindow", u"Set", None))
         self.label_MTL_file.setText(QCoreApplication.translate("MainWindow", u"File", None))
@@ -6700,7 +6701,6 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.pushbtn_illumi_2.setText(QCoreApplication.translate("MainWindow", u"Illumi", None))
         self.group_spectrograph.setTitle(QCoreApplication.translate("MainWindow", u"Spectrograph", None))
-        self.pushbtn_GFA_set_2.setText(QCoreApplication.translate("MainWindow", u"getbias", None))
         self.lineEdit_cmd_2.setPlaceholderText(QCoreApplication.translate("MainWindow", u"For help, type '?' or 'ADC?'", None))
         self.label_cmd_2.setText(QCoreApplication.translate("MainWindow", u"CMD:", None))
 #if QT_CONFIG(tooltip)

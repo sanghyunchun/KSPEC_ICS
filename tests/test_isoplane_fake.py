@@ -647,9 +647,11 @@ class DarkSequenceTest(unittest.TestCase):
         script = self.cli.script()
         reply = {'inst': 'SPEC', 'func': 'getbias', 'process': 'Done',
                  'status': 'success', 'backend': 'ISOPLANE'}
+        async def send_and_reply(queue, send, *args, **kwargs):
+            await send
+            return reply
         with patch.object(self.cli, 'handle_spec', new_callable=AsyncMock), \
-                patch.object(self.cli, 'wait_reply', new_callable=AsyncMock,
-                             return_value=reply), \
+                patch.object(self.cli, 'send_and_wait_reply', send_and_reply), \
                 patch.object(script, 'add_obslog', new_callable=AsyncMock) as add_log:
             result = asyncio.run(script.send_spec_and_log(
                 'getbias 1', 'Bias', 0, 1, run))

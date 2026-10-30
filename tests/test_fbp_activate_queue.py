@@ -68,6 +68,22 @@ class FbpActivateQueueTests(unittest.IsolatedAsyncioTestCase):
                                 status='success', message='Ready'))
         self.assertTrue(self.gui.response_queue.empty())
 
+    async def test_deploy_waiter_receives_only_mtl_reply(self):
+        from Lib.reply import ReplyRouter, send_and_wait_reply
+
+        self.gui.response_queue = ReplyRouter()
+
+        async def send_loadobj():
+            await self.deliver(dict(inst='FBP', func='fbpinitial', process='Done',
+                                    status='success', message='Initial complete'))
+            await self.deliver(dict(inst='MTL', func='loadobj', process='Done',
+                                    status='success', message='Objects loaded'))
+
+        result = await send_and_wait_reply(
+            self.gui.response_queue, send_loadobj(), 'MTL', 'loadobj', timeout=1)
+        self.assertEqual(result['message'], 'Objects loaded')
+        self.assertTrue(self.gui.response_queue.empty())
+
 
 class SyscheckRuntimeTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
