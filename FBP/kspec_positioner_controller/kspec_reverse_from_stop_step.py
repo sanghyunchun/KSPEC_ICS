@@ -620,7 +620,7 @@ async def reverse_from_stop_step( # pyright: ignore[reportGeneralTypeIssues]
         )
         print(f"{prepared_plcs_text} 복귀 대상 축 Power ON 완료")
 
-        await asyncio.sleep(1.0)
+        await asyncio.sleep(3.0)
 
 
         # ====================================================

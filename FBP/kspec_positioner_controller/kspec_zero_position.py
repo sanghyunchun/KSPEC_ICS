@@ -559,7 +559,7 @@ async def zero_main( # pyright: ignore[reportGeneralTypeIssues]
             "Power ON 완료"
         )
 
-        await asyncio.sleep(1.0)
+        await asyncio.sleep(3.0)
 
 
         # ====================================================
