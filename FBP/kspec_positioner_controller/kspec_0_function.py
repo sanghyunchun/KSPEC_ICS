@@ -824,7 +824,7 @@ async def power_on_one_plc(
 async def wait_for_powered_axes(
     plc_connections: dict,
     power_targets: list,
-    timeout: float = 10.0,
+    timeout: float = 30.0,
     poll_interval: float = 1.0,
 ):
     """구동 대상 축이 모두 Powered가 될 때까지 확인하고, 미완료 축을 반환한다."""
@@ -2148,7 +2148,7 @@ async def rotate_one(
         )
 
         # ====================================================
-        # 실제 Powered=True 상태를 최대 10초 동안 확인
+        # 실제 Powered=True 상태를 최대 30초 동안 확인
         # ====================================================
         not_powered_axes = await wait_for_powered_axes(
             {plc_name: plc}, [(plc_name, route)]
@@ -2161,7 +2161,7 @@ async def rotate_one(
                 "message": (
                     f"{route['positioner']} "
                     f"{route['motor']} 축의 "
-                    "10초 동안 Power ON을 확인하지 못했습니다."
+                    "30초 동안 Power ON을 확인하지 못했습니다."
                 ),
                 "data": {
                     "plc_name":

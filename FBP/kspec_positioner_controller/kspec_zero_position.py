@@ -559,7 +559,7 @@ async def zero_main( # pyright: ignore[reportGeneralTypeIssues]
             "Power ON 완료"
         )
 
-        # 0도 이동 대상 축이 모두 Powered가 될 때까지 최대 10초 확인
+        # 0도 이동 대상 축이 모두 Powered가 될 때까지 최대 30초 확인
         power_targets = [
             (plc_name, route)
             for plc_name in prepared_plcs
@@ -570,7 +570,7 @@ async def zero_main( # pyright: ignore[reportGeneralTypeIssues]
         )
         if not_powered_axes:
             raise RuntimeError(
-                "10초 동안 Power ON을 확인하지 못한 0도 이동 대상 축이 있습니다: "
+                "30초 동안 Power ON을 확인하지 못한 0도 이동 대상 축이 있습니다: "
                 f"{not_powered_axes}"
             )
 

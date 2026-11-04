@@ -357,7 +357,7 @@ async def reverse_main(plc_connections, alpha_file, beta_file):
         print("PLC1, PLC2 구동 축 Power ON 완료")
 
         # ==========================
-        # 실제 Power ON 상태를 최대 10초 동안 반복 확인
+        # 실제 Power ON 상태를 최대 30초 동안 반복 확인
         # ==========================
         power_targets = [
             (plc_name, route)
@@ -370,7 +370,7 @@ async def reverse_main(plc_connections, alpha_file, beta_file):
         )
         if not_powered_axes:
             raise RuntimeError(
-                "10초 동안 Power ON을 확인하지 못한 축이 있습니다: "
+                "30초 동안 Power ON을 확인하지 못한 축이 있습니다: "
                 f"{not_powered_axes}"
             )
 
