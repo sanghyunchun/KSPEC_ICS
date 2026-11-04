@@ -102,7 +102,8 @@ def _sky_corrected_target(target_file, config, message):
     KSPEC.ini MTL.sky_correction: enabled, precession (TETE 세차 회전), instrument_offset
     (+ instrument_offset_deg: GFA 로 잰 기기 회전 - planner 회전; 재설치 후 다시 잰다).
     mtlstart 메시지의 sky_correction / precession / instrument_offset / instrument_offset_deg /
-    obs_time 이 있으면 그 값이 우선한다.
+    obs_time 이 있으면 그 값이 우선한다. calibration target (이름이나 project 에 'calib',
+    또는 하늘 좌표 없음) 은 보정하지 않고 원래 파일을 쓴다 (요약의 skipped).
     """
     sc = dict(config.get("sky_correction") or {})
     if not _flag(message, "sky_correction", bool(sc.get("enabled", False))):
@@ -116,6 +117,9 @@ def _sky_corrected_target(target_file, config, message):
         precession=precession,
         instrument_offset_deg=offset if use_offset else 0.0,
     )
+    if summary.get("skipped"):
+        print(f"MTL sky correction skipped for {os.path.basename(target_file)}: {summary['skipped']}")
+        return target_file, summary
     print(f"MTL sky correction: {os.path.basename(target_file)} -> {os.path.basename(out)}, "
           f"rotation {summary['rotation_deg']:+.4f} deg (precession {summary['precession_deg']:+.4f}"
           f", instrument {summary['instrument_offset_deg']:+.4f}), max shift "
