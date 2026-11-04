@@ -1,8 +1,6 @@
 """Range motion uses original, inclusive path steps and sends typed FBP commands."""
 import ast
-import asyncio
 import json
-import math
 import re
 import tempfile
 import unittest
@@ -71,51 +69,6 @@ class PathRangeTests(unittest.TestCase):
         plc = SimpleNamespace(write_by_name=lambda *args: writes.append(args))
         namespace['set_forward_mode_sync']('PLC1', plc, 6)
         self.assertEqual(writes[0][:2], ('GVL.gMotionModeCommand', 6))
-
-
-class RangeStartPositionTests(unittest.IsolatedAsyncioTestCase):
-    async def test_first_target_requires_current_or_adjacent_path_step(self):
-        source = ROOT / 'FBP/kspec_positioner_controller/kspec_main.py'
-        tree = ast.parse(source.read_text())
-        guard = next(node for node in ast.walk(tree) if isinstance(node, ast.If)
-                     and any(isinstance(child, ast.Name) and child.id == 'start_tolerance'
-                             for child in ast.walk(node)))
-        check = ast.AsyncFunctionDef(
-            name='check_start',
-            args=ast.arguments(posonlyargs=[], args=[], vararg=None, kwonlyargs=[],
-                               kw_defaults=[], kwarg=None, defaults=[]),
-            body=[guard], decorator_list=[],
-        )
-        module = ast.fix_missing_locations(ast.Module(body=[check], type_ignores=[]))
-        code = compile(module, str(source), 'exec')
-
-        class PLC:
-            def __init__(self, position):
-                self.position = position
-            def read_by_name(self, tag, datatype):
-                return self.position
-
-        async def attempt(start, end, position):
-            namespace = {
-                'selected_steps': [start, end], 'step_from': start, 'step_to': end,
-                'original_total_steps': 60, 'original_axis_points': {1: list(range(1, 61))},
-                'plc_motion_routes': {'PLC1': [{
-                    'plc_name': 'PLC1', 'positioner': 'A1', 'motor': 'alpha',
-                    'global_axis': 1, 'local_axis': 1,
-                }]},
-                'plc_connections': {'PLC1': PLC(position)},
-                'asyncio': asyncio, 'math': math,
-                'pyads': SimpleNamespace(PLCTYPE_LREAL=object()),
-                'save_result_json': Mock(),
-            }
-            exec(code, namespace)
-            return await namespace['check_start']()
-
-        self.assertIsNone(await attempt(2, 40, 1))
-        self.assertIsNone(await attempt(50, 1, 51))
-        rejected = await attempt(50, 1, 60)
-        self.assertEqual(rejected['status'], 'fail')
-        self.assertEqual(rejected['data']['accepted_start_steps'], [50, 51])
 
 
 class CommandRangeTests(unittest.IsolatedAsyncioTestCase):

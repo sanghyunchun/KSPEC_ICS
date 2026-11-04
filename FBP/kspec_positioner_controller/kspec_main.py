@@ -5,7 +5,6 @@
 import time
 import asyncio
 import pyads
-import math
 
 from kspec_0_function import *
 
@@ -26,9 +25,8 @@ async def main(plc_connections, alpha_file, beta_file, offset_mode=False, *, ste
         original_total_steps = total_steps
         selected_steps = None
         if step_from is not None:
-            original_axis_points = axis_points
             axis_points, selected_steps = select_motion_steps(
-                original_axis_points, total_steps, step_from, step_to
+                axis_points, total_steps, step_from, step_to
             )
             total_steps = len(selected_steps)
 
@@ -217,65 +215,6 @@ async def main(plc_connections, alpha_file, beta_file, offset_mode=False, *, ste
 
 
         # ==========================
-        # 범위 구동은 현재 각도가 첫 목표 step 또는 바로 앞 step에
-        # 있어야 한다. 중간 경로를 건너뛰는 큰 이동을 막는다.
-        if selected_steps is not None:
-            direction = 1 if step_to >= step_from else -1
-            start_steps = [step_from]
-            previous_step = step_from - direction
-            if step_from != step_to and 1 <= previous_step <= original_total_steps:
-                start_steps.append(previous_step)
-
-            start_routes = [
-                route for routes in plc_motion_routes.values() for route in routes
-            ]
-            actual_positions = await asyncio.gather(*[
-                asyncio.to_thread(
-                    plc_connections[route["plc_name"]].read_by_name,
-                    f"GVL.gAxisState[{route['local_axis']}].ActPos",
-                    pyads.PLCTYPE_LREAL)
-                for route in start_routes
-            ])
-            start_tolerance = 0.2
-            mismatches_by_step = {
-                step: [
-                    {
-                        "plc_name": route["plc_name"],
-                        "positioner": route["positioner"],
-                        "motor": route["motor"],
-                        "global_axis": route["global_axis"],
-                        "actual_position": float(actual),
-                        "expected_position": float(original_axis_points[route["global_axis"]][step - 1]),
-                    }
-                    for route, actual in zip(start_routes, actual_positions)
-                    if (
-                        not math.isfinite(float(actual))
-                        or not math.isfinite(float(original_axis_points[route["global_axis"]][step - 1]))
-                        or abs(float(actual) - float(original_axis_points[route["global_axis"]][step - 1])) > start_tolerance
-                    )
-                ]
-                for step in start_steps
-            }
-            if all(mismatches_by_step.values()):
-                closest_step = min(start_steps, key=lambda step: len(mismatches_by_step[step]))
-                result = {
-                    "status": "fail",
-                    "message": (
-                        f"현재 축 위치가 시작 step {step_from} 또는 바로 앞 step과 "
-                        "일치하지 않아 범위 구동을 시작하지 않았습니다."
-                    ),
-                    "data": {
-                        "step_from": step_from,
-                        "step_to": step_to,
-                        "accepted_start_steps": start_steps,
-                        "position_tolerance_deg": start_tolerance,
-                        "mismatched_axes": mismatches_by_step[closest_step],
-                    },
-                }
-                print(result["message"])
-                save_result_json(result)
-                return result
-
         # PLC1, PLC2에 정방향 모드 설정 및 이전 Stop 기록 삭제하지 않음
         # ==========================
         await asyncio.gather(
