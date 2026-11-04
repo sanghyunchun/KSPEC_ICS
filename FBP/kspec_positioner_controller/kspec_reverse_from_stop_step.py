@@ -620,45 +620,18 @@ async def reverse_from_stop_step( # pyright: ignore[reportGeneralTypeIssues]
         )
         print(f"{prepared_plcs_text} 복귀 대상 축 Power ON 완료")
 
-        await asyncio.sleep(10.0)
-
-
-        # ====================================================
-        # 실제 Powered 확인
-        # ====================================================
+        # 복귀 대상 축이 모두 Powered가 될 때까지 최대 10초 확인
         power_targets = [
             (plc_name, route)
             for plc_name, routes in plc_motion_routes.items()
             for route in routes
         ]
-
-        powered_results = await asyncio.gather(
-            *[
-                asyncio.to_thread(
-                    plc_connections[plc_name].read_by_name,
-                    f"GVL.gAxisState[{route['local_axis']}].Powered",
-                    pyads.PLCTYPE_BOOL
-                )
-                for plc_name, route in power_targets
-            ]
+        not_powered_axes = await wait_for_powered_axes(
+            plc_connections, power_targets
         )
-
-        not_powered_axes = [
-            {
-                "plc_name": plc_name,
-                "global_axis": route["global_axis"],
-                "local_axis": route["local_axis"],
-                "positioner": route["positioner"],
-                "motor": route["motor"],
-            }
-            for (plc_name, route), powered
-            in zip(power_targets, powered_results)
-            if not powered
-        ]
-
         if not_powered_axes:
             raise RuntimeError(
-                "Power ON에 실패한 복귀 대상 축이 있습니다: "
+                "10초 동안 Power ON을 확인하지 못한 복귀 대상 축이 있습니다: "
                 f"{not_powered_axes}"
             )
 

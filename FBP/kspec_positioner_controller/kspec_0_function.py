@@ -796,6 +796,49 @@ async def power_on_one_plc(
         routes
     )
 
+
+async def wait_for_powered_axes(
+    plc_connections: dict,
+    power_targets: list,
+    timeout: float = 10.0,
+    poll_interval: float = 1.0,
+):
+    """구동 대상 축이 모두 Powered가 될 때까지 확인하고, 미완료 축을 반환한다."""
+    deadline = time.monotonic() + timeout
+
+    while True:
+        powered_results = await asyncio.gather(
+            *[
+                asyncio.to_thread(
+                    plc_connections[plc_name].read_by_name,
+                    f"GVL.gAxisState[{route['local_axis']}].Powered",
+                    pyads.PLCTYPE_BOOL,
+                )
+                for plc_name, route in power_targets
+            ]
+        )
+
+        not_powered_axes = [
+            {
+                "plc_name": plc_name,
+                "global_axis": route["global_axis"],
+                "local_axis": route["local_axis"],
+                "positioner": route["positioner"],
+                "motor": route["motor"],
+            }
+            for (plc_name, route), powered in zip(power_targets, powered_results)
+            if not powered
+        ]
+
+        if not not_powered_axes:
+            return []
+
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return not_powered_axes
+
+        await asyncio.sleep(min(poll_interval, remaining))
+
 ##
 def send_path_to_one_plc_sync(
         plc_name: str,
@@ -2080,29 +2123,21 @@ async def rotate_one(
             [route]
         )
 
-        await asyncio.sleep(0.5)
-
-
         # ====================================================
-        # 실제 Powered=True 확인
+        # 실제 Powered=True 상태를 최대 10초 동안 확인
         # ====================================================
-        powered = await asyncio.to_thread(
-            plc.read_by_name,
-            (
-                f"GVL.gAxisState"
-                f"[{local_axis}].Powered"
-            ),
-            pyads.PLCTYPE_BOOL
+        not_powered_axes = await wait_for_powered_axes(
+            {plc_name: plc}, [(plc_name, route)]
         )
 
-        if not powered:
+        if not_powered_axes:
 
             result = {
                 "status": "fail",
                 "message": (
                     f"{route['positioner']} "
                     f"{route['motor']} 축의 "
-                    "Power ON을 확인하지 못했습니다."
+                    "10초 동안 Power ON을 확인하지 못했습니다."
                 ),
                 "data": {
                     "plc_name":
