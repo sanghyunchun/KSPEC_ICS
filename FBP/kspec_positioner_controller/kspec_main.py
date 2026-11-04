@@ -5,18 +5,37 @@
 import time
 import asyncio
 import pyads
+import math
 
 from kspec_0_function import *
 
-async def main(plc_connections, alpha_file, beta_file, offset_mode=False):
+async def main(plc_connections, alpha_file, beta_file, offset_mode=False, *, step_from=None, step_to=None):
 
-    print("전체 포지셔너 정방향 구동 시작")
+    print("전체 포지셔너 경로 구동 시작")
 
     try:
+        if (step_from is None) != (step_to is None):
+            raise ValueError("From과 To step을 모두 입력해야 합니다.")
+        if offset_mode and step_from is not None:
+            raise ValueError("Offset 경로에는 step 범위를 사용할 수 없습니다.")
         if offset_mode:
             axis_points, total_steps = read_offset_json(alpha_file, beta_file)
         else:
             axis_points, total_steps = read_json(alpha_file, beta_file)
+
+        original_total_steps = total_steps
+        selected_steps = None
+        if step_from is not None:
+            original_axis_points = axis_points
+            axis_points, selected_steps = select_motion_steps(
+                original_axis_points, total_steps, step_from, step_to
+            )
+            total_steps = len(selected_steps)
+
+        motion_direction = (
+            "forward" if selected_steps is None else
+            "range_forward" if step_to >= step_from else "range_reverse"
+        )
 
     except FileNotFoundError as e:
         result = {
@@ -198,16 +217,77 @@ async def main(plc_connections, alpha_file, beta_file, offset_mode=False):
 
 
         # ==========================
+        # 범위 구동은 현재 각도가 첫 목표 step 또는 바로 앞 step에
+        # 있어야 한다. 중간 경로를 건너뛰는 큰 이동을 막는다.
+        if selected_steps is not None:
+            direction = 1 if step_to >= step_from else -1
+            start_steps = [step_from]
+            previous_step = step_from - direction
+            if step_from != step_to and 1 <= previous_step <= original_total_steps:
+                start_steps.append(previous_step)
+
+            start_routes = [
+                route for routes in plc_motion_routes.values() for route in routes
+            ]
+            actual_positions = await asyncio.gather(*[
+                asyncio.to_thread(
+                    plc_connections[route["plc_name"]].read_by_name,
+                    f"GVL.gAxisState[{route['local_axis']}].ActPos",
+                    pyads.PLCTYPE_LREAL)
+                for route in start_routes
+            ])
+            start_tolerance = 0.2
+            mismatches_by_step = {
+                step: [
+                    {
+                        "plc_name": route["plc_name"],
+                        "positioner": route["positioner"],
+                        "motor": route["motor"],
+                        "global_axis": route["global_axis"],
+                        "actual_position": float(actual),
+                        "expected_position": float(original_axis_points[route["global_axis"]][step - 1]),
+                    }
+                    for route, actual in zip(start_routes, actual_positions)
+                    if (
+                        not math.isfinite(float(actual))
+                        or not math.isfinite(float(original_axis_points[route["global_axis"]][step - 1]))
+                        or abs(float(actual) - float(original_axis_points[route["global_axis"]][step - 1])) > start_tolerance
+                    )
+                ]
+                for step in start_steps
+            }
+            if all(mismatches_by_step.values()):
+                closest_step = min(start_steps, key=lambda step: len(mismatches_by_step[step]))
+                result = {
+                    "status": "fail",
+                    "message": (
+                        f"현재 축 위치가 시작 step {step_from} 또는 바로 앞 step과 "
+                        "일치하지 않아 범위 구동을 시작하지 않았습니다."
+                    ),
+                    "data": {
+                        "step_from": step_from,
+                        "step_to": step_to,
+                        "accepted_start_steps": start_steps,
+                        "position_tolerance_deg": start_tolerance,
+                        "mismatched_axes": mismatches_by_step[closest_step],
+                    },
+                }
+                print(result["message"])
+                save_result_json(result)
+                return result
+
         # PLC1, PLC2에 정방향 모드 설정 및 이전 Stop 기록 삭제하지 않음
         # ==========================
         await asyncio.gather(
             set_forward_mode(
                 "PLC1",
-                plc_connections["PLC1"]
+                plc_connections["PLC1"],
+                MOTION_MODE_RANGE if selected_steps is not None else MOTION_MODE_FORWARD
             ),
             set_forward_mode(
                 "PLC2",
-                plc_connections["PLC2"]
+                plc_connections["PLC2"],
+                MOTION_MODE_RANGE if selected_steps is not None else MOTION_MODE_FORWARD
             )
         )
 
@@ -632,7 +712,7 @@ async def main(plc_connections, alpha_file, beta_file, offset_mode=False):
                         "전체 PLC에 정지를 요청했습니다."
                     ),
                     "data": {
-                        "direction": "forward",
+                        "direction": motion_direction,
                         "error_axes": error_axes,
                         "total_steps": total_steps,
                         "motion_axes": motion_axes,
@@ -736,14 +816,14 @@ async def main(plc_connections, alpha_file, beta_file, offset_mode=False):
                     stop_status = "stopped"
                     stop_message = (
                         "사용자의 Stop 요청으로 전체 PLC의 "
-                        "정방향 구동이 중간에 중단되었습니다."
+                        "경로 구동이 중간에 중단되었습니다."
                     )
 
                 result = {
                     "status": stop_status,
                     "message": stop_message,
                     "data": {
-                        "direction": "forward",
+                        "direction": motion_direction,
                         "stop_detected_plcs": (
                             stop_detected_plcs
                         ),
@@ -811,7 +891,7 @@ async def main(plc_connections, alpha_file, beta_file, offset_mode=False):
                         "PLC step 동기화 대기 로직을 확인해야 합니다."
                     ),
                     "data": {
-                        "direction": "forward",
+                        "direction": motion_direction,
                         "sync_overrun_plcs": sorted(sync_overrun_plcs),
                         "last_allowed_step": last_allowed_step,
                         "completed_steps": completed_steps,
@@ -953,17 +1033,20 @@ async def main(plc_connections, alpha_file, beta_file, offset_mode=False):
             "status": "success",
             "message": (
                 "PLC1과 PLC2의 모든 구동 대상 포지셔너가 "
-                "정방향 구동을 완료했습니다."
+                "경로 구동을 완료했습니다."
             ),
             "data": {
-                "direction": "forward",
+                "direction": motion_direction,
                 "total_steps": total_steps,
                 "active_plcs": prepared_plcs,
                 "motion_axes": motion_axes,
                 "locked_axes": locked_axes,
                 "completed_steps": completed_steps,
                 "allowed_steps": allowed_steps,
-                "final_positions": final_positions
+                "final_positions": final_positions,
+                "original_step_from": step_from,
+                "original_step_to": step_to,
+                "original_total_steps": original_total_steps,
             }
         }
 

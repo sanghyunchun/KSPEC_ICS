@@ -93,7 +93,7 @@ async def send_fbp_response(FBP_server, result=None, *, log=True, **updates):
 
 async def identify_execute(FBP_server, cmd):
     func = json.loads(cmd)['func']
-    protected = {'fbpactivate', 'fbplock', 'fbpmoveone', 'fbpmoveall', 'fbpoffset',
+    protected = {'fbpactivate', 'fbplock', 'fbpmoveone', 'fbpmoveall', 'fbpmoverange', 'fbpoffset',
                  'fbpinitial', 'fbpinitial_from_stop'}
     if func in protected:
         if _fbp_operation_lock.locked():
@@ -111,7 +111,7 @@ async def _identify_execute(FBP_server,cmd):
     dict_data=json.loads(cmd)
     func=dict_data['func']
 
-    if func in ('fbpmoveall', 'fbpinitial', 'fbpinitial_from_stop'):
+    if func in ('fbpmoveall', 'fbpmoverange', 'fbpinitial', 'fbpinitial_from_stop'):
         try:
             motion_paths = loaded_motion_paths()
         except ValueError as error:
@@ -119,7 +119,7 @@ async def _identify_execute(FBP_server,cmd):
                                     status='fail', message=str(error))
             return
 
-    if func in ('fbpmoveone', 'fbpmoveall', 'fbpoffset', 'fbpinitial', 'fbpinitial_from_stop') and not _locks_ready:
+    if func in ('fbpmoveone', 'fbpmoveall', 'fbpmoverange', 'fbpoffset', 'fbpinitial', 'fbpinitial_from_stop') and not _locks_ready:
         await send_fbp_response(FBP_server, func=func, process='Done', status='fail',
                                 message='FBP default locks are not verified; activate the PLC runtime first.')
         return
@@ -339,6 +339,38 @@ async def _identify_execute(FBP_server,cmd):
         # rsp=json.dumps(reply_data)
         # print('\033[32m'+'[FBP]', comment+'\033[0m')
         # await FBP_server.send_message('ICS',rsp)
+
+    if func == 'fbpmoverange':
+        step_from = dict_data.get('step_from')
+        step_to = dict_data.get('step_to')
+        if any(isinstance(step, bool) or not isinstance(step, int) or step < 1
+               for step in (step_from, step_to)):
+            await send_fbp_response(
+                FBP_server, func=func, process='Done', status='fail',
+                message='From/To step은 1 이상의 정수여야 합니다.', fbp_state='None',
+            )
+            return
+
+        await send_fbp_response(
+            FBP_server, func=func, process='START', status='success',
+            message=f'Positioners start moving along path steps {step_from} to {step_to}.',
+            fbp_state='ING',
+        )
+        result = await FBP_action.rotate_range(
+            **motion_paths, step_from=step_from, step_to=step_to,
+        )
+        if result.get('status') == 'success':
+            original_total = result.get('data', {}).get('original_total_steps')
+            fbp_state = ('initial' if step_to == 1 else
+                         'assign' if step_to == original_total else 'manual')
+        elif result.get('status') == 'stopped':
+            fbp_state = 'stop'
+        else:
+            fbp_state = 'manual'
+
+        await send_fbp_response(
+            FBP_server, result, func=func, process='Done', fbp_state=fbp_state,
+        )
 
     if func == 'fbpoffset':
         status, comment, alpha_file, beta_file = saveoffset(dict_data)

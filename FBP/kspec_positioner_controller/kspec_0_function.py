@@ -418,6 +418,26 @@ def read_json(
     return axis_points, total_steps
 
 
+def select_motion_steps(axis_points, total_steps, step_from, step_to):
+    """원본 path의 1-based step 범위를 양 끝을 포함해 선택한다."""
+    if any(isinstance(step, bool) or not isinstance(step, int)
+           for step in (step_from, step_to)):
+        raise ValueError("From/To step은 정수여야 합니다.")
+    if not (1 <= step_from <= total_steps and 1 <= step_to <= total_steps):
+        raise ValueError(
+            f"From/To step은 1부터 {total_steps}까지여야 합니다: "
+            f"{step_from}, {step_to}"
+        )
+
+    direction = 1 if step_to >= step_from else -1
+    step_numbers = list(range(step_from, step_to + direction, direction))
+    selected_points = {
+        axis: [points[step - 1] for step in step_numbers]
+        for axis, points in axis_points.items()
+    }
+    return selected_points, step_numbers
+
+
 def read_offset_json(
         alpha_filename: str,
         beta_filename: str
@@ -653,10 +673,12 @@ def build_global_axis_routes(
 
 ## 정방향 // main()
 MOTION_MODE_FORWARD = 1 
+MOTION_MODE_RANGE = 6
 ## 
 def set_forward_mode_sync(
         plc_name: str,
-        plc
+        plc,
+        mode: int = MOTION_MODE_FORWARD,
         ):
     """
     PLC 한 대에 정방향 모드를 설정한다.
@@ -665,10 +687,10 @@ def set_forward_mode_sync(
     Stop 기록은 Stop 후 복귀에 사용하기 위해 유지한다.
     """
 
-    # 정방향 main() 명령
+    # 범위 구동은 원본 전체 경로의 Stop 복귀와 구별한다.
     plc.write_by_name(
         "GVL.gMotionModeCommand",
-        1,
+        mode,
         pyads.PLCTYPE_INT
     )
 
@@ -677,7 +699,8 @@ def set_forward_mode_sync(
     # )
 async def set_forward_mode(
         plc_name: str,
-        plc
+        plc,
+        mode: int = MOTION_MODE_FORWARD,
         ):
     """
     동기식 정방향 모드 설정 함수를
@@ -687,7 +710,8 @@ async def set_forward_mode(
     await asyncio.to_thread(
         set_forward_mode_sync,
         plc_name,
-        plc
+        plc,
+        mode,
     )
 
 

@@ -1,0 +1,2866 @@
+import sys
+import os
+import asyncio
+import re
+import shlex
+from pathlib import Path
+
+from PySide6.QtCore import *
+from PySide6.QtWidgets import (
+        QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QMessageBox, QSizePolicy, QFileDialog, QListWidget,QListWidgetItem,
+        QDialog, QTextEdit, QLabel
+        )
+from PySide6.QtGui import QMouseEvent, QGuiApplication, QTextCursor, QFont
+from ui_mainwindow import Ui_MainWindow
+from qasync import QEventLoop, asyncSlot
+from astropy.io import fits
+from astropy.coordinates import Angle, SkyCoord
+import astropy.units as u
+import Lib.mkmessage as mkmsg
+import Lib.zscale as zs
+from Lib.updatelog import obslog, add_isoplane_reply
+from Lib.make_spec_header import set_header_info
+import json
+from aio_pika import IncomingMessage
+
+from datetime import datetime, timezone
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+import numpy as np
+from Lib.AMQ import AMQclass, UDPClientProtocol, TCPClient
+from ADC.adccli import handle_adc
+from GFA.gfacli import handle_gfa, bytes_to_sexagesimal
+from GFA.pointing import apply_offsets, radec_str_to_deg, ra_deg_to_hms, dec_deg_to_dms
+from FBP.fbpcli import handle_fbp
+from MTL.mtlcli import handle_mtl, mtl_start, mtl_set
+from LAMP.lampcli import handle_lamp
+from SPECTRO.speccli import handle_spec, spec_queue, ILLUMINATION_COMMANDS, frame_command
+from SPECTRO_ISOPLANE.specisocli import (handle_speciso, make_speciso_command,
+                                         make_frame_header)
+from TCS.tcscli import handle_telcom
+from script.scriptcli import handle_script, ILLUMINATION_TIMEOUT_S
+from Lib.reply import ReplyRouter, send_and_wait_reply
+from script.scriptcli import script
+from SCIOBS.sciobscli import sciobscli
+
+
+MTL_TRIAL_NFS_DIR = Path('/home/kspecics/work/DATA/MTLDATA/target')
+
+
+### Canvas Setting ###
+class MplCanvas(FigureCanvas):
+    def __init__(self, parent=None,dpi=100,left=0.00,right=1.,bottom=0.0,top=1.):
+        self.fig = Figure(dpi=dpi)
+        self.ax = self.fig.add_subplot(111)
+        self.fig.subplots_adjust(left=left,right=right,bottom=bottom,top=top) 
+        self.ax.axis('off')
+        super().__init__(self.fig)
+        self.setParent(parent)
+
+        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        self.updateGeometry()
+
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.setFocus()
+        self._is_dragging = False
+        self._last_mouse_pos = None
+
+        # Set inital axis range
+        self._initial_xlim = None
+        self._initial_ylim = None
+
+    def imshows(self, data, **kwargs):
+        self.ax.clear()
+        self.ax.imshow(data, **kwargs)
+        self.ax.axis('on')
+        self.fig.subplots_adjust(left=0.05,right=1,bottom=0.05, top=1)
+        self._initial_xlim = self.ax.get_xlim()
+        self._initial_ylim = self.ax.get_ylim()
+        self.draw()
+
+    def plots(self,wave,flux):
+        self.ax.clear()
+        self.ax.plot(wave,flux,'k-')
+        self.ax.axis('on')
+        self.draw()
+
+    def wheelEvent(self, event):
+        # Expand and contract
+        x_min, x_max = self.ax.get_xlim()
+        y_min, y_max = self.ax.get_ylim()
+        zoom_factor = 0.9 if event.angleDelta().y() > 0 else 1.1
+
+        x_center = (x_min + x_max) / 2
+        y_center = (y_min + y_max) / 2
+        x_range = (x_max - x_min) * zoom_factor
+        y_range = (y_max - y_min) * zoom_factor
+
+        self.ax.set_xlim([x_center - x_range / 2, x_center + x_range / 2])
+        self.ax.set_ylim([y_center - y_range / 2, y_center + y_range / 2])
+        self.draw()
+
+    def mousePressEvent(self, event: QMouseEvent):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._is_dragging = True
+            self._last_mouse_pos = event.position()
+        elif event.button() == Qt.MouseButton.RightButton:
+            # Right click for reset
+            if self._initial_xlim and self._initial_ylim:
+                self.ax.set_xlim(self._initial_xlim)
+                self.ax.set_ylim(self._initial_ylim)
+                self.draw()
+
+    def mouseMoveEvent(self, event: QMouseEvent):
+        if self._is_dragging and self._last_mouse_pos:
+            current_pos = event.position()
+            dx = current_pos.x() - self._last_mouse_pos.x()
+            dy = current_pos.y() - self._last_mouse_pos.y()
+
+            x_min, x_max = self.ax.get_xlim()
+            y_min, y_max = self.ax.get_ylim()
+            x_range = x_max - x_min
+            y_range = y_max - y_min
+
+            self.ax.set_xlim(x_min - dx * x_range / self.width(), x_max - dx * x_range / self.width())
+            self.ax.set_ylim(y_min + dy * y_range / self.height(), y_max + dy * y_range / self.height())
+            self.draw()
+
+            self._last_mouse_pos = current_pos
+
+    def mouseReleaseEvent(self, event: QMouseEvent):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._is_dragging = False
+
+
+
+class SelectTile(QDialog):
+    def __init__(self, headers, data_lines, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Select Observation Plan file")
+        self.selected_values = None
+
+        self.list_widget = QListWidget()
+
+        for line in data_lines:
+            values = line.strip().split()
+            # 헤더와 값 결합
+            display_line = "   ".join(f"{h}: {v}" for h, v in zip(headers, values))
+            item = QListWidgetItem(display_line)
+            item.setData(32, values)  # Qt.UserRole = 32 → 원본 값 저장
+            self.list_widget.addItem(item)
+
+        self.list_widget.itemDoubleClicked.connect(self.select_row)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.list_widget)
+        self.setLayout(layout)
+        self.resize(600, 400)
+
+    def select_row(self, item):
+        self.selected_values = item.data(32)
+        self.accept()
+
+
+class MainWindow(QMainWindow):
+
+    # region Initialization and GUI setup
+    def __init__(self):
+
+        super(MainWindow, self).__init__()
+        self.setWindowTitle("K-SPEC ICS")
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
+        self._setup_right_panel()
+        if self.ui.obstype.findText('Dark') < 0:   # not in KSPECGUI2.ui yet
+            self.ui.obstype.addItem('Dark')
+        self.ui.pushbtn_FBP_lock.setToolTip('Lock additional IDs; an empty field clears only additional locks.')
+        map_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Lib', 'positioner_axis_map.json')
+        with open(map_path, 'r', encoding='utf-8') as file:
+            self.positioner_axis_map = json.load(file)
+        self.reset_fbp_error_labels()
+        self.scriptrun=script()
+        self.ICS_client = None
+
+        QTimer.singleShot(0, self.adjust_window_size_by_screen)
+
+        ### All Response queue of asyncio ###
+        self.response_queue = ReplyRouter()
+        self.GFA_response_queue = asyncio.Queue()
+        self.ADC_response_queue = asyncio.Queue()
+        self.SPEC_response_queue = asyncio.Queue()
+        self._fbp_activate_lock = asyncio.Lock()
+        self._fbp_activate_waiter = None
+        self.fbp_runtime_initialized = False
+
+        ### Observation Setting ###
+        self.observer = None
+        self.obsdir = None
+        self.command_list = self.load_command_list()
+        self.tcsagentIP, self.tcsagentPort, self.telcomIP, self.telcomPort = self.load_config()
+
+        self.gfaexpt = None
+        self.gfacam = 0
+        self.adc = 0
+        
+        self.mtlexp = None
+        self.mtl_trial_json = None
+        self.msglog_path = None
+        self.ra = None
+        self.dec = None
+        self.delta_ra = None
+        self.delta_dec = None
+        self.new_ra = None
+        self.new_dec = None
+        self.obstype = None
+        self.TileID = None
+        self.expT = None
+        self.expnum = None
+        self.obsnum = None
+        self.project = None
+        self.fwhm = None
+        self.object = None
+        self.obslog = None
+        self._pending_spec_cmdlog = {}  # GUI frame commands awaiting a Done reply
+
+        ### Instrument position state & state ###
+        self.adcadjusting_state = False
+        self.fbp_state = False
+        self.find_state = False
+        self.mtl_state = False
+        self.guiding_state = False
+        self.arc_state = False
+        self.flat_state = False
+        self.fiducial_state = False
+        self.illumi_state = False
+        self.illumi_stage = None      # IsoPlane stage state from the last SPEC reply (IN, OUT, ...)
+        self.illumi_busy = False
+        self._illumi_waiter = None    # (func, future) while the button waits for its reply
+#        self.fbp_restore = False
+    
+
+#       Make timer (LT & UTC) 
+        self.datetime = QDateTime.currentDateTime().toString()
+        #self.lcd.display(datetime)
+        self.timer = QTimer(self)
+        self.timer.setInterval(1000)
+        self.timer.timeout.connect(self.timeout)
+        self.setWindowTitle('KSPEC ICS')
+        self.timer.start()
+
+        self._setup_buttons()
+        self._setup_canvases()
+
+    def _setup_buttons(self):
+        """Connect GUI widgets to their handlers."""
+        # Setting Initial observation
+        self.ui.pushbtn_connect.setCheckable(True)
+        self.ui.pushbtn_connect.clicked.connect(self.rabbitmq_connect)
+        #    self.ui.pushbtn_observer.clicked.connect(self.save_observer)
+        self.ui.pushbtn_directory.clicked.connect(self.set_directory)
+        self.ui.pushbtn_syscheck.clicked.connect(self.syscheck)
+        self.ui.pushbtn_TwinCat_restart.clicked.connect(
+            self.TwinCat_restart_button_clicked
+        )
+
+
+        # GFA & Guiding
+        self.ui.pushbtn_Guiding.setCheckable(True)
+        self.ui.pushbtn_Guiding.clicked.connect(self.Guiding_button_clicked)
+        self.ui.pushbtn_Guiding_2.setCheckable(True)
+        self.ui.pushbtn_Guiding_2.clicked.connect(self.Guiding_button_clicked)
+
+        self.ui.pushbtn_GFArun.clicked.connect(self.GFArun_button_clicked)
+        self.ui.pushbtn_GFA_set.clicked.connect(self.GFA_set_button_clicked)
+
+
+
+        # Pointing and Astrometry
+        self.ui.pushbtn_caloffset.clicked.connect(self.caloffset_button_clicked)
+        self.ui.pushbtn_pointing.clicked.connect(self.pointing_button_clicked)
+
+
+        #    # Finder
+        #    self.ui.pushbtn_finder_exp.clicked.connect(self.finder_button_clicked)
+
+
+        # ADC adjust
+        self.ui.pushbtn_ADCadjust.setCheckable(True)
+        self.ui.pushbtn_ADCadjust.clicked.connect(self.ADCadjust_button_clicked)
+        self.ui.pushbtn_ADCadjust_2.setCheckable(True)
+        self.ui.pushbtn_ADCadjust_2.clicked.connect(self.ADCadjust_button_clicked)
+
+        self.ui.pushbtn_adc_rotate.clicked.connect(self.adcrotate_button_clicked)
+        self.ui.pushbtn_adc_park.clicked.connect(self.adcpark_button_clicked)
+        self.ui.pushbtn_adc_home.clicked.connect(self.adchome_button_clicked)
+        self.ui.pushbtn_adc_zero.clicked.connect(self.adczero_button_clicked)
+        self.ui.pushbtn_adc_connect.clicked.connect(self.adcconnect_button_clicked)
+
+
+
+        # Fiber assign
+        #self.ui.pushbtn_FBP_zero.setEnabled(False)
+        self.ui.pushbtn_FBP_offset.clicked.connect(self.FBP_offset_button_clicked)
+        self.ui.pushbtn_FBP_status.clicked.connect(self.FBP_Status_button_clicked)
+        self.ui.pushbtn_FBP_rotate.clicked.connect(self.FBP_rotate_button_clicked)
+
+        #    self.ui.pushbtn_FBP_assign.setCheckable(True)
+        self.ui.pushbtn_FBP_assign.clicked.connect(self.FBP_assign_button_clicked)
+        #    self.ui.pushbtn_FBP_assign_2.setCheckable(True)
+        self.ui.pushbtn_FBP_assign_2.clicked.connect(self.FBP_assign_button_clicked)
+        self.ui.pushbtn_FBP_move.clicked.connect(self.FBP_move_button_clicked)
+
+        self.ui.pushbtn_FBP_initial.clicked.connect(self.FBP_initial_button_clicked)
+        self.ui.pushbtn_FBP_stop.clicked.connect(self.FBP_stop_button_clicked)
+
+        self.ui.pushbtn_FBP_lock.clicked.connect(self.FBP_lock_button_clicked)
+        self.ui.pushbtn_FBP_step_check.clicked.connect(self.FBP_step_check_button_clicked)
+
+
+
+
+        # MTL
+        self.ui.pushbtn_MTL_test.clicked.connect(self.MTL_test_button_clicked)
+        self.ui.pushbtn_MTL_trial.clicked.connect(self.MTL_trial_button_clicked)
+        self.ui.pushbtn_MTL_set.clicked.connect(self.MTL_set_button_clicked)
+        self.ui.pushbtn_MTL_reset.clicked.connect(self.MTL_reset_button_clicked)
+
+
+        # Load Sequence
+        self.ui.pushbtn_load_sequence.clicked.connect(self.load_file)
+        self.ui.pushbtn_set_sequence.clicked.connect(self.load_tile)
+
+
+        # Take and show spectro images
+        self.ui.pushbtn_run_obs.clicked.connect(self.run_obs_clicked)
+        self.ui.pushbtn_run_calib.clicked.connect(self.take_calib)
+
+        self.ui.pushbtn_exp_start.clicked.connect(self.exp_start_clicked)
+
+        self.ui.pushbtn_show_spec.clicked.connect(self.show_spec)
+
+        # LAMP
+        self.ui.pushbtn_Flat.setCheckable(True)
+        self.ui.pushbtn_Flat_2.setCheckable(True)
+        self.ui.pushbtn_Flat.clicked.connect(self.flat_button_clicked)
+        self.ui.pushbtn_Flat_2.clicked.connect(self.flat_button_clicked)
+
+        self.ui.pushbtn_Arc.setCheckable(True)
+        self.ui.pushbtn_Arc_2.setCheckable(True)
+        self.ui.pushbtn_Arc.clicked.connect(self.arc_button_clicked)
+        self.ui.pushbtn_Arc_2.clicked.connect(self.arc_button_clicked)
+
+        self.ui.pushbtn_Fiducial.setCheckable(True)
+        self.ui.pushbtn_Fiducial_2.setCheckable(True)
+        self.ui.pushbtn_Fiducial.clicked.connect(self.fiducial_button_clicked)
+        self.ui.pushbtn_Fiducial_2.clicked.connect(self.fiducial_button_clicked)
+
+        self.ui.pushbtn_illumi.setCheckable(True)
+        self.ui.pushbtn_illumi_2.setCheckable(True)
+        self.ui.pushbtn_illumi.clicked.connect(self.illumi_button_clicked)
+        self.ui.pushbtn_illumi_2.clicked.connect(self.illumi_button_clicked)
+
+
+        # Telescope slew
+        self.ui.pushbtn_slew.clicked.connect(self.slew_button_clicked)
+
+
+        #    # Focusing
+        #    self.ui.pushbtn_dfp5.clicked.connect(self.dfp5_button_clicked)
+        #    self.ui.pushbtn_dfm5.clicked.connect(self.dfm5_button_clicked)
+        #    self.ui.pushbtn_dfp005.clicked.connect(self.dfp005_button_clicked)
+        #    self.ui.pushbtn_dfm005.clicked.connect(self.dfm005_button_clicked)
+        #    self.ui.pushbtn_fttgoto.clicked.connect(self.fttgoto_button_clicked)
+
+        # CLI command
+        self.ui.pushbtn_send_cmd.clicked.connect(self.user_input)
+        self.ui.pushbtn_send_cmd_2.clicked.connect(self.user_input)
+
+        # Observer Comment
+        self.ui.pushbtn_send_comment_1.clicked.connect(self.comment1_clicked)
+        self.ui.pushbtn_send_comment_2.clicked.connect(self.comment2_clicked)
+
+
+        # System status button
+        self.ui.pushbtn_reset1.clicked.connect(self.reset_status)
+        self.ui.pushbtn_reset2.clicked.connect(self.reset_status)
+
+    def _setup_canvases(self):
+        """Create matplotlib canvases embedded in the GUI."""
+        self.canvas_B=MplCanvas(self,dpi=100,left=0.00,right=1.,bottom=0.0,top=1.)
+        self.B_layout=QVBoxLayout(self.ui.frame_B)
+        self.B_layout.addWidget(self.canvas_B)
+
+        self.canvas_R=MplCanvas(self,dpi=100,left=0.00,right=1.,bottom=0.0,top=1.)
+        self.R_layout=QVBoxLayout(self.ui.frame_R)
+        self.R_layout.addWidget(self.canvas_R)
+
+    def _setup_right_panel(self):
+        """Initialize the expandable controls in KSPECGUI_expand.ui."""
+        self._right_panel_width = 200
+        self._right_panel_expanded = False
+        self._right_panel = getattr(self.ui, 'rightPanel', None)
+        self._right_panel_button = getattr(self.ui, 'toolButton_expand', None)
+        if self._right_panel is None or self._right_panel_button is None:
+            raise RuntimeError(
+                'Expandable panel widgets are missing. Regenerate ui_mainwindow.py '
+                'from KSPECGUI_expand.ui using pyside6-uic.'
+            )
+
+        self._right_panel.setMinimumWidth(0)
+        self._right_panel.setMaximumWidth(0)
+        self._right_panel_button.setCheckable(True)
+        self._right_panel_button.setChecked(False)
+        self._right_panel_button.setArrowType(Qt.RightArrow)
+        self._right_panel_button.toggled.connect(self._toggle_right_panel)
+
+    def _toggle_right_panel(self, expanded):
+        """Expand the window to the right without shrinking existing controls."""
+        if expanded == self._right_panel_expanded:
+            return
+        width = self._right_panel_width
+        if expanded:
+            # Resize the outer window before giving the panel its width.
+            self.resize(self.width() + width, self.height())
+            self._right_panel.setMinimumWidth(width)
+            self._right_panel.setMaximumWidth(width)
+            self._right_panel_button.setArrowType(Qt.LeftArrow)
+        else:
+            self._right_panel.setMinimumWidth(0)
+            self._right_panel.setMaximumWidth(0)
+            self.resize(max(self.minimumWidth(), self.width() - width), self.height())
+            self._right_panel_button.setArrowType(Qt.RightArrow)
+        self._right_panel_expanded = expanded
+
+    def adjust_window_size_by_screen(self):
+        screen = QGuiApplication.primaryScreen()
+        geometry = screen.availableGeometry()
+
+        # Window size
+        screen_width = geometry.width()
+        screen_height = geometry.height()
+
+        window_width = int(screen_width * 0.5)
+        window_height = int(screen_height * 0.5)
+
+        # Keep the initial window size for the collapsed state. The original
+        # panel is never squeezed when toggling the additional 200px region.
+        if self._right_panel_expanded:
+            window_width += self._right_panel_width
+        self.resize(window_width, window_height)
+
+    def timeout(self):
+        sender = self.sender()
+        self.currentTime = QDateTime.currentDateTime().toString('yyyy.MM.dd, hh:mm:ss')
+        self.currentutc = QDateTime.currentDateTimeUtc().toString('yyyy.MM.dd, hh:mm:ss')
+        #print(currentTime)
+        if id(sender) == id(self.timer):
+            self.ui.lcd_lt.display(self.currentTime)
+            self.ui.lcd_utc.display(self.currentutc)
+
+    def closeEvent(self, QCloseEvent):
+        re = QMessageBox.question(self, "Close the program", "Are you sure you want to quit?",
+                    QMessageBox.Yes|QMessageBox.No)
+
+        if re == QMessageBox.Yes:
+            QCloseEvent.accept()
+        else:
+            QCloseEvent.ignore()
+
+    # endregion Initialization and GUI setup
+
+    # region Logging, dialogs, and config
+    def logging(self,message,status: str='success', level: str='send', save: str=True):
+        if isinstance(message,dict):
+            message=json.dumps(message)
+
+        color_map={
+                "send": "green", "receive": "blue", "error": "red", "warning": "orange",
+        }
+
+        if status == "error":
+            level = 'error'
+
+        color = color_map.get(level,"black")
+
+        self.uttime = QDateTime.currentDateTimeUtc().toString('hh:mm:ss.ss')
+        self.ui.log1.append(f'<span style="color:{color};">[{self.uttime}][ICS] {message}</span>')
+        self.ui.log2.append(f'<span style="color:{color};">[{self.uttime}][ICS] {message}</span>')
+        self.ui.log1.moveCursor(QTextCursor.End)
+        self.ui.log2.moveCursor(QTextCursor.End)
+
+        if save and self.msglog_path is not None:
+            with open(self.msglog_path,'a') as f:
+                f.write(f'[{self.uttime}][ICS] {message}\n')
+
+    def set_directory(self): 
+        current_dir=os.getcwd()
+        parent_dir = os.path.dirname(current_dir)
+        self.dir_name=self.ui.lineEdit_directory.text()
+
+        msglogfile = 'MSGLOG_'+self.dir_name+'.txt'
+        self.msglog_path=os.path.join(parent_dir,"DATA/MSGLOG",msglogfile)
+        if os.path.exists(self.msglog_path):
+            self.logging(f"Message Log file'{msglogfile}' already exists.", level='normal')
+            pass
+        else:
+            with open(self.msglog_path,'w') as f:
+                pass
+                self.logging(f"Message Log file '{msglogfile}' was created.", level='normal')
+
+        self.dir_path=os.path.join(parent_dir,"DATA/RAWDATA",self.dir_name)
+        if os.path.exists(self.dir_path):
+            self.logging(f"Directory '{self.dir_path}' already exists.", level='normal')
+            pass
+        else:
+            os.makedirs(self.dir_path, exist_ok=True)
+            self.logging(f"Create directory '{self.dir_path}'.",level='normal')
+
+    def show_command_popup(self):
+        file_path = "./Lib/command.txt"
+
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+        except Exception as e:
+            content = f"Failed to read file:\n{e}"
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle("K-SPEC Command list")
+        dialog.resize(600, 900)
+
+        layout = QVBoxLayout(dialog)
+
+        text_edit = QTextEdit()
+        text_edit.setReadOnly(True)
+        text_edit.setPlainText(content)
+
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(dialog.close)
+
+        layout.addWidget(text_edit)
+        layout.addWidget(close_button)
+
+        dialog.setModal(True)
+        dialog.open()
+
+    def show_inst_command_popup(self,instrument):
+        if instrument == "ADC?":
+            file_path = "./Lib/ADCcommand.txt"
+        elif instrument == 'GFA?':
+            file_path = "./Lib/GFAcommand.txt"
+        elif instrument == 'LAMP?':
+            file_path = "./Lib/LAMPcommand.txt"
+        elif instrument == 'MTL?':
+            file_path = "./Lib/MTLcommand.txt"
+        elif instrument == 'FBP?':
+            file_path = "./Lib/FBPcommand.txt"
+        elif instrument == 'SPEC?':
+            file_path = "./Lib/SPECcommand.txt"
+
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+        except Exception as e:
+            content = f"Failed to read file:\n{e}"
+
+        inst = instrument.rstrip("?")
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"{inst} Command Usages")
+        dialog.resize(600, 900)
+
+        layout = QVBoxLayout(dialog)
+
+        text_edit = QTextEdit()
+        text_edit.setReadOnly(True)
+        text_edit.setPlainText(content)
+
+        font = QFont("Courier New")
+        font.setStyleHint(QFont.Monospace)
+        text_edit.setFont(font)
+
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(dialog.close)
+
+        layout.addWidget(text_edit)
+        layout.addWidget(close_button)
+
+        dialog.setModal(True)
+        dialog.open()
+
+    def comment1_clicked(self):
+        comment=self.ui.lineEdit_comment_1.text()
+        self.logging(f"Observer comment '{comment}'.",level='comment')
+        self.ui.lineEdit_comment_1.clear()
+
+    def comment2_clicked(self):
+        comment=self.ui.lineEdit_comment_2.text()
+        self.logging(f"Observer comment '{comment}'.",level='comment')
+        self.ui.lineEdit_comment_2.clear()
+
+    def sync_queue_mode(self):
+        self.ui.lineEdit_CProj.clear()
+        self.ui.lineEdit_CTile.clear()
+        self.ui.lineEdit_TileID.clear()
+        self.ui.lineEdit_exp_time_1.clear()
+        self.ui.lineEdit_n_exp_1.clear()
+        self.ui.lineEdit_ra_1.setText(self.ra)
+        self.ui.lineEdit_dec_1.setText(self.dec)
+        self.ui.lineEdit_offset.clear()
+        self.ui.lineEdit_raoffset.clear()
+        self.ui.lineEdit_decoffset.clear()
+
+    def handle_utils(self, message):
+        if message == "?":
+            self.show_command_popup()
+        else:
+            self.show_inst_command_popup(message)
+        return
+
+    def load_command_list(self):
+        return {
+            "adc": ["adcstatus", "adcactivate", "adcadjust", "adcconnect", "adcdisconnect", "adchome", "adczero",
+            "adcpoweroff", "adcrotate1", "adcrotate2", "adcstop", "adcpark", "adcctrotate", "adccorotate"],
+            "gfa": ["gfastatus", "gfagrab", "fdgrab"],
+            "fbp": ["fbpactivate", "fbpstatus", "fbpstepstatus", "fbpstate", "fbpmove", "fbpoffset"],
+            "mtl": ["mtlstatus", "mtlstart", "mtlset", "mtltest", "mtlcal", "mtltrial", "mtlresult", "mtlreset"],
+            "lamp": ["lampstatus", "arcon", "arcoff", "flaton", "flatoff","fiducialon","fiducialoff"],
+            "spec": ["specstatus", "specstop", "specinitial","illuon", "illuoff", "illulighton", "illulightoff", "getobj", "getbias", "getdark", "getflat","getarc"],
+            "tcs": ["tmradec", "start", "stop", "tcsint", "tcsreset", "tcsclose",
+            "tcsarc", "tcsstatus", "tstat", "traw", "tsync", "tcmd",
+            "treg", "tmradec", "tmr", "tmobject", "tmo", "tmelaz",
+            "tme", "tmoffset", "toff", "tstop", "tstow", "tdi",
+            "cc", "oo", "nstset", "nston", "nstoff", "auxinit",
+            "auxreset", "auxclose", "auxarc", "auxstatus",
+            "astat", "acmd", "fsastat", "fs", "fttstat",
+            "ft", "dfocus", "dtilt", "fttgoto"],
+
+            "telcom": ["getall", "getra", "getdec", "getha", "getel", "getaz", "getsecz", "mvstow", "mvelaz", "mvstop", "mvra", "mvdec", "track", "stepra", "stepdec"],
+            "utils": ["?","obsstatus","loadtile","setdir", "ADC?", "GFA?", "LAMP?", "MTL?", "FBP?", "SPEC?"],
+            "script": ["runcalib", "rundark", "obsinitial", "autoguide", "autoguidestop", "runobs", "runmtl"]
+            }
+
+    def load_config(self):
+        """Loads configuration settings from KSPEC.ini."""
+        with open('./Lib/KSPEC.ini', 'r') as f:
+            kspecinfo = json.load(f)
+
+        return (
+            kspecinfo['TCS']['TCSagentIP'],
+            kspecinfo['TCS']['TCSagentPort'],
+            kspecinfo['TCS']['TelcomIP'],
+            kspecinfo['TCS']['TelcomPort']
+        )
+
+    def find_category(self, cmd):
+        """Finds the category of a given command."""
+        return next((cat for cat, cmds in self.command_list.items() if cmd in cmds), None)
+
+    # endregion Logging, dialogs, and config
+
+    # region Connection and command routing
+    @asyncSlot()
+    async def rabbitmq_connect(self):
+        if self.msglog_path == None:
+            self.logging("Obseveing directory was not set. Please insert directory.",level='error',save=False)
+            self.ui.pushbtn_connect.setChecked(False)
+            return
+        else:
+            if self.ui.pushbtn_connect.isChecked():
+                self.ui.pushbtn_connect.setText('Connecting')
+                self.ui.pushbtn_connect.setStyleSheet('color: orange;')
+
+                client = None
+                try:
+                    #    print(f'Observer Name: {self.observer}')
+                    # Connect RabbitMQ
+                    with open('./Lib/KSPEC.ini', 'r') as f:
+                        kspecinfo = json.load(f)
+
+                    client = AMQclass(
+                        kspecinfo['RabbitMQ']['ip_addr'],
+                        kspecinfo['RabbitMQ']['idname'],
+                        kspecinfo['RabbitMQ']['pwd'],
+                        'ICS', 'ics.ex'
+                    )
+
+                    react = await client.connect()
+                    self.logging(react,level='AMQ')
+                    react = await client.define_producer()
+                    self.logging(react,level='AMQ')
+
+                    await client.define_consumer('ICS',self.on_ics_message)
+                    self.ICS_client = client
+                    self.ui.pushbtn_connect.setText('Connected')
+                    self.ui.pushbtn_connect.setStyleSheet('color: green;')
+
+                except Exception as e:
+                    self.logging(f"RabbitMQ connection failed: {e}", level='error')
+                    self.ui.pushbtn_connect.setChecked(False)
+                    self.ui.pushbtn_connect.setText('Connect')
+                    self.ui.pushbtn_connect.setStyleSheet('color: black;')
+                    self.ICS_client = None
+
+                    if client is not None:
+                        try:
+                            await client.disconnect()
+                        except Exception as close_error:
+                            self.logging(f"RabbitMQ cleanup failed: {close_error}", level='warning')
+
+            else:
+                try:
+                    if self.ICS_client is not None:
+                        await self.ICS_client.disconnect()
+                except Exception as e:
+                    self.logging(f"RabbitMQ disconnect failed: {e}", level='error')
+                finally:
+                    self.ui.pushbtn_connect.setText('Connect')
+                    self.ui.pushbtn_connect.setStyleSheet('color: black;')
+                    self.ui.pushbtn_connect.setChecked(False)
+                    self.ICS_client = None
+
+    def check_connection(self):
+        client = getattr(self,'ICS_client',None)
+        connection = getattr(client,'connection',None) if client else None
+        channel = getattr(client,'channel',None) if client else None
+        connection_closed = getattr(connection,'is_closed',True)
+        channel_closed = getattr(channel,'is_closed',True)
+
+        if not client or connection is None or channel is None or connection_closed or channel_closed:
+            self.logging("ICS_client is not connected to RabbitMQ server. Please click 'connect' button.", level='error')
+            self.ui.pushbtn_connect.setText('Connect')
+            self.ui.pushbtn_connect.setStyleSheet('color: black;')
+            self.ui.pushbtn_connect.setChecked(False)
+            self.ICS_client = None
+            return False
+        return True
+
+    def check_syscheck(self):
+        if not getattr(self,'dependencies', False):
+            self.logging("Systems are not checked. Please click 'Sys check' button.", level='error')
+            return False
+        return True
+
+    def _log_received_message(self, inst, msg, status):
+        if isinstance(msg, dict):
+            log_msg = json.dumps(msg, indent=2)
+        else:
+            log_msg = str(msg)
+
+        print(
+            f"\033[94m[ICS] received from {inst}: {log_msg}\033[0m\n",
+            flush=True,
+        )
+
+        if status == "error":
+            log_level = "error"
+
+        elif status in ("fail", "stopped"):
+            log_level = "warning"
+
+        else:
+            log_level = "receive"
+
+        self.logging(log_msg, status, level=log_level)
+
+    def _log_spec_camera_problems(self, response_data):
+        """Warn when the IsoPlane camera is not in its configured mode (exposures get refused).
+
+        specinitial reports it on a success reply, so the reply line alone is not highlighted.
+        """
+        problems = response_data.get('camera_problems')
+        if problems is None and isinstance(response_data.get('isoplane'), dict):
+            problems = response_data['isoplane'].get('camera_problems')
+        if problems:
+            self.logging('Spectrograph camera not in the configured mode, exposures will be '
+                         'refused: ' + '; '.join(map(str, problems)), level='warning')
+
+    async def _handle_in_progress_response(self, response_data, inst, process):
+        queue_map = {
+            "GFA": self.GFA_response_queue,
+            "ADC": self.ADC_response_queue,
+            "SPEC": self.SPEC_response_queue,
+        }
+
+        if inst not in queue_map or process not in ("ING", "START"):
+            return False
+
+        await queue_map[inst].put(response_data)
+
+        if inst == "GFA" and process == "ING":
+            fwhm = response_data.get("fwhm")
+            if fwhm is not None:
+                try:
+                    fwhm_value = float(fwhm)
+                except (TypeError, ValueError):
+                    fwhm_value = None
+
+                if fwhm_value is not None and np.isfinite(fwhm_value):
+                    self.fwhm = round(fwhm_value, 2)
+                    # self.ui.lineEdit_seeing.setText(f"{self.fwhm}")
+                    # self.show_guiding()
+
+        return True
+
+    async def _handle_gfa_guiding_terminal_response(self, response_data, inst, process, status, msg):
+        if inst != "GFA" or process != "Done" or status not in ("warning", "error", "fail"):
+            return False
+
+        if "guid" not in str(msg).lower():
+            return False
+
+        await self.GFA_response_queue.put(response_data)
+        await self.response_queue.put(response_data)
+        return True
+
+    async def on_ics_message(self, message: IncomingMessage):
+        async with message.process():
+            try:
+                response_data = json.loads(message.body)
+
+                inst = response_data.get("inst", "None")
+                process = response_data.get("process", "None")
+                status = response_data.get("status", "fail")
+                subinst = response_data.get("subinst", "None")
+                msg = response_data.get("message", "None")
+
+            #    print(response_data)
+
+                # 1. 상태 업데이트
+                self.set_inst_pos_state(response_data)
+                self.show_status(response_data)
+
+                # 2. 수신 로그 출력
+                self._log_received_message(inst, msg, status)
+
+                # IsoPlane replies carry the back-illumination state (also the light auto-off)
+                # and, from specinitial and specstatus, the camera-mode check.
+                backillum = response_data.get('backillum')
+                if inst == 'SPEC' and isinstance(backillum, dict):
+                    self._sync_illumi_state(backillum)
+                if inst == 'SPEC':
+                    self._log_spec_camera_problems(response_data)
+                    func = response_data.get('func')
+                    pending = self._pending_spec_cmdlog.get(func)
+                    if process == 'Done' and pending:
+                        row = pending.pop(0)
+                        if not pending:
+                            del self._pending_spec_cmdlog[func]
+                        if status == 'success':
+                            try:
+                                details = response_data.get('cmdlog') or {}
+                                paths = response_data.get('filenames') or [response_data.get('filename')]
+                                row['file'] = details.get('file') or ', '.join(
+                                    str(path).replace('\\', '/').rsplit('/', 1)[-1]
+                                    for path in paths if path not in (None, '', 'None')
+                                )
+                                row['grating'] = details.get('grating', '')
+                                row['central_wave'] = details.get('central_wave', '')
+                                self.obslog = await asyncio.to_thread(
+                                    self._append_spec_cmdlog, row)
+                                self.scriptrun.obslog = self.obslog
+                                self.logging(self.obslog.message, level='receive')
+                            except Exception as error:
+                                self.logging(f'CMDLOG update failed: {error}', level='error')
+                    elif response_data.get('cmdlog'):
+                        try:
+                            self.obslog = await asyncio.to_thread(
+                                add_isoplane_reply, self.obslog, response_data)
+                            self.scriptrun.obslog = self.obslog
+                            self.logging(self.obslog.message, level='receive')
+                        except Exception as error:
+                            self.logging(f'CMDLOG update failed: {error}', level='error')
+
+                # The illumination button waits for its own reply; a script's reply falls through.
+                if (
+                    inst == 'SPEC'
+                    and process == 'Done'
+                    and response_data.get('func') in ILLUMINATION_COMMANDS
+                    and self._illumi_waiter is not None
+                    and self._illumi_waiter[0] == response_data.get('func')
+                    and not self._illumi_waiter[1].done()
+                ):
+                    self._illumi_waiter[1].set_result(response_data)
+                    return
+
+                if inst == 'FBP' and response_data.get('func') == 'fbpactivate':
+                    activate_waiter = getattr(self, '_fbp_activate_waiter', None)
+                    if (
+                        process == 'Done'
+                        and activate_waiter is not None
+                        and not activate_waiter.done()
+                    ):
+                        activate_waiter.set_result(response_data)
+                    return
+
+                if (
+                    inst == 'MTL'
+                    and response_data.get('func') == 'mtltrial'
+                    and process == 'Done'
+                ):
+                    filename = response_data.get('filename')
+                    if status == 'success' and filename not in (None, '', 'None'):
+                        self.mtl_trial_json = str(MTL_TRIAL_NFS_DIR / Path(str(filename)).name)
+                    else:
+                        self.mtl_trial_json = None
+
+                # A settings reply must not be consumed by a trial waiting on the shared queue.
+                if inst == 'MTL' and response_data.get('func') == 'mtlset' and process == 'Done':
+                    if status == 'success':
+                        self.mtlexp = float(response_data['exptime']) / 1_000.0
+                        self.mtlnum = int(response_data['nexposure'])
+                        self.scriptrun.MTL_set(
+                            self.mtlexp, self.mtlnum, self.ui.lineEdit_MTL_file.text()
+                        )
+                    return
+
+                # 3. 진행 중 메시지는 각 장비별 queue로 전달
+                if await self._handle_in_progress_response(response_data, inst, process):
+                    return
+
+                # 4. GFA POINT 완료 처리
+                if inst == "GFA" and process == "Done" and subinst == "POINT":
+                    await self._handle_gfa_point_response(response_data, status)
+                    return
+
+                # 5. GFA guiding terminal warning/error 처리
+                if await self._handle_gfa_guiding_terminal_response(response_data, inst, process, status, msg):
+                    return
+
+                # 5. SPEC image 처리: queue first, so a display failure cannot lose the reply
+                if inst == "SPEC" and response_data.get("filename") not in (None, "None"):
+                    await self.response_queue.put(response_data)
+                    try:
+                        self.show_spec(response_data)
+                    except Exception as error:
+                        self.logging(f'Could not display the SPEC frame: {error}', level='warning')
+                    return
+
+                # 6. FBP 처리
+            #    if inst == "FBP" and 'data' in response_date:
+
+                # 6. 그 외 일반 응답
+                await self.response_queue.put(response_data)
+
+            except Exception as e:
+                print(f"Error in on_ics_message: {e}", flush=True)
+                self.logging(f"Error in on_ics_message: {e}", "fail", level="error")
+
+    async def send_udp_message(self, message):
+        """
+        Sends a message to the TCS Agent via UDP using UDPClientProtocol 
+        """
+        loop = asyncio.get_running_loop()
+        on_con_lost = loop.create_future()
+        transport, protocol = await loop.create_datagram_endpoint(
+            lambda: UDPClientProtocol(on_con_lost),
+            remote_addr=(self.tcsagentIP, self.tcsagentPort)
+        )
+
+        print(f"\033[32m[ICS] sent TCS message to TCS Agent: {message}\033[0m", flush=True)
+        self.logging(f'sent TCS message to TCS Agent: {message}',level='send')
+        transport.sendto(message.encode())
+        transport.close()
+
+    async def send_telcom_command(self,message):
+        """Sends a command to the Telcom system via TCP."""
+        telcom_client = TCPClient(self.telcomIP,self.telcomPort)
+        await telcom_client.connect()
+        result = await handle_telcom(message,telcom_client)
+        await telcom_client.close()
+        return result
+
+    async def send_command(self, category, message):
+        """
+        Sends a command using the respective handler.
+        """
+        category = category.lower()
+
+        parts = message.split()
+        if category == 'fbp' and parts and parts[0] == 'fbpoffset':
+            if not self._check_fbp_offset_state():
+                return
+
+        if category == 'fbp' and parts and parts[0] == 'fbpstate':
+            try:
+                if len(parts) != 2:
+                    raise ValueError('Usage: fbpstate <assign|stop|initial|normal>')
+                self.set_fbp_state(parts[1])
+            except ValueError as error:
+                self.logging(str(error), status='error', level='error',
+                             save=self.msglog_path is not None)
+            return
+
+        general_handlers = {
+            "adc": handle_adc, "gfa": handle_gfa, "fbp": handle_fbp,
+            "mtl": handle_mtl, "lamp": handle_lamp,
+            "spec": handle_spec,
+        }
+
+        if category == "utils":
+            self.handle_utils(message)
+            return
+
+        if category == "script":
+            script_cmd = message.split()[0]
+            if script_cmd == 'runobs' and not self.sync_script_observation_context():
+                return
+            self.scriptrun.fwhm = self.fwhm
+            self.scriptrun.obslog = self.obslog
+            await handle_script(message, scriptrun=self.scriptrun, logging=self.logging)
+            return
+
+        if category == "spec" and spec_queue() == "ISOPLANE":
+            try:
+                parsed = json.loads(make_speciso_command(message))
+                header = make_frame_header(
+                    parsed, night=self.dir_name or self.obsdate, project=self.project,
+                    tile_id=self.TileID, object_name=self.object,
+                    ra=self.ra, dec=self.dec, fwhm=self.fwhm,
+                )
+                row = None
+                if header is not None:
+                    def known(value):
+                        return '' if value is None or str(value).strip() in ('', 'None') else value
+
+                    row = {
+                        'night': known(header['OBSDATE']),
+                        'ut': datetime.now(timezone.utc).isoformat(timespec='milliseconds'),
+                        'projid': known(header['PROJID']),
+                        'tile_id': known(header['TileID']),
+                        'objtype': header['OBSTYPE'],
+                        'object_name': known(header['OBJECT']) or known(header['TileID']),
+                        'exposure': parsed.get('time', 0.0),
+                        'exp_num': parsed['numframe'],
+                        'comments': message.strip(),
+                    }
+                    self._pending_spec_cmdlog.setdefault(parsed['func'], []).append(row)
+                try:
+                    await handle_speciso(message, self.ICS_client, header)
+                except BaseException:
+                    if row is not None:
+                        pending = self._pending_spec_cmdlog[parsed['func']]
+                        pending.remove(row)
+                        if not pending:
+                            del self._pending_spec_cmdlog[parsed['func']]
+                    raise
+            except ValueError as error:
+                self.logging(str(error), status='error', level='error',
+                             save=self.msglog_path is not None)
+            return
+
+        handler = general_handlers.get(category)
+        if handler is None:
+            print(f"Unknown command category: {category}", flush=True)
+            return
+
+        if category in ('mtl', 'adc', 'fbp', 'gfa'):
+            await handler(message, self.ICS_client, logging=self.logging)
+        else:
+            await handler(message, self.ICS_client)
+
+    @asyncSlot()
+    async def user_input(self):
+        """
+        Handles user input asynchronously, allowing immediate command sending.
+        """
+        try:
+            sys.stdout.flush()
+
+            message = self.ui.lineEdit_cmd.text().strip() or self.ui.lineEdit_cmd_2.text().strip()
+                
+            cmd = message.split(" ")[0]
+            category = self.find_category(cmd)
+            print(f'Command Category is {category}', flush=True)
+
+            if category:
+                # Clear the submitted command before awaiting a response. A new
+                # draft entered while this command is in flight must survive.
+                self.ui.lineEdit_cmd.clear()
+                self.ui.lineEdit_cmd_2.clear()
+                if category.lower() == 'tcs':
+                    messagetcs = 'KSPEC>TC ' + message
+                    await self.send_udp_message(messagetcs)
+                elif category.lower() == 'telcom':
+                    telcom_result = await self.send_telcom_command(message)
+                    print('\033[94m' + '[ICS] received: ', telcom_result.decode() + '\033[0m', flush=True)
+                    self.logging(telcom_result.decode(), level='receive')
+                else:
+                    await self.send_command(category, message)
+            else:
+                print("Invalid command. Please enter a valid command.\n", flush=True)
+        except Exception as e:
+            print(f"Error in user_input: {e}", flush=True)
+
+    # endregion Connection and command routing
+
+    # region Status display
+    def QWidgetLabelColor(self, widget, textcolor, bgcolor=None):
+        if bgcolor == None:
+            label = "QLabel {color:%s}" % textcolor
+            widget.setStyleSheet(label)
+        else:
+            label = "QLabel {color:%s;background:%s}" % (textcolor, bgcolor)
+            widget.setStyleSheet(label)
+
+    def QWidgetLabelStyle(self, widget, textcolor, bgcolor=None, fontsize=16, bold=True):
+        current_style = widget.styleSheet().replace(" ","").lower()
+        if "color:red" in current_style:
+            return
+
+        style = f"QLabel {{ color: {textcolor};"
+
+        if textcolor == 'black':
+            style += f" font-size: 14pt;"
+            style += " font-weight: normal;"
+        else:
+            style += f" font-size: {fontsize}pt;"
+            style += " font-weight: bold;" if bold else "font-weight: normal;"
+
+        style += " }"
+
+        widget.setStyleSheet(style)
+
+    def FPLabelStyle(self, widget, textcolor, bgcolor=None, fontsize=20, bold=True):
+        style = f"QLabel {{ color: {textcolor};"
+        if bgcolor is not None:
+            style += f" background: {bgcolor};"
+
+        if textcolor == 'black':
+            style += f" font-size: 20pt;"
+            style += " font-weight: normal;"
+        else:
+            style += f" font-size: {fontsize}pt;"
+            style += " font-weight: bold;" if bold else "font-weight: normal;"
+
+        style += " }"
+
+        widget.setStyleSheet(style)
+
+    def show_status(self,dict_data):
+        inst = dict_data.get('inst', 'None')
+        process = dict_data.get('process', 'None')
+        #message =dict_data.get('message','None')
+        status = dict_data.get('status', 'error')
+        subinst = dict_data.get('subinst', 'None')
+        
+        if process == 'Done':
+            color_map = {'success': 'black','error': 'red', 'fail': 'black'}
+        elif process in  ('ING', 'START'):
+            color_map = {'success': 'orange','error': 'red', 'fail': 'black'}
+        else:
+            color_map = {}
+
+        label_map = {
+            'LAMP': self.ui.ok_status_lamp,
+            'GFA': self.ui.ok_status_gfa,
+            'ADC': self.ui.ok_status_adc,
+            'FBP': self.ui.ok_status_fiber,
+            'MTL' : self.ui.ok_status_metrology,
+            'SPEC' : self.ui.ok_status_spectrograph
+        }   
+        label_map2 = {
+            'LAMP': self.ui.ok_status_lamp_2,
+            'GFA': self.ui.ok_status_gfa_2,
+            'ADC': self.ui.ok_status_adc_2,
+            'FBP': self.ui.ok_status_fiber_2,
+            'MTL' : self.ui.ok_status_metrology_2,
+            'SPEC' : self.ui.ok_status_spectrograph_2
+        }   
+        inst_map1 = {
+            'LAMP': self.ui.label_status_lamp,
+            'GFA': self.ui.label_status_gfa,
+            'ADC': self.ui.label_status_adc,
+            'FBP': self.ui.label_status_fiber,
+            'MTL' : self.ui.label_status_metrology,
+            'SPEC' : self.ui.label_status_spectrograph
+        }
+        inst_map2 = {
+            'LAMP': self.ui.label_status_lamp_2,
+            'GFA': self.ui.label_status_gfa_2,
+            'ADC': self.ui.label_status_adc_2,
+            'FBP': self.ui.label_status_fiber_2,
+            'MTL' : self.ui.label_status_metrology_2,
+            'SPEC' : self.ui.label_status_spectrograph_2
+        }
+        
+        if inst in label_map and status in color_map:
+            self.QWidgetLabelStyle(label_map[inst], color_map[status])
+            self.QWidgetLabelStyle(label_map2[inst], color_map[status])
+            self.QWidgetLabelStyle(inst_map1[inst], color_map[status])
+            self.QWidgetLabelStyle(inst_map2[inst], color_map[status])
+
+        if dict_data['inst'] == 'FBP':
+            self._handle_fbp_state(dict_data)
+        elif dict_data['inst'] == 'GFA':
+            self._handle_gfa_state(inst, subinst, process)
+        elif dict_data['inst'] == 'ADC':
+            self._handle_adc_state(inst, process)
+        elif dict_data['inst'] == 'LAMP':
+            self._handle_lamp_state(inst, subinst, process)
+
+    def _set_toggle_button(self, button, active):
+        color = 'green' if active else 'black'
+        button.setStyleSheet(f"color: {color}")
+        button.setChecked(active)
+
+    def _set_button_state(self, button, text, color, checked):
+        button.setText(text)
+        button.setStyleSheet(f"color: {color}")
+        button.setChecked(checked)
+
+    def reset_status(self):
+        labels =[
+            self.ui.ok_status_lamp,self.ui.ok_status_lamp_2,self.ui.label_status_lamp,self.ui.label_status_lamp_2,
+            self.ui.ok_status_gfa,self.ui.ok_status_gfa_2,self.ui.label_status_gfa,self.ui.label_status_gfa_2,
+            self.ui.ok_status_adc,self.ui.ok_status_adc_2,self.ui.label_status_adc,self.ui.label_status_adc_2,
+            self.ui.ok_status_fiber,self.ui.ok_status_fiber_2,self.ui.label_status_fiber,self.ui.label_status_fiber_2,
+            self.ui.ok_status_metrology,self.ui.ok_status_metrology_2,self.ui.label_status_metrology,self.ui.label_status_metrology_2,
+            self.ui.ok_status_spectrograph,self.ui.ok_status_spectrograph_2,self.ui.label_status_spectrograph,self.ui.label_status_spectrograph_2,
+            ]
+        for label in labels:
+            label.setStyleSheet(f"color: black")
+        self.reset_fbp_error_labels()
+
+    def set_inst_pos_state(self,dict_data):
+        inst = dict_data.get('inst')
+        if not inst:
+            return
+
+        state_map = {
+            'ADC': ('adc_state', 'pos_state'),
+    #        'FBP': ('fbp_state', 'pos_state'),
+            'MTL': ('mtl_state', 'process'),
+            'FIND': ('FIND_state', 'process'),
+            'GFA': ('GFA_state', 'process'),
+        }
+
+        attr, key = state_map.get(inst, (None, None))
+        if attr and key in dict_data:
+            setattr(self, attr, dict_data[key])
+
+    # endregion Status display
+
+    # region FBP controls and state
+    def update_fbp_error_labels(
+        self,
+        positions=None,
+        *,
+        normal_color='green',
+        missing_color=None,
+        error_axis=None
+    ):
+        if positions in (None, 'None'):
+            positions = {}
+
+        if isinstance(positions, str):
+            try:
+                positions = json.loads(positions)
+            except json.JSONDecodeError:
+                self.logging('FBP position data has invalid format.', level='error')
+                return
+
+        if not isinstance(positions, dict):
+            self.logging('FBP position data is not a dictionary.', level='error')
+            return
+
+        positions = {str(axis): data for axis, data in positions.items()}
+
+        if error_axis is not None:
+            axis_key = str(error_axis)
+            axis_data = positions.get(axis_key)
+            if not isinstance(axis_data, dict):
+                axis_data = {}
+            axis_data = dict(axis_data, error=True)
+            positions[axis_key] = axis_data
+
+        def is_error(value):
+            if isinstance(value, str):
+                return value.strip().lower() in ('true', '1', 'yes', 'error')
+            return bool(value)
+
+        for positioner, mapping in self.positioner_axis_map.items():
+            axes = [str(mapping[arm]['global_axis']) for arm in ('alpha', 'beta')]
+            label = getattr(self.ui, f'circle_{positioner}', None)
+            if label is None:
+                continue
+
+            axis_entries = [
+                positions.get(axis)
+                for axis in axes
+                if isinstance(positions.get(axis), dict)
+            ]
+
+            has_error = any(
+                is_error(axis_data.get('error', False))
+                for axis_data in axis_entries
+            )
+
+            if has_error:
+                self.FPLabelStyle(label, 'red')
+            elif len(axis_entries) == len(axes) and normal_color is not None:
+                self.FPLabelStyle(label, normal_color)
+            elif not axis_entries and missing_color is not None:
+                self.FPLabelStyle(label, missing_color)
+
+    def reset_fbp_error_labels(self):
+        for name, label in vars(self.ui).items():
+            if name.startswith('circle_') and isinstance(label, QLabel):
+                positioner = name[len('circle_'):]
+                color = 'black' if positioner in self.positioner_axis_map else 'gray'
+                self.FPLabelStyle(label, color)
+
+    def set_fbp_state(self, state):
+        """GUI의 FBP 상태를 수동 지정한다. 잘못된 상태는 ValueError를 발생시킨다."""
+        if state not in ('assign', 'stop', 'initial', 'normal'):
+            raise ValueError(
+                f'Invalid FBP state: {state!r}. Allowed: assign, stop, initial, normal.'
+            )
+
+        previous_state = self.fbp_state
+        self.fbp_state = state
+        assigned = state in ('assign', 'stop')
+        for button in (self.ui.pushbtn_FBP_assign, self.ui.pushbtn_FBP_assign_2):
+            self._set_button_state(
+                button, 'FBP Assigned' if assigned else 'FBP Assign',
+                'green' if assigned else 'black', assigned,
+            )
+        if state == 'initial':
+            self.reset_fbp_error_labels()
+        self.logging(
+            f'GUI FBP state changed manually: {previous_state} -> {state}.',
+            level='receive', save=self.msglog_path is not None,
+        )
+
+    def _handle_fbp_state(self, dict_data):
+        if dict_data.get('inst') != 'FBP':
+            return
+
+        fbp_data = dict_data.get('data')
+        if not isinstance(fbp_data, dict):
+            fbp_data = {}
+
+        func = dict_data.get('func', 'None')
+        process = dict_data.get('process', 'None')
+        status = dict_data.get('status', 'None')
+        next_state = dict_data.get('fbp_state', 'None')
+
+        if func == 'fbpstepstatus':
+            if process == 'Done':
+                plcs = fbp_data.get('plcs', {})
+                if isinstance(plcs, dict):
+                    for plc_name, step_state in plcs.items():
+                        self.logging(
+                            f'{plc_name} Step/Stop (PLC internal steps): '
+                            f'{json.dumps(step_state, ensure_ascii=False)}',
+                            status=status, level='receive',
+                        )
+            return
+
+        if func == 'fbpstatus' and process == 'Done' and status == 'success':
+            positioner = fbp_data.get('positioner', 'Unknown')
+            alpha = fbp_data.get('alpha', {})
+            beta = fbp_data.get('beta', {})
+            try:
+                alpha_angle = float(alpha['current_angle_degree'])
+                beta_angle = float(beta['current_angle_degree'])
+            except (KeyError, TypeError, ValueError):
+                self.logging(
+                    f'{positioner} current position angle is missing from the FBP status response.',
+                    status='error', level='error',
+                )
+            else:
+                self.logging(
+                    f'{positioner} current position: α = {alpha_angle:.3f}°, '
+                    f'β = {beta_angle:.3f}°.',
+                    status=status, level='receive',
+                )
+            return
+
+        # 이전 서버는 영점 확인 오류에도 zero를 보내므로 initial로 신뢰하지 않는다.
+        # 갱신된 서버가 영점 확인 성공 후 명시적으로 initial을 보낸다.
+        if next_state == 'zero':
+            next_state = 'manual'
+
+        if status == 'stopped':
+            self.fbp_state = 'stop'
+        elif next_state not in (None, 'None'):
+            self.fbp_state = next_state
+
+        if process in ('ING', 'START', 'Done') and self.fbp_state in ('assign', 'manual', 'stop'):
+            self._set_button_state(self.ui.pushbtn_FBP_assign, 'FBP Assigned', 'green', True)
+            self._set_button_state(self.ui.pushbtn_FBP_assign_2, 'FBP Assigned', 'green', True)
+        elif process == 'Done' and self.fbp_state == 'initial':
+            self._set_button_state(self.ui.pushbtn_FBP_assign, 'FBP Assign', 'black', False)
+            self._set_button_state(self.ui.pushbtn_FBP_assign_2, 'FBP Assign', 'black', False)
+
+        if process != 'Done':
+            return
+
+        positions = (
+            fbp_data.get('final_positions')
+            or fbp_data.get('stopped_positions')
+        )
+
+        if status in ('error', 'fail'):
+            self.update_fbp_error_labels(
+                positions,
+                normal_color=None,
+                missing_color=None,
+                error_axis=fbp_data.get('error_axis')
+            )
+            # Accept the current server's "intial" spelling as well as "initial".
+            if func in ('fbpinitial', 'fbpinitial_from_stop', 'fbpintial_from_stop'):
+                error_axes = fbp_data.get('error_axes', [])
+                if isinstance(error_axes, list):
+                    for axis_data in error_axes:
+                        if not isinstance(axis_data, dict):
+                            continue
+                        axis = axis_data.get('global_axis')
+                        if axis is not None:
+                            self.update_fbp_error_labels(
+                                normal_color=None,
+                                missing_color=None,
+                                error_axis=axis,
+                            )
+            return
+
+        if status in ('success', 'stopped') and (
+            status == 'stopped' or func == 'fbpstop' or self.fbp_state == 'stop'
+        ):
+            self.update_fbp_error_labels(
+                positions,
+                normal_color='green',
+                missing_color=None
+            )
+            return
+
+        if func == 'fbpmoveone' and status == 'success':
+            positioner = fbp_data.get('positioner')
+            if positioner in self.positioner_axis_map:
+                label = getattr(self.ui, f'circle_{positioner}', None)
+                if label is not None:
+                    color = 'black' if self.fbp_state == 'initial' else 'green'
+                    self.FPLabelStyle(label, color)
+            return
+
+        if status == 'success' and self.fbp_state == 'initial':
+            if positions:
+                self.update_fbp_error_labels(
+                    positions,
+                    normal_color='black',
+                    missing_color=None
+                )
+            return
+
+        if status == 'success' and self.fbp_state == 'assign':
+            self.update_fbp_error_labels(
+                positions,
+                normal_color='green',
+                missing_color=None
+            )
+            return
+
+        if positions:
+            default_color = 'black' if self.fbp_state == 'initial' else 'green'
+            self.update_fbp_error_labels(
+                positions,
+                normal_color=default_color,
+                missing_color=None
+            )
+
+    async def _activate_fbp_runtime(self, requested_by: str) -> bool:
+        """FBP 서버에 fbpactivate를 보내고 완료 응답을 기다린다."""
+        if self._fbp_activate_lock.locked():
+            self.logging(
+                'TwinCAT Activate/Login/Play is already in progress.',
+                level='error',
+            )
+            return False
+
+        async with self._fbp_activate_lock:
+            loop = asyncio.get_running_loop()
+            waiter = loop.create_future()
+            self._fbp_activate_waiter = waiter
+            request_phase = 'sending fbpactivate'
+
+            try:
+                self.logging(
+                    f'{requested_by}: sending fbpactivate to the FBP server.',
+                    level='send',
+                )
+                sent = await asyncio.wait_for(
+                    handle_fbp('fbpactivate', self.ICS_client, logging=self.logging), timeout=10
+                )
+                if not sent:
+                    self.logging(
+                        'Failed to send fbpactivate to the FBP server.',
+                        level='error',
+                    )
+                    return False
+
+                self.logging(
+                    f'{requested_by}: waiting for TwinCAT Activate/Login/Play.',
+                    level='send',
+                )
+                request_phase = 'waiting for the FBP response'
+                response = await asyncio.wait_for(waiter, timeout=180)
+            except asyncio.TimeoutError:
+                self.logging(
+                    f'Timed out while {request_phase}.',
+                    level='error',
+                )
+                return False
+            except Exception as error:
+                self.logging(
+                    f'FBP Activate/Login/Play request failed: {error}',
+                    level='error',
+                )
+                return False
+            finally:
+                if self._fbp_activate_waiter is waiter:
+                    self._fbp_activate_waiter = None
+
+        if response.get('status') != 'success':
+            self.fbp_runtime_initialized = False
+            plc_errors = []
+            for plc_name, plc_result in response.get('data', {}).get('plcs', {}).items():
+                for error in plc_result.get('errors', []):
+                    plc_errors.append(f'{plc_name}: {error}')
+            detail = f" ({'; '.join(plc_errors)})" if plc_errors else ''
+            self.logging(
+                response.get(
+                    'message',
+                    'TwinCAT Activate/Login/Play failed. Check PLC details in the FBP response.',
+                ) + detail,
+                level='error',
+            )
+            return False
+
+        self.fbp_runtime_initialized = True
+        return True
+
+    @asyncSlot()
+    async def TwinCat_restart_button_clicked(self):
+        """운영자 요청으로 TwinCAT Activate/Login/Play를 다시 실행한다."""
+        if not self.check_connection():
+            return
+
+        restart_button = self.ui.pushbtn_TwinCat_restart
+        restart_button.setEnabled(False)
+        try:
+            if await self._activate_fbp_runtime('TwinCat restart requested'):
+                self.logging(
+                    'TwinCAT Activate/Login/Play completed. Verify FBP state before moving positioners.',
+                    level='normal',
+                )
+            else:
+                self.logging(
+                    'TwinCAT restart failed; FBP motion must not be started.',
+                    level='error',
+                )
+        finally:
+            restart_button.setEnabled(True)
+
+    @asyncSlot()
+    async def FBP_stop_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        await handle_fbp(f'fbpstop', self.ICS_client, logging=self.logging)
+        self.logging(f'Sent Stop Positioners rotation.', level='send')
+
+    @asyncSlot()
+    async def FBP_lock_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        positioner_text = self.ui.lineEdit_FBP_lock.text().strip()
+
+        if positioner_text:
+            await handle_fbp(f'fbplock {positioner_text}', self.ICS_client, logging=self.logging)
+            self.logging(f'Sent additional Lock Positioners {positioner_text}', level='send')
+        else:
+            await handle_fbp('fbplock', self.ICS_client, logging=self.logging)
+            self.logging('Sent clear additional locks; default locks remain active.', level='send')
+
+    @asyncSlot()
+    async def FBP_rotate_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        if not self.ui.lineEdit_FBP_number.text().strip() or not self.ui.lineEdit_FBP_angle.text().strip():
+            self.logging('Insert positioner label you wnat to rotate and the desired angle.', level = 'error')
+            return
+        
+        motor_alpha = self.ui.alpha_checkBox.isChecked()
+        motor_beta = self.ui.beta_checkBox.isChecked()
+
+        if not motor_alpha and not motor_beta:
+            self.logging('Please check one motor you want to rotate.', level='error')
+            return
+
+        if motor_alpha and motor_beta:
+            self.logging('Please check only one motor you want to rotate.', level='error')
+            return
+
+        motor_name = 'alpha' if motor_alpha else 'beta'
+        max_angle = 360.0 if motor_alpha else 180.0
+        angle = self.ui.lineEdit_FBP_angle.text().strip()
+
+        try:
+            angle_value = float(angle)
+        except ValueError:
+            self.logging('Insert a numeric FBP rotation angle.', level='error')
+            return
+
+        if not np.isfinite(angle_value):
+            self.logging('Insert a finite FBP rotation angle.', level='error')
+            return
+
+        if angle_value < -max_angle or angle_value > max_angle:
+            self.logging(
+                f'{motor_name.capitalize()} angle must be between '
+                f'{-max_angle:g} and {max_angle:g} degrees.',
+                level='error',
+            )
+            return
+
+        # if self.fbp_state in ('initial', 'manual'):
+        positioner_label = self.ui.lineEdit_FBP_number.text().strip()
+        await handle_fbp(f'fbpmoveone {positioner_label} {motor_name} {angle}', self.ICS_client, logging=self.logging)
+        self.logging(f'Sent Rotate Positioner {positioner_label} {motor_name} motor by {angle}.', level='send')
+        self.ui.lineEdit_FBP_number.clear()
+        self.ui.lineEdit_FBP_angle.clear()
+        # else:
+        #     self.logging('Manual rotation is available in initial or manual state. Please move positioners to initial positions first.', level='error')
+
+    @asyncSlot()
+    async def FBP_assign_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+        
+        if self.fbp_state == 'initial':
+            self.assign_state = not getattr(self,"assign_state",False)
+            # sync two button
+            self.ui.pushbtn_FBP_assign.setChecked(self.assign_state)
+            self.ui.pushbtn_FBP_assign_2.setChecked(self.assign_state)
+            await handle_fbp('fbpmoveall',self.ICS_client, logging=self.logging)
+            self.logging('Sent Positioner assignment Starts.', level='send')
+        else:
+            self.logging(f'Positioner assignment is only available in initial state. Current positioner status is {self.fbp_state}.', level='error')
+
+    @asyncSlot()
+    async def FBP_move_button_clicked(self):
+        if not self.check_connection() or not self.check_syscheck():
+            return
+        if self.fbp_state in ('stop', 'ING'):
+            self.logging(
+                f'FBP step range movement is unavailable in {self.fbp_state} state.',
+                level='error',
+            )
+            return
+
+        from_text = self.ui.lineEdit_step_from.text().strip()
+        to_text = self.ui.lineEdit_step_to.text().strip()
+        if not re.fullmatch(r'[1-9][0-9]*', from_text) or not re.fullmatch(r'[1-9][0-9]*', to_text):
+            self.logging('Enter positive integer values for Step From and Step To.', level='error')
+            return
+
+        step_from, step_to = int(from_text), int(to_text)
+        await handle_fbp(
+            f'fbpmoverange {step_from} {step_to}',
+            self.ICS_client, logging=self.logging,
+        )
+
+    @asyncSlot()
+    async def FBP_initial_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        if self.fbp_state == 'assign':
+            await handle_fbp('fbpinitial', self.ICS_client, logging=self.logging)
+            self.logging('Sent Move positioners to intial positions.', level='send')
+        elif self.fbp_state == 'stop':
+            await handle_fbp('fbpinitial_from_stop', self.ICS_client, logging=self.logging)
+            self.logging('Sent Move positioners to intial positions.', level='send')
+        elif self.fbp_state == 'initial':
+            self.logging(f'Current positioner status is already {self.fbp_state}.', level='error')
+        else:
+            self.logging(f'This operation is only available when the positioners are in the assigned position. Current positioner status is {self.fbp_state}.', level='error')
+
+    def _check_fbp_offset_state(self):
+        if self.fbp_state == 'assign':
+            return True
+        self.logging(
+            f'FBP offset requires assign state. Current state: {self.fbp_state}.',
+            status='error', level='error', save=self.msglog_path is not None,
+        )
+        return False
+
+    @asyncSlot()
+    async def FBP_offset_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        if not self._check_fbp_offset_state():
+            return
+
+        if not self.mtl_trial_json:
+            self.logging(
+                'No successful MTL trial JSON is available. Run MTL Trial first.',
+                level='error',
+            )
+            return
+
+        sent = await handle_fbp(
+            f'fbpoffset {shlex.quote(self.mtl_trial_json)}',
+            self.ICS_client,
+            logging=self.logging,
+        )
+        if not sent:
+            self.logging(
+                f'Failed to read MTL trial JSON: {self.mtl_trial_json}',
+                level='error',
+            )
+            return
+
+        self.logging(
+            f'Sent Fiber offset using {self.mtl_trial_json}.',
+            level='send',
+        )
+
+    @asyncSlot()
+    async def FBP_step_check_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        sent = await handle_fbp('fbpstepstatus', self.ICS_client, logging=self.logging)
+        if sent:
+            self.logging('Sent PLC Step/Stop status request.', level='send')
+        else:
+            self.logging('Failed to send PLC Step/Stop status request.', level='error')
+
+    @asyncSlot()
+    async def FBP_Status_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        
+        if not self.ui.lineEdit_FBP_number.text():
+            self.logging('Insert Positioner Label to know status')
+            return
+        else:
+            positioner_num = self.ui.lineEdit_FBP_number.text()
+            await handle_fbp(f'fbpstatus {positioner_num}', self.ICS_client, logging=self.logging)
+            self.logging(f'Sent Show positioner {positioner_num} status')
+
+    # endregion FBP controls and state
+
+    # region GFA guiding and pointing
+    def _handle_gfa_state(self, inst, subinst, process):
+        if inst != 'GFA':
+            return
+
+        if subinst == 'None':
+            state = (process in ('ING','START'))
+            self.guiding_state = state
+            self._set_toggle_button(self.ui.pushbtn_Guiding, state)
+            self._set_toggle_button(self.ui.pushbtn_Guiding_2, state)
+
+    async def _handle_gfa_point_response(self, response_data, status):
+        msg = response_data.get("message", "Unknown message")
+
+        # 1. success: offset 값이 있어야 함
+        if status == "success":
+            required_keys = ("sepsec", "dra", "ddec", "new_ra", "new_dec")
+            missing = [key for key in required_keys if key not in response_data]
+
+            if missing:
+                self.logging(
+                    f"GFA POINT success response missing keys: {missing}",
+                    status="error",
+                    level="error",
+                )
+                await self.response_queue.put(response_data)
+                return
+
+            sepsec = round(response_data["sepsec"], 2)
+            self.delta_ra = float(response_data["dra"])
+            self.delta_dec = float(response_data["ddec"])
+
+            self.ui.lineEdit_offset.setText(f"{sepsec}")
+            self.ui.lineEdit_raoffset.setText(f"{self.delta_ra:.2f}")
+            self.ui.lineEdit_decoffset.setText(f"{self.delta_dec:.2f}")
+
+            self.new_ra = response_data["new_ra"]
+            self.new_dec = response_data["new_dec"]
+
+            await self.response_queue.put(response_data)
+            return
+
+        # 2. fail: 작업은 끝났지만 조건 미달
+        if status == "fail":
+
+            # 이전에 남아 있던 offset 값이 사용되지 않도록 초기화 권장
+            self.delta_ra = None
+            self.delta_dec = None
+            self.new_ra = None
+            self.new_dec = None
+
+            self.ui.lineEdit_offset.clear()
+            self.ui.lineEdit_raoffset.clear()
+            self.ui.lineEdit_decoffset.clear()
+
+            await self.response_queue.put(response_data)
+            return
+
+        # 3. error: 실제 오류
+        if status == "error":
+            self.logging(
+                f"GFA POINT error: {msg}",
+                status="error",
+                level="error",
+            )
+
+            self.delta_ra = None
+            self.delta_dec = None
+            self.new_ra = None
+            self.new_dec = None
+
+            self.ui.lineEdit_offset.clear()
+            self.ui.lineEdit_raoffset.clear()
+            self.ui.lineEdit_decoffset.clear()
+
+            await self.response_queue.put(response_data)
+            return
+
+        # 4. 알 수 없는 status
+        self.logging(
+            f"GFA POINT returned unknown status '{status}': {msg}",
+            status="fail",
+            level="warning",
+        )
+        await self.response_queue.put(response_data)
+
+    @asyncSlot()
+    async def GFArun_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+        if not self.ui.lineEdit_GFA_exptime.text():
+            self.ui.lineEdit_GFA_exptime.setText('5')      # Default guiding exposure time : 5 sec
+
+        if not self.ui.lineEdit_GFA_cam.text():
+            self.ui.lineEdit_GFA_cam.setText('0')
+
+        if not self.ui.lineEdit_GFA_expnum.text():
+            self.ui.lineEdit_GFA_expnum.setText('1')
+
+        self.gfaexpt = float(self.ui.lineEdit_GFA_exptime.text())
+        self.gfacam = int(self.ui.lineEdit_GFA_cam.text())
+        self.gfaexpnum = int(self.ui.lineEdit_GFA_expnum.text())
+
+#        gfasave=self.ui.gfa_checkBox.isChecked()
+
+        await handle_gfa(f'gfagrab {self.gfacam} {self.gfaexpt} {self.gfaexpnum}',self.ICS_client, logging=self.logging)
+        if self.gfacam == 0:
+            self.logging(f'Sent Expose all GFA cameras for {self.gfaexpt} seconds.', level='send')
+        else:
+            self.logging(f'Sent Expose GFA camera {self.gfacam} for {self.gfaexpt} seconds.', level='send')
+
+    @asyncSlot()
+    async def Guiding_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        if not self.ra or not self.dec:
+           self.logging(f'Please load Tile or slew telescope.',level='error')
+           return
+
+        if not self.ui.lineEdit_GFA_exptime.text():
+            self.ui.lineEdit_GFA_exptime.setText('5')      # Default guiding exposure time : 5 sec
+
+        if not self.ui.lineEdit_GFA_expnum.text():
+            self.ui.lineEdit_GFA_expnum.setText('1')
+
+        self.gfaexpt = float(self.ui.lineEdit_GFA_exptime.text())
+        self.gfaexpnum = int(self.ui.lineEdit_GFA_expnum.text())
+
+        self.guiding_state = not getattr(self,"guiding_state",False)
+
+        # sync two button
+        self.ui.pushbtn_Guiding.setChecked(self.guiding_state)
+        self.ui.pushbtn_Guiding_2.setChecked(self.guiding_state)
+
+        # Set colors
+        style_on = "color: green; font-weight:900;"
+        style_off = "color: black;"
+        style = style_on if self.guiding_state else style_off
+        self.ui.pushbtn_Guiding.setStyleSheet(style)
+        self.ui.pushbtn_Guiding_2.setStyleSheet(style)
+
+        # Command and log
+        gfasave=self.ui.gfa_checkBox.isChecked()
+        if self.guiding_state:
+            if not gfasave:
+                await handle_script(f'autoguide {self.gfaexpt} {self.gfaexpnum} False', scriptrun=self.scriptrun, logging=self.logging)
+                self.logging(f'Sent Autoguiding Start. Exposure time is {self.gfaexpt}.', level='send')
+            else:
+                await handle_script(f'autoguide {self.gfaexpt} {self.gfaexpnum} True', scriptrun=self.scriptrun,logging=self.logging)
+        else:
+            await handle_script('autoguidestop', scriptrun=self.scriptrun,logging=self.logging)
+            self.logging('Sent Autoguiding Stop', level='send')
+
+    @asyncSlot()
+    async def GFA_set_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        if not self.ui.lineEdit_GFA_exptime.text():
+            self.ui.lineEdit_GFA_exptime.setText('5')
+
+        if not self.ui.lineEdit_GFA_expnum.text():
+            self.ui.lineEdit_GFA_expnum.setText('1')
+
+        try:
+            exptime = float(self.ui.lineEdit_GFA_exptime.text())
+            expnum = int(self.ui.lineEdit_GFA_expnum.text())
+            self.scriptrun.GFA_set(exptime, expnum)
+        except ValueError as error:
+            self.logging(f'Invalid GFA exposure settings: {error}', level='error')
+            return
+
+        self.gfaexpt, self.gfaexpnum = exptime, expnum
+        self.logging(f'Set GFA exposure time to {exptime} s, exposure count to {expnum}.', level='send')
+
+    @asyncSlot()
+    async def caloffset_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        if not self.ui.lineEdit_GFA_exptime.text():
+            self.ui.lineEdit_GFA_exptime.setText('5')      # Default guiding exposure time : 5 sec
+
+        if not self.ui.lineEdit_GFA_expnum.text():
+            self.ui.lineEdit_GFA_expnum.setText('1')
+
+        self.gfaexpt = float(self.ui.lineEdit_GFA_exptime.text())
+        self.gfaexpnum = int(self.ui.lineEdit_GFA_expnum.text())
+
+
+        if not self.ra or not self.dec:
+           self.logging(f'Please load Tile or slew telescope.',level='error')
+           return
+       
+        self.delta_ra = self.delta_dec = self.new_ra = self.new_dec = None
+        gfasave = self.ui.gfa_checkBox.isChecked()
+        await handle_gfa(f'caloffset {self.gfaexpt} {self.gfaexpnum} {gfasave} {self.ra} {self.dec}',self.ICS_client, logging=self.logging)
+
+    def format_decimal(self,x):
+        from decimal import Decimal
+        x = Decimal(str(x))
+        sign = "-" if x < 0 else ""
+        value = abs(x)
+        return f"{sign}{int(value * 100):04d}"
+
+    @asyncSlot()
+    async def pointing_button_clicked(self):
+        if self.delta_ra is None or self.delta_dec is None or not self.new_ra or not self.new_dec:
+            self.logging('Calculate a valid GFA pointing offset before Pointing.', level='error')
+            return
+
+        try:
+            with open('./Lib/KSPEC.ini', 'r') as config_file:
+                use_tcs = json.load(config_file)['GFA'].get('pointing_use_tcs_coordinates', True)
+            if not isinstance(use_tcs, bool):
+                raise ValueError('GFA.pointing_use_tcs_coordinates must be true or false')
+
+            if use_tcs:
+                ra_reply = await self.send_telcom_command('getra')
+                dec_reply = await self.send_telcom_command('getdec')
+                tcs_ra = bytes_to_sexagesimal(ra_reply)
+                tcs_dec = bytes_to_sexagesimal(dec_reply)
+                ra_deg, dec_deg = radec_str_to_deg(tcs_ra, tcs_dec)
+                corrected_ra, corrected_dec = apply_offsets(
+                    ra_deg, dec_deg, self.delta_ra, self.delta_dec
+                )
+                new_ra = ra_deg_to_hms(corrected_ra)
+                new_dec = dec_deg_to_dms(corrected_dec)
+                self.logging(f'TCS reported (RA,DEC)=({tcs_ra},{tcs_dec})', level='normal')
+            else:
+                new_ra, new_dec = self.new_ra, self.new_dec
+        except Exception as error:
+            self.logging(f'Pointing aborted: unable to calculate TCS command coordinates: {error}', level='error')
+            return
+
+        self.logging(f'Applied Offsets {self.delta_ra}, {self.delta_dec}. New (RA,DEC)=({new_ra},{new_dec})',level='normal')
+        self.logging(f'Slew Telescope to (RA,DEC)=({new_ra},{new_dec})',level='send')
+        messagetcs = 'KSPEC>TC ' + 'tmradec ' + new_ra +' '+ new_dec
+        await self.send_udp_message(messagetcs)
+
+    # endregion GFA guiding and pointing
+
+    # region ADC controls
+    def _handle_adc_state(self, inst, process):
+        if inst != 'ADC':
+            return
+
+        state = (process == 'ING')
+        self.adcadjusting_state = state
+        self._set_toggle_button(self.ui.pushbtn_ADCadjust, state)
+        self._set_toggle_button(self.ui.pushbtn_ADCadjust_2, state)
+
+    @asyncSlot()
+    async def adcconnect_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        await handle_adc('adcconnect',self.ICS_client, logging=self.logging)
+
+    @asyncSlot()
+    async def ADCadjust_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        if self.ra is None or self.dec is None:
+            self.logging('Please slew telescope to specific sky position or load sequence file',level='error')
+            return
+
+
+        self.adcadjusting_state = not getattr(self,"adcadjusting_state",False)
+
+        # sync two button
+        self.ui.pushbtn_ADCadjust.setChecked(self.adcadjusting_state)
+        self.ui.pushbtn_ADCadjust_2.setChecked(self.adcadjusting_state)
+
+        style_on = "color: green; font-weight:900;"
+        style_off = "color: black;"
+        style = style_on if self.adcadjusting_state else style_off
+        self.ui.pushbtn_ADCadjust.setStyleSheet(style)
+        self.ui.pushbtn_ADCadjust_2.setStyleSheet(style)
+
+        if self.adcadjusting_state:
+#            self.ui.pushbtn_ADCadjust.setStyleSheet("color: green; font-weight:900;")
+#            self.ra='20:34:43.2'
+#            self.dec='-32:34:56.4'
+            await handle_adc(f'adcadjust {self.ra} {self.dec}', self.ICS_client, logging=self.logging)
+            self.logging(f'Sent ADC adjusting for ({self.ra}, {self.dec}) Start.', level='send')
+        else:
+            self.ui.pushbtn_ADCadjust.setStyleSheet("color: black;")
+            await handle_adc('adcstop',self.ICS_client, logging=self.logging)
+            self.logging('Sent ADC adjusting Stop', level='send')
+
+    def rotate_mode(self):
+        chk1=self.ui.adc_checkBox1.isChecked()
+        chk2=self.ui.adc_checkBox2.isChecked()
+        chk3=self.ui.adc_checkBox_corotate.isChecked()
+
+        if chk1 and chk2 and chk3:
+            cmd = 'adccorotate'
+        elif chk1 and chk2:
+            cmd = 'adcctrotate'
+        elif chk1 and not chk3:
+            cmd = 'adcrotate1'
+        elif chk2 and not chk3:
+            cmd = 'adcrotate2'
+        else:
+            self.logging('Wrong checkbox. Check right ADC lens and rotation direction.', level='error')
+            return
+
+        return cmd
+
+    @asyncSlot()
+    async def adcrotate_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        if not self.ui.lineEdit_adc_counts.text():
+            self.ui.lineEdit_adc_counts.setText('0')
+
+        if not self.ui.lineEdit_adc_velocity.text():
+            self.ui.lineEdit_adc_velocity.setText('1')
+
+        self.adc_count = int(self.ui.lineEdit_adc_counts.text())
+        self.adc_velocity = self.ui.lineEdit_adc_velocity.text()
+
+        adccmd=self.rotate_mode()
+
+        if adccmd == None:
+            return
+        else:
+            fcmd = adccmd + ' ' + str(self.adc_count) + ' ' + str(self.adc_velocity)
+            self.logging(f'Sent ADC {fcmd}', level='send')
+            await handle_adc(fcmd, self.ICS_client, logging=self.logging)
+
+    @asyncSlot()
+    async def adcpark_button_clicked(self):
+        if not self.check_connection():
+            return
+
+#        if not self.check_syscheck():
+#            return
+
+        self.logging(f'Sent ADC adcpark', level='send')
+        await handle_adc('adcpark', self.ICS_client, logging=self.logging)
+
+    @asyncSlot()
+    async def adchome_button_clicked(self):
+        if not self.check_connection():
+            return
+
+#        if not self.check_syscheck():
+#            return
+
+        if not self.ui.lineEdit_adc_velocity.text():
+            self.ui.lineEdit_adc_velocity.setText('2')
+
+        self.adc_velocity = self.ui.lineEdit_adc_velocity.text()
+
+        self.logging(f'Sent ADC adchome', level='send')
+        await handle_adc(f'adchome {self.adc_velocity}', self.ICS_client, logging=self.logging)
+
+    @asyncSlot()
+    async def adczero_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        if not self.ui.lineEdit_adc_velocity.text():
+            self.ui.lineEdit_adc_velocity.setText('2')
+
+        self.adc_velocity = self.ui.lineEdit_adc_velocity.text()
+        
+        self.logging(f'Sent ADC adczero', level='send')
+        await handle_adc(f'adczero {self.adc_velocity}', self.ICS_client, logging=self.logging)
+
+    # endregion ADC controls
+
+    # region MTL controls
+    def _mtl_exposure_inputs(self):
+        exptime_text = self.ui.lineEdit_MTL_exptime.text().strip() or '0.01'
+        count_text = self.ui.lineEdit_MTL_expnum.text().strip() or '1'
+        exptime, count = float(exptime_text), int(count_text)
+        mtl_set(exptime, count)  # Validate before sending or starting a tile load.
+        self.ui.lineEdit_MTL_exptime.setText(exptime_text)
+        self.ui.lineEdit_MTL_expnum.setText(count_text)
+        return exptime, count
+
+    @asyncSlot()
+    async def MTL_test_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        try:
+            self.mtlexp, self.nexposure = self._mtl_exposure_inputs()
+        except ValueError as error:
+            self.logging(f'Invalid MTL exposure settings: {error}', level='error')
+            return
+
+        if not self.ui.lineEdit_MTL_file.text():
+            self.ui.lineEdit_MTL_file.setText('test.fits')
+            
+        if not self.ui.lineEdit_MTL_expnum.text():
+            self.ui.lineEdit_MTL_expnum.setText('1')
+
+        self.mtlexp = float(self.ui.lineEdit_MTL_exptime.text())
+        self.mtlfile = str(self.ui.lineEdit_MTL_file.text())
+        self.nexposure = int(self.ui.lineEdit_MTL_expnum.text())
+        self.logging(f'Sent MTL camera test exposure', level='send')
+        await handle_mtl(f'mtltest {self.mtlexp} {self.nexposure} {self.mtlfile}', self.ICS_client, logging=self.logging)
+
+    @asyncSlot()
+    async def MTL_trial_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        self.mtl_trial_json = None
+        self.logging('Sent MTL trial', level='send')
+        await handle_mtl('mtltrial', self.ICS_client, logging=self.logging)
+
+    @asyncSlot()
+    async def MTL_set_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        try:
+            exptime, nexposure = self._mtl_exposure_inputs()
+        except ValueError as error:
+            self.logging(f'Invalid MTL exposure settings: {error}', level='error')
+            return
+        self.logging(f'Request MTL exposure settings: {exptime:g} s, {nexposure} images', level='send')
+        await handle_mtl(f'mtlset {exptime} {nexposure}', self.ICS_client, logging=self.logging)
+
+    @asyncSlot()
+    async def MTL_reset_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        self.mtl_trial_json = None
+        self.logging('Sent MTL run reset', level='send')
+        await handle_mtl('mtlreset', self.ICS_client, logging=self.logging)
+
+    # endregion MTL controls
+
+    # region LAMP controls
+    def _handle_lamp_state(self, inst, subinst, process):
+        if inst != 'LAMP':
+            return
+
+    # 서브 상태에 따라 제어
+        def apply(sub, state_var, button, button2):
+            state = (process == 'ING')
+            setattr(self, state_var, state)
+            self._set_toggle_button(button, state)
+            self._set_toggle_button(button2, state)
+
+        if subinst == 'FIDUCIAL':
+            apply('FIDUCIAL', 'fiducial_state', self.ui.pushbtn_Fiducial, self.ui.pushbtn_Fiducial_2)
+        elif subinst == 'ARC':
+            apply('ARC', 'arc_state', self.ui.pushbtn_Arc, self.ui.pushbtn_Arc_2)
+        elif subinst == 'FLAT':
+            apply('FLAT', 'flat_state', self.ui.pushbtn_Flat, self.ui.pushbtn_Flat_2)
+
+    @asyncSlot()
+    async def _onoff_button_clicked(self, state_attr, btn1, btn2, command_on, command_off, label):
+        if not self.check_connection():
+            return
+
+#        if not self.check_syscheck():
+#            return
+        # call state and convert
+        state = not getattr(self, state_attr, False)
+        setattr(self, state_attr, state)
+
+        # sync two button
+        btn1.setChecked(state)
+        btn2.setChecked(state)
+
+        # set style
+        style_on = "color: green; font-weight:900;"
+        style_off = "color: black;"
+        style = style_on if state else style_off
+        btn1.setStyleSheet(style)
+        btn2.setStyleSheet(style)
+
+        # command and logging
+        command = command_on if state else command_off
+        #if command in ('fiducialon', 'fiducialoff'):
+        result = await handle_lamp(command, self.ICS_client)
+        self.logging(f"Sent {label} {'ON' if state else 'OFF'}", level='send')
+        self.logging(f"{label} {'ON' if result == 1 else 'OFF'}", level='receive')
+       
+
+    @asyncSlot()
+    async def flat_button_clicked(self):
+        if not self.check_connection():
+            return
+
+    #    if not self.check_syscheck():
+    #        return
+
+        await self._onoff_button_clicked(state_attr="flat_state", btn1=self.ui.pushbtn_Flat, btn2=self.ui.pushbtn_Flat_2,
+        command_on="flaton",command_off="flatoff",label="Flat")
+
+    @asyncSlot()
+    async def arc_button_clicked(self):
+        if not self.check_connection():
+            return
+
+    #    if not self.check_syscheck():
+    #        return
+
+        await self._onoff_button_clicked(state_attr="arc_state", btn1=self.ui.pushbtn_Arc, btn2=self.ui.pushbtn_Arc_2,
+        command_on="arcon",command_off="arcoff",label="Arc")
+
+    @asyncSlot()
+    async def fiducial_button_clicked(self):
+        if not self.check_connection():
+            return
+
+    #    if not self.check_syscheck():
+    #        return
+
+        await self._onoff_button_clicked(state_attr="fiducial_state", btn1=self.ui.pushbtn_Fiducial, btn2=self.ui.pushbtn_Fiducial_2,
+        command_on="fiducialon",command_off="fiducialoff",label="Fiducial")
+
+    # endregion LAMP controls
+
+    # region Spectrograph controls
+    def _sync_illumi_state(self, backillum):
+        """Follow the IsoPlane back-illumination state reported in a SPEC reply."""
+        self.illumi_state = bool(backillum.get('light'))
+        self.illumi_stage = backillum.get('state')
+        if not self.illumi_busy:
+            for button in (self.ui.pushbtn_illumi, self.ui.pushbtn_illumi_2):
+                self._set_toggle_button(button, self.illumi_state)
+
+    async def _send_isoplane_illumination(self, command):
+        """Send an illumination command to the IsoPlane server and wait for its Done reply.
+
+        The reply is taken out of the shared response queue by on_ics_message, so it cannot be
+        mistaken later for the reply of another command.
+        """
+        waiter = asyncio.get_running_loop().create_future()
+        self._illumi_waiter = (command, waiter)
+        try:
+            self.logging(f'Back illumination: sending {command} to the IsoPlane server.', level='send')
+            await handle_spec(command, self.ICS_client)
+            response = await asyncio.wait_for(waiter, timeout=ILLUMINATION_TIMEOUT_S)
+        except asyncio.TimeoutError:
+            self.logging(f'No reply to {command} within {ILLUMINATION_TIMEOUT_S:g} s; '
+                         'back illumination state unknown (send specstatus).', level='error')
+            return
+        finally:
+            if self._illumi_waiter is not None and self._illumi_waiter[1] is waiter:
+                self._illumi_waiter = None
+        if not isinstance(response.get('backillum'), dict) and response.get('status') == 'success':
+            self.illumi_state = command in ('illuon', 'illulighton')
+
+    @asyncSlot()
+    async def illumi_button_clicked(self):
+        if self.illumi_busy:
+            return
+
+        desired_state = not self.illumi_state
+        buttons = (self.ui.pushbtn_illumi, self.ui.pushbtn_illumi_2)
+        self.illumi_busy = True
+        for button in buttons:
+            button.setEnabled(False)
+        try:
+            if spec_queue() == 'SPEC':
+                command = 'illuon' if desired_state else 'illuoff'
+                self.logging(f"Back illumination: sending {'ON' if desired_state else 'OFF'} to WebRelay.", level='send')
+                relay_state = await handle_spec(command, self.ICS_client)
+                self.illumi_state = bool(relay_state)
+                self.logging(f"Back illumination: WebRelay relay1={relay_state}.", level='receive')
+            else:
+                # IsoPlane: with the stage already IN (light switched off between metrology
+                # trials), ON switches only the light; OFF always raises the stage.
+                if desired_state:
+                    command = 'illulighton' if self.illumi_stage == 'IN' else 'illuon'
+                else:
+                    command = 'illuoff'
+                await self._send_isoplane_illumination(command)
+        except Exception as error:
+            self.logging(f'Back illumination command failed: {error}', level='error')
+        finally:
+            for button in buttons:
+                self._set_toggle_button(button, self.illumi_state)
+                button.setEnabled(True)
+            self.illumi_busy = False
+
+    @asyncSlot()
+    async def exp_start_clicked(self):
+        if not self.check_connection():
+            return
+
+
+        self.obstype = self.ui.obstype.currentText()
+        self.expT = self.ui.lineEdit_exp_time_2.text()
+        self.expnum = self.ui.lineEdit_n_exp_2.text()
+
+        try:   # Bias -> getbias, Dark -> getdark, ...: each frame type has its own command
+            command = frame_command(self.obstype, self.expT, self.expnum)
+        except ValueError as e:
+            self.logging(f'Exposure not started: {e}', level='error')
+            return
+
+        if self.object in (None, '', 'None'):
+            self.object = self.TileID
+
+        header=set_header_info(obsdate = self.dir_name, obstype = self.obstype, TileID = self.TileID, obsra = self.ra,
+            obsdec = self.dec, exptime = self.expT, expnum = self.expnum, projID = self.project, fwhm=self.fwhm)
+        header['OBJECT'] = self.object
+
+        await handle_spec(command, self.ICS_client, header)
+        if spec_queue() == 'ISOPLANE':
+            return  # The ICS logs the IsoPlane Done reply after the frames are saved.
+        
+        cmt = ''
+    
+        if self.obslog is None:
+            self.logging('Observation log is not ready. Skipping log update.', level='warning')
+            return
+
+        try:
+            await asyncio.to_thread(
+                self.obslog.add_log,
+                self.uttime,
+                self.project,
+                self.TileID,
+                self.obstype,
+                self.object,
+                self.expT,
+                self.expnum,
+                cmt,
+            )
+            self.logging(self.obslog.message, level='receive')
+        except Exception as e:
+            self.logging(f'Observation log update failed: {e}', level='error')
+
+    def _append_spec_cmdlog(self, row):
+        """Write a GUI command snapshot after the matching SPEC command succeeds."""
+        log = self.obslog
+        if log is None or log.title != row['night']:
+            log = obslog(row['night'])
+        log.add_log(
+            row['ut'], row['projid'], row['tile_id'], row['objtype'],
+            row['object_name'], row['exposure'], row['exp_num'], row['comments'],
+            row.get('file', ''), row.get('grating', ''), row.get('central_wave', ''),
+            value_input_option='RAW',
+        )
+        return log
+
+    def _spec_frame_path(self, filename):
+        """Local path of a frame named in a SPEC reply: as given, else under SPEC.specimagepath.
+
+        The IsoPlane server runs on the LightField PC, so its path (e.g. a Windows share) may
+        not exist here; the frame is then looked up as <specimagepath>/<night>/<file>.
+        """
+        if filename in (None, '', 'None'):
+            return None
+        if os.path.exists(str(filename)):
+            return str(filename)
+        parts = str(filename).replace('\\', '/').split('/')
+        with open('./Lib/KSPEC.ini', 'r') as f:
+            imagepath = json.load(f)['SPEC']['specimagepath']
+        local = os.path.join(imagepath, *parts[-2:])
+        return local if os.path.exists(local) else None
+
+    def show_spec(self, spec_response):
+        """Display the last frame named in a SPEC reply, if this machine can read it."""
+        path = self._spec_frame_path(spec_response.get('filename'))
+        if path is None:
+            self.logging(f"SPEC frame is not readable here: {spec_response.get('filename')}", level='warning')
+            return
+
+        with fits.open(path) as hdul:
+            data = np.asarray(hdul[0].data, dtype=float)
+        while data.ndim > 2:   # LightField frames are (1, ny, nx)
+            data = data[0]
+
+        self.S_zmin, self.S_zmax = zs.zscale(data)
+        self.canvas_B.imshows(data,vmin=self.S_zmin,vmax=self.S_zmax,cmap='gray',origin='lower',aspect='auto')
+
+    # endregion Spectrograph controls
+
+    # region Observation script workflow
+    @asyncSlot()
+    async def syscheck(self):
+        self.logging('Sys check button clicked.', level='normal', save=self.msglog_path is not None)
+        if not self.check_connection():
+            return
+
+        self.dependencies = False
+        self.logging('System check start. Initialize dependencies',level='normal')
+
+        self.scriptrun.initialize_dependencies(self.ICS_client, self.send_udp_message, self.send_telcom_command,
+            self.response_queue, self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue, self.show_status, self.dir_name)
+
+        self.logging('Script dependencies delivered.',level='normal')
+
+        # GFA/MTL 상태 조회와 ADC 초기화를 먼저 수행한다.
+        # FBP 상태 조회는 Runtime 준비가 끝난 뒤 별도로 실행한다.
+        await self.scriptrun.obs_initial(self.scriptrun, self.logging, include_fbp=False)
+
+        if not self.fbp_runtime_initialized:
+            self.logging(
+                'Other instrument initialization finished. Preparing FBP TwinCAT and PLC Runtime.',
+                level='normal',
+            )
+            if not await self._activate_fbp_runtime('Initial Sys check'):
+                self.logging(
+                    'System check stopped because the FBP Runtime is not ready.',
+                    level='error',
+                )
+                return
+
+        # await handle_fbp('fbpstatus', self.ICS_client)
+        # await self.response_queue.get()
+
+        labels = [self.ui.label_status_gfa,self.ui.label_status_adc,self.ui.label_status_fiber,self.ui.label_status_metrology,
+            self.ui.label_status_spectrograph,self.ui.label_status_lamp]
+
+        for label in labels:
+            style = label.styleSheet().lower()
+            if "color: red" in style:
+                self.logging('While system checking, unexpected Errors have occurred in some instruments.',level='error')
+                return True
+        
+        self.fbp_state = 'initial'
+
+        try:
+            self.obslog = obslog(self.dir_name)
+            self.scriptrun.obslog = self.obslog
+            self.logging(self.obslog.message, level='normal')
+
+        except Exception as e:
+            self.obslog = None
+            self.scriptrun.obslog = None
+            self.logging(
+                f'Observation log sheet setup failed: {e}',
+                level='error'
+            )
+
+        self.dependencies = True
+        self.logging('System check finished. All systems are OK.',level='normal')
+
+    def sync_script_observation_context(self):
+        tile_id = self.ui.lineEdit_TileID.text().strip() or self.TileID
+        ra = self.ui.lineEdit_ra_1.text().strip() or self.ra
+        dec = self.ui.lineEdit_dec_1.text().strip() or self.dec
+        exp_time = self.ui.lineEdit_exp_time_1.text().strip() or self.expT
+        obs_num = self.ui.lineEdit_n_exp_1.text().strip() or self.obsnum
+
+        if not all([tile_id, ra, dec, exp_time, obs_num]):
+            self.logging('Please load tile information.', level='error')
+            return False
+
+        self.TileID = tile_id
+        self.ra = ra
+        self.dec = dec
+        self.expT = exp_time
+        self.obsnum = obs_num
+
+        self.scriptrun.configure_cordinate(
+            self.project,
+            self.obsdate,
+            self.TileID,
+            self.ra,
+            self.dec,
+            self.obsnum,
+            self.expT,
+            object_name=self.object,
+        )
+        self.scriptrun.fwhm = self.fwhm
+        self.scriptrun.obslog = self.obslog
+        return True
+
+    @asyncSlot()
+    async def run_obs_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+
+        if not self.ui.lineEdit_ra_1.text() or not self.ui.lineEdit_dec_1.text():
+            self.logging('Please load tile information.', level='error')
+            return
+
+        if not self.sync_script_observation_context():
+            return
+
+        await handle_script(f'runobs',scriptrun=self.scriptrun,logging=self.logging)
+
+    @asyncSlot()
+    async def take_calib(self):
+        if not self.check_connection():
+            return
+
+        if not self.check_syscheck():
+            return
+#        await self.scriptrun.run_calib(self.ICS_client, self.send_udp_message, self.send_telcom_command, self.response_queue,
+#                self.GFA_response_queue, self.ADC_response_queue, self.SPEC_response_queue, logging=self.logging)
+
+        self.scriptrun.fwhm = self.fwhm
+        self.scriptrun.obslog = self.obslog
+        await handle_script(f'runcalib', scriptrun=self.scriptrun,logging=self.logging)
+        self.logging('Sent Calibration Start', level='send')
+
+    @asyncSlot()
+    async def load_tile(self):
+        self.mtl_trial_json = None
+        try:
+            exptime, nexposure = self._mtl_exposure_inputs()
+        except ValueError as error:
+            self.logging(f'Invalid MTL exposure settings: {error}', level='error')
+            return
+        self.ui.lineEdit_CProj.setText(f'{self.project}')
+        self.ui.lineEdit_CTile.setText(f'{self.TileID}')
+    #    self.logging('Sent Guide stars information to GFA',level='send')
+    #    await self.ICS_client.send_message("GFA", self.guidemsg)
+    #    await self.response_queue.get()
+    #    await asyncio.sleep(2)
+
+        self.logging('Sent Target information to MTL',level='send')
+        loadobj_response = await send_and_wait_reply(
+            self.response_queue, self.ICS_client.send_message("MTL", self.objmsg),
+            'MTL', 'loadobj', timeout=60, logging=self.logging,
+        )
+
+        loadobj_succeeded = (
+            loadobj_response.get('inst') == 'MTL'
+            and loadobj_response.get('func') == 'loadobj'
+            and loadobj_response.get('status') == 'success'
+        )
+        if not loadobj_succeeded:
+            message = loadobj_response.get('message', 'Unknown error')
+            self.logging(
+                f'MTL target information could not be loaded: {message}',
+                status=loadobj_response.get('status', 'fail'),
+                level='error',
+            )
+            return
+
+        self.logging('Sent MTL run initialization command', level='send')
+        mtlstart_response = await send_and_wait_reply(
+            self.response_queue,
+            self.ICS_client.send_message(
+                'MTL', mtl_start(exptime=exptime, nexposure=nexposure)
+            ),
+            'MTL', 'mtlstart', timeout=300, logging=self.logging,
+        )
+
+        mtlstart_succeeded = (
+            mtlstart_response.get('inst') == 'MTL'
+            and mtlstart_response.get('func') == 'mtlstart'
+            and mtlstart_response.get('status') == 'success'
+        )
+        if not mtlstart_succeeded:
+            message = mtlstart_response.get('message', 'Unknown error')
+            self.logging(
+                f'MTL run could not be initialized: {message}',
+                status=mtlstart_response.get('status', 'fail'),
+                level='error',
+            )
+            return
+
+        await asyncio.sleep(2)
+
+        for arm, motionmsg in (('alpha', self.motionmsg1), ('beta', self.motionmsg2)):
+            self.logging(f'Sent Motion plan of {arm} motor to FBP', level='send')
+            response = await send_and_wait_reply(
+                self.response_queue, self.ICS_client.send_message("FBP", motionmsg),
+                'FBP', 'loadmotion', timeout=60, logging=self.logging,
+                match={'arm': arm},
+            )
+            if not (
+                response.get('inst') == 'FBP'
+                and response.get('func') == 'loadmotion'
+                and response.get('arm') == arm
+                and response.get('status') == 'success'
+            ):
+                message = response.get('message', 'Unknown error')
+                self.logging(
+                    f'FBP {arm} motion plan could not be loaded: {message}',
+                    status=response.get('status', 'fail'),
+                    level='error',
+                )
+                return
+
+        self.logging(f'All accessary files for observation of Tile ID {self.TileID} are successfully loaded', level='receive')
+        await asyncio.sleep(2)
+
+    def load_file(self):
+        file_path, _ = QFileDialog.getOpenFileName(self)
+
+        if not file_path:
+            return
+
+        if file_path:
+            with open(file_path,'r') as f:
+                lines=f.readlines()
+
+        header = lines[0].strip().split()
+        tile_lines = lines[1:]
+
+
+        dialog = SelectTile(header[:4], tile_lines, self)
+        if dialog.exec() != QDialog.Accepted or not dialog.selected_values:
+            return
+
+        self.TileID = dialog.selected_values[0]
+        self.object = None  # The newly selected tile has no separate object name.
+        self.obsnum = dialog.selected_values[2]
+        self.expT = dialog.selected_values[3]
+#            self.ra = dialog.selected_values[4]        # For commission
+#            self.dec = dialog.selected_values[5]       # For commission
+
+#        print(self.ra)
+
+        sciobs=sciobscli()
+        filename=os.path.basename(file_path)
+        wild=filename.split('_')
+        sciobs.project=wild[0]
+        sciobs.obsdate=wild[-1].split('.')[0]
+        self.project=wild[0]
+        self.obsdate=wild[-1].split('.')[0]
+#        print(self.project)
+#        print(self.obsdate)
+#        print(self.TileID)
+#        print(self.ra)
+#        print(self.dec)
+
+
+#        self.objmsg=sciobs.loadtile(self.TileID)   # For commission
+#        self.ra, self.dec=self.convert_to_sexagesimal(self.ra,self.dec)    # For commission
+#        self.scriptrun.configure_cordinate(self.project, self.obsdate, self.TileID, self.ra, self.dec, self.obsnum, self.expT)   # For commission
+#        self.ui.lineEdit_TileID.setText(f'{self.TileID}')
+#        self.ui.lineEdit_ra_1.setText(f'{self.ra}')
+#        self.ui.lineEdit_dec_1.setText(f'{self.dec}')
+#        self.ui.lineEdit_exp_time_1.setText(f'{self.expT}')
+#        self.ui.lineEdit_n_exp_1.setText(f'{self.obsnum}')
+   
+
+    ### Real survey Observation ####    
+        calibration_plan = re.fullmatch(r'Calib_obsplan_(?:\d{8}|YYYYMMDD)\.txt', filename) is not None
+        self.tilemsg,self.objmsg,self.motionmsg1,self.motionmsg2=sciobs.loadtile(
+            self.TileID, invert_motion_angles=True,
+            zenith_angle_override=0.0 if calibration_plan else None,
+        )
+        self.ra, self.dec=self.convert_to_sexagesimal(sciobs.ra,sciobs.dec)
+
+        self.scriptrun.configure_cordinate(
+            self.project,
+            self.obsdate,
+            self.TileID,
+            self.ra,
+            self.dec,
+            self.obsnum,
+            self.expT,
+            object_name=self.object,
+        )
+
+        self.ui.lineEdit_TileID.setText(f'{self.TileID}')
+        self.ui.lineEdit_ra_1.setText(f'{self.ra}')
+        self.ui.lineEdit_dec_1.setText(f'{self.dec}')
+        self.ui.lineEdit_exp_time_1.setText(f'{self.expT}')
+        self.ui.lineEdit_n_exp_1.setText(f'{self.obsnum}')
+
+    def reload_img(self,filename):
+        rawdir='/media/shyunc/DATA/KSpec/RAWDATA/'
+        filepath=os.path.join(rawdir,filename)
+
+        try:
+            with fits.open(filepath) as hdul:
+                data = hdul[0].data
+
+            # Z-scale 계산
+            self.zmin, self.zmax = zs.zscale(data)
+
+            # 기존 캔버스 초기화
+            self.canvas_B.imshows(
+                data,
+                vmin=self.zmin,
+                vmax=self.zmax,
+                cmap='gray',
+                origin='lower'
+             )
+
+            self.canvas_R.imshows(
+                data,
+                vmin=self.zmin,
+                vmax=self.zmax,
+                cmap='gray',
+                origin='lower'
+             )
+
+#            self.canvas.ax.axis('off')
+#            self.canvas.draw()
+
+            self.logging(f"Loaded image: {filename}",level='normal')
+            self.logging(f"Loaded image: {filename}",level='normal')
+
+        except Exception as e:
+            print(f"[ERROR] Could not load image {filepath}: {e}")
+            self.logging(f"Failed to load image: {e}",level='error')
+            self.logging(f"Failed to load image: {e}",level='error')
+
+    def convert_to_sexagesimal(self,ra_deg, dec_deg):
+        """Converts RA and DEC from degrees to sexagesimal format."""
+        ra = Angle(ra_deg, unit=u.degree)
+        dec = Angle(dec_deg, unit=u.degree)
+
+        ra_hms = ra.to_string(unit=u.hour, sep=':', precision=2, pad=True)
+        dec_dms = dec.to_string(unit=u.degree, sep=':', alwayssign=True, precision=2)
+        return ra_hms, dec_dms
+
+    # endregion Observation script workflow
+
+    # region Telescope controls
+    @asyncSlot()
+    async def slew_button_clicked(self):
+        if not self.check_connection():
+            return
+
+        if not self.ui.lineEdit_ra_2.text() or not self.ui.lineEdit_dec_2.text():
+            self.logging('Please insert RA and DEC coordinates in Single Mode tap.', level='error')
+            return
+        else:
+            self.ra = self.ui.lineEdit_ra_2.text()
+            self.dec = self.ui.lineEdit_dec_2.text()
+
+        self.sync_queue_mode()
+
+        messagetcs = 'KSPEC>TC ' + 'tmradec ' + self.ra +' '+ self.dec
+        self.logging(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.', level='send')
+        print(f'Slew Telescope to RA={self.ra}, DEC={self.dec}.')
+        await self.send_udp_message(messagetcs)
+
+    # endregion Telescope controls
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    loop = QEventLoop(app)
+    asyncio.set_event_loop(loop)
+
+    window = MainWindow()
+    window.show()
+    
+    with loop:
+        loop.run_forever()
+#    sys.exit(app.exec())

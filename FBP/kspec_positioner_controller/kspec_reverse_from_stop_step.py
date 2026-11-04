@@ -155,6 +155,12 @@ async def reverse_from_stop_step( # pyright: ignore[reportGeneralTypeIssues]
 
         source_stop_mode = next(iter(stopped_modes))
 
+        if source_stop_mode == MOTION_MODE_RANGE:
+            raise ValueError(
+                "부분 step 범위 구동의 Stop 기록은 전체 원본 경로 복귀에 "
+                "사용할 수 없습니다. 범위 구동 전용 복귀 절차가 필요합니다."
+            )
+
         if source_stop_mode not in (MOTION_MODE_FORWARD, MOTION_MODE_REVERSE, MOTION_MODE_STOP_REVERSE):
             raise ValueError(
                 "main(), reverse_main(), reverse_from_stop_step() 중 발생한 Stop만 복귀할 수 있습니다. "

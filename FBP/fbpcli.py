@@ -60,6 +60,11 @@ def fbp_activate():
         message='Activate TwinCAT configuration and start PLC runtimes.',
     )
 def fbp_moveall(): return create_fbp_command('fbpmoveall', message = 'Move all positioners to target position.')
+def fbp_move_range(step_from: int, step_to: int):
+    return create_fbp_command(
+        'fbpmoverange', step_from=step_from, step_to=step_to,
+        message=f'Move positioners along loaded path steps {step_from} to {step_to}.',
+    )
 def fbp_initial(): return create_fbp_command('fbpinitial', message = 'Move all positioners to initial position.')
 def fbp_stop(): return create_fbp_command('fbpstop', message = ' Stop current positioners moving.')
 def fbp_initial_from_stop(): return create_fbp_command('fbpinitial_from_stop', message = 'Move all positioners from stop to initial positions.')
@@ -83,6 +88,19 @@ async def handle_fbp(arg, ICS_client, logging=None):
         'fbpmoveall': fbp_moveall,
         'fbpinitial': fbp_initial, 'fbpstop': fbp_stop, 'fbpinitial_from_stop': fbp_initial_from_stop
     }
+    if cmd == 'fbpmoverange':
+        if len(params) != 2:
+            print('Error: Usage: fbpmoverange <from_step> <to_step>')
+            return False
+        try:
+            step_from, step_to = (int(value) for value in params)
+        except ValueError:
+            print('Error: From/To step must be integers.')
+            return False
+        if step_from < 1 or step_to < 1:
+            print('Error: From/To step must be positive.')
+            return False
+        command_map[cmd] = lambda: fbp_move_range(step_from, step_to)
     if cmd == 'fbpoffset':
         offset_args = shlex.split(raw_params)
         if len(offset_args) != 1:

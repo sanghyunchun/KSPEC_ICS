@@ -294,6 +294,18 @@ async def rotate_all(alpha_file: str, beta_file: str) -> dict[str, Any]:
     return await _run_with_plcs(_kspec_main.main, alpha_file=alpha_file, beta_file=beta_file)
 
 
+async def rotate_range(alpha_file: str, beta_file: str, step_from: int, step_to: int) -> dict[str, Any]:
+    """현재 load된 원본 path에서 지정한 step 범위만 이동한다."""
+    result = await _run_with_plcs(
+        _kspec_main.main, alpha_file=alpha_file, beta_file=beta_file,
+        step_from=step_from, step_to=step_to,
+    )
+    result.setdefault('data', {}).update(
+        original_step_from=step_from, original_step_to=step_to,
+    )
+    return result
+
+
 # offset 이동은 경로 계획 없이 모든 축을 한 번에 절대각으로 옮긴다. metrology 보정은 보통 수 도이므로
 # 현재 위치에서 이보다 멀리 가야 하는 축이 있으면 각도 규약 오류 (예: alpha 360도 차이) 나 fiber
 # 오매칭으로 보고 구동하지 않는다.
