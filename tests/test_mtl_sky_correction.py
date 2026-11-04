@@ -113,6 +113,45 @@ class SkyCorrectionTest(unittest.TestCase):
         self.assertLessEqual(r, a1[kc] + a2[kc])
 
 
+class SkyCorrectionGuardTest(unittest.TestCase):
+    def test_calibration_targets_are_not_corrected(self):
+        n = len(cfg.fiber_ids())
+        calib = {"tile_id": 1, "project": "Calib", "ra": [0.0] * n, "dec": [0.0] * n,
+                 "xp": tile_target()["xp"], "yp": tile_target()["yp"], "class": ["0"] * n,
+                 "zenith_angle": 0.0}
+        for target in (calib, {"alpha": [0.0] * n, "beta": [0.0] * n}):
+            out, s = correct_target(target, TIME, instrument_offset_deg=0.18, use_measured=False)
+            self.assertIn("skipped", s)
+            self.assertEqual(out, target)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "Calib_2627_0001.assign.json"
+            path.write_text(json.dumps(calib))
+            used, s = write_corrected_target(str(path), time=TIME, instrument_offset_deg=0.18)
+            self.assertEqual(used, str(path))
+            self.assertFalse(Path(corrected_path(str(path))).exists())
+
+    def test_calib_in_the_name_or_project_is_not_corrected(self):
+        t = tile_target()                                  # real sky coordinates
+        with tempfile.TemporaryDirectory() as tmp:
+            for name, project in (("CALIB_arm_scan.json", "ASPECS"), ("x.json", "Calib")):
+                path = Path(tmp) / name
+                path.write_text(json.dumps(dict(t, project=project)))
+                used, s = write_corrected_target(str(path), time=TIME, instrument_offset_deg=0.18)
+                self.assertEqual(used, str(path))
+                self.assertTrue(s["skipped"].startswith("calibration target"))
+            path = Path(tmp) / "ASPECS_2627_9140.assign.json"
+            path.write_text(json.dumps(t))
+            used, s = write_corrected_target(str(path), time=TIME, instrument_offset_deg=0.18)
+            self.assertNotIn("skipped", s)
+
+    def test_non_finite_result_is_not_written(self):
+        t = tile_target()
+        with patch("kspec_metrology.analysis.sky_correction.icrs_to_tete_focal",
+                   return_value=(float("nan"), float("nan"))):
+            with self.assertRaises(ValueError):
+                correct_target(t, TIME, use_measured=False)
+
+
 class MtlStartSkyCorrectionTest(unittest.IsolatedAsyncioTestCase):
     async def run_start(self, config, **message):
         tmp = tempfile.mkdtemp()
