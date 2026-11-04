@@ -357,7 +357,7 @@ async def reverse_main(plc_connections, alpha_file, beta_file):
         print("PLC1, PLC2 구동 축 Power ON 완료")
 
         # Power 상태가 PLC에 적용될 시간
-        await asyncio.sleep(3.0)
+        await asyncio.sleep(10.0)
 
 
 
