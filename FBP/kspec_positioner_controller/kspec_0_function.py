@@ -821,13 +821,48 @@ async def power_on_one_plc(
     )
 
 
+def _read_power_failure_states_sync(plc, axes):
+    """Power ON 확인에 실패한 축의 PLC 상태를 진단용으로 읽는다."""
+    states = []
+    try:
+        system_ready = bool(plc.read_by_name("GVL.gSystemReady", pyads.PLCTYPE_BOOL))
+        system_read_error = None
+    except Exception as error:
+        system_ready = None
+        system_read_error = str(error)
+
+    for axis in axes:
+        state = dict(axis)
+        state["system_ready"] = system_ready
+        read_errors = dict(state.pop("read_errors", {}))
+        if system_read_error is not None:
+            read_errors["system_ready"] = system_read_error
+        local_axis = axis["local_axis"]
+        tags = {
+            "power_command": f"GVL.gAxisCmd[{local_axis}].Power",
+            "powered": f"GVL.gAxisState[{local_axis}].Powered",
+            "axis_error": f"GVL.gAxisState[{local_axis}].Error",
+            "busy": f"GVL.gAxisState[{local_axis}].Busy",
+        }
+        for field, tag in tags.items():
+            try:
+                state[field] = bool(plc.read_by_name(tag, pyads.PLCTYPE_BOOL))
+            except Exception as error:
+                state[field] = None
+                read_errors[field] = str(error)
+        if read_errors:
+            state["read_errors"] = read_errors
+        states.append(state)
+    return states
+
+
 async def wait_for_powered_axes(
     plc_connections: dict,
     power_targets: list,
     timeout: float = 30.0,
     poll_interval: float = 1.0,
 ):
-    """구동 대상 축이 모두 Powered가 될 때까지 확인하고, 미완료 축을 반환한다."""
+    """모든 구동 축의 Powered를 확인하고, 실패 축의 PLC 상태를 반환한다."""
     deadline = time.monotonic() + timeout
 
     while True:
@@ -839,7 +874,8 @@ async def wait_for_powered_axes(
                     pyads.PLCTYPE_BOOL,
                 )
                 for plc_name, route in power_targets
-            ]
+            ],
+            return_exceptions=True,
         )
 
         not_powered_axes = [
@@ -849,9 +885,11 @@ async def wait_for_powered_axes(
                 "local_axis": route["local_axis"],
                 "positioner": route["positioner"],
                 "motor": route["motor"],
+                **({"read_errors": {"powered_poll": str(powered)}}
+                   if isinstance(powered, Exception) else {}),
             }
             for (plc_name, route), powered in zip(power_targets, powered_results)
-            if not powered
+            if isinstance(powered, Exception) or not powered
         ]
 
         if not not_powered_axes:
@@ -859,7 +897,21 @@ async def wait_for_powered_axes(
 
         remaining = deadline - time.monotonic()
         if remaining <= 0:
-            return not_powered_axes
+            by_plc = {}
+            for axis in not_powered_axes:
+                by_plc.setdefault(axis["plc_name"], []).append(axis)
+            snapshots = await asyncio.gather(*[
+                asyncio.to_thread(
+                    _read_power_failure_states_sync, plc_connections[plc_name], axes
+                )
+                for plc_name, axes in by_plc.items()
+            ])
+            failures = [axis for snapshot in snapshots for axis in snapshot
+                        if axis["powered"] is not True]
+            if failures:
+                print("Power ON 미확인 축과 PLC 상태: "
+                      + json.dumps(failures, ensure_ascii=False), flush=True)
+            return failures
 
         await asyncio.sleep(min(poll_interval, remaining))
 

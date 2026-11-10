@@ -90,6 +90,20 @@ class GFAAstrometry:
         with open(config, "r") as f:
             self.inpar = json.load(f)
 
+        # The worker count and the CPU time allowed to each solve-field process
+        # are independent settings. Log both values and the loaded source/config
+        # so a running GFA server can be checked against its deployed files.
+        self.solve_field_cpulimit_s = int(
+            self.inpar["astrometry"].get("cpulimit_s", 60)
+        )
+        self.logger.info(
+            "Astrometry source=%s config=%s max_workers=%s cpulimit_s=%s",
+            __file__,
+            config,
+            self.inpar["settings"]["cpu"]["limit"],
+            self.solve_field_cpulimit_s,
+        )
+
         dirs = self.inpar["paths"]["directories"]
 
         default_root = self.inpar.get("paths", {}).get(
@@ -296,7 +310,20 @@ class GFAAstrometry:
                 with fits.open(fp, memmap=True) as hdul:
                     if len(hdul) < 2 or hdul[1].data is None:
                         raise ValueError("No table found in HDU[1].")
-                    tables.append(Table(hdul[1].data))
+                    table = Table(hdul[1].data)
+                    for column in hdul[1].columns:
+                        if column.unit:
+                            # Astrometry.net uses nonstandard FITS spellings.
+                            # Keep meaningful units in standard FITS form.
+                            unit = {
+                                "degrees": "deg",
+                                "pixels": "pix",
+                                "none": None,
+                                "unknown": None,
+                            }.get(column.unit.strip().lower(), column.unit)
+                            if unit:
+                                table[column.name].unit = unit
+                    tables.append(table)
             except Exception as e:
                 bad.append(fp)
                 self.logger.warning(f"Failed reading corr={fp}: {e}")
@@ -336,10 +363,6 @@ class GFAAstrometry:
 
         scale_low, scale_high = self.inpar["astrometry"]["scale_range"]
         radius = self.inpar["astrometry"]["radius"]
-        # CPU-time limit per solve [s]. settings.cpu.limit is the number of parallel
-        # solves (preproc max_workers), not a time: passing it as --cpulimit gave up
-        # after 6 s.
-        cpulimit_s = int(self.inpar["astrometry"].get("cpulimit_s", 60))
 
         raw_fits_path = os.path.abspath(raw_fits_path)
         if not os.path.exists(raw_fits_path):
@@ -393,7 +416,7 @@ class GFAAstrometry:
             "-E",
             "2",
             "--cpulimit",
-            str(cpulimit_s),
+            str(self.solve_field_cpulimit_s),
         ]
 
         self.logger.info(f"[{stem}] Running command: {' '.join(cmd)}")

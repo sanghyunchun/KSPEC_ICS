@@ -71,7 +71,8 @@
         "fields": {
             "ra_column": "index_ra",
             "dec_column": "index_dec",
-            "mag_flux": "FLUX"
+            "mag_flux": "FLUX",
+            "ra_unit": "deg"
         },
         "tolerance": {
             "angular_distance": 0.10,

@@ -379,6 +379,30 @@ def test_build_combined_star_from_corr_reads_and_writes(tmp_path, monkeypatch):
         assert len(hdul[1].data) == 3
 
 
+def test_build_combined_star_from_corr_preserves_coordinate_units(tmp_path, monkeypatch):
+    cfgp = tmp_path / "cfg.json"
+    _write_config(cfgp, tmp_path)
+    _patch_solve_field_ok(monkeypatch)
+    ast = GFAAstrometry(config=str(cfgp), logger=_get_default_logger())
+
+    corr = Path(ast.temp_dir) / "unit.corr"
+    corr2 = Path(ast.temp_dir) / "unit2.corr"
+    columns = [
+        fits.Column(name="index_ra", format="D", unit="degrees", array=[12.0]),
+        fits.Column(name="index_dec", format="D", unit="degrees", array=[-30.0]),
+        fits.Column(name="field_x", format="D", unit="pixels", array=[50.0]),
+    ]
+    fits.HDUList([fits.PrimaryHDU(), fits.BinTableHDU.from_columns(columns)]).writeto(corr)
+    fits.HDUList([fits.PrimaryHDU(), fits.BinTableHDU.from_columns(columns)]).writeto(corr2)
+
+    out = ast.build_combined_star_from_corr(corr_files=[str(corr), str(corr2)])
+    with fits.open(out) as hdul:
+        assert len(hdul[1].data) == 2
+        assert hdul[1].columns["index_ra"].unit == "deg"
+        assert hdul[1].columns["index_dec"].unit == "deg"
+        assert hdul[1].columns["field_x"].unit == "pix"
+
+
 def test_build_combined_star_from_corr_all_bad_raises_runtimeerror(
     tmp_path, monkeypatch
 ):

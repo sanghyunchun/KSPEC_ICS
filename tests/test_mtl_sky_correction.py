@@ -114,11 +114,11 @@ class SkyCorrectionTest(unittest.TestCase):
 
 
 class MtlStartSkyCorrectionTest(unittest.IsolatedAsyncioTestCase):
-    async def run_start(self, config, **message):
+    async def run_start(self, config, *, start_sky_correction=None, **message):
         tmp = tempfile.mkdtemp()
         target = Path(tmp) / "ASPECS_2627_9140.assign.json"
         target.write_text(json.dumps(tile_target()))
-        msg = json.loads(mtl_start())
+        msg = json.loads(mtl_start(sky_correction=start_sky_correction))
         msg.update(target_file=str(target), obs_time=TIME, **message)
         server = SimpleNamespace(send_message=AsyncMock())
         context = MTLContext()
@@ -152,6 +152,17 @@ class MtlStartSkyCorrectionTest(unittest.IsolatedAsyncioTestCase):
         used, _, reply, target = await self.run_start(sc, sky_correction="false")
         self.assertEqual(used, str(target))
         self.assertIsNone(reply["sky_correction"])
+
+    async def test_calibration_message_skips_both_corrections(self):
+        config = {"sky_correction": {"enabled": True, "precession": True,
+                                     "instrument_offset": True, "instrument_offset_deg": 0.18}}
+        self.assertIs(json.loads(mtl_start(sky_correction=False))["sky_correction"], False)
+        self.assertNotIn("sky_correction", json.loads(mtl_start()))
+        used, context, reply, target = await self.run_start(config, start_sky_correction=False)
+        self.assertEqual(used, str(target))
+        self.assertEqual(context.target_file, str(target))
+        self.assertIsNone(reply["sky_correction"])
+        self.assertFalse(Path(str(target).replace(".json", "_skycorr.json")).exists())
 
     async def test_off_without_config(self):
         used, _, reply, target = await self.run_start({})

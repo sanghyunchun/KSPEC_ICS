@@ -1,0 +1,1500 @@
+#!/usr/bin/env python3
+"""viewer2.py
+
+Standalone live GUI viewer for GFA FITS images.
+- Select one of six cameras using the camera buttons.
+- Show the selected image and reference-star cutouts in an enlarged panel.
+- Preserve frame navigation, FITS opening, polling, reference locking and drift
+  measurements, demo fallback, and last-image retention between exposures.
+
+Usage:
+    python viewer2.py
+    python viewer2.py --root ~/work/DATA/GFADATA/img --interval 2
+
+By default, follow guiding_save under --root. The Pointing and Guiding buttons
+switch between the corresponding saved-image directories.
+
+Requires numpy, astropy, matplotlib, and tkinter; viewer.py is not required.
+Optional demo images are loaded from demo_save beside this file.
+"""
+
+import argparse
+import os
+import re
+import time
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
+from astropy.io import fits
+from astropy.visualization import ZScaleInterval
+
+import tkinter as tk
+from tkinter import ttk, messagebox, filedialog
+from tkinter import font as tkfont
+
+import matplotlib
+matplotlib.use("TkAgg")
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.patches import Circle, Rectangle
+from matplotlib.transforms import Bbox
+
+
+# ---- Optics / plate scale ----
+PIX_SIZE = 4 * 2.74e-6  # 4x4 binning (meters)
+FLEN = 5.12             # meters
+PIX_SCALE = np.rad2deg(PIX_SIZE / FLEN) * 3600.0  # arcsec / pixel
+
+# Avoid locking onto saturated or near-saturated stars.
+# Reference-star candidates must have peak counts below this value.
+STAR_PEAK_MAX = 4096.0
+
+
+FNAME_RE = re.compile(
+    r"^D(?P<date>\d{8})_T(?P<time>\d{6})_(?P<serial>\d+)_(?:exp[\d.]+s|combined)\.fits$"
+)
+
+
+@dataclass(frozen=True)
+class FrameKey:
+    date: str  # YYYYMMDD
+    t: str     # HHMMSS
+
+    def sortable(self) -> str:
+        return f"{self.date}{self.t}"
+
+
+def yyyymmdd_to_folder(yyyymmdd: str) -> str:
+    if not re.fullmatch(r"\d{8}", yyyymmdd):
+        raise ValueError("date must be YYYYMMDD (e.g. 20260126)")
+    return f"{yyyymmdd[0:4]}-{yyyymmdd[4:6]}-{yyyymmdd[6:8]}"
+
+
+def time_to_sec(hhmmss: str) -> int:
+    hh = int(hhmmss[0:2])
+    mm = int(hhmmss[2:4])
+    ss = int(hhmmss[4:6])
+    return hh * 3600 + mm * 60 + ss
+
+
+def parse_filename(name: str) -> Optional[Tuple[FrameKey, str]]:
+    m = FNAME_RE.match(name)
+    if not m:
+        return None
+    key = FrameKey(m.group("date"), m.group("time"))
+    serial = m.group("serial")
+    return key, serial
+
+
+def scan_groups(day_dir: str, selected_path: Optional[str] = None) -> Dict[FrameKey, Dict[str, str]]:
+    """
+    Returns:
+      { FrameKey -> { serial -> filepath } }
+
+    Files whose timestamps are within 4 seconds are grouped together.
+    When supplied, the selected file anchors its own group before other groups.
+    """
+    groups: Dict[FrameKey, Dict[str, str]] = {}
+    if not os.path.isdir(day_dir):
+        return groups
+
+    threshold_sec = 4
+    selected = parse_filename(os.path.basename(selected_path)) if selected_path else None
+    selected_key = selected[0] if selected else None
+    group_keys: List[FrameKey] = [selected_key] if selected_key else []
+    selected_distances: Dict[str, int] = {}
+
+    for fn in sorted(os.listdir(day_dir)):
+        if not fn.endswith(".fits"):
+            continue
+
+        parsed = parse_filename(fn)
+        if not parsed:
+            continue
+
+        key, serial = parsed
+        t_sec = time_to_sec(key.t)
+
+        matched_key: Optional[FrameKey] = None
+        for gkey in group_keys:
+            if gkey.date != key.date:
+                continue
+            if abs(time_to_sec(gkey.t) - t_sec) <= threshold_sec:
+                matched_key = gkey
+                break
+
+        if matched_key is None:
+            matched_key = key
+            group_keys.append(matched_key)
+
+        path = os.path.join(day_dir, fn)
+        if matched_key == selected_key:
+            distance = abs(time_to_sec(selected_key.t) - t_sec)
+            # Prefer the selected file, then the closest exposure per camera.
+            if selected_path and os.path.abspath(path) == os.path.abspath(selected_path):
+                distance = -1
+            if serial in selected_distances and selected_distances[serial] <= distance:
+                continue
+            selected_distances[serial] = distance
+        groups.setdefault(matched_key, {})[serial] = path
+
+    return groups
+
+
+def sorted_keys(groups: Dict[FrameKey, Dict[str, str]]) -> List[FrameKey]:
+    return sorted(groups.keys(), key=lambda k: k.sortable())
+
+
+def scan_saved_groups(save_dir: str) -> Dict[FrameKey, Dict[str, str]]:
+    """Read the newest populated date folder used by the GFA server."""
+    if not os.path.isdir(save_dir):
+        return {}
+
+    date_dirs = sorted(
+        (
+            entry.path for entry in os.scandir(save_dir)
+            if entry.is_dir() and re.fullmatch(r"\d{4}-\d{2}-\d{2}", entry.name)
+        ),
+        reverse=True,
+    )
+    for date_dir in date_dirs:
+        groups = scan_groups(date_dir)
+        if groups:
+            return groups
+
+    # Also accept FITS files directly in the save directory.
+    return scan_groups(save_dir)
+
+
+def robust_stats(x: np.ndarray) -> Tuple[float, float]:
+    """Median + robust sigma (MAD)."""
+    med = float(np.median(x))
+    mad = float(np.median(np.abs(x - med)))
+    sigma = 1.4826 * mad if mad > 0 else float(np.std(x))
+    return med, sigma
+
+
+def estimate_fwhm_arcsec(data: np.ndarray) -> Optional[Tuple[float, float, float, float, float]]:
+    """
+    Estimate FWHM by 2nd moments around a moderately bright, unsaturated peak.
+    Returns:
+        (peak_signal, fwhm_arcsec, x, y, fwhm_pix)
+    or None if failed.
+
+    Saturation handling:
+    - The initial candidate peak must be < STAR_PEAK_MAX.
+    - The local fitting cutout must also have max < STAR_PEAK_MAX.
+      This prevents locking onto stars whose center/core is saturated
+      even if a nearby non-saturated pixel was selected as the candidate.
+    """
+    if data.ndim != 2:
+        return None
+
+    img = np.asarray(data, dtype=np.float64)
+
+    if not np.isfinite(img).any():
+        return None
+    finite = img[np.isfinite(img)]
+    if finite.size < 100:
+        return None
+
+    med, sig = robust_stats(finite)
+
+    h, w = img.shape
+    y0, y1 = int(0.1 * h), int(0.9 * h)
+    x0, x1 = int(0.1 * w), int(0.9 * w)
+    roi = img[y0:y1, x0:x1]
+
+    lower = med + 5.0 * sig
+
+    cand = roi.copy()
+    bad = (~np.isfinite(cand)) | (cand >= STAR_PEAK_MAX) | (cand <= lower)
+    cand[bad] = -np.inf
+
+    if not np.isfinite(cand).any():
+        return None
+
+    # Try bright candidates in descending order. A single saturated star may
+    # contribute adjacent pixels below STAR_PEAK_MAX, so reject the whole local
+    # cutout if it contains any saturated/near-saturated pixels.
+    max_candidates = 80
+    flat = cand.ravel()
+    finite_idx = np.flatnonzero(np.isfinite(flat))
+    if finite_idx.size == 0:
+        return None
+
+    order = finite_idx[np.argsort(flat[finite_idx])[::-1]]
+    order = order[:max_candidates]
+
+    for flat_idx in order:
+        iy, ix = np.unravel_index(flat_idx, cand.shape)
+        peak_signal = float(cand[iy, ix])
+        py, px = iy + y0, ix + x0
+
+        half = 12
+        ys = max(py - half, 0)
+        ye = min(py + half + 1, h)
+        xs = max(px - half, 0)
+        xe = min(px + half + 1, w)
+        cut = img[ys:ye, xs:xe]
+
+        finite_cut = cut[np.isfinite(cut)]
+        if finite_cut.size < 20:
+            continue
+
+        # Reject any candidate whose local star cutout contains saturated pixels.
+        if float(np.max(finite_cut)) >= STAR_PEAK_MAX:
+            continue
+
+        border = np.concatenate([
+            cut[0, :], cut[-1, :], cut[:, 0], cut[:, -1]
+        ])
+        finite_border = border[np.isfinite(border)]
+        bkg = float(np.median(finite_border)) if finite_border.size > 0 else med
+
+        wgt = cut - bkg
+        wgt[~np.isfinite(wgt)] = 0.0
+        wgt[wgt < 0] = 0.0
+        s = float(wgt.sum())
+        if s <= 0:
+            continue
+
+        yy, xx = np.indices(cut.shape)
+        cx = float((wgt * xx).sum() / s)
+        cy = float((wgt * yy).sum() / s)
+
+        vx = float((wgt * (xx - cx) ** 2).sum() / s)
+        vy = float((wgt * (yy - cy) ** 2).sum() / s)
+        if vx <= 0 or vy <= 0:
+            continue
+
+        sigma_pix = float(np.sqrt(0.5 * (vx + vy)))
+        fwhm_pix = 2.355 * sigma_pix
+        fwhm_arcsec = fwhm_pix * PIX_SCALE
+
+        x_img = xs + cx
+        y_img = ys + cy
+        return peak_signal, fwhm_arcsec, x_img, y_img, fwhm_pix
+
+    return None
+
+
+def read_fits_2d(path: str) -> Optional[np.ndarray]:
+    try:
+        with fits.open(path, memmap=False) as hdul:
+            for hdu in hdul:
+                if hdu.data is None:
+                    continue
+                arr = np.asarray(hdu.data)
+                if arr.ndim == 2:
+                    return arr
+                if arr.ndim == 3 and 1 in arr.shape:
+                    arr2 = np.squeeze(arr)
+                    if arr2.ndim == 2:
+                        return arr2
+    except Exception:
+        return None
+    return None
+
+
+def autoscale_limits(img: np.ndarray) -> Tuple[float, float]:
+    finite = img[np.isfinite(img)]
+    if finite.size < 10:
+        return 0.0, 1.0
+    try:
+        vmin, vmax = ZScaleInterval().get_limits(finite)
+        if np.isfinite(vmin) and np.isfinite(vmax) and vmax > vmin:
+            return float(vmin), float(vmax)
+    except Exception:
+        pass
+    p1, p99 = np.percentile(finite, [1, 99])
+    if p99 <= p1:
+        p1, p99 = float(finite.min()), float(finite.max())
+        if p99 <= p1:
+            p99 = p1 + 1.0
+    return float(p1), float(p99)
+
+
+def extract_cutout(img: np.ndarray, x: float, y: float, half_size: int = 12):
+    """
+    Extract a square cutout centered near (x, y).
+    Returns:
+        cutout, xs, xe, ys, ye
+    where [ys:ye, xs:xe] are the bounds in the original image.
+    """
+    h, w = img.shape
+    cx = int(round(x))
+    cy = int(round(y))
+
+    xs = max(cx - half_size, 0)
+    xe = min(cx + half_size + 1, w)
+    ys = max(cy - half_size, 0)
+    ye = min(cy + half_size + 1, h)
+
+    cut = img[ys:ye, xs:xe]
+    return cut, xs, xe, ys, ye
+
+
+def centroid_in_cutout(img: np.ndarray) -> Optional[Tuple[float, float]]:
+    """
+    Estimate centroid inside a cutout using simple background-subtracted moments.
+    Returns (x, y) in cutout-local coordinates, or None.
+    """
+    if img.ndim != 2:
+        return None
+
+    arr = np.asarray(img, dtype=np.float64)
+    finite = arr[np.isfinite(arr)]
+    if finite.size < 20:
+        return None
+
+    med = float(np.median(finite))
+
+    border = np.concatenate([arr[0, :], arr[-1, :], arr[:, 0], arr[:, -1]])
+    border = border[np.isfinite(border)]
+    bkg = float(np.median(border)) if border.size > 0 else med
+
+    wgt = arr - bkg
+    wgt[~np.isfinite(wgt)] = 0.0
+    wgt[wgt < 0] = 0.0
+
+    s = float(wgt.sum())
+    if s <= 0:
+        return None
+
+    yy, xx = np.indices(arr.shape)
+    cx = float((wgt * xx).sum() / s)
+    cy = float((wgt * yy).sum() / s)
+    return cx, cy
+
+
+class FitsLiveViewer:
+    def __init__(
+        self,
+        root_dir: str,
+        date_yyyymmdd: Optional[str],
+        camera_serials: List[str],
+        poll_sec: float,
+    ):
+        self.root_dir = os.path.abspath(os.path.expanduser(root_dir))
+        self.date_yyyymmdd = date_yyyymmdd
+        self.date_folder = yyyymmdd_to_folder(date_yyyymmdd) if date_yyyymmdd else None
+        self.live_source = None if self.date_folder else "guiding"
+        self.day_dir = (
+            os.path.join(self.root_dir, "grab", self.date_folder)
+            if self.date_folder else os.path.join(self.root_dir, "guiding_save")
+        )
+        self.source_label = f"grab/{self.date_folder}" if self.date_folder else "guiding_save"
+        self.selected_path: Optional[str] = None
+
+        self.camera_serials = camera_serials
+        self.poll_sec = poll_sec
+
+        self.groups: Dict[FrameKey, Dict[str, str]] = {}
+        self.keys: List[FrameKey] = []
+        self.idx: int = -1
+        self.follow_latest: bool = True
+
+        self.reference_centers: Dict[str, Tuple[float, float]] = {}
+        self.reference_fwhm_pix: Dict[str, float] = {}
+        self.reference_locked: bool = False
+
+        self._closing = False
+        self._after_id = None
+
+        # Actual watched data
+        self.actual_groups: Dict[FrameKey, Dict[str, str]] = {}
+
+        # Demo fallback
+        self.demo_active: bool = False
+        self.waiting_for_next_frame: bool = False
+        self.demo_dir = Path(__file__).resolve().parent / "demo_save"
+
+        self._build_gui()
+        self.win.protocol("WM_DELETE_WINDOW", self.on_close)
+
+        self._initial_scan()
+        self._fit_initial_window()
+        self._schedule_poll()
+
+    def _build_gui(self):
+        self.win = tk.Tk()
+        self.win.title("FITS Live Viewer")
+
+        top = ttk.Frame(self.win, padding=8)
+        top.pack(side=tk.TOP, fill=tk.X)
+
+        self.status_var = tk.StringVar(value="")
+        ttk.Label(top, textvariable=self.status_var).pack(side=tk.LEFT)
+
+        btns = ttk.Frame(self.win, padding=8)
+        btns.pack(side=tk.BOTTOM, fill=tk.X)
+
+        self.control_font = tkfont.nametofont("TkDefaultFont").copy()
+        self.control_font.configure(size=12)
+        style = ttk.Style(self.win)
+        style.configure(
+            "ViewerControls.TButton", font=self.control_font, padding=(10, 6)
+        )
+        style.configure(
+            "ViewerControls.TCheckbutton", font=self.control_font, padding=(4, 6)
+        )
+        style.configure("ViewerControls.TLabel", font=self.control_font)
+
+        self.open_btn = ttk.Button(
+            btns, text="Open…", command=self.on_open, style="ViewerControls.TButton"
+        )
+        self.open_btn.pack(side=tk.LEFT, padx=(0, 8))
+
+        self.pointing_btn = ttk.Button(
+            btns, text="Pointing", command=lambda: self.on_source("pointing"),
+            style="ViewerControls.TButton",
+        )
+        self.pointing_btn.pack(side=tk.LEFT, padx=(0, 8))
+
+        self.guiding_btn = ttk.Button(
+            btns, text="Guiding", command=lambda: self.on_source("guiding"),
+            style="ViewerControls.TButton",
+        )
+        self.guiding_btn.pack(side=tk.LEFT, padx=(0, 8))
+
+        self.prev_btn = ttk.Button(
+            btns, text="◀ Prev", command=self.on_prev, style="ViewerControls.TButton"
+        )
+        self.prev_btn.pack(side=tk.LEFT)
+
+        self.next_btn = ttk.Button(
+            btns, text="Next ▶", command=self.on_next, style="ViewerControls.TButton"
+        )
+        self.next_btn.pack(side=tk.LEFT, padx=(8, 0))
+
+        self.latest_btn = ttk.Button(
+            btns, text="Go to Latest", command=self.on_latest,
+            style="ViewerControls.TButton",
+        )
+        self.latest_btn.pack(side=tk.LEFT, padx=(8, 0))
+
+        self.relock_btn = ttk.Button(
+            btns, text="Relock Ref", command=self.on_relock,
+            style="ViewerControls.TButton",
+        )
+        self.relock_btn.pack(side=tk.LEFT, padx=(8, 0))
+
+        self.follow_var = tk.BooleanVar(value=True)
+        self.follow_chk = ttk.Checkbutton(
+            btns, text="Follow latest", variable=self.follow_var,
+            command=self.on_toggle_follow, style="ViewerControls.TCheckbutton",
+        )
+        self.follow_chk.pack(side=tk.LEFT, padx=(16, 0))
+
+        # Each camera panel is built from:
+        #   main image | contour thumbnail
+        #              | grayscale thumbnail
+        #   info text  | pixel scale and reference FWHM
+        # Fixed pixel widths: 10 + 900 + 10 + 270 + 10 = 1200.
+        self.fig = plt.figure(figsize=(12, 6.8), dpi=100)
+        outer_gs = self.fig.add_gridspec(
+            2, 3,
+            wspace=0.025,
+            hspace=0.12,
+        )
+
+        main_axes = []
+        contour_axes = []
+        thumbnail_axes = []
+        thumbnail_info_axes = []
+        info_axes = []
+        for row in range(2):
+            for col in range(3):
+                panel_gs = outer_gs[row, col].subgridspec(
+                    2, 2,
+                    height_ratios=[1.0, 0.15],
+                    width_ratios=[1.0, 0.18],
+                    wspace=0.0,
+                    hspace=0.012,
+                )
+                thumb_gs = panel_gs[0, 1].subgridspec(
+                    2, 1,
+                    height_ratios=[1.0, 1.0],
+                    hspace=0.0,
+                )
+                main_axes.append(self.fig.add_subplot(panel_gs[0, 0]))
+                contour_axes.append(self.fig.add_subplot(thumb_gs[0, 0]))
+                thumbnail_axes.append(self.fig.add_subplot(thumb_gs[1, 0]))
+                thumbnail_info_axes.append(self.fig.add_subplot(panel_gs[1, 1]))
+                info_axes.append(self.fig.add_subplot(panel_gs[1, :]))
+
+        self.axes = np.array(main_axes).reshape(2, 3)
+        self.contour_axes = np.array(contour_axes).reshape(2, 3)
+        self.thumbnail_axes = np.array(thumbnail_axes).reshape(2, 3)
+        self.thumbnail_info_axes = np.array(thumbnail_info_axes).reshape(2, 3)
+        self.info_axes = np.array(info_axes).reshape(2, 3)
+        self.fig.subplots_adjust(
+            left=0.012, right=0.996,
+            bottom=0.035, top=0.935,
+            wspace=0.055, hspace=0.18,
+        )
+
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self.win)
+        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        self.img_artists = [None] * 6
+        self.overlay_artists: List = []
+
+        for ax, cax, tax, tiax, iax, serial in zip(
+            self.axes.flatten(),
+            self.contour_axes.flatten(),
+            self.thumbnail_axes.flatten(),
+            self.thumbnail_info_axes.flatten(),
+            self.info_axes.flatten(),
+            self.camera_serials,
+        ):
+            ax.set_title(serial, pad=2)
+            ax.set_xticks([])
+            ax.set_yticks([])
+            ax.set_anchor("E")
+            for sax in (cax, tax):
+                sax.set_xticks([])
+                sax.set_yticks([])
+#                sax.set_anchor("SW")
+                cax.set_anchor("S")
+                tax.set_anchor("N")
+#                try:
+#                    sax.set_box_aspect(1)
+#                except Exception:
+#                    pass
+            iax.axis("off")
+            tiax.axis("off")
+
+        self.camera_var = tk.StringVar(value=self.camera_serials[0])
+        selector = ttk.Frame(self.win, padding=(8, 0, 8, 8))
+        selector.pack(
+            side=tk.TOP, fill=tk.X, before=self.canvas.get_tk_widget()
+        )
+        self._control_frames = (top, selector, btns)
+        ttk.Label(selector, text="Camera:").pack(side=tk.LEFT, padx=(0, 8))
+        self.camera_buttons = []
+        for serial in self.camera_serials:
+            button = ttk.Radiobutton(
+                selector,
+                text=serial,
+                value=serial,
+                variable=self.camera_var,
+                command=self._select_camera,
+                style="Toolbutton",
+            )
+            button.pack(side=tk.LEFT, padx=(0, 6), ipadx=8, ipady=4)
+            self.camera_buttons.append(button)
+
+        # Give every camera the same large layout, displaying only the selected
+        # panel. Keeping separate axes preserves each camera's last rendered
+        # image, cutouts and overlays without reopening a possibly deleted file.
+        panel = self.fig.add_gridspec(
+            2, 2,
+            height_ratios=[1.0, 0.15],
+            width_ratios=[1.0, 0.3],
+            wspace=0.0,
+            hspace=0.012,
+        )
+        thumbnails = panel[0, 1].subgridspec(2, 1, hspace=0.0)
+        for axes, spec in (
+            (self.axes, panel[0, 0]),
+            (self.contour_axes, thumbnails[0, 0]),
+            (self.thumbnail_axes, thumbnails[1, 0]),
+            (self.info_axes, panel[1, :]),
+            (self.thumbnail_info_axes, panel[1, 1]),
+        ):
+            for ax in axes.flat:
+                ax.set_subplotspec(spec)
+
+        for ax, iax in zip(self.axes.flat, self.info_axes.flat):
+            ax.set_axes_locator(
+                lambda image_ax, renderer: self._fixed_panel_bounds("image")
+            )
+            # Follow the actual image bounds after Matplotlib preserves its
+            # aspect ratio, including when the window is resized.
+            def locate_info(info_ax, renderer, image_ax=ax):
+                image_ax.apply_aspect(
+                    image_ax.get_axes_locator()(image_ax, renderer)
+                )
+                bounds = image_ax.get_position()
+                height = 60.0 / self.fig.bbox.height
+                gap = 4.0 / self.fig.bbox.height
+                return Bbox.from_bounds(
+                    bounds.x0, bounds.y0 - gap - height, bounds.width, height
+                )
+
+            iax.set_axes_locator(locate_info)
+
+        for cax, tax in zip(self.contour_axes.flat, self.thumbnail_axes.flat):
+            cax.set_axes_locator(
+                lambda contour_ax, renderer: self._fixed_panel_bounds("contour")
+            )
+            tax.set_axes_locator(
+                lambda thumbnail_ax, renderer: self._fixed_panel_bounds("thumbnail")
+            )
+
+        for tiax in self.thumbnail_info_axes.flat:
+            tiax.set_axes_locator(
+                lambda info_ax, renderer: self._fixed_panel_bounds("thumbnail_info")
+            )
+
+        self._show_selected_camera()
+
+    def _fit_initial_window(self, canvas_height=680):
+        """Fit the initial window to the canvas and the actual control heights."""
+        if not self.win.winfo_exists():
+            return
+        self.win.update_idletasks()
+        controls_height = sum(
+            frame.winfo_reqheight() for frame in self._control_frames
+        )
+        # Fit the canvas to the actual image width, removing unused space from
+        # the nominal 900-pixel camera area while preserving the image aspect.
+        image_height = max(540.0, canvas_height - 120.0)
+        canvas_width = int(np.ceil(self._camera_display_width(image_height) + 300.0))
+        # An explicit size keeps long status messages from widening the window.
+        # Tk geometry describes the client area; the window manager adds borders.
+        self.win.geometry(f"{canvas_width}x{canvas_height + controls_height}")
+
+    def _camera_display_width(self, image_height):
+        """Use only the width needed by the selected image at its native aspect."""
+        selected = self.camera_var.get()
+        index = self.camera_serials.index(selected)
+        artist = self.img_artists[index]
+        if artist is not None:
+            height, width = artist.get_array().shape[:2]
+            return min(900.0, image_height * width / height)
+        return 900.0
+
+    def _fixed_panel_bounds(self, panel):
+        """Allocate pixel-sized panels independently of the canvas width."""
+        height = self.fig.bbox.height
+        left = 10.0
+        image_height = max(540.0, height - 120.0)
+        image_width = self._camera_display_width(image_height)
+        bottom = 80.0
+        if panel == "image":
+            bounds = Bbox.from_bounds(left, bottom, image_width, image_height)
+        else:
+            thumb_bottom = bottom + (image_height - 540.0) / 2.0
+            if panel == "thumbnail_info":
+                bounds = Bbox.from_bounds(
+                    left + image_width + 10.0, thumb_bottom - 64.0, 270.0, 60.0
+                )
+                return bounds.transformed(self.fig.transFigure.inverted())
+            if panel == "contour":
+                thumb_bottom += 270.0
+            bounds = Bbox.from_bounds(
+                left + image_width + 10.0, thumb_bottom, 270.0, 270.0
+            )
+        return bounds.transformed(self.fig.transFigure.inverted())
+
+
+    def _select_camera(self):
+        self._show_selected_camera()
+        self._fit_initial_window(canvas_height=int(round(self.fig.bbox.height)))
+
+    def _show_selected_camera(self):
+        selected = self.camera_var.get()
+        for axes in (
+            self.axes, self.contour_axes, self.thumbnail_axes,
+            self.thumbnail_info_axes, self.info_axes,
+        ):
+            for ax, serial in zip(axes.flat, self.camera_serials):
+                ax.set_visible(serial == selected)
+        self.canvas.draw_idle()
+
+
+    def _reset_reference_state(self):
+        self.reference_centers = {}
+        self.reference_fwhm_pix = {}
+        self.reference_locked = False
+
+    def _set_thumbnail_info(self, ax, serial: str):
+        """Show the scale and locked reference-star FWHM below a thumbnail."""
+        ax.clear()
+        ax.axis("off")
+        fwhm_pix = self.reference_fwhm_pix.get(serial)
+        fwhm_text = (
+            f"{fwhm_pix * PIX_SCALE:.2f} arcsec"
+            if fwhm_pix is not None else "--"
+        )
+        ax.text(
+            0.0, 1.0,
+            f"Pixel scale: {PIX_SCALE:.3f} arcsec/pix\n"
+            f"Ref FWHM: {fwhm_text}",
+            transform=ax.transAxes,
+            ha="left", va="top", fontsize=12, linespacing=1.2,
+        )
+
+    def _copy_groups(self, groups: Dict[FrameKey, Dict[str, str]]) -> Dict[FrameKey, Dict[str, str]]:
+        return {k: dict(v) for k, v in groups.items()}
+
+    def _load_demo_groups(self) -> Dict[FrameKey, Dict[str, str]]:
+        """
+        Load one demo frame from demo_guiding_save directory.
+        The files are mapped to camera order as:
+            K, -, S, P, E, C
+        """
+        demo_groups: Dict[FrameKey, Dict[str, str]] = {}
+
+        demo_files = [
+            self.demo_dir / "01_K.fits",
+            self.demo_dir / "02_dash.fits",
+            self.demo_dir / "03_S.fits",
+            self.demo_dir / "04_P.fits",
+            self.demo_dir / "05_E.fits",
+            self.demo_dir / "06_C.fits",
+        ]
+
+        if not all(p.is_file() for p in demo_files):
+            return demo_groups
+
+        key = FrameKey(self.date_yyyymmdd or time.strftime("%Y%m%d"), "000000")
+        demo_groups[key] = {}
+
+        for serial, path in zip(self.camera_serials, demo_files):
+            demo_groups[key][serial] = str(path)
+
+        return demo_groups
+
+    def _activate_demo_mode(self):
+        self.waiting_for_next_frame = False
+        demo_groups = self._load_demo_groups()
+        if not demo_groups:
+            self.demo_active = False
+            self.groups = {}
+            self.keys = []
+            self.idx = -1
+            self._reset_reference_state()
+            self._clear_empty_view("No FITS found and no demo images available.")
+            return
+
+        self.demo_active = True
+        self.groups = self._copy_groups(demo_groups)
+        self.keys = sorted_keys(self.groups)
+        self.idx = len(self.keys) - 1 if self.keys else -1
+        self._reset_reference_state()
+        if self.keys:
+            self._lock_reference_stars()
+            self._render_current()
+        else:
+            self._clear_empty_view("Demo images could not be loaded.")
+
+    def _activate_actual_mode(self):
+        if self.demo_active:
+            # A demo frame is not a previous observation frame.
+            self.img_artists = [None] * 6
+        self.waiting_for_next_frame = False
+        self.demo_active = False
+        self.groups = self._copy_groups(self.actual_groups)
+        self.keys = sorted_keys(self.groups)
+        self.idx = len(self.keys) - 1 if self.keys else -1
+        self._reset_reference_state()
+        if self.keys:
+            self._lock_reference_stars()
+            self._render_current()
+        else:
+            self._clear_empty_view(f"No FITS found yet in {self.day_dir}")
+
+    def _clear_empty_view(self, message: str):
+        self._clear_overlays()
+        for ax, cax, tax, tiax, iax, serial in zip(
+            self.axes.flatten(),
+            self.contour_axes.flatten(),
+            self.thumbnail_axes.flatten(),
+            self.thumbnail_info_axes.flatten(),
+            self.info_axes.flatten(),
+            self.camera_serials,
+        ):
+            ax.clear()
+            cax.clear()
+            tax.clear()
+            self._set_thumbnail_info(tiax, serial)
+            iax.clear()
+            ax.set_title(f"{serial}\n(empty)")
+            ax.set_xticks([])
+            ax.set_yticks([])
+            for sax in (cax, tax):
+                sax.set_xticks([])
+                sax.set_yticks([])
+                try:
+                    sax.set_box_aspect(1)
+                except Exception:
+                    pass
+            cax.set_anchor("S")
+            tax.set_anchor("N")
+            iax.axis("off")
+        self.canvas.draw_idle()
+        self.status_var.set(message)
+
+    def _initial_scan(self):
+        # The saved-image directories are created by the GFA server.
+        if self.live_source is None and not os.path.isdir(self.day_dir):
+            try:
+                os.makedirs(self.day_dir, exist_ok=True)
+                print(f"[INFO] Created directory: {self.day_dir}")
+            except Exception as e:
+                messagebox.showerror(
+                    "Directory creation failed",
+                    f"Could not create:\n{self.day_dir}\n\n{e}"
+                )
+                try:
+                    self.win.destroy()
+                except Exception:
+                    pass
+                return
+
+        _ = self._rescan()
+
+        if self.actual_groups:
+            self._activate_actual_mode()
+        else:
+            self._activate_demo_mode()
+
+    def _rescan(self) -> bool:
+        """
+        Rescan the watched directory only.
+        Returns True if actual watched data changed.
+        """
+        new_groups = (
+            scan_saved_groups(self.day_dir) if self.live_source
+            else scan_groups(self.day_dir, self.selected_path)
+        )
+        changed = (new_groups != self.actual_groups)
+        self.actual_groups = self._copy_groups(new_groups)
+        return changed
+
+    def _lock_reference_stars(self):
+        """
+        Lock reference star positions from the current frame, one per camera.
+
+        First, find an approximate star position using estimate_fwhm_arcsec().
+        Then, re-center it using centroid_in_cutout() on a fixed cutout.
+        This makes the locked reference center consistent with the centroid
+        method used later in _render_current(), so dx/dy on the reference
+        frame should be close to 0.
+        """
+        if not self.keys or self.idx < 0 or self.idx >= len(self.keys):
+            self.reference_centers = {}
+            self.reference_fwhm_pix = {}
+            self.reference_locked = False
+            return
+
+        key = self.keys[self.idx]
+        frame = self.groups.get(key, {})
+
+        self.reference_centers = {}
+        self.reference_fwhm_pix = {}
+
+        for serial in self.camera_serials:
+            path = frame.get(serial)
+            if path is None or not os.path.isfile(path):
+                continue
+
+            img = read_fits_2d(path)
+            if img is None:
+                continue
+
+            f = estimate_fwhm_arcsec(img)
+            if f is None:
+                continue
+
+            peak_signal, fwhm_arcsec, x0, y0, fwhm_pix = f
+
+            cut_half = max(12, int(np.ceil(4.0 * fwhm_pix)))
+            cutout, xs, xe, ys, ye = extract_cutout(img, x0, y0, half_size=cut_half)
+
+            c = centroid_in_cutout(cutout)
+            if c is not None:
+                cx_local, cy_local = c
+                x_ref = xs + cx_local
+                y_ref = ys + cy_local
+            else:
+                x_ref = x0
+                y_ref = y0
+
+            self.reference_centers[serial] = (x_ref, y_ref)
+            self.reference_fwhm_pix[serial] = fwhm_pix
+
+        self.reference_locked = len(self.reference_centers) > 0
+
+    def _schedule_poll(self):
+        if self._closing:
+            return
+
+        try:
+            self._after_id = self.win.after(int(self.poll_sec * 1000), self._poll)
+        except Exception:
+            self._after_id = None
+
+    def _poll(self):
+        if self._closing:
+            return
+
+        try:
+            changed = self._rescan()
+            has_actual = bool(self.actual_groups)
+
+            if has_actual:
+                if self.demo_active:
+                    self._activate_actual_mode()
+                elif changed:
+                    self.waiting_for_next_frame = False
+                    current_key = (
+                        self.keys[self.idx]
+                        if 0 <= self.idx < len(self.keys) else None
+                    )
+                    self.groups = self._copy_groups(self.actual_groups)
+                    self.keys = sorted_keys(self.groups)
+                    if self.follow_latest:
+                        self.idx = len(self.keys) - 1
+                    elif current_key in self.keys:
+                        self.idx = self.keys.index(current_key)
+                    else:
+                        # The displayed frame was removed; keep a nearby frame.
+                        self.idx = min(max(self.idx, 0), len(self.keys) - 1)
+
+                    if not self.reference_locked and self.keys:
+                        self._lock_reference_stars()
+
+                    self._render_current()
+                else:
+                    self._update_status()
+            else:
+                if not self.demo_active and self.keys:
+                    # The raw files may be removed between exposures. Keep the
+                    # rendered image and its guide-star reference until new data arrives.
+                    self.waiting_for_next_frame = True
+                    self._update_status()
+                elif not self.demo_active:
+                    self._activate_demo_mode()
+                else:
+                    self._update_status()
+
+        except Exception as e:
+            print(f"[poll] {e}")
+
+        if not self._closing:
+            self._schedule_poll()
+
+    def _update_status(self):
+        if not self.keys:
+            if self.demo_active:
+                self.status_var.set("[DEMO] No actual FITS in watched directory.")
+            else:
+                self.status_var.set(f"[{self.source_label}] No frames yet.")
+            return
+
+        key = self.keys[self.idx] if 0 <= self.idx < len(self.keys) else self.keys[-1]
+        lock_txt = "LOCKED" if self.reference_locked else "UNLOCKED"
+
+        if self.waiting_for_next_frame:
+            self.status_var.set(
+                f"[{self.source_label}] Waiting for next frame; showing last actual image "
+                f"D{key.date} T{key.t} [ref: {lock_txt}]"
+            )
+            self.win.title(f"FITS Live Viewer - {self.source_label} - waiting for next frame")
+            return
+
+        prefix = "[DEMO] " if self.demo_active else f"[{self.source_label}] "
+
+        self.status_var.set(
+            f"{prefix}"
+            f"Frame {self.idx+1}/{len(self.keys)}  "
+            f"D{key.date} T{key.t}  "
+            f"[ref: {lock_txt}] "
+            f"(updated: {time.strftime('%H:%M:%S')})"
+        )
+
+        if self.demo_active:
+            self.win.title("FITS Live Viewer - DEMO - K-SPEC")
+        else:
+            self.win.title(f"FITS Live Viewer - {self.source_label} - D{key.date} T{key.t}")
+
+    def on_open(self):
+        path = filedialog.askopenfilename(
+            parent=self.win,
+            title="Open GFA FITS image",
+            initialdir=self.day_dir,
+            filetypes=[("FITS images", "*.fits"), ("All files", "*")],
+        )
+        if not path:
+            return
+
+        path = os.path.abspath(path)
+        parsed = parse_filename(os.path.basename(path))
+        if parsed is None:
+            messagebox.showerror(
+                "Unsupported filename",
+                "Expected DYYYYMMDD_THHMMSS_SERIAL_expNs.fits or "
+                "DYYYYMMDD_THHMMSS_SERIAL_combined.fits.",
+                parent=self.win,
+            )
+            return
+        key, serial = parsed
+        if serial not in self.camera_serials or read_fits_2d(path) is None:
+            messagebox.showerror(
+                "Cannot open image",
+                "Select a readable FITS image from one of the configured cameras.",
+                parent=self.win,
+            )
+            return
+
+        day_dir = os.path.dirname(path)
+        try:
+            groups = scan_groups(day_dir, path)
+        except OSError as e:
+            messagebox.showerror("Cannot read directory", str(e), parent=self.win)
+            return
+        if key not in groups:
+            messagebox.showerror("Cannot open image", "Selected image is no longer available.", parent=self.win)
+            return
+
+        self.day_dir = day_dir
+        self.live_source = None
+        self.selected_path = path
+        self.source_label = day_dir
+        self.demo_active = False
+        self.waiting_for_next_frame = False
+        self.actual_groups = groups
+        self.groups = self._copy_groups(groups)
+        self.keys = sorted_keys(groups)
+        self.idx = self.keys.index(key)
+        self.follow_latest = False
+        self.follow_var.set(False)
+        self._reset_reference_state()
+        self._lock_reference_stars()
+        self._render_current()
+
+    def on_source(self, source: str):
+        """Switch to the latest saved pointing or guiding frame."""
+        if source not in ("pointing", "guiding"):
+            raise ValueError(f"Unknown image source: {source}")
+
+        self.live_source = source
+        self.day_dir = os.path.join(self.root_dir, f"{source}_save")
+        self.source_label = f"{source}_save"
+        self.selected_path = None
+        self.follow_latest = True
+        self.follow_var.set(True)
+        self.waiting_for_next_frame = False
+        self.demo_active = False
+        self.actual_groups = {}
+        self.groups = {}
+        self.keys = []
+        self.idx = -1
+        self.img_artists = [None] * 6
+        self._reset_reference_state()
+        self._rescan()
+        if self.actual_groups:
+            self._activate_actual_mode()
+        else:
+            self._activate_demo_mode()
+
+    def on_toggle_follow(self):
+        self.follow_latest = bool(self.follow_var.get())
+        if self.follow_latest:
+            self.on_latest()
+
+    def on_prev(self):
+        if self.waiting_for_next_frame:
+            return
+        self.follow_latest = False
+        self.follow_var.set(False)
+        if not self.keys:
+            return
+        self.idx = max(0, self.idx - 1)
+        self._render_current()
+
+    def on_next(self):
+        if self.waiting_for_next_frame:
+            return
+        self.follow_latest = False
+        self.follow_var.set(False)
+        if not self.keys:
+            return
+        self.idx = min(len(self.keys) - 1, self.idx + 1)
+        self._render_current()
+
+    def on_latest(self):
+        if self.waiting_for_next_frame:
+            return
+        if not self.keys:
+            return
+        self.idx = len(self.keys) - 1
+        self._render_current()
+
+    def on_relock(self):
+        if self.waiting_for_next_frame:
+            return
+        if not self.keys:
+            return
+        self._lock_reference_stars()
+        self._render_current()
+
+    def on_close(self):
+        if self._closing:
+            return
+
+        self._closing = True
+
+        try:
+            self.win.withdraw()
+        except Exception:
+            pass
+
+        try:
+            self.win.quit()
+        except Exception:
+            pass
+
+        try:
+            self.win.after_idle(self.win.destroy)
+        except Exception:
+            try:
+                self.win.destroy()
+            except Exception:
+                pass
+
+    def _clear_overlays(self):
+        for a in self.overlay_artists:
+            try:
+                a.remove()
+            except Exception:
+                pass
+        self.overlay_artists = []
+
+    def _keep_previous_image(self, ax, iax, serial: str, index: int, reason: str) -> bool:
+        """Keep a rendered camera image if its raw file vanished during a scan."""
+        previous = self.img_artists[index]
+        if previous is None or previous not in ax.images:
+            return False
+        ax.set_title(f"{serial}\n(previous image)", pad=2)
+        iax.clear()
+        iax.axis("off")
+        iax.text(0.5, 0.55, reason, transform=iax.transAxes,
+                 ha="center", va="center", fontsize=8)
+        return True
+
+
+    def _render_current(self):
+        if not self.keys:
+            return
+
+        self.idx = int(np.clip(self.idx, 0, len(self.keys) - 1))
+        key = self.keys[self.idx]
+        frame = self.groups.get(key, {})
+
+        self._clear_overlays()
+
+        for i, (ax, cax, tax, tiax, iax, serial) in enumerate(zip(
+            self.axes.flatten(),
+            self.contour_axes.flatten(),
+            self.thumbnail_axes.flatten(),
+            self.thumbnail_info_axes.flatten(),
+            self.info_axes.flatten(),
+            self.camera_serials,
+        )):
+            self._set_thumbnail_info(tiax, serial)
+            path = frame.get(serial)
+            ax.set_title(serial, pad=2)
+            ax.set_xticks([])
+            ax.set_yticks([])
+            ax.set_anchor("E")
+
+            if path is None or not os.path.isfile(path):
+                if self._keep_previous_image(ax, iax, serial, i, "Waiting for next image"):
+                    continue
+                cax.clear()
+                tax.clear()
+                iax.clear()
+                iax.axis("off")
+                ax.clear()
+                ax.set_title(f"{serial}\n(missing)")
+                ax.set_xticks([])
+                ax.set_yticks([])
+                self.img_artists[i] = None
+                iax.text(0.5, 0.55, "missing", transform=iax.transAxes, ha="center", va="center", fontsize=8)
+                cax.text(0.5, 0.5, "missing", transform=cax.transAxes, ha="center", va="center", fontsize=7)
+                tax.text(0.5, 0.5, "missing", transform=tax.transAxes, ha="center", va="center", fontsize=7)
+                continue
+
+            img = read_fits_2d(path)
+            if img is None:
+                if self._keep_previous_image(ax, iax, serial, i, "Image not ready; showing previous"):
+                    continue
+                cax.clear()
+                tax.clear()
+                iax.clear()
+                iax.axis("off")
+                ax.clear()
+                ax.set_title(f"{serial}\n(read error)")
+                ax.set_xticks([])
+                ax.set_yticks([])
+                self.img_artists[i] = None
+                iax.text(0.5, 0.55, "read error", transform=iax.transAxes, ha="center", va="center", fontsize=8)
+                cax.text(0.5, 0.5, "err", transform=cax.transAxes, ha="center", va="center", fontsize=7)
+                tax.text(0.5, 0.5, "err", transform=tax.transAxes, ha="center", va="center", fontsize=7)
+                continue
+
+            cax.clear()
+            tax.clear()
+            iax.clear()
+            for sax in (cax, tax):
+                sax.set_xticks([])
+                sax.set_yticks([])
+                try:
+                    sax.set_box_aspect(1)
+                except Exception:
+                    pass
+            cax.set_anchor("S")
+            tax.set_anchor("N")
+            iax.axis("off")
+
+            vmin, vmax = autoscale_limits(img)
+
+            ax.clear()
+            im = ax.imshow(
+                img,
+                origin="lower",
+                vmin=vmin,
+                vmax=vmax,
+                interpolation="nearest",
+                cmap="Greys_r",
+            )
+            ax.set_title(serial, pad=2)
+            ax.set_xticks([])
+            ax.set_yticks([])
+            ax.set_anchor("E")
+            self.img_artists[i] = im
+
+            ref = self.reference_centers.get(serial)
+
+            if ref is not None:
+                x_ref, y_ref = ref
+                fwhm_pix_ref = self.reference_fwhm_pix.get(serial, 3.0)
+
+                cut_half = max(12, int(np.ceil(4.0 * fwhm_pix_ref)))
+                cutout, xs, xe, ys, ye = extract_cutout(img, x_ref, y_ref, half_size=cut_half)
+
+                ref_circ = Circle(
+                    (x_ref, y_ref),
+                    radius=max(6.0, 4.0 * fwhm_pix_ref),
+                    fill=False,
+                    linewidth=1.5,
+                    edgecolor="darkorange",
+                    alpha=0.9,
+                )
+                ax.add_patch(ref_circ)
+                self.overlay_artists.append(ref_circ)
+
+                rect = Rectangle(
+                    (xs, ys),
+                    xe - xs,
+                    ye - ys,
+                    fill=False,
+                    linewidth=1.2,
+                    edgecolor="cyan",
+                    alpha=0.9,
+                )
+                ax.add_patch(rect)
+                self.overlay_artists.append(rect)
+
+                c = centroid_in_cutout(cutout)
+
+                peak_signal = np.nan
+                finite_cut = cutout[np.isfinite(cutout)]
+                if finite_cut.size > 0:
+                    peak_signal = float(np.max(finite_cut))
+
+                dx = np.nan
+                dy = np.nan
+                x_now = None
+                y_now = None
+                cx_local = None
+                cy_local = None
+
+                if c is not None:
+                    cx_local, cy_local = c
+                    x_now = xs + cx_local
+                    y_now = ys + cy_local
+                    dx = x_now - x_ref
+                    dy = y_now - y_ref
+
+                    current_circ = Circle(
+                        (x_now, y_now),
+                        radius=max(4.0, 2.0 * fwhm_pix_ref),
+                        fill=False,
+                        linewidth=1.2,
+                        edgecolor="lime",
+                        alpha=0.9,
+                    )
+                    ax.add_patch(current_circ)
+                    self.overlay_artists.append(current_circ)
+
+                cvmin, cvmax = autoscale_limits(cutout)
+
+                finite_contour = cutout[np.isfinite(cutout)]
+                cax.set_facecolor("black")
+                if finite_contour.size > 10:
+                    try:
+                        bkg = float(np.median(finite_contour))
+                        peak = float(np.max(finite_contour))
+                        levels = bkg + (peak - bkg) * np.array([0.05, 0.20, 0.50, 0.95])
+                        levels = np.unique(levels[np.isfinite(levels)])
+
+                        if levels.size >= 2 and float(levels[-1]) > float(levels[0]):
+                            cax.contour(
+                                cutout,
+                                levels=levels,
+                                origin="lower",
+                                colors="cyan",
+                                linewidths=0.75,
+                            )
+                        else:
+                            cax.imshow(
+                                cutout,
+                                origin="lower",
+                                vmin=cvmin,
+                                vmax=cvmax,
+                                interpolation="nearest",
+                                cmap="Greys_r",
+                            )
+                    except Exception:
+                        cax.imshow(
+                            cutout,
+                            origin="lower",
+                            vmin=cvmin,
+                            vmax=cvmax,
+                            interpolation="nearest",
+                            cmap="Greys_r",
+                        )
+         #       if c is not None and cx_local is not None and cy_local is not None:
+         #           cax.plot(cx_local, cy_local, marker="+", markersize=9, color="lime")
+                cax.set_xlim(-0.5, cutout.shape[1] - 0.5)
+                cax.set_ylim(-0.5, cutout.shape[0] - 0.5)
+                cax.set_xticks([])
+                cax.set_yticks([])
+                for spine in cax.spines.values():
+                    spine.set_edgecolor("cyan")
+                    spine.set_linewidth(0.5)
+
+                tax.imshow(
+                    cutout,
+                    origin="lower",
+                    vmin=cvmin,
+                    vmax=cvmax,
+                    interpolation="nearest",
+                    cmap="Greys_r",
+                )
+
+                x_ref_local = x_ref - xs
+                y_ref_local = y_ref - ys
+                tax.plot(x_ref_local, y_ref_local, marker="+", markersize=25, color="black")
+
+                if c is not None and cx_local is not None and cy_local is not None:
+                    tax.plot(cx_local, cy_local, marker="+", markersize=25, color="lime")
+
+                # The info axes follow the displayed image bounds, so the
+                # measurements begin directly below the image's left edge.
+                iax.text(
+                    0.0, 1.0,
+                    f"dx={dx:+.2f}, dy={dy:+.2f} pix    "
+                    f"offset=({dx*PIX_SCALE:+.2f}, {dy*PIX_SCALE:+.2f}) arcsec\n"
+                    f"Count={peak_signal:.1f}",
+                    transform=iax.transAxes,
+                    ha="left", va="top",
+                    fontsize=15,
+                    linespacing=1.08,
+                )
+
+                tax.set_xticks([])
+                tax.set_yticks([])
+                tax.set_facecolor("black")
+                for spine in tax.spines.values():
+                    spine.set_edgecolor("cyan")
+                    spine.set_linewidth(0.5)
+
+            else:
+                iax.text(
+                    0.5, 0.55,
+                    "No locked reference",
+                    transform=iax.transAxes,
+                    ha="center", va="center",
+                    fontsize=8,
+                )
+                cax.text(
+                    0.5, 0.5,
+                    "No ref",
+                    transform=cax.transAxes,
+                    ha="center", va="center",
+                    fontsize=8,
+                )
+                tax.text(
+                    0.5, 0.5,
+                    "No ref",
+                    transform=tax.transAxes,
+                    ha="center", va="center",
+                    fontsize=8,
+                )
+
+            fn = os.path.basename(path)
+            small = ax.text(
+                0.02, 0.02, fn,
+                transform=ax.transAxes,
+                ha="left", va="bottom",
+                color="w",
+                fontsize=7,
+                bbox=dict(facecolor="black", alpha=0.35, edgecolor="none", pad=2),
+            )
+            self.overlay_artists.append(small)
+
+        self.fig.subplots_adjust(
+            left=0.012, right=0.996,
+            bottom=0.035, top=0.935,
+            wspace=0.055, hspace=0.18,
+        )
+        self.canvas.draw_idle()
+        self._update_status()
+        self._show_selected_camera()
+
+    def run(self):
+        self.win.mainloop()
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--root", default="~/work/DATA/GFADATA/img", help="GFA image directory"
+    )
+    parser.add_argument(
+        "--date", help="Start with grab/YYYY-MM-DD instead of guiding_save (YYYYMMDD)"
+    )
+    parser.add_argument(
+        "--interval", type=float, default=2.0, help="Polling interval in seconds"
+    )
+    parser.add_argument(
+        "--cameras",
+        default="40103834,40103651,40103667,40103833,40103663,40103831",
+        help="Comma-separated camera serials (button order). Default uses your list.",
+    )
+    args = parser.parse_args()
+    cameras = [serial.strip() for serial in args.cameras.split(",") if serial.strip()]
+    if len(cameras) != 6:
+        parser.error("Please provide exactly 6 camera serials in --cameras")
+
+    viewer = FitsLiveViewer(
+        root_dir=args.root,
+        date_yyyymmdd=args.date,
+        camera_serials=cameras,
+        poll_sec=args.interval,
+    )
+    viewer.run()
+
+
+if __name__ == "__main__":
+    main()

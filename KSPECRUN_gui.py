@@ -216,6 +216,7 @@ class MainWindow(QMainWindow):
         self.expnum = None
         self.obsnum = None
         self.project = None
+        self.calibration_plan = False
         self.fwhm = None
         self.object = None
         self.obslog = None
@@ -2593,7 +2594,8 @@ class MainWindow(QMainWindow):
         mtlstart_response = await send_and_wait_reply(
             self.response_queue,
             self.ICS_client.send_message(
-                'MTL', mtl_start(exptime=exptime, nexposure=nexposure)
+                'MTL', mtl_start(exptime=exptime, nexposure=nexposure,
+                                 sky_correction=False if self.calibration_plan else None)
             ),
             'MTL', 'mtlstart', timeout=300, logging=self.logging,
         )
@@ -2691,6 +2693,7 @@ class MainWindow(QMainWindow):
 
     ### Real survey Observation ####    
         calibration_plan = re.fullmatch(r'Calib_obsplan_(?:\d{8}|YYYYMMDD)\.txt', filename) is not None
+        self.calibration_plan = calibration_plan
         self.tilemsg,self.objmsg,self.motionmsg1,self.motionmsg2=sciobs.loadtile(
             self.TileID, invert_motion_angles=True,
             zenith_angle_override=0.0 if calibration_plan else None,

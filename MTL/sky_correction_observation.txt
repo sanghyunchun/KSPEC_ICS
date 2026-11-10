@@ -1,0 +1,38 @@
+MTL 하늘 보정: 일반 관측과 Calibration 관측
+
+현재 Lib/KSPEC.ini 설정
+  enabled = true
+  precession = true
+  instrument_offset = false
+  instrument_offset_deg = 0.18
+
+1. 일반 관측 (Calib_obsplan_YYYYMMDD.txt 형식이 아닌 시퀀스)
+  Load sequence 후 Deploy는 mtlstart 메시지에 sky_correction 값을 넣지 않는다.
+  MTL 서버는 KSPEC.ini의 enabled=true를 사용하므로 하늘 보정을 실행한다.
+  관측 시각과 타일 좌표로 계산한 세차 보정(precession=true)을 원래 목표
+  초점면 좌표 xp, yp에 적용한다. instrument_offset=false이므로 설정된
+  0.18도는 적용하지 않는다. 세차 회전각은 타일과 관측 시각에 따라 달라진다.
+  MTL은 보정된 *_skycorr.json을 만들어 Trial 0과 후속 trial의 목표로 사용한다.
+
+2. Calibration 관측 (Calib_obsplan_YYYYMMDD.txt 형식의 시퀀스)
+  Load sequence에서 파일명을 판별한다. 이때 적용하는 zenith angle 0도
+  지정은 MTL 하늘 보정 스위치와 별개의 처리이다.
+  Deploy는 mtlstart 메시지에 sky_correction=false를 넣는다.
+  MTL 서버는 메시지 값을 KSPEC.ini의 enabled=true보다 우선하므로 보정
+  단계 전체를 건너뛴다. 세차도 적용하지 않고, 이미 꺼져 있는 기기 회전
+  오프셋도 적용하지 않는다. *_skycorr.json을 새로 만들지 않으며 원본
+  assign 목표 파일을 Trial 0과 후속 trial에 사용한다.
+
+3. FBP와의 관계
+  최초 FBP assign은 별도로 로드한 motion path를 사용한다. MTL 하늘
+  보정은 이 경로를 수정하지 않는다. 이후 MTL trial에서 계산한 offset을
+  FBP에 보내면, FBP는 전달받은 각도로 이동한다. 따라서 하늘 보정의
+  차이는 MTL 목표 및 후속 offset 결과에 반영될 수 있다.
+
+확인 위치
+  Lib/KSPEC.ini: MTL.sky_correction 설정
+  KSPECRUN_gui.py, KSPECRUN_gui_expand.py: Calibration 판별 및 Deploy 메시지
+  MTL/mtlcli.py: mtlstart 메시지 생성
+  MTL/command.py: 메시지 우선 처리와 목표 파일 선택
+  MTL/kspec_metrology/kspec_metrology/analysis/sky_correction.py: 좌표 보정
+  script/scriptcli.py: MTL trial 결과를 fbpoffset으로 FBP에 전달

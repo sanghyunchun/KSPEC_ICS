@@ -10,7 +10,8 @@
 #   inpar["paths"]["directories"]["star_catalog"] (dir OR file path).
 # - No longer hardcodes "img/combined_star.fits".
 # - Adds robust catalog path resolution + helpful diagnostics.
-# - Keeps RA hour->deg heuristic/override.
+# - Uses FITS column units for catalog coordinates, with a degree fallback
+#   for legacy combined catalogs that have no unit metadata.
 
 import os
 import sys
@@ -344,10 +345,8 @@ class GFAGuider:
         - Uses config dirs["star_catalog"] (dir OR file path) to locate combined_star.fits.
         - No longer uses hardcoded "img/combined_star.fits".
 
-        RA unit handling:
-        - If catalog RA looks like hours (0~24), convert to degrees by *15.
-        - Or force via config:
-            inpar["catalog_matching"]["fields"]["ra_unit"] in {"deg","hour"}
+        FITS column units take precedence. For legacy catalogs without RA
+        units, use catalog_matching.fields.ra_unit or assume degrees.
         """
         star_catalog_path = self._resolve_combined_star_path()
 
@@ -398,28 +397,34 @@ class GFAGuider:
             dec_p = np.array(data[dec_col], dtype=float)
             flux = np.array(data[flux_col], dtype=float)
 
+            ra_fits_unit = data.columns[ra_col].unit
+            dec_fits_unit = data.columns[dec_col].unit
+
         # -------------------------
-        # ✅ RA unit handling (hour -> deg)
+        # Coordinate units: trust the FITS columns, then the legacy config.
+        # An unlabelled catalog from the old builder is in degrees as well.
         # -------------------------
         fields_cfg = self.inpar.get("catalog_matching", {}).get("fields", {})
-        ra_unit = (
-            (fields_cfg.get("ra_unit", "") or "").strip().lower()
-        )  # "deg" or "hour" or ""
+        ra_unit = str(
+            ra_fits_unit or fields_cfg.get("ra_unit") or "degrees"
+        ).strip().lower()
+        dec_unit = str(dec_fits_unit or "degrees").strip().lower()
 
-        ra_min = float(np.nanmin(ra_p)) if ra_p.size else float("nan")
-        ra_max = float(np.nanmax(ra_p)) if ra_p.size else float("nan")
-
-        looks_like_hours = (ra_p.size > 0) and (ra_max <= 24.0) and (ra_min >= -0.1)
-
-        if ra_unit == "hour" or (ra_unit == "" and looks_like_hours):
-            self.logger.info(
-                f"[catalog] RA appears to be in HOURS (min={ra_min:.3f}, max={ra_max:.3f}) -> converting RA*15 to degrees."
-            )
+        if ra_unit in {"hour", "hours", "hourangle", "h"}:
             ra_p = ra_p * 15.0
-        else:
-            self.logger.debug(
-                f"[catalog] RA treated as DEGREES (min={ra_min:.3f}, max={ra_max:.3f}), ra_unit='{ra_unit or 'auto'}'"
-            )
+        elif ra_unit not in {"degree", "degrees", "deg"}:
+            raise ValueError(f"Unsupported catalog RA unit: {ra_unit!r}")
+
+        if dec_unit not in {"degree", "degrees", "deg"}:
+            raise ValueError(f"Unsupported catalog DEC unit: {dec_unit!r}")
+
+        self.logger.info(
+            "[catalog] coordinate units: RA=%s (%s), DEC=%s (%s); matching in degrees",
+            ra_unit,
+            "FITS" if ra_fits_unit else "config/default",
+            dec_unit,
+            "FITS" if dec_fits_unit else "default",
+        )
 
         # Convert to radians for matching
         ra1_rad = math.radians(crval1)

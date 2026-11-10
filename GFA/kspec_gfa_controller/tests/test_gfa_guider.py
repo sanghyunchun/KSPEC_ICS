@@ -428,14 +428,16 @@ def test_background_returns_subtracted_and_stddev(guider_config):
 # -------------------------
 # load_star_catalog branches
 # -------------------------
-def _write_combined_star_fits(path: Path, cols: dict[str, Any]):
+def _write_combined_star_fits(path: Path, cols: dict[str, Any], units=None):
     from astropy.io import fits
 
     col_defs = []
     for name, arr in cols.items():
         arr = np.array(arr)
         fmt = "D" if arr.dtype.kind in ("f",) else "K"
-        col_defs.append(fits.Column(name=name, format=fmt, array=arr))
+        col_defs.append(
+            fits.Column(name=name, format=fmt, unit=(units or {}).get(name), array=arr)
+        )
     hdu1 = fits.BinTableHDU.from_columns(col_defs)
     fits.HDUList([fits.PrimaryHDU(), hdu1]).writeto(path, overwrite=True)
 
@@ -482,7 +484,7 @@ def test_load_star_catalog_missing_columns_raises_keyerror(tmp_path, guider_conf
         g.load_star_catalog(10.0, 20.0)
 
 
-def test_load_star_catalog_ra_hour_auto_converts(tmp_path, guider_config):
+def test_load_star_catalog_unitless_ra_defaults_to_degrees(tmp_path, guider_config):
     cfg = _load_cfg(guider_config)
     catdir = tmp_path / "cat3"
     catdir.mkdir()
@@ -498,7 +500,42 @@ def test_load_star_catalog_ra_hour_auto_converts(tmp_path, guider_config):
     )
 
     _, _, _, _, ra_p, _, _ = g.load_star_catalog(10.0, 20.0)
-    assert np.allclose(ra_p, np.array([15.0, 30.0]))
+    assert np.allclose(ra_p, np.array([1.0, 2.0]))
+
+
+def test_load_star_catalog_reads_fits_degree_unit_below_24(tmp_path, guider_config):
+    cfg = _load_cfg(guider_config)
+    catdir = tmp_path / "cat_deg"
+    catdir.mkdir()
+    cfg["paths"]["directories"]["star_catalog"] = str(catdir)
+    _save_cfg(guider_config, cfg)
+    g = _mk_guider(guider_config)
+
+    _write_combined_star_fits(
+        catdir / "combined_star.fits",
+        {"RA": [10.5], "DEC": [-30.0], "FLUX": [200.0]},
+        units={"RA": "degrees", "DEC": "degrees"},
+    )
+    _, _, _, _, ra_p, _, _ = g.load_star_catalog(10.5, -30.0)
+    assert np.allclose(ra_p, [10.5])
+
+
+def test_load_star_catalog_reads_fits_hour_unit(tmp_path, guider_config):
+    cfg = _load_cfg(guider_config)
+    catdir = tmp_path / "cat_hour"
+    catdir.mkdir()
+    cfg["paths"]["directories"]["star_catalog"] = str(catdir)
+    cfg["catalog_matching"]["fields"]["ra_unit"] = "deg"
+    _save_cfg(guider_config, cfg)
+    g = _mk_guider(guider_config)
+
+    _write_combined_star_fits(
+        catdir / "combined_star.fits",
+        {"RA": [1.0], "DEC": [-30.0], "FLUX": [200.0]},
+        units={"RA": "hourangle", "DEC": "degrees"},
+    )
+    _, _, _, _, ra_p, _, _ = g.load_star_catalog(15.0, -30.0)
+    assert np.allclose(ra_p, [15.0])
 
 
 def test_load_star_catalog_ra_unit_force_deg_no_convert(tmp_path, guider_config):

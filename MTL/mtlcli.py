@@ -31,6 +31,7 @@ def mtl_start(
         max_trial=None,
         nexposure=None,
         exptime=None,
+        sky_correction=None,
         ):
     """MetrologyRun을 초기화하고 Trial 0 기준 JSON 생성을 요청한다."""
     data = {
@@ -49,6 +50,8 @@ def mtl_start(
         data["nexposure"] = nexposure
     if exptime is not None:
         data["time"] = seconds_to_microseconds(exptime)
+    if sky_correction is not None:
+        data["sky_correction"] = bool(sky_correction)
 
     return create_mtl_command("mtlstart", **data)
 
