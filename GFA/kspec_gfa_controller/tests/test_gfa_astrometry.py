@@ -142,6 +142,21 @@ def test_init_creates_expected_paths(tmp_path, monkeypatch):
     assert ast.combined_star_path.endswith("stars.fits")
 
 
+def test_init_works_with_single_argument_gfa_logger(tmp_path, monkeypatch):
+    cfgp = tmp_path / "cfg.json"
+    _write_config(cfgp, tmp_path)
+    _patch_solve_field_ok(monkeypatch)
+
+    class SingleArgumentLogger:
+        def info(self, message):
+            assert isinstance(message, str)
+
+        def debug(self, message):
+            assert isinstance(message, str)
+
+    GFAAstrometry(config=str(cfgp), logger=SingleArgumentLogger())
+
+
 # -------------------------
 # solve-field path resolution
 # -------------------------

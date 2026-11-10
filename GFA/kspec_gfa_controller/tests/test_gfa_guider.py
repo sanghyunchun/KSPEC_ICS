@@ -520,6 +520,31 @@ def test_load_star_catalog_reads_fits_degree_unit_below_24(tmp_path, guider_conf
     assert np.allclose(ra_p, [10.5])
 
 
+def test_load_star_catalog_works_with_single_argument_gfa_logger(
+    tmp_path, guider_config
+):
+    cfg = _load_cfg(guider_config)
+    catdir = tmp_path / "cat_logger"
+    catdir.mkdir()
+    cfg["paths"]["directories"]["star_catalog"] = str(catdir)
+    _save_cfg(guider_config, cfg)
+
+    class SingleArgumentLogger:
+        def info(self, message):
+            assert isinstance(message, str)
+
+        def debug(self, message):
+            assert isinstance(message, str)
+
+    g = GFAGuider(config=str(guider_config), logger=SingleArgumentLogger())
+    _write_combined_star_fits(
+        catdir / "combined_star.fits",
+        {"RA": [10.5], "DEC": [-30.0], "FLUX": [200.0]},
+        units={"RA": "deg", "DEC": "deg"},
+    )
+    g.load_star_catalog(10.5, -30.0)
+
+
 def test_load_star_catalog_reads_fits_hour_unit(tmp_path, guider_config):
     cfg = _load_cfg(guider_config)
     catdir = tmp_path / "cat_hour"

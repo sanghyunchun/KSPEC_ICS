@@ -289,10 +289,11 @@ def read_fits_2d(path: str) -> Optional[np.ndarray]:
                     continue
                 arr = np.asarray(hdu.data)
                 if arr.ndim == 2:
-                    return arr
+                    if all(arr.shape):
+                        return arr
                 if arr.ndim == 3 and 1 in arr.shape:
                     arr2 = np.squeeze(arr)
-                    if arr2.ndim == 2:
+                    if arr2.ndim == 2 and all(arr2.shape):
                         return arr2
     except Exception:
         return None
@@ -1273,6 +1274,19 @@ class FitsLiveViewer:
             self.img_artists[i] = im
 
             ref = self.reference_centers.get(serial)
+
+            # A locked reference can come from an earlier frame with different
+            # dimensions. Do not pass an empty cutout to imshow/set_ylim.
+            if ref is not None:
+                x_ref, y_ref = ref
+                height, width = img.shape
+                if not (
+                    np.isfinite(x_ref)
+                    and np.isfinite(y_ref)
+                    and 0 <= x_ref < width
+                    and 0 <= y_ref < height
+                ):
+                    ref = None
 
             if ref is not None:
                 x_ref, y_ref = ref

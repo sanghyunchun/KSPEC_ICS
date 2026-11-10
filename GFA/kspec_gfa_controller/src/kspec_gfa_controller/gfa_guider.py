@@ -419,11 +419,10 @@ class GFAGuider:
             raise ValueError(f"Unsupported catalog DEC unit: {dec_unit!r}")
 
         self.logger.info(
-            "[catalog] coordinate units: RA=%s (%s), DEC=%s (%s); matching in degrees",
-            ra_unit,
-            "FITS" if ra_fits_unit else "config/default",
-            dec_unit,
-            "FITS" if dec_fits_unit else "default",
+            f"[catalog] coordinate units: "
+            f"RA={ra_unit} ({'FITS' if ra_fits_unit else 'config/default'}), "
+            f"DEC={dec_unit} ({'FITS' if dec_fits_unit else 'default'}); "
+            "matching in degrees"
         )
 
         # Convert to radians for matching

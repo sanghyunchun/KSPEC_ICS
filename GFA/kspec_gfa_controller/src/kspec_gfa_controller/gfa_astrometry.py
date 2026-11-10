@@ -97,11 +97,9 @@ class GFAAstrometry:
             self.inpar["astrometry"].get("cpulimit_s", 60)
         )
         self.logger.info(
-            "Astrometry source=%s config=%s max_workers=%s cpulimit_s=%s",
-            __file__,
-            config,
-            self.inpar["settings"]["cpu"]["limit"],
-            self.solve_field_cpulimit_s,
+            f"Astrometry source={__file__} config={config} "
+            f"max_workers={self.inpar['settings']['cpu']['limit']} "
+            f"cpulimit_s={self.solve_field_cpulimit_s}"
         )
 
         dirs = self.inpar["paths"]["directories"]
