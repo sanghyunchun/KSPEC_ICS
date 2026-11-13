@@ -49,7 +49,7 @@ PIX_SCALE = np.rad2deg(PIX_SIZE / FLEN) * 3600.0  # arcsec / pixel
 
 # Avoid locking onto saturated or near-saturated stars.
 # Reference-star candidates must have peak counts below this value.
-STAR_PEAK_MAX = 4096.0
+STAR_PEAK_MAX = 4000.0
 
 
 FNAME_RE = re.compile(

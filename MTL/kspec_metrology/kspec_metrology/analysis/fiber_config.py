@@ -364,10 +364,10 @@ FIDUCIAL_EXCLUDE = ()
 #   환경변수 : KSPEC_FIBER_EXCLUDE="G4,C6,..."  KSPEC_FIBER_FIXED="G7,H8,J6"  KSPEC_SKY_FIBERS="B7,H1,N7"
 #   파일     : 아래 목록 (또는 import 뒤 fiber_config.FIBER_EXCLUDE = [...])
 FIBER_OBJ = ['C4', 'C5', 'D2', 'D3', 'D4', 'D5', 'D7', 'E8', 'E9', 'F8', 'F9',
-             'G3', 'G5', 'G6', 'G9', 'H3', 'H4', 'H5', 'H6', 'H7',
-             'I3', 'I5', 'I6', 'I7', 'I8', 'J2', 'J3', 'J4', 'J5',
-             'K2', 'K3', 'K4', 'L3', 'L5', 'L6', 'L7', 'M3']          # <- 분광기 obj fiber 홀 (37; 설치표 "F19" 는 F9, G4 대신 H3)
-FIBER_FIXED = ['G7', 'H8', 'J6']        # <- sky fiber 가 꽂힌, 고장나 고정된 positioner 홀 (켜짐, 매칭 안 함)
+             'G5', 'G6', 'G9', 'H3', 'H4', 'H5', 'H6', 'H7',
+             'I3', 'I7', 'I8', 'J5',
+             'K2', 'K4', 'L3', 'L5', 'L6', 'L7', 'M3']          # <- 분광기 obj fiber 홀 (37; 설치표 "F19" 는 F9, G4 대신 H3)
+FIBER_FIXED = ['G7', 'H8', 'J6', 'G3', 'I5', 'J3', 'J4']        # <- sky fiber 가 꽂힌, 고장나 고정된 positioner 홀 (켜짐, 매칭 안 함)
 SKY_FIBERS = ['B7', 'H1', 'N7']         # <- 표에서 -9 인 홀의 sky fiber (켜짐, 매칭 안 함)
 
 # 빛이 안 나는 positioner = obj 도 FIXED 도 아닌 것 (고정 25: C6 E2 E4 E5 E6 E7 F2 F3 F4 F5 F6 F7
