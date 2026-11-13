@@ -363,7 +363,7 @@ FIDUCIAL_EXCLUDE = ()
 #
 #   환경변수 : KSPEC_FIBER_EXCLUDE="G4,C6,..."  KSPEC_FIBER_FIXED="G7,H8,J6"  KSPEC_SKY_FIBERS="B7,H1,N7"
 #   파일     : 아래 목록 (또는 import 뒤 fiber_config.FIBER_EXCLUDE = [...])
-FIBER_OBJ = ['C4', 'C5', 'D2', 'D3', 'D4', 'D5', 'D7', 'E8', 'E9', 'F8', 'F9',
+FIBER_OBJ = ['C4', 'C5', 'D2', 'D3', 'D4', 'D5', 'E8', 'E9', 'F8', 'F9',
              'G5', 'G6', 'G9', 'H3', 'H4', 'H5', 'H6', 'H7',
              'I3', 'I7', 'I8', 'J5',
              'K2', 'K4', 'L3', 'L5', 'L6', 'L7', 'M3']          # <- 분광기 obj fiber 홀 (37; 설치표 "F19" 는 F9, G4 대신 H3)
