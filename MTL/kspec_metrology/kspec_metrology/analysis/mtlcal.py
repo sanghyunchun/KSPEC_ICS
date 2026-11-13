@@ -326,6 +326,25 @@ def save_angles(json_dir, target_name, itrial, angles):
     return path
 
 
+def held_previous(prev, json_dir, target_name, itrial):
+    """직전 trial 각도에서 NaN (그 trial 에 잡아 둔 축) 을 그 전 trial 들의 마지막 유한값으로 채운다.
+
+    잡아 둔 축은 FBP 가 움직이지 않으므로 positioner 명령은 그 축이 마지막으로 받은 값 그대로다.
+    Trial 0 까지 내려가도 없으면 NaN 으로 둔다 (계속 잡아 둔다).
+    """
+    prev = np.array(prev, float)
+    k = itrial - 2
+    while np.isnan(prev).any() and k >= 0 and json_dir is not None and target_name is not None:
+        path = json_path(json_dir, target_name, k)
+        if os.path.exists(path):
+            with open(path, 'r') as ff:
+                older = angle_array(json.load(ff))
+            fill = np.isnan(prev) & np.isfinite(older)
+            prev[fill] = older[fill]
+        k -= 1
+    return prev
+
+
 def save_initial_angles(json_dir, target_name, target_file=None,
                         use_measured=None, use_measured_positioners=None):
     """관측 전에 목표 각도를 Trial 0 json으로 저장한다.
@@ -1159,6 +1178,7 @@ def mtlcal(data_dir='./MTL/data/'
 
     if prev is None:
         prev = _flatten_angles(theta_true, phi_true)
+    prev = held_previous(prev, json_dir, target_name, itrial)
 
     angle_cum = prev + angle_rot
     # alpha: 360 도 돌면 같은 위치라 해가 여럿이다. 직전 각도에서 가장 적게 도는 해가 리밋 (여유 포함) 안이면 그대로, 밖이면
@@ -1192,6 +1212,18 @@ def mtlcal(data_dir='./MTL/data/'
                   ", ".join(f"{ids_b[i]} ({angle_cum[2*i]:.1f}, {angle_cum[2*i+1]:.1f})" for i in np.where(bad)[0]))
         for i in np.where(bad)[0]:
             angle_cum[2*i:2*i+2] = prev[2*i:2*i+2]; angle_rot[2*i:2*i+2] = 0.
+
+    # 끊어진 fiber 와 이번 trial 에 못 잰 fiber 는 잡아 둔다: 각도 NaN = FBP 가 그 축을 움직이지 않는다
+    # (fbpoffset 이 현재 위치 ActPos 를 목표로 쓴다). 직전 명령 (Trial 0 = 보정된 목표 각도) 을 다시 보내면
+    # 지금 서 있는 곳 (planner 끝 각도) 에서 보정량만큼 움직이게 되고, alpha 범위 경계 근처에서는
+    # ~360 도 점프가 되어 fbpoffset 전체가 거부된다 (2026-10-29 tile 9162 G11).
+    hold = dead[:nfib] | lost
+    if hold.any():
+        ids_h = list(cfg.fiber_ids())
+        log.info("%d fiber(s) held this trial (not moved, angle NaN): %s", int(hold.sum()),
+                 ", ".join(ids_h[i] for i in np.where(hold)[0]))
+        angle_cum[0::2][hold] = np.nan
+        angle_cum[1::2][hold] = np.nan
 
     if json_dir is not None and target_name is not None:
         np.save(naming.coeff_path(json_dir, target_name, itrial), coeff)   # 다음 trial 의 Predict 가 읽는다
