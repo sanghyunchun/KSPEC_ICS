@@ -337,6 +337,55 @@ async def reverse_main(plc_connections, alpha_file, beta_file):
 
 
         # ===========================
+        # Power ON 전 축 Error 사전 확인 및 자동 Reset
+        # TwinCAT MC_Power는 Error 플래그가 켜진 축을 Powered=True로 전환하지 않으므로
+        # 미리 감지하고, Reset으로 해소를 시도한다. Reset 후에도 에러가 남으면
+        # 하드웨어 이상으로 판단해 사용자에게 알린다.
+        # ===========================
+        pre_error_axes = await check_axis_errors_before_power(
+            plc_connections, plc_motion_routes
+        )
+        if pre_error_axes:
+            print(
+                f"Power ON 전 에러 감지 ({len(pre_error_axes)}개 축) "
+                "— 자동 Reset 시도..."
+            )
+            reset_result = await try_reset_axis_errors(
+                plc_connections, plc_motion_routes
+            )
+            if reset_result["status"] != "success":
+                still_errors = reset_result["still_error_axes"]
+                error_summary = ", ".join(
+                    f"{ax['positioner']}-{ax['motor']} "
+                    f"(PLC={ax['plc_name']}, global_axis={ax['global_axis']}"
+                    + (f", read_error={ax['read_error']}" if ax.get("read_error") else "")
+                    + ")"
+                    for ax in still_errors
+                )
+                result = {
+                    "status": "error",
+                    "message": (
+                        f"에러 Reset을 {reset_result['attempts']}회 시도했으나 "
+                        "에러가 해소되지 않았습니다. "
+                        "드라이브 하드웨어 또는 EtherCAT 연결을 점검하거나 "
+                        "fbpactivate를 실행해 TwinCAT을 재시작하십시오. "
+                        f"에러 축: {error_summary}"
+                    ),
+                    "data": {
+                        "pre_power_error_axes": pre_error_axes,
+                        "still_error_axes": still_errors,
+                        "reset_attempts": reset_result["attempts"],
+                        "locked_axes": locked_axes,
+                        "motion_axes": motion_axes,
+                    },
+                }
+                print(result["message"])
+                save_result_json(result)
+                return result
+
+        print("Power ON 전 축 에러 없음 확인 완료")
+
+        # ===========================
         # PLC1, PLC2의 구동 가능 축 Power 동시 ON
         # 잠긴 축은 plc_motion_routes에 없음으로 제외됨
         # ===========================
@@ -369,9 +418,19 @@ async def reverse_main(plc_connections, alpha_file, beta_file):
             plc_connections, power_targets
         )
         if not_powered_axes:
+            error_summary = ", ".join(
+                f"{ax['positioner']}-{ax['motor']} "
+                f"(PLC={ax['plc_name']}, global_axis={ax['global_axis']}"
+                + (f", axis_error={ax.get('axis_error')}" if ax.get("axis_error") else "")
+                + (f", system_ready={ax.get('system_ready')}" if "system_ready" in ax else "")
+                + ")"
+                for ax in not_powered_axes
+            )
             raise RuntimeError(
-                "30초 동안 Power ON을 확인하지 못한 축이 있습니다: "
-                f"{not_powered_axes}"
+                "30초 동안 Power ON을 확인하지 못한 축이 있습니다. "
+                "fbpactivate를 실행해 TwinCAT을 재시작하거나 "
+                "드라이브 경보를 해제한 뒤 다시 시도하십시오. "
+                f"미확인 축: {error_summary}"
             )
 
         print("전체 구동 대상 축 Powered = True 확인 완료")
@@ -1092,6 +1151,29 @@ async def reverse_main(plc_connections, alpha_file, beta_file):
         }
 
         print(result["message"])
+
+        # ===========================
+        # 구동 완료 후 축 Error 사후 확인
+        # 완료 직후 에러가 남아 있으면 다음 구동 전 Reset이 필요하다는 경고를 남긴다.
+        # ===========================
+        post_error_axes = await check_axis_errors_before_power(
+            plc_connections, plc_motion_routes
+        )
+        if post_error_axes:
+            error_summary = ", ".join(
+                f"{ax['positioner']}-{ax['motor']} "
+                f"(PLC={ax['plc_name']}, global_axis={ax['global_axis']})"
+                for ax in post_error_axes
+            )
+            warning_msg = (
+                f"구동은 완료됐으나 {len(post_error_axes)}개 축에 에러가 남아 있습니다. "
+                "다음 구동 시 자동 Reset을 시도하거나 "
+                f"fbpactivate를 실행하십시오. 에러 축: {error_summary}"
+            )
+            print(f"경고: {warning_msg}")
+            result["data"]["post_motion_error_axes"] = post_error_axes
+            result["data"]["post_motion_warning"] = warning_msg
+
         save_result_json(result)
         return result
 

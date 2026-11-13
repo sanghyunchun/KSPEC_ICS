@@ -10,8 +10,7 @@
 #   inpar["paths"]["directories"]["star_catalog"] (dir OR file path).
 # - No longer hardcodes "img/combined_star.fits".
 # - Adds robust catalog path resolution + helpful diagnostics.
-# - Uses FITS column units for catalog coordinates, with a degree fallback
-#   for legacy combined catalogs that have no unit metadata.
+# - Resolves catalog RA units from explicit config or FITS column metadata.
 
 import os
 import sys
@@ -345,8 +344,11 @@ class GFAGuider:
         - Uses config dirs["star_catalog"] (dir OR file path) to locate combined_star.fits.
         - No longer uses hardcoded "img/combined_star.fits".
 
-        FITS column units take precedence. For legacy catalogs without RA
-        units, use catalog_matching.fields.ra_unit or assume degrees.
+        RA unit handling:
+        - Explicit fields.ra_unit ("deg" or "hour") overrides FITS TUNIT.
+        - Otherwise use the selected RA column's TUNIT; unknown/missing units fail.
+        - Never infer units from numeric ranges. Returned RA/DEC are degrees;
+          matching coordinates are radians, and CRVAL1/CRVAL2 are degrees.
         """
         star_catalog_path = self._resolve_combined_star_path()
 
@@ -400,27 +402,18 @@ class GFAGuider:
             ra_fits_unit = data.columns[ra_col].unit
             dec_fits_unit = data.columns[dec_col].unit
 
-        # -------------------------
-        # Coordinate units: trust the FITS columns, then the legacy config.
-        # An unlabelled catalog from the old builder is in degrees as well.
-        # -------------------------
-        fields_cfg = self.inpar.get("catalog_matching", {}).get("fields", {})
-        ra_unit = str(
-            ra_fits_unit or fields_cfg.get("ra_unit") or "degrees"
-        ).strip().lower()
+        ra_unit = self._resolve_catalog_ra_unit(ra_fits_unit, ra_col)
         dec_unit = str(dec_fits_unit or "degrees").strip().lower()
 
-        if ra_unit in {"hour", "hours", "hourangle", "h"}:
+        if ra_unit == "hour":
             ra_p = ra_p * 15.0
-        elif ra_unit not in {"degree", "degrees", "deg"}:
-            raise ValueError(f"Unsupported catalog RA unit: {ra_unit!r}")
 
         if dec_unit not in {"degree", "degrees", "deg"}:
             raise ValueError(f"Unsupported catalog DEC unit: {dec_unit!r}")
 
         self.logger.info(
             f"[catalog] coordinate units: "
-            f"RA={ra_unit} ({'FITS' if ra_fits_unit else 'config/default'}), "
+            f"RA={ra_unit}, "
             f"DEC={dec_unit} ({'FITS' if dec_fits_unit else 'default'}); "
             "matching in degrees"
         )
@@ -435,6 +428,45 @@ class GFAGuider:
             f"Star catalog loaded with {len(ra_p)} stars from {star_catalog_path}."
         )
         return ra1_rad, dec1_rad, ra2_rad, dec2_rad, ra_p, dec_p, flux
+
+    def _resolve_catalog_ra_unit(self, fits_unit, ra_col: str) -> str:
+        """Resolve decimal RA units without guessing from values or column names."""
+        fields = self.inpar.get("catalog_matching", {}).get("fields", {})
+        configured = fields.get("ra_unit")
+        if configured is not None and not isinstance(configured, str):
+            raise ValueError("catalog_matching.fields.ra_unit must be 'deg' or 'hour'.")
+        override = (configured or "").strip().lower()
+        if override and override not in {"deg", "hour"}:
+            raise ValueError(
+                f"Invalid catalog_matching.fields.ra_unit={configured!r}; "
+                "use 'deg' or 'hour', or omit it to use FITS TUNIT."
+            )
+
+        # Astrometry.net writes 'degrees', rather than the standard FITS 'deg'.
+        # 'h'/'hour' in an RA column denotes decimal hours of right ascension.
+        aliases = {
+            "deg": "deg", "degree": "deg", "degrees": "deg",
+            "h": "hour", "hr": "hour", "hour": "hour",
+            "hours": "hour", "hourangle": "hour",
+        }
+        metadata = aliases.get((fits_unit or "").strip().lower())
+        if override:
+            if fits_unit and metadata != override:
+                self.logger.warning(
+                    f"[catalog] fields.ra_unit={override!r} overrides "
+                    f"RA column {ra_col!r} TUNIT={fits_unit!r}."
+                )
+            unit, source = override, "catalog_matching.fields.ra_unit"
+        elif metadata:
+            unit, source = metadata, f"FITS TUNIT ({fits_unit!r})"
+        else:
+            raise ValueError(
+                f"Cannot determine RA unit for column {ra_col!r}: TUNIT={fits_unit!r}. "
+                "Set catalog_matching.fields.ra_unit to 'deg' or 'hour', "
+                "or supply a supported FITS column unit. Numeric ranges are ambiguous."
+            )
+        self.logger.info(f"[catalog] RA unit={unit}, source={source}; output=degrees.")
+        return unit
 
     def select_stars(
         self,

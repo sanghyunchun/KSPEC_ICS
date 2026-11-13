@@ -296,6 +296,7 @@ class GFAAstrometry:
             )
 
         tables: List[Table] = []
+        table_units = []
         bad: List[str] = []
 
         for fp in corr_files:
@@ -308,20 +309,13 @@ class GFAAstrometry:
                 with fits.open(fp, memmap=True) as hdul:
                     if len(hdul) < 2 or hdul[1].data is None:
                         raise ValueError("No table found in HDU[1].")
-                    table = Table(hdul[1].data)
-                    for column in hdul[1].columns:
-                        if column.unit:
-                            # Astrometry.net uses nonstandard FITS spellings.
-                            # Keep meaningful units in standard FITS form.
-                            unit = {
-                                "degrees": "deg",
-                                "pixels": "pix",
-                                "none": None,
-                                "unknown": None,
-                            }.get(column.unit.strip().lower(), column.unit)
-                            if unit:
-                                table[column.name].unit = unit
-                    tables.append(table)
+                    # FITS_rec -> Table drops TUNIT. Carry the original strings
+                    # separately: solve-field uses nonstandard units such as
+                    # 'degrees'/'pixels' that Table.write may otherwise discard.
+                    tables.append(Table(hdul[1].data))
+                    table_units.append({
+                        col.name: col.unit or "" for col in hdul[1].columns
+                    })
             except Exception as e:
                 bad.append(fp)
                 self.logger.warning(f"Failed reading corr={fp}: {e}")
@@ -331,8 +325,24 @@ class GFAAstrometry:
                 f"All .corr files failed to read. bad(sample)={bad[:10]}"
             )
 
+        # vstack does not convert values when units differ. Reject conflicts
+        # (including a missing unit in only some inputs) before stacking so no
+        # rows can silently inherit another input's coordinate unit.
+        column_units = {}
+        for units in table_units:
+            for name, unit in units.items():
+                if name in column_units and column_units[name] != unit:
+                    raise ValueError(
+                        f"Conflicting corr units for column {name!r}: "
+                        f"{column_units[name]!r} vs {unit!r}; normalize inputs before merging."
+                    )
+                column_units[name] = unit
         combined = vstack(tables, metadata_conflicts="silent")
-        combined.write(out_path, overwrite=True)
+        hdu = fits.BinTableHDU(data=combined.as_array())
+        for index, name in enumerate(combined.colnames, start=1):
+            if column_units[name]:
+                hdu.header[f"TUNIT{index}"] = column_units[name]
+        fits.HDUList([fits.PrimaryHDU(), hdu]).writeto(out_path, overwrite=True)
 
         nrows = len(combined)
         if nrows < int(min_rows):

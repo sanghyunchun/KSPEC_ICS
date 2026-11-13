@@ -895,6 +895,146 @@ async def check_axis_errors_before_power(
 
 
 ##
+def reset_axis_errors_sync(
+    plc_name: str,
+    plc,
+    routes: list,
+    pulse_wait: float = 0.15,
+) -> list:
+    """
+    에러 상태인 축에 MC_Reset 펄스(True → 대기 → False)를 전송한다.
+
+    MC_Reset FB는 Execute의 Rising Edge에서만 동작하므로
+    True를 쓴 뒤 반드시 False로 내려야 다음 Reset이 가능하다.
+
+    Args:
+        plc_name: "PLC1" 또는 "PLC2".
+        plc: 열려 있는 pyads.Connection 객체.
+        routes: plc_motion_routes[plc_name] 형태의 route 목록.
+        pulse_wait: Reset=True 유지 시간 [초]. PLC 사이클 처리 대기.
+
+    Returns:
+        Reset 펄스를 보낸 축의 route 목록.
+    """
+    reset_routes = []
+    for route in routes:
+        local_axis = route["local_axis"]
+        try:
+            axis_error = bool(
+                plc.read_by_name(
+                    f"GVL.gAxisState[{local_axis}].Error",
+                    pyads.PLCTYPE_BOOL,
+                )
+            )
+            if axis_error:
+                plc.write_by_name(
+                    f"GVL.gAxisCmd[{local_axis}].Reset",
+                    True,
+                    pyads.PLCTYPE_BOOL,
+                )
+                reset_routes.append(route)
+        except Exception as exc:
+            print(f"[{plc_name}] local_axis={local_axis} Reset 준비 중 오류: {exc}")
+
+    if reset_routes:
+        time.sleep(pulse_wait)   # MC_Reset이 처리될 시간 확보
+        for route in reset_routes:
+            local_axis = route["local_axis"]
+            try:
+                plc.write_by_name(
+                    f"GVL.gAxisCmd[{local_axis}].Reset",
+                    False,
+                    pyads.PLCTYPE_BOOL,
+                )
+            except Exception as exc:
+                print(f"[{plc_name}] local_axis={local_axis} Reset 해제 중 오류: {exc}")
+
+    return reset_routes
+
+
+async def try_reset_axis_errors(
+    plc_connections: dict,
+    plc_motion_routes: dict,
+    verify_timeout: float = 3.0,
+    poll_interval: float = 0.2,
+    max_attempts: int = 3,
+) -> dict:
+    """
+    구동 대상 축의 에러를 Reset하고 결과를 반환한다.
+
+    PLC1/PLC2를 동시에 Reset한 뒤 Error=False가 될 때까지
+    verify_timeout초 동안 폴링한다. 에러가 남아 있으면
+    최대 max_attempts회 반복한다.
+
+    Args:
+        plc_connections: {"PLC1": plc, "PLC2": plc} 형태의 열린 PLC 연결.
+        plc_motion_routes: {"PLC1": [route, ...], "PLC2": [route, ...]} 형태.
+        verify_timeout: 각 시도에서 Error=False를 기다리는 최대 시간 [초].
+        poll_interval: Error 폴링 간격 [초].
+        max_attempts: Reset 최대 반복 횟수. 초과하면 "fail"을 반환한다.
+
+    Returns:
+        {
+            "status": "success" | "fail",
+            "reset_axes": [route, ...],      # Reset을 시도한 모든 축
+            "still_error_axes": [...],        # 최종적으로 에러가 남은 축
+            "attempts": int,
+        }
+    """
+    reset_axes_all = []
+    still_error_axes = []
+
+    for attempt in range(1, max_attempts + 1):
+        print(f"축 에러 Reset 시도 {attempt}/{max_attempts}...")
+
+        results = await asyncio.gather(
+            *[
+                asyncio.to_thread(
+                    reset_axis_errors_sync,
+                    plc_name,
+                    plc_connections[plc_name],
+                    plc_motion_routes[plc_name],
+                )
+                for plc_name in ("PLC1", "PLC2")
+            ],
+            return_exceptions=True,
+        )
+
+        for plc_name, result in zip(("PLC1", "PLC2"), results):
+            if isinstance(result, Exception):
+                print(f"[{plc_name}] Reset 중 예외: {result}")
+            else:
+                reset_axes_all.extend(result)
+
+        # Reset 후 Error=False 확인 (폴링)
+        deadline = time.monotonic() + verify_timeout
+        while time.monotonic() < deadline:
+            await asyncio.sleep(poll_interval)
+            remaining = await check_axis_errors_before_power(
+                plc_connections, plc_motion_routes
+            )
+            if not remaining:
+                print(f"축 에러 Reset 성공 (시도 {attempt}회)")
+                return {
+                    "status": "success",
+                    "reset_axes": reset_axes_all,
+                    "still_error_axes": [],
+                    "attempts": attempt,
+                }
+
+        still_error_axes = remaining
+        if attempt < max_attempts:
+            await asyncio.sleep(0.5)
+
+    return {
+        "status": "fail",
+        "reset_axes": reset_axes_all,
+        "still_error_axes": still_error_axes,
+        "attempts": max_attempts,
+    }
+
+
+##
 def power_on_one_plc_sync(
         plc_name: str,
         plc, routes: list
