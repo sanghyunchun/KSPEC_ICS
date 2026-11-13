@@ -20,6 +20,11 @@ y = -N) 하늘에서의 회전은 초점면에서 반대 부호가 된다. 여�
 
 보정 파일에는 planner 원래 값을 xp_planner / yp_planner 로 같이 남기고, 이미 보정된
 파일을 다시 넣으면 그 원래 값에서 다시 계산한다 (보정이 두 번 들어가지 않는다).
+
+calibration target 은 보정하지 않고 원래 파일을 그대로 쓴다: 파일 이름이나 project 에
+'calib' 가 들어 있거나 (대소문자 무관, 예: Calib_2627_0001.assign.json), 하늘 좌표가 없는
+경우 (각도만 적은 파일, 또는 ra/dec 가 모두 한 점, 예: Calib 의 ra = dec = 0). 보정 결과에
+NaN 이 생기면 파일을 쓰지 않고 멈춘다.
 """
 
 import json
@@ -34,6 +39,10 @@ from kspec_metrology.analysis import fiber_config as cfg
 log = logging.getLogger(__name__)
 
 SUFFIX = '_skycorr'
+# 파일 이름이나 project 에 이 글자가 들어 있으면 (대소문자 무관) calibration target 으로 본다
+CALIB_TAG = 'calib'
+# 목표들이 타일 중심에서 이보다 가까이 모여 있으면 하늘 좌표가 없는 target 으로 본다 [deg]
+MIN_SKY_SPREAD_DEG = 1. / 3600.
 
 
 def obs_time(time=None):
@@ -120,16 +129,45 @@ def _reach(xp, yp, use_measured=None):
     return np.minimum(r - rmin, rmax - r), hole, rmin, rmax
 
 
+def no_sky_reason(target, target_file=None):
+    """하늘 보정을 하지 않을 target 이면 그 이유 (문자열), 아니면 None.
+
+    calibration target (파일 이름이나 project 에 CALIB_TAG) 이거나 하늘 좌표가 없는 경우.
+    """
+    name = os.path.basename(str(target_file or ''))
+    project = str(target.get('project', '') or '')
+    if CALIB_TAG in name.lower() or CALIB_TAG in project.lower():
+        return f"calibration target ('{CALIB_TAG}' in the file name or project: {name or project})"
+    missing = [k for k in ('xp', 'yp', 'ra', 'dec') if k not in target]
+    if missing:
+        return f"no {'/'.join(missing)} in the target (angle target, e.g. a calibration run)"
+    ra = np.asarray(target['ra'], float)
+    dec = np.asarray(target['dec'], float)
+    if ra.size == 0 or not (np.isfinite(ra).all() and np.isfinite(dec).all()):
+        return "ra/dec missing or not finite"
+    ra0, dec0 = np.radians(field_centre(target))
+    ra, dec = np.radians(ra), np.radians(dec)
+    cosd = np.sin(dec) * np.sin(dec0) + np.cos(dec) * np.cos(dec0) * np.cos(ra - ra0)
+    if np.degrees(np.arccos(np.clip(cosd, -1., 1.))).max() < MIN_SKY_SPREAD_DEG:
+        return "all targets at one sky position (no sky coordinates, e.g. a calibration run)"
+    return None
+
+
 def correct_target(target, time=None, precession=True, instrument_offset_deg=0.0,
-                   use_measured=None):
+                   use_measured=None, target_file=None):
     """보정한 target dict 과 요약 (dict) 을 돌려준다. target 은 바꾸지 않는다.
 
     time : 관측 시각 (UTC; astropy Time 이 받는 값, 또는 '+09:00' 같은 시간대가 붙은 ISO
         문자열). None 이면 지금.
     닿지 않게 된 목표: class 9 (목표 없음) 는 planner 값을 그대로 두고, 나머지는 닿는
     끝까지만 옮기고 요약의 clipped 에 적는다 (그 fiber 는 다시 배정해야 한다).
+    calibration target 이나 하늘 좌표가 없는 target (no_sky_reason; target_file 은 이름 검사용)
+    은 그대로 돌려주고 요약에 skipped 를 적는다.
     """
     time = obs_time(time or None)
+    reason = no_sky_reason(target, target_file)
+    if reason is not None:
+        return dict(target), {'time_utc': time.utc.isot, 'skipped': reason}
     xp0 = np.asarray(target.get('xp_planner', target['xp']), float)
     yp0 = np.asarray(target.get('yp_planner', target['yp']), float)
 
@@ -141,6 +179,10 @@ def correct_target(target, time=None, precession=True, instrument_offset_deg=0.0
     rot = prec + float(instrument_offset_deg)
     c, s = scale * np.cos(np.radians(rot)), scale * np.sin(np.radians(rot))
     xp, yp = c * xp0 - s * yp0, s * xp0 + c * yp0
+    bad = np.isfinite(xp0) & np.isfinite(yp0) & ~(np.isfinite(xp) & np.isfinite(yp))
+    if bad.any():
+        raise ValueError(f"sky correction gave non-finite targets (rotation {rot}, scale {scale}); "
+                         "the target file is not written")
 
     kept, clipped = [], []
     reach = _reach(xp, yp, use_measured)
@@ -191,10 +233,18 @@ def corrected_path(target_file):
 
 
 def write_corrected_target(target_file, out_file=None, **kwargs):
-    """target 파일을 읽어 보정 파일을 쓰고 (경로, 요약) 을 돌려준다. kwargs 는 correct_target 로."""
+    """target 파일을 읽어 보정 파일을 쓰고 (경로, 요약) 을 돌려준다. kwargs 는 correct_target 로.
+
+    calibration target 이나 하늘 좌표가 없는 target 이면 파일을 쓰지 않고 (target_file, 요약) 을
+    돌려준다 (요약의 skipped).
+    """
     with open(target_file, 'r') as f:
         target = json.load(f)
-    out, summary = correct_target(target, **kwargs)
+    out, summary = correct_target(target, target_file=target_file, **kwargs)
+    if summary.get('skipped'):
+        log.info("Sky correction skipped for %s: %s", target_file, summary['skipped'])
+        return target_file, summary
+
     out_file = out_file or corrected_path(target_file)
     with open(out_file, 'w', encoding='utf-8') as f:
         json.dump(out, f)
