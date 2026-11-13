@@ -783,14 +783,126 @@ async def set_reverse_mode(
 
 
 ##
+def check_axis_errors_sync(plc_name: str, plc, routes: list) -> list:
+    """
+    Power ON 전에 구동 대상 축의 Error 플래그를 읽어
+    에러 상태인 축 목록을 반환한다.
+
+    TwinCAT MC_Power는 축에 Error가 있으면 Powered=True로 전환하지 않는다.
+    Power ON 시도 전에 미리 확인해 사용자에게 알리기 위한 함수다.
+
+    Args:
+        plc_name: "PLC1" 또는 "PLC2".
+        plc: 열려 있는 pyads.Connection 객체.
+        routes: plc_motion_routes[plc_name] 형태의 route 목록.
+            각 route는 local_axis, global_axis, positioner, motor 키를 갖는다.
+
+    Returns:
+        에러 상태인 축의 정보 리스트. 에러가 없으면 빈 리스트를 반환한다.
+        각 항목 예:
+            {
+                "plc_name": "PLC1",
+                "global_axis": 3,
+                "local_axis": 3,
+                "positioner": "A2",
+                "motor": "alpha",
+                "axis_error": True,
+                "read_error": None,          # ADS 읽기 실패 시 오류 메시지
+            }
+    """
+    error_axes = []
+    for route in routes:
+        local_axis = route["local_axis"]
+        read_error = None
+        axis_error = False
+        try:
+            axis_error = bool(
+                plc.read_by_name(
+                    f"GVL.gAxisState[{local_axis}].Error",
+                    pyads.PLCTYPE_BOOL,
+                )
+            )
+        except Exception as exc:
+            read_error = str(exc)
+            axis_error = True  # 읽기 실패도 안전을 위해 에러로 취급
+
+        if axis_error:
+            error_axes.append(
+                {
+                    "plc_name": plc_name,
+                    "global_axis": route["global_axis"],
+                    "local_axis": local_axis,
+                    "positioner": route["positioner"],
+                    "motor": route["motor"],
+                    "axis_error": True,
+                    "read_error": read_error,
+                }
+            )
+    return error_axes
+
+
+async def check_axis_errors_before_power(
+    plc_connections: dict,
+    plc_motion_routes: dict,
+) -> list:
+    """
+    PLC1/PLC2 구동 대상 축 전체의 Error 플래그를 동시에 읽어
+    에러 상태인 축 목록을 반환한다.
+
+    Power ON 직전에 호출해 에러 축을 조기에 감지한다.
+
+    Args:
+        plc_connections: {"PLC1": plc, "PLC2": plc} 형태의 열린 PLC 연결.
+        plc_motion_routes: {"PLC1": [route, ...], "PLC2": [route, ...]} 형태.
+
+    Returns:
+        에러 상태인 축의 정보 리스트. 에러가 없으면 빈 리스트를 반환한다.
+    """
+    results = await asyncio.gather(
+        *[
+            asyncio.to_thread(
+                check_axis_errors_sync,
+                plc_name,
+                plc_connections[plc_name],
+                plc_motion_routes[plc_name],
+            )
+            for plc_name in ("PLC1", "PLC2")
+        ],
+        return_exceptions=True,
+    )
+
+    error_axes = []
+    for plc_name, result in zip(("PLC1", "PLC2"), results):
+        if isinstance(result, Exception):
+            # ADS 연결 자체가 끊긴 경우 — 해당 PLC 전체를 에러로 표시
+            print(f"[{plc_name}] 축 에러 사전 확인 중 예외 발생: {result}")
+            for route in plc_motion_routes.get(plc_name, []):
+                error_axes.append(
+                    {
+                        "plc_name": plc_name,
+                        "global_axis": route["global_axis"],
+                        "local_axis": route["local_axis"],
+                        "positioner": route["positioner"],
+                        "motor": route["motor"],
+                        "axis_error": True,
+                        "read_error": str(result),
+                    }
+                )
+        else:
+            error_axes.extend(result)
+
+    return error_axes
+
+
+##
 def power_on_one_plc_sync(
-        plc_name: str, 
+        plc_name: str,
         plc, routes: list
         ):
     """
-    PLC 한 대에서 이번에 실제로 움직일 축만 
+    PLC 한 대에서 이번에 실제로 움직일 축만
     Power = True로 설정한다.
-    
+
     routes 안의 local_axis를 사용한다.
     """
 

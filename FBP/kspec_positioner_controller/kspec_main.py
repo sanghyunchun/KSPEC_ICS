@@ -258,6 +258,42 @@ async def main(plc_connections, alpha_file, beta_file, offset_mode=False, *, ste
 
 
         # ===========================
+        # Power ON 전 축 Error 사전 확인
+        # TwinCAT MC_Power는 Error 플래그가 켜진 축을 Powered=True로 전환하지 않으므로
+        # 미리 감지해 사용자에게 알린다.
+        # ===========================
+        pre_error_axes = await check_axis_errors_before_power(
+            plc_connections, plc_motion_routes
+        )
+        if pre_error_axes:
+            error_summary = ", ".join(
+                f"{ax['positioner']}-{ax['motor']} "
+                f"(PLC={ax['plc_name']}, global_axis={ax['global_axis']}"
+                + (f", read_error={ax['read_error']}" if ax.get("read_error") else "")
+                + ")"
+                for ax in pre_error_axes
+            )
+            result = {
+                "status": "error",
+                "message": (
+                    "Power ON 전 축 에러가 감지되었습니다. "
+                    "fbpactivate를 실행해 TwinCAT을 재시작하거나 "
+                    "드라이브 경보를 해제한 뒤 다시 시도하십시오. "
+                    f"에러 축: {error_summary}"
+                ),
+                "data": {
+                    "pre_power_error_axes": pre_error_axes,
+                    "locked_axes": locked_axes,
+                    "motion_axes": motion_axes,
+                },
+            }
+            print(result["message"])
+            save_result_json(result)
+            return result
+
+        print("Power ON 전 축 에러 없음 확인 완료")
+
+        # ===========================
         # PLC1, PLC2의 구동 가능 축 Power 동시 ON
         # 잠긴 축은 plc_motion_routes에 없음으로 제외됨
         # ===========================
@@ -287,9 +323,19 @@ async def main(plc_connections, alpha_file, beta_file, offset_mode=False, *, ste
             plc_connections, power_targets
         )
         if not_powered_axes:
+            error_summary = ", ".join(
+                f"{ax['positioner']}-{ax['motor']} "
+                f"(PLC={ax['plc_name']}, global_axis={ax['global_axis']}"
+                + (f", axis_error={ax.get('axis_error')}" if ax.get("axis_error") else "")
+                + (f", system_ready={ax.get('system_ready')}" if "system_ready" in ax else "")
+                + ")"
+                for ax in not_powered_axes
+            )
             raise RuntimeError(
-                "30초 동안 Power ON을 확인하지 못한 축이 있습니다: "
-                f"{not_powered_axes}"
+                "30초 동안 Power ON을 확인하지 못한 축이 있습니다. "
+                "fbpactivate를 실행해 TwinCAT을 재시작하거나 "
+                "드라이브 경보를 해제한 뒤 다시 시도하십시오. "
+                f"미확인 축: {error_summary}"
             )
 
         print("전체 구동 대상 축 Powered = True 확인 완료")
