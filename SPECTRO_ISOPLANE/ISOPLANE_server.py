@@ -36,13 +36,18 @@ async def main():
 async def serve(isoplane, ISOPLANE_server):
 
     async def on_isoplane_message(message: aio_pika.IncomingMessage):
-        async with message.process():
-            try:
-                dict_data = json.loads(message.body)
-                print('\033[94m' + '[ISOPLANE] received: ' + str(dict_data.get('message', dict_data.get('func'))) + '\033[0m')
-                await isoplane.handle(ISOPLANE_server, message.body)
-            except Exception as e:
-                print(f"Error in on_isoplane_message: {e}", flush=True)
+        # Ack on receipt, not after the command: an exposure command can run longer than the
+        # broker's consumer_timeout (30 min by default). A delivery unacked that long is
+        # requeued, which killed the command before its header cards and started the same
+        # exposure again (20261029 darks 0037-0050, 20261030_0020/0021). A command is thus
+        # never redelivered, also not after a server crash mid-exposure.
+        await message.ack()
+        try:
+            dict_data = json.loads(message.body)
+            print('\033[94m' + '[ISOPLANE] received: ' + str(dict_data.get('message', dict_data.get('func'))) + '\033[0m')
+            await isoplane.handle(ISOPLANE_server, message.body)
+        except Exception as e:
+            print(f"Error in on_isoplane_message: {e}", flush=True)
 
         print('Waiting for message from client......')
 
