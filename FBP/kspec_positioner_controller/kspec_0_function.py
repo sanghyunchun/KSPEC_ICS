@@ -235,7 +235,7 @@ def reset_and_play_one_plc_sync(plc_name: str, ams_net_id: str):
         is_ready = False
         print(f"[{plc_name}] EtherCAT 하드웨어 통신 안정화 대기 중...")
 
-        for _ in range(30): # 최대 15초 대기 (0.5초 * 30회)
+        for _ in range(60): # 최대 30초 대기 (0.5초 * 60회)
             try:
                 is_ready = plc_conn.read_by_name("GVL.gSystemReady", pyads.PLCTYPE_BOOL)
                 if is_ready:
