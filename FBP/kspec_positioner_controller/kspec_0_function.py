@@ -1121,13 +1121,8 @@ async def wait_for_powered_axes(
     Power=True를 쓴 직후 이전 구동의 FB 에러가 뒤늦게 떠오르는 경우를 처리한다.
     """
     deadline = time.monotonic() + timeout
-    # plc_name -> routes 역매핑 (Reset 호출용)
-    routes_by_plc = {}
-    for plc_name, route in power_targets:
-        routes_by_plc.setdefault(plc_name, []).append(route)
 
     while True:
-        # Powered 상태 읽기
         powered_results = await asyncio.gather(
             *[
                 asyncio.to_thread(
@@ -1201,9 +1196,7 @@ async def wait_for_powered_axes(
             error_names = ", ".join(
                 f"{ax['positioner']}-{ax['motor']}" for ax in axes_with_error
             )
-            print(
-                f"Power ON 중 축 에러 감지 — 자동 Reset 시도: {error_names}"
-            )
+            print(f"Power ON 중 축 에러 감지 — 자동 Reset 시도: {error_names}")
             await asyncio.gather(
                 *[
                     asyncio.to_thread(
@@ -1216,10 +1209,8 @@ async def wait_for_powered_axes(
                 ],
                 return_exceptions=True,
             )
-            # Reset 후 짧게 대기 (MC_Reset 처리 완료 대기)
-            await asyncio.sleep(0.3)
-            # 다음 폴링 주기를 짧게 줘서 빠르게 재확인
-            await asyncio.sleep(0.2)
+            # Reset 처리 완료 대기 후 즉시 재폴링
+            await asyncio.sleep(0.5)
             continue
 
         await asyncio.sleep(min(poll_interval, remaining))

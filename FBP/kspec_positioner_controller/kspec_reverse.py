@@ -582,7 +582,7 @@ async def reverse_main(plc_connections, alpha_file, beta_file):
                     plc_connections[plc_name],
                     plc_motion_routes[plc_name],
                     motion_sequence_before[plc_name],
-                    2.0
+                    5.0   # Reset 후 재시도 주기를 감안해 2.0 -> 5.0으로 확대
                 )
                 for plc_name in prepared_plcs
             ]
