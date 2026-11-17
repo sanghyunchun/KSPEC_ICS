@@ -1114,10 +1114,20 @@ async def wait_for_powered_axes(
     timeout: float = 30.0,
     poll_interval: float = 1.0,
 ):
-    """모든 구동 축의 Powered를 확인하고, 실패 축의 PLC 상태를 반환한다."""
+    """모든 구동 축의 Powered를 확인하고, 실패 축의 PLC 상태를 반환한다.
+
+    폴링 도중 Powered=False인 축에 axis_error=True가 감지되면
+    즉시 MC_Reset 펄스를 보내고 재시도한다.
+    Power=True를 쓴 직후 이전 구동의 FB 에러가 뒤늦게 떠오르는 경우를 처리한다.
+    """
     deadline = time.monotonic() + timeout
+    # plc_name -> routes 역매핑 (Reset 호출용)
+    routes_by_plc = {}
+    for plc_name, route in power_targets:
+        routes_by_plc.setdefault(plc_name, []).append(route)
 
     while True:
+        # Powered 상태 읽기
         powered_results = await asyncio.gather(
             *[
                 asyncio.to_thread(
@@ -1164,6 +1174,53 @@ async def wait_for_powered_axes(
                 print("Power ON 미확인 축과 PLC 상태: "
                       + json.dumps(failures, ensure_ascii=False), flush=True)
             return failures
+
+        # -------------------------------------------------------
+        # Powered=False 축 중 axis_error=True인 것이 있으면
+        # Power=True 직후 FB 에러가 떠오른 것이므로 즉시 Reset 시도
+        # -------------------------------------------------------
+        error_check_results = await asyncio.gather(
+            *[
+                asyncio.to_thread(
+                    plc_connections[ax["plc_name"]].read_by_name,
+                    f"GVL.gAxisState[{ax['local_axis']}].Error",
+                    pyads.PLCTYPE_BOOL,
+                )
+                for ax in not_powered_axes
+            ],
+            return_exceptions=True,
+        )
+        axes_with_error = [
+            ax for ax, err in zip(not_powered_axes, error_check_results)
+            if err is True
+        ]
+        if axes_with_error:
+            by_plc_error = {}
+            for ax in axes_with_error:
+                by_plc_error.setdefault(ax["plc_name"], []).append(ax)
+            error_names = ", ".join(
+                f"{ax['positioner']}-{ax['motor']}" for ax in axes_with_error
+            )
+            print(
+                f"Power ON 중 축 에러 감지 — 자동 Reset 시도: {error_names}"
+            )
+            await asyncio.gather(
+                *[
+                    asyncio.to_thread(
+                        reset_axis_errors_sync,
+                        plc_name,
+                        plc_connections[plc_name],
+                        axes,
+                    )
+                    for plc_name, axes in by_plc_error.items()
+                ],
+                return_exceptions=True,
+            )
+            # Reset 후 짧게 대기 (MC_Reset 처리 완료 대기)
+            await asyncio.sleep(0.3)
+            # 다음 폴링 주기를 짧게 줘서 빠르게 재확인
+            await asyncio.sleep(0.2)
+            continue
 
         await asyncio.sleep(min(poll_interval, remaining))
 
