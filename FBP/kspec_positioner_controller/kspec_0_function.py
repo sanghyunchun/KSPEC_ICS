@@ -235,7 +235,7 @@ def reset_and_play_one_plc_sync(plc_name: str, ams_net_id: str):
         is_ready = False
         print(f"[{plc_name}] EtherCAT 하드웨어 통신 안정화 대기 중...")
 
-        for _ in range(30): # 최대 15초 대기 (0.5초 * 30회)
+        for _ in range(60): # 최대 30초 대기 (0.5초 * 60회)
             try:
                 is_ready = plc_conn.read_by_name("GVL.gSystemReady", pyads.PLCTYPE_BOOL)
                 if is_ready:
@@ -1114,7 +1114,12 @@ async def wait_for_powered_axes(
     timeout: float = 30.0,
     poll_interval: float = 1.0,
 ):
-    """모든 구동 축의 Powered를 확인하고, 실패 축의 PLC 상태를 반환한다."""
+    """모든 구동 축의 Powered를 확인하고, 실패 축의 PLC 상태를 반환한다.
+
+    폴링 도중 Powered=False인 축에 axis_error=True가 감지되면
+    즉시 MC_Reset 펄스를 보내고 재시도한다.
+    Power=True를 쓴 직후 이전 구동의 FB 에러가 뒤늦게 떠오르는 경우를 처리한다.
+    """
     deadline = time.monotonic() + timeout
 
     while True:
@@ -1164,6 +1169,49 @@ async def wait_for_powered_axes(
                 print("Power ON 미확인 축과 PLC 상태: "
                       + json.dumps(failures, ensure_ascii=False), flush=True)
             return failures
+
+        # -------------------------------------------------------
+        # Powered=False 축 중 axis_error=True인 것이 있으면
+        # Power=True 직후 FB 에러가 떠오른 것이므로 즉시 Reset 시도
+        # -------------------------------------------------------
+        error_check_results = await asyncio.gather(
+            *[
+                asyncio.to_thread(
+                    plc_connections[ax["plc_name"]].read_by_name,
+                    f"GVL.gAxisState[{ax['local_axis']}].Error",
+                    pyads.PLCTYPE_BOOL,
+                )
+                for ax in not_powered_axes
+            ],
+            return_exceptions=True,
+        )
+        axes_with_error = [
+            ax for ax, err in zip(not_powered_axes, error_check_results)
+            if err is True
+        ]
+        if axes_with_error:
+            by_plc_error = {}
+            for ax in axes_with_error:
+                by_plc_error.setdefault(ax["plc_name"], []).append(ax)
+            error_names = ", ".join(
+                f"{ax['positioner']}-{ax['motor']}" for ax in axes_with_error
+            )
+            print(f"Power ON 중 축 에러 감지 — 자동 Reset 시도: {error_names}")
+            await asyncio.gather(
+                *[
+                    asyncio.to_thread(
+                        reset_axis_errors_sync,
+                        plc_name,
+                        plc_connections[plc_name],
+                        axes,
+                    )
+                    for plc_name, axes in by_plc_error.items()
+                ],
+                return_exceptions=True,
+            )
+            # Reset 처리 완료 대기 후 즉시 재폴링
+            await asyncio.sleep(0.5)
+            continue
 
         await asyncio.sleep(min(poll_interval, remaining))
 
@@ -1406,9 +1454,10 @@ def wait_one_plc_started_sync(
     """
     PLC가 새로운 모션 명령을 정상적으로 접수했는지
     gMotionSequence 변화로 확인한다.
-    
-    축 하나라도 Error=True이면 즉시 실패한다.
-    
+
+    축 에러가 감지되면 즉시 Reset 펄스를 보내고 재시도한다.
+    StartSpline 직후 FB 에러가 뒤늦게 떠오르는 경우를 처리한다.
+    Reset 후에도 timeout 안에 출발하지 못하면 axis_error로 실패한다.
     """
     start_time = time.time()
     sequence_now = sequence_before
@@ -1436,16 +1485,15 @@ def wait_one_plc_started_sync(
                     "motor": route["motor"],
                 })
 
-        # 축 에러가 발생했다면 출발 실패
+        # 축 에러가 감지되면 즉시 Reset 후 재시도
         if error_axes:
-            return {
-                "plc_name": plc_name,
-                "started": False,
-                "reason": "axis_error",
-                "sequence_before": int(sequence_before),
-                "sequence_now": int(sequence_now),
-                "error_axes": error_axes
-            }
+            error_names = ", ".join(
+                f"{ax['positioner']}-{ax['motor']}" for ax in error_axes
+            )
+            print(f"[{plc_name}] StartSpline 후 축 에러 감지 — 자동 Reset 시도: {error_names}")
+            reset_axis_errors_sync(plc_name, plc, routes, pulse_wait=0.15)
+            time.sleep(0.2)
+            continue
 
         # 현재 MotionSequence 확인
         sequence_now = plc.read_by_name(
@@ -1466,8 +1514,31 @@ def wait_one_plc_started_sync(
 
         time.sleep(0.02)
 
+    # 제한 시간 동안 MotionSequence가 변하지 않음 — 마지막 에러 축 수집
+    final_error_axes = []
+    for route in routes:
+        local_axis = route["local_axis"]
+        try:
+            if plc.read_by_name(f"GVL.gAxisState[{local_axis}].Error", pyads.PLCTYPE_BOOL):
+                final_error_axes.append({
+                    "global_axis": route["global_axis"],
+                    "local_axis": local_axis,
+                    "positioner": route["positioner"],
+                    "motor": route["motor"],
+                })
+        except Exception:
+            pass
 
-    # 제한 시간 동안 MotionSequence가 변하지 않음
+    if final_error_axes:
+        return {
+            "plc_name": plc_name,
+            "started": False,
+            "reason": "axis_error",
+            "sequence_before": int(sequence_before),
+            "sequence_now": int(sequence_now),
+            "error_axes": final_error_axes,
+        }
+
     return {
         "plc_name": plc_name,
         "started": False,
