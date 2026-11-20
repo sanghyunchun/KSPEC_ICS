@@ -70,20 +70,30 @@ def query(ra0, dec0, gmax, workers=6):
     from concurrent.futures import ThreadPoolExecutor
 
     cols = "source_id, ra, dec, pmra, pmdec, phot_g_mean_mag"
-    qs = [
-        f"SELECT {cols} FROM gaiadr3.gaia_source WHERE 1 = CONTAINS(POINT(ra, dec), "
-        f"CIRCLE({c.ra.deg:.6f}, {c.dec.deg:.6f}, {R_CIRCLE})) AND phot_g_mean_mag < {gmax}"
-        for c in ring_circles(ra0, dec0)
-    ]
 
-    def run(q):
-        for attempt in range(3):
+    def cone_query(ra, dec, r):
+        return (f"SELECT {cols} FROM gaiadr3.gaia_source WHERE 1 = CONTAINS(POINT(ra, dec), "
+                f"CIRCLE({ra:.6f}, {dec:.6f}, {r:.4f})) AND phot_g_mean_mag < {gmax}")
+
+    def run(cone, depth=0):
+        """One cone; if the archive gives up (dense field), 7 cones of half the radius
+        (center + 6 at 0.866 r cover the circle), down to r / 4."""
+        ra, dec, r = cone
+        for attempt in range(2):
             try:
-                return _sync(q)
+                return _sync(cone_query(ra, dec, r))
             except Exception:
-                if attempt == 2:
-                    raise
-                time.sleep(5 * (attempt + 1))
+                time.sleep(3 * (attempt + 1))
+        if depth >= 2:
+            raise RuntimeError(f"cone ({ra:.4f}, {dec:.4f}, r = {r:.3f} deg) failed")
+        c = SkyCoord(ra * u.deg, dec * u.deg)
+        sub = [(ra, dec, r / 2)] + [
+            (p.ra.deg, p.dec.deg, r / 2)
+            for p in c.directional_offset_by(np.arange(6) * 60.0 * u.deg, 0.866 * r * u.deg)
+        ]
+        return vstack([run(x, depth + 1) for x in sub], metadata_conflicts="silent")
+
+    qs = [(c.ra.deg, c.dec.deg, R_CIRCLE) for c in ring_circles(ra0, dec0)]
 
     with ThreadPoolExecutor(max_workers=workers) as ex:
         parts = list(ex.map(run, qs))
