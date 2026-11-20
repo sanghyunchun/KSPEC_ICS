@@ -971,3 +971,180 @@ def test_preproc_runs_only_missing_outputs(tmp_path, monkeypatch):
     assert called["paths"] == ["b.fits"]
     assert len(res) == 1
     assert len(corr_ok) == 1
+
+
+# -------------------------
+# solve-field from the matched-filter star list (astrometry.source_list)
+# -------------------------
+from kspec_gfa_controller import gfa_sources  # noqa: E402
+
+STARS = [(200.3, 150.7, 4000.0), (600.0, 700.2, 2500.0), (900.6, 300.4, 6000.0),
+         (120.2, 1000.9, 1500.0), (1100.5, 520.1, 3000.0), (450.8, 880.6, 2000.0)]
+
+
+def _star_image(shape=(1152, 1332), fwhm=7.0, sky=100.0, seed=1):
+    rng = np.random.default_rng(seed)
+    ny, nx = shape
+    yy, xx = np.mgrid[0:ny, 0:nx]
+    sig = fwhm / 2.3548
+    img = np.full(shape, sky, dtype=float)
+    for x, y, f in STARS:
+        img += f / (2 * np.pi * sig**2) * np.exp(-((xx - x) ** 2 + (yy - y) ** 2) / (2 * sig**2))
+    return img + rng.normal(0.0, 1.0, shape)
+
+
+def _write_list_config(path: Path, tmp_path: Path, enabled=True):
+    _write_config(path, tmp_path)
+    cfg = json.loads(path.read_text())
+    cfg["astrometry"]["source_list"] = {
+        "enabled": enabled, "fwhm": 7.0, "nsigma": 6.0, "box_size": 64, "border": 8,
+        "min_sources": 5, "scale_units": "arcsecperpix", "scale_range": [0.40, 0.46],
+    }
+    path.write_text(json.dumps(cfg))
+
+
+def _fake_wcs_header():
+    h = fits.Header()
+    h["WCSAXES"] = 2
+    h["CTYPE1"], h["CTYPE2"] = "RA---TAN-SIP", "DEC--TAN-SIP"
+    h["CRVAL1"], h["CRVAL2"] = 123.456, -78.9
+    h["CRPIX1"], h["CRPIX2"] = 666.5, 576.5
+    h["CD1_1"], h["CD1_2"], h["CD2_1"], h["CD2_2"] = -1.16e-4, 0.0, 0.0, 1.16e-4
+    h["A_ORDER"], h["B_ORDER"] = 2, 2
+    h["A_2_0"], h["B_0_2"] = 1e-7, -1e-7
+    h["IMAGEW"], h["IMAGEH"] = 1332, 1152
+    return h
+
+
+def test_source_list_finds_the_stars_1_based_and_sorted():
+    t = gfa_sources.source_list(_star_image())
+    assert len(t) == len(STARS)
+    assert np.all(np.diff(t["FLUX"]) <= 0)
+    for x, y, _ in STARS:
+        d = np.hypot(t["X"] - (x + 1.0), t["Y"] - (y + 1.0))
+        assert d.min() < 0.15  # noise-limited centroid, faintest star S/N ~ 140
+
+
+def test_source_list_empty_image_returns_empty_table():
+    rng = np.random.default_rng(0)
+    t = gfa_sources.source_list(100.0 + rng.normal(0.0, 3.0, (512, 512)))
+    assert len(t) == 0
+    assert t.colnames == ["X", "Y", "FLUX"]
+
+
+def test_shipped_config_solves_from_the_star_list():
+    cfg = json.loads(Path(_get_default_config_path()).read_text())
+    sl = cfg["astrometry"]["source_list"]
+    assert sl["enabled"] is True
+    assert sl["scale_units"] == "arcsecperpix"
+    assert 0.40 <= 0.418 <= 0.46  # pixel_scale of the GFA cameras inside the limits
+    assert list(map(float, sl["scale_range"])) == [0.40, 0.46]
+
+
+def test_astrometry_raw_solves_the_list_and_attaches_the_wcs(tmp_path, monkeypatch):
+    cfgp = tmp_path / "cfg.json"
+    _write_list_config(cfgp, tmp_path)
+    _patch_solve_field_ok(monkeypatch)
+    ast = GFAAstrometry(config=str(cfgp), logger=_get_default_logger())
+
+    raw = Path(ast.dir_path) / "img.fits"
+    img = _star_image().astype(np.float32)
+    _write_raw_fits(raw, img, ra=111.0, dec=-22.0)
+
+    seen = {}
+
+    def fake_run(cmd, capture_output, text, env):
+        seen["cmd"] = cmd
+        work_dir = Path(cmd[cmd.index("-D") + 1])
+        outbase = cmd[cmd.index("-o") + 1]
+        # a list solve writes .wcs and .corr, no .new
+        fits.PrimaryHDU(header=_fake_wcs_header()).writeto(work_dir / f"{outbase}.wcs")
+        col = fits.Column(name="X", format="E", array=np.array([1.0], dtype=np.float32))
+        fits.HDUList([fits.PrimaryHDU(), fits.BinTableHDU.from_columns([col])]).writeto(
+            work_dir / f"{outbase}.corr"
+        )
+
+        class R:
+            returncode = 0
+            stdout = ""
+            stderr = ""
+
+        return R()
+
+    monkeypatch.setattr("kspec_gfa_controller.gfa_astrometry.subprocess.run", fake_run)
+    cr1, cr2, astro_path, corr_path = ast.astrometry_raw(str(raw))
+
+    cmd = seen["cmd"]
+    assert cmd[1].endswith("img.xy.fits")
+    assert cmd[cmd.index("--width") + 1] == "1332"
+    assert cmd[cmd.index("--height") + 1] == "1152"
+    assert cmd[cmd.index("--scale-units") + 1] == "arcsecperpix"
+    assert (cmd[cmd.index("-L") + 1], cmd[cmd.index("-H") + 1]) == ("0.4", "0.46")
+    xy = fits.getdata(cmd[1], 1)
+    assert len(xy) == len(STARS)
+
+    assert (cr1, cr2) == (123.456, -78.9)
+    hdr = fits.getheader(astro_path)
+    assert hdr["CTYPE1"] == "RA---TAN-SIP" and hdr["A_2_0"] == 1e-7
+    assert str(hdr["RA"]) == "111.0"
+    np.testing.assert_array_equal(fits.getdata(astro_path), img)
+
+
+def test_astrometry_raw_falls_back_to_the_image_when_the_list_fails(tmp_path, monkeypatch):
+    cfgp = tmp_path / "cfg.json"
+    _write_list_config(cfgp, tmp_path)
+    _patch_solve_field_ok(monkeypatch)
+    ast = GFAAstrometry(config=str(cfgp), logger=_get_default_logger())
+
+    raw = Path(ast.dir_path) / "img.fits"
+    _write_raw_fits(raw, np.zeros((4, 4), dtype=np.float32))
+
+    def boom(*a, **k):
+        raise ValueError("detector failed")
+
+    monkeypatch.setattr(gfa_sources, "source_list", boom)
+    seen = {}
+
+    def fake_run(cmd, capture_output, text, env):
+        seen["cmd"] = cmd
+
+        class R:
+            returncode = 1
+            stdout = ""
+            stderr = ""
+
+        return R()
+
+    monkeypatch.setattr("kspec_gfa_controller.gfa_astrometry.subprocess.run", fake_run)
+    with pytest.raises(RuntimeError):
+        ast.astrometry_raw(str(raw))
+    cmd = seen["cmd"]
+    assert cmd[1] == str(raw)
+    assert "--width" not in cmd
+    assert cmd[cmd.index("--scale-units") + 1] == "degwidth"
+
+
+def test_astrometry_raw_list_disabled_keeps_the_image_command(tmp_path, monkeypatch):
+    cfgp = tmp_path / "cfg.json"
+    _write_list_config(cfgp, tmp_path, enabled=False)
+    _patch_solve_field_ok(monkeypatch)
+    ast = GFAAstrometry(config=str(cfgp), logger=_get_default_logger())
+    raw = Path(ast.dir_path) / "img.fits"
+    _write_raw_fits(raw, np.zeros((4, 4), dtype=np.float32))
+    seen = {}
+
+    def fake_run(cmd, capture_output, text, env):
+        seen["cmd"] = cmd
+
+        class R:
+            returncode = 1
+            stdout = ""
+            stderr = ""
+
+        return R()
+
+    monkeypatch.setattr("kspec_gfa_controller.gfa_astrometry.subprocess.run", fake_run)
+    with pytest.raises(RuntimeError):
+        ast.astrometry_raw(str(raw))
+    assert seen["cmd"][1] == str(raw)
+    assert seen["cmd"][seen["cmd"].index("-L") + 1] == "0.1"

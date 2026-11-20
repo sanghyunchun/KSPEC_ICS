@@ -28,6 +28,8 @@ from astropy.table import Table, vstack
 from astropy.coordinates import SkyCoord
 import astropy.units as u
 
+from . import gfa_sources
+
 DEFAULT_SOLVE_FIELD = "/home/yyoon/astrometry/bin/solve-field"
 
 
@@ -388,9 +390,27 @@ class GFAAstrometry:
         corr_path = os.path.join(work_dir, f"{outbase}.corr")
         new_path = os.path.join(work_dir, f"{outbase}.new")
 
+        # Input: the matched-filter star list (astrometry.source_list.enabled)
+        # or the image (solve-field's own simplexy detection).
+        xy_path = None
+        if self._source_list_cfg().get("enabled", False):
+            xy_path = self._write_source_list(raw_fits_path, work_dir, stem)
+
+        if xy_path is not None:
+            sl = self._source_list_cfg()
+            with fits.open(xy_path) as h:
+                width = int(h[1].header["IMAGEW"])
+                height = int(h[1].header["IMAGEH"])
+            scale_units = str(sl.get("scale_units", "arcsecperpix"))
+            scale_low, scale_high = sl.get("scale_range", [0.40, 0.46])
+            solve_input = [xy_path, "--width", str(width), "--height", str(height)]
+        else:
+            scale_units = "degwidth"
+            solve_input = [raw_fits_path]
+
         cmd = [
             solve_field_path,
-            raw_fits_path,
+            *solve_input,
             "-D",
             work_dir,
             "-o",
@@ -408,7 +428,7 @@ class GFAAstrometry:
             "-s",
             "FLUX",
             "--scale-units",
-            "degwidth",
+            scale_units,
             "-L",
             str(scale_low),
             "-H",
@@ -436,6 +456,12 @@ class GFAAstrometry:
             self.logger.debug(f"[{stem}] solve-field stdout:\n{p.stdout}")
         if p.stderr:
             self.logger.debug(f"[{stem}] solve-field stderr:\n{p.stderr}")
+
+        wcs_path = os.path.join(work_dir, f"{outbase}.wcs")
+        if xy_path is not None and os.path.exists(wcs_path):
+            # solve-field writes no .new for a list input: attach the solved
+            # WCS to the raw frame, as solve-field does for an image.
+            self._attach_wcs(raw_fits_path, wcs_path, new_path)
 
         if not os.path.exists(new_path):
             try:
@@ -508,6 +534,69 @@ class GFAAstrometry:
 
         self.logger.info(f"[{stem}] Astrometry done. CRVAL1={crval1}, CRVAL2={crval2}")
         return crval1, crval2, out_fits_path, corr_path
+
+    # -------------------------------
+    # matched-filter star list as solve-field input
+    # -------------------------------
+    def _source_list_cfg(self) -> dict:
+        return self.inpar.get("astrometry", {}).get("source_list", {}) or {}
+
+    def _write_source_list(
+        self, raw_fits_path: str, work_dir: str, stem: str
+    ) -> Optional[str]:
+        """
+        Write the matched-filter star list of a frame as an xylist.
+
+        Returns its path, or None (solve the image instead) when the
+        detection fails. With fewer than ``min_sources`` stars the list is
+        still written: solve-field then gives up in seconds, where the image
+        would run into ``--cpulimit``.
+        """
+        sl = self._source_list_cfg()
+        try:
+            img = fits.getdata(raw_fits_path)
+            if img is None or img.ndim != 2:
+                raise ValueError("no 2-D image in the primary HDU")
+            t0 = time.time()
+            table = gfa_sources.source_list(
+                img,
+                fwhm=float(sl.get("fwhm", 7.0)),
+                nsigma=float(sl.get("nsigma", 6.0)),
+                box_size=int(sl.get("box_size", 64)),
+                border=int(sl.get("border", 8)),
+            )
+        except Exception as e:
+            self.logger.warning(
+                f"[{stem}] star list failed ({e}) -> solving the image instead"
+            )
+            return None
+
+        n = len(table)
+        min_sources = int(sl.get("min_sources", 5))
+        if n < min_sources:
+            self.logger.warning(
+                f"[{stem}] star list has {n} stars (< {min_sources}): "
+                "solve-field will most likely fail"
+            )
+        xy_path = os.path.join(work_dir, f"{stem}.xy.fits")
+        gfa_sources.write_xylist(table, xy_path, img.shape[1], img.shape[0])
+        self.logger.info(
+            f"[{stem}] star list: {n} stars in {time.time() - t0:.2f} s -> {xy_path}"
+        )
+        return xy_path
+
+    @staticmethod
+    def _attach_wcs(raw_fits_path: str, wcs_path: str, out_path: str) -> None:
+        """Copy the raw frame to ``out_path`` with the WCS cards of ``wcs_path``."""
+        skip = {"SIMPLE", "BITPIX", "NAXIS", "NAXIS1", "NAXIS2", "EXTEND", "COMMENT",
+                "HISTORY", ""}
+        wcs_hdr = fits.getheader(wcs_path)
+        with fits.open(raw_fits_path, do_not_scale_image_data=True) as hdul:
+            hdr = hdul[0].header
+            for card in wcs_hdr.cards:
+                if card.keyword not in skip:
+                    hdr[card.keyword] = (card.value, card.comment)
+            hdul.writeto(out_path, overwrite=True)
 
     def rm_tempfiles(self):
         self.logger.info("Removing temporary files.")
