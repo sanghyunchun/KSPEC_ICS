@@ -242,3 +242,22 @@ def test_astrometry_raw_without_catalogue_keeps_solve_field(tmp_path, monkeypatc
     assert "GFAREFIT" not in fits.getheader(astro)
     assert corr.endswith(f"{NAME}.corr") and not corr.endswith(".refit.corr")
     assert (cr1, cr2) == (solve_field_like_header()["CRVAL1"], solve_field_like_header()["CRVAL2"])
+
+
+def test_combined_star_glob_prefers_the_refit_corr(tmp_path, monkeypatch):
+    _config(tmp_path / "cfg.json", tmp_path, tmp_path / "gaia")
+    monkeypatch.setattr(gfa_astrometry, "_get_solve_field_path", lambda env=None: "/fake/solve-field")
+    ast = GFAAstrometry(config=str(tmp_path / "cfg.json"), logger=_get_default_logger())
+
+    def corr(path, n):
+        cols = [fits.Column(name="index_ra", format="D", array=np.zeros(n), unit="degrees"),
+                fits.Column(name="index_dec", format="D", array=np.zeros(n), unit="degrees"),
+                fits.Column(name="FLUX", format="E", array=np.ones(n))]
+        path.parent.mkdir(parents=True, exist_ok=True)
+        fits.HDUList([fits.PrimaryHDU(), fits.BinTableHDU.from_columns(cols)]).writeto(path)
+
+    corr(Path(ast.temp_dir) / "a" / "a.corr", 3)
+    corr(Path(ast.temp_dir) / "a" / "a.refit.corr", 7)
+    corr(Path(ast.temp_dir) / "b" / "b.corr", 2)  # not refit: kept
+    out = ast.build_combined_star_from_corr(corr_files=None)
+    assert len(fits.getdata(out, 1)) == 9

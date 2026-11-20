@@ -292,6 +292,13 @@ class GFAAstrometry:
             corr_files = sorted(
                 glob.glob(os.path.join(self.temp_dir, corr_glob), recursive=True)
             )
+            # a frame with a Gaia refit has both <stem>.corr and <stem>.refit.corr:
+            # keep only the refit one (its positions match the refit WCS)
+            refit = {f[: -len(".refit.corr")] for f in corr_files if f.endswith(".refit.corr")}
+            corr_files = [
+                f for f in corr_files
+                if f.endswith(".refit.corr") or f[: -len(".corr")] not in refit
+            ]
 
         self.logger.info(
             f"Building combined star catalog from .corr files: found {len(corr_files)} files."
