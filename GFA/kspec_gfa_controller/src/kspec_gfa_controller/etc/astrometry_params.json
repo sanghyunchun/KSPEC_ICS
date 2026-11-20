@@ -62,7 +62,8 @@
         "centroid": {
             "fwhm_px": 8.0,
             "measure_fwhm": true,
-            "neighbour_max_bias_px": 0.05
+            "neighbour_max_bias_px": 0.05,
+            "saturation_adu": 4000
         },
         "criteria": {
             "critical_outlier": 0.25
@@ -71,6 +72,13 @@
             "max": 4000,
             "min": 100
         }
+    },
+    "guide_offset": {
+        "method": "fit",
+        "min_cameras": 3,
+        "min_stars": 8,
+        "fit_scale": true,
+        "nsig": 3.0
     },
     "catalog_matching": {
         "fields": {

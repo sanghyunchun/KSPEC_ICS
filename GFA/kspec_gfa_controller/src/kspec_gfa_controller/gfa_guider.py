@@ -35,6 +35,8 @@ from astropy.utils.exceptions import AstropyWarning
 
 import photutils.detection as pd
 
+from kspec_gfa_controller import gfa_guide_fit
+
 
 ###############################################################################
 # Helper Functions
@@ -160,6 +162,26 @@ class GFAGuider:
             centroid_par.get("neighbour_max_bias_px", 0.05)
         )
         self.measure_fwhm = bool(centroid_par.get("measure_fwhm", True))
+        # Raw pixel value (ADU, before any background subtraction) at or above
+        # which a star is saturated (12-bit camera: 4095); such stars are not
+        # used for guiding.
+        self.saturation_adu = float(centroid_par.get("saturation_adu", 4000.0))
+
+        # Guide offset estimator (exe_cal): "fit" = shift + rotation (+ scale)
+        # over all stars about the ring center (gfa_guide_fit), "mean" = the
+        # clipped mean of cal_final_offset. The fit needs >= min_cameras cameras
+        # and >= min_stars stars, else the mean is used.
+        off_par = self.inpar.get("guide_offset", {})
+        self.offset_method = str(off_par.get("method", "fit")).strip().lower()
+        self.offset_min_cameras = int(off_par.get("min_cameras", 3))
+        self.offset_min_stars = int(off_par.get("min_stars", 8))
+        self.offset_fit_scale = bool(off_par.get("fit_scale", True))
+        self.offset_nsig = float(off_par.get("nsig", 3.0))
+        if self.offset_method not in ("fit", "mean"):
+            raise ValueError(
+                f"guide_offset.method must be 'fit' or 'mean', got {self.offset_method!r}"
+            )
+        self.last_fit = None
         if not (np.isfinite(self.centroid_fwhm) and self.centroid_fwhm > 0):
             raise ValueError(
                 f"detection.centroid.fwhm_px must be > 0, got {self.centroid_fwhm}"
@@ -338,6 +360,8 @@ class GFAGuider:
 
         # Subtract a single global background level from the full image.
         image_data = image_data_p.astype(float, copy=False) - background_level
+        # kept for the saturation check (raw value = image_data + this level)
+        self._background_level = background_level
 
         self.logger.debug(
             "Global background subtraction done. "
@@ -727,7 +751,8 @@ class GFAGuider:
         """
         Measure catalogue star ``i`` (see ``cal_centroid_offset``).
 
-        Returns a dict with ``status`` (ok, oob, edge, nopeak, neighbour, badflux)
+        Returns a dict with ``status`` (ok, oob, edge, nopeak, saturated,
+        neighbour, badflux)
         and, for ``ok``, the 1-based centroid ``fra``/``fdec``, the seed ``peak``
         above the local background and the PSF ``sigma`` from the windowed
         second moment.
@@ -791,6 +816,16 @@ class GFAGuider:
         dist = np.hypot(px - xp_cat, py - yp_cat)
         j = int(np.argmin(dist))
         x_peak, y_peak, peak_val = float(px[j]), float(py[j]), float(pv[j])
+
+        # Saturated: a raw pixel within 2 px of the seed reaches saturation_adu.
+        # Checked on the raw value (the peak above the background of a
+        # saturated star is 4095 - sky, ~3770 on a dark sky, which passed
+        # peak_detection.max = 4000).
+        ixs, iys = int(round(x_peak)), int(round(y_peak))
+        core = image_data[max(iys - 2, 0): iys + 3, max(ixs - 2, 0): ixs + 3]
+        level = float(getattr(self, "_background_level", 0.0))
+        if core.size and np.nanmax(core) + level >= self.saturation_adu:
+            return {"status": "saturated"}
 
         # 4. Neighbour check. Peaks within 1 FWHM, or at the seed's value
         #    (saturated plateau), belong to the same source.
@@ -999,7 +1034,9 @@ class GFAGuider:
         peakc: List[float] = []
         counts = {
             k: 0
-            for k in ("ok", "nopeak", "oob", "edge", "badflux", "neighbour", "exc")
+            for k in (
+                "ok", "nopeak", "oob", "edge", "badflux", "saturated", "neighbour", "exc"
+            )
         }
         ok_peak_values: List[float] = []
 
@@ -1096,6 +1133,7 @@ class GFAGuider:
             f"oob={counts['oob']} "
             f"edge={counts['edge']} "
             f"badflux={counts['badflux']} "
+            f"saturated={counts['saturated']} "
             f"neighbour={counts['neighbour']} "
             f"exc={counts['exc']} "
             f"thr={thr_val:.2f} "
@@ -1222,6 +1260,93 @@ class GFAGuider:
         else:
             self.logger.warning("Offsets within critical threshold; returning 0, 0.")
             return 0.0, 0.0
+
+    @staticmethod
+    def _chip_center(wcs_obj: WCS, header: fits.Header, data) -> Optional[Tuple[float, float]]:
+        """(RA, Dec) [deg] of the chip center through its WCS, or None."""
+        try:
+            if data is not None and getattr(data, "ndim", 0) == 2:
+                ny, nx = data.shape
+            else:
+                nx, ny = int(header["NAXIS1"]), int(header["NAXIS2"])
+            ra, dec = wcs_obj.pixel_to_world_values((nx - 1) / 2.0, (ny - 1) / 2.0)
+            ra, dec = float(ra), float(dec)
+            return (ra, dec) if np.isfinite(ra) and np.isfinite(dec) else None
+        except Exception:
+            return None
+
+    def cal_fit_offset(
+        self,
+        dxp: np.ndarray,
+        dyp: np.ndarray,
+        ra: np.ndarray,
+        dec: np.ndarray,
+        cam: np.ndarray,
+        centers: List[Optional[Tuple[float, float]]],
+    ) -> Tuple[Optional[float], Optional[float]]:
+        """
+        Guide offset = the shift at the field center of a shift + rotation
+        (+ scale) fit over all stars (``gfa_guide_fit.fit_shift_rotation``).
+
+        A field rotation omega moves each star by omega x (its position about
+        the field center); the plain mean of cal_final_offset picks up omega x
+        (mean star position), which is not the center when a camera is missing
+        or has fewer stars (~0.1" per hour of guide session on the 2026 Oct-Nov
+        data). The center is the ring center of the chip centers. Logs omega,
+        scale, rms and the difference from the mean.
+
+        Returns (fdx, fdy) [arcsec east, north] after the critical_outlier
+        threshold, or (None, None) when the fit is not possible (fewer than
+        min_cameras cameras / min_stars stars): the caller then uses the mean.
+        """
+        self.last_fit = None
+        good = [c for c in centers if c is not None]
+        n_cam = len(np.unique(cam))
+        if len(good) < self.offset_min_cameras or n_cam < self.offset_min_cameras:
+            self.logger.info(
+                f"[guide_fit] {n_cam} cameras (< {self.offset_min_cameras}): mean offset"
+            )
+            return None, None
+        if len(dxp) < self.offset_min_stars:
+            self.logger.info(
+                f"[guide_fit] {len(dxp)} stars (< {self.offset_min_stars}): mean offset"
+            )
+            return None, None
+        try:
+            ra0, dec0 = gfa_guide_fit.ring_center([c[0] for c in good], [c[1] for c in good])
+            xi, eta = gfa_guide_fit.gnomonic(ra, dec, ra0, dec0)
+            p = np.c_[xi, eta] * 3600.0
+            d = np.c_[dxp, dyp]
+            fit = gfa_guide_fit.fit_shift_rotation(
+                d, p, cam, scale=self.offset_fit_scale, nsig=self.offset_nsig
+            )
+        except Exception as exc:
+            self.logger.warning(f"[guide_fit] fit failed ({exc}): mean offset")
+            return None, None
+        if fit["n_cam"] < self.offset_min_cameras or not np.all(np.isfinite(fit["t"])):
+            self.logger.warning(
+                f"[guide_fit] {fit['n_cam']} cameras left after clipping: mean offset"
+            )
+            return None, None
+
+        fdx, fdy = float(fit["t"][0]), float(fit["t"][1])
+        keep = fit["keep"]
+        mean = d[keep].mean(axis=0)
+        self.last_fit = dict(fit, center=(ra0, dec0))
+        self.logger.info(
+            f"[guide_fit] t=({fdx:+.3f}, {fdy:+.3f})\" "
+            f"omega={np.degrees(fit['omega']) * 3600.0:+.2f}\" "
+            f"({np.degrees(fit['omega']):+.5f} deg) "
+            f"scale={fit['k'] * 1e6:+.1f} ppm rms={fit['rms']:.3f}\" "
+            f"stars={int(keep.sum())}/{len(keep)} cameras={fit['n_cam']} "
+            f"mean-t=({mean[0] - fdx:+.3f}, {mean[1] - fdy:+.3f})\" "
+            f"center=({ra0:.5f}, {dec0:.5f})"
+        )
+        if math.hypot(fdx, fdy) > self.crit_out:
+            self.logger.info(f"Final offset (fit): fdx={fdx:.4f}, fdy={fdy:.4f}")
+            return fdx, fdy
+        self.logger.warning("Offsets within critical threshold; returning 0, 0.")
+        return 0.0, 0.0
 
     @staticmethod
     def isotropic_gaussian_2d(
@@ -1385,6 +1510,9 @@ class GFAGuider:
             self.logger.info(f"Using combined_star.fits: {cat_path}")
 
             dxpp, dypp, pindpp = [], [], []
+            # for the shift + rotation fit: catalogue position and camera of
+            # every kept star, and each camera's chip center
+            rapp, decpp, campp, centers = [], [], [], []
             cutoutn_stack: List[np.ndarray] = []
             wcs_scales: List[float] = []
             file_counter = 1
@@ -1406,7 +1534,7 @@ class GFAGuider:
                     self.logger.info(f"  raw(img) : {raw_file}")
 
                     # 1) WCS는 astro_file에서
-                    _, header, wcs_obj = self.load_image_and_wcs(astro_file)
+                    astro_data, header, wcs_obj = self.load_image_and_wcs(astro_file)
                     crval1, crval2 = header["CRVAL1"], header["CRVAL2"]
                     self.logger.debug(f"  CRVAL1: {crval1:.6f}, CRVAL2: {crval2:.6f}")
 
@@ -1478,6 +1606,10 @@ class GFAGuider:
                     dxpp.append(dxn)
                     dypp.append(dyn)
                     pindpp.append(pindn)
+                    rapp.append(np.asarray(ra_sel, float)[pindn])
+                    decpp.append(np.asarray(dec_sel, float)[pindn])
+                    campp.append(np.full(len(pindn), file_counter))
+                    centers.append(self._chip_center(wcs_obj, header, astro_data))
 
                     file_counter += 1
 
@@ -1513,7 +1645,14 @@ class GFAGuider:
 
             self.logger.info(f"Total valid guide star offsets: {len(dxp)}")
 
-            fdx, fdy = self.cal_final_offset(dxp, dyp, pindp)
+            fdx, fdy = None, None
+            if self.offset_method == "fit":
+                fdx, fdy = self.cal_fit_offset(
+                    dxp, dyp, np.concatenate(rapp), np.concatenate(decpp),
+                    np.concatenate(campp), centers,
+                )
+            if fdx is None:
+                fdx, fdy = self.cal_final_offset(dxp, dyp, pindp)
             self.logger.info(
                 f"Computed final offset: ΔX = {fdx} arcsec, ΔY = {fdy} arcsec"
             )

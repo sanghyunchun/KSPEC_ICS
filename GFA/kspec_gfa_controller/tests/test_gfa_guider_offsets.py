@@ -455,3 +455,72 @@ def test_fwhm_measured_per_frame(tmp_path, measure):
         assert math.hypot(x[4] - target[0], y[4] - target[1]) < 0.05
     else:
         assert peak[4] == -1
+
+
+# ---------------------------------------------------------------------------
+# Field rotation (guide_offset.method "fit") and saturated stars
+# ---------------------------------------------------------------------------
+def _rotated(stars: SkyCoord, centre: SkyCoord, rot_deg: float) -> SkyCoord:
+    """The stars rotated about the field centre by rot_deg (position angle + rot_deg)."""
+    return centre.directional_offset_by(
+        centre.position_angle(stars) + rot_deg * u.deg, centre.separation(stars)
+    )
+
+
+@pytest.mark.parametrize("method", ["fit", "mean"])
+def test_field_rotation_does_not_bias_the_offset(tmp_path, method):
+    """
+    Five cameras (one missing), the telescope off by (3, -2)" and the field rotated
+    by 0.01 deg about the boresight (0.93" at the ring). The fit returns the shift
+    at the boresight; the clipped mean picks up omega x (mean star position, ~0.3
+    deg off the centre with five cameras), ~0.2".
+    """
+    inpar = json.loads(CONFIG.read_text())
+    inpar["guide_offset"]["method"] = method
+    config = tmp_path / f"cfg_{method}.json"
+    config.write_text(json.dumps(inpar))
+    bore = SkyCoord(87.4 * u.deg, -46.0 * u.deg)
+    rig = GuidingRig(tmp_path / "rig", bore, CAMERAS[:5], config=config)
+    rig.stars = _rotated(rig.stars, bore, 0.01)
+
+    cur = bore.spherical_offsets_by(3.0 * u.arcsec, -2.0 * u.arcsec)
+    fdx, fdy, _ = rig.measure(cur)
+    err = np.hypot(fdx + 3.0, fdy - 2.0)
+    if method == "fit":
+        assert err < 0.05
+        fit = rig.guider.last_fit
+        # omega > 0 turns east toward north: position angles +0.01 deg = omega -0.01 deg
+        assert np.degrees(fit["omega"]) == pytest.approx(-0.01, abs=0.001)
+        assert fit["n_cam"] == 5
+    else:
+        assert err > 0.1
+        assert rig.guider.last_fit is None
+
+
+def test_fewer_than_three_cameras_uses_the_mean(tmp_path):
+    bore = SkyCoord(87.4 * u.deg, -46.0 * u.deg)
+    rig = GuidingRig(tmp_path / "rig", bore, CAMERAS[:2])
+    cur = bore.spherical_offsets_by(3.0 * u.arcsec, -2.0 * u.arcsec)
+    fdx, fdy, _ = rig.measure(cur)
+    assert rig.guider.last_fit is None
+    assert fdx == pytest.approx(-3.0, abs=0.1)
+    assert fdy == pytest.approx(2.0, abs=0.1)
+
+
+@pytest.mark.parametrize("sky", [25.0, 300.0])
+def test_saturated_star_is_not_used(tmp_path, sky):
+    """
+    A star clipped at 4095 ADU on a 25 ADU sky peaks 4070 above the background, on
+    a 300 ADU sky 3795, under the 4000 peak cut either way. The raw value is what
+    marks it as saturated (detection.centroid.saturation_adu). An unsaturated star
+    in the same frame is kept.
+    """
+    raw = _gauss_image((200, 300), [(80.3, 99.6, 20000.0), (220.4, 100.2, 2000.0)],
+                       fwhm=8.0, sky=0.0, noise=5.0) + sky
+    raw = np.minimum(raw, 4095.0)
+    g = _guider(tmp_path)
+    img, std = g.background(raw)
+    x, y, peak = _measure(g, img, [(81.0, 100.0), (220.0, 100.0)], noise=std)
+    assert peak[0] == -1.0  # rejected: saturated
+    assert peak[1] > 1000.0
+    assert math.hypot(x[1] - 220.4, y[1] - 100.2) < 0.2
