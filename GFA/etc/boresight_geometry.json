@@ -32,5 +32,33 @@
       "theta_deg": 89.80727,
       "n_fields": 25
     }
+  },
+  "cameras_gaia_method": "as 'cameras', on the Gaia-refit chip solutions (fixed distortion of gfa_distortion.json + linear fit to Gaia DR3 at the epoch); used for frames with GFAREFIT = T",
+  "cameras_gaia": {
+    "40103651": {
+      "sep_deg": 1.4731841,
+      "theta_deg": 89.83797,
+      "n_fields": 25
+    },
+    "40103663": {
+      "sep_deg": 1.4739175,
+      "theta_deg": 89.97757,
+      "n_fields": 25
+    },
+    "40103831": {
+      "sep_deg": 1.4740822,
+      "theta_deg": 90.11531,
+      "n_fields": 25
+    },
+    "40103833": {
+      "sep_deg": 1.473084,
+      "theta_deg": 89.92815,
+      "n_fields": 25
+    },
+    "40103834": {
+      "sep_deg": 1.4748107,
+      "theta_deg": 89.80669,
+      "n_fields": 25
+    }
   }
 }

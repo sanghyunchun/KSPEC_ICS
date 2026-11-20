@@ -349,13 +349,37 @@ def load_boresight_geometry(path):
         return json.load(f)["cameras"]
 
 
-def boresight_from_astro_files(astro_paths, geometry, **kwargs):
+def load_boresight_geometry_gaia(path):
+    """Geometry calibrated on Gaia-refit chip solutions ("cameras_gaia"), {} if absent."""
+    with open(path, "r") as f:
+        return json.load(f).get("cameras_gaia", {})
+
+
+def geometry_for_headers(headers, geometry, geometry_gaia=None):
+    """Per camera: the Gaia-refit geometry for a refit frame (GFAREFIT = T), else ``geometry``.
+
+    sep/theta are calibrated per kind of solution: the refit chips (fixed distortion, Gaia
+    DR3 at the epoch) differ in theta by up to 0.007 deg (0.6" at the 1.47 deg lever).
+    """
+    out = {}
+    for serial, h in headers.items():
+        if geometry_gaia and h.get("GFAREFIT", False) and serial in geometry_gaia:
+            out[serial] = geometry_gaia[serial]
+        elif serial in geometry:
+            out[serial] = geometry[serial]
+    return out
+
+
+def boresight_from_astro_files(astro_paths, geometry, geometry_gaia=None, **kwargs):
     """astro_*.fits 경로 목록으로 boresight_from_wcs 실행."""
     headers = {}
     for p in astro_paths:
         with fits.open(p) as hdul:
             headers[camera_serial(p)] = hdul[0].header.copy()
-    return boresight_from_wcs(headers, geometry, **kwargs)
+    geom = geometry_for_headers(headers, geometry, geometry_gaia)
+    ra, dec, info = boresight_from_wcs(headers, geom, **kwargs)
+    info["refit"] = sorted(s for s, h in headers.items() if h.get("GFAREFIT", False))
+    return ra, dec, info
 
 
 #def refine_command_coordinate(

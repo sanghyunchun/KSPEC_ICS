@@ -65,6 +65,15 @@
             "min_sources": 5,
             "scale_units": "arcsecperpix",
             "scale_range": [0.40, 0.46]
+        },
+        "refine": {
+            "enabled": true,
+            "catalog_dir": "~/work/DATA/GFADATA/gaia",
+            "distortion_file": "",
+            "cone_deg": 0.115,
+            "match_px": 3.0,
+            "min_stars": 6,
+            "error_model_arcsec": [0.079, 0.135]
         }
     },
     "detection": {

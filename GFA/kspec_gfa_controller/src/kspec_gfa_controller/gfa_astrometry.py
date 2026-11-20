@@ -17,6 +17,7 @@ import json
 import glob
 import shutil
 import subprocess
+import threading
 import logging
 from typing import Optional, List, Union, Tuple
 from pathlib import Path
@@ -28,7 +29,7 @@ from astropy.table import Table, vstack
 from astropy.coordinates import SkyCoord
 import astropy.units as u
 
-from . import gfa_sources
+from . import gfa_refit, gfa_sources
 
 DEFAULT_SOLVE_FIELD = "/home/yyoon/astrometry/bin/solve-field"
 
@@ -149,6 +150,12 @@ class GFAAstrometry:
 
         # ✅ 세션 검증 tolerance(arcsec). 필요하면 config로 빼도 됨.
         self._session_radec_tol_arcsec = 30.0
+
+        # Gaia refit inputs, loaded on first use (astrometry.refine)
+        self._refine_lock = threading.Lock()
+        self._gaia = None
+        self._distortion = None
+        self._refine_disabled = False
 
     def set_subprocess_env(self, env: dict) -> None:
         self._subprocess_env = env
@@ -532,6 +539,14 @@ class GFAAstrometry:
                 f"  error={e}"
             ) from e
 
+        # Refit against Gaia DR3 at the epoch with the fixed chip distortion
+        # (astrometry.refine). Needs the star list and a local catalogue;
+        # otherwise the solve-field solution stays.
+        if xy_path is not None:
+            refit = self._refine(out_fits_path, xy_path, corr_path, stem)
+            if refit is not None:
+                crval1, crval2, corr_path = refit
+
         self.logger.info(f"[{stem}] Astrometry done. CRVAL1={crval1}, CRVAL2={crval2}")
         return crval1, crval2, out_fits_path, corr_path
 
@@ -597,6 +612,125 @@ class GFAAstrometry:
                 if card.keyword not in skip:
                     hdr[card.keyword] = (card.value, card.comment)
             hdul.writeto(out_path, overwrite=True)
+
+    # -------------------------------
+    # Gaia refit of the chip WCS (gfa_refit)
+    # -------------------------------
+    def _refine_cfg(self) -> dict:
+        return self.inpar.get("astrometry", {}).get("refine", {}) or {}
+
+    def _refine_inputs(self):
+        """(GaiaCatalog, distortion) or None when the refit is off / has no inputs."""
+        cfg = self._refine_cfg()
+        if not cfg.get("enabled", False):
+            return None
+        with self._refine_lock:
+            if self._gaia is None:
+                cat_dir = os.path.expanduser(str(cfg.get("catalog_dir", "")))
+                dist = cfg.get("distortion_file") or os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)), "etc", "gfa_distortion.json"
+                )
+                try:
+                    self._distortion = gfa_refit.load_distortion(os.path.expanduser(dist))
+                except Exception as e:
+                    self.logger.warning(f"Gaia refit off: distortion file {dist}: {e}")
+                    self._refine_disabled = True
+                self._gaia = gfa_refit.GaiaCatalog(cat_dir)
+            if self._refine_disabled:
+                return None
+            try:
+                n = len(self._gaia)
+            except Exception as e:
+                self.logger.warning(f"Gaia refit skipped: catalogue {self._gaia.directory}: {e}")
+                return None
+        if n == 0:
+            self.logger.info(
+                f"Gaia refit skipped: no catalogue files in {self._gaia.directory}"
+            )
+            return None
+        return self._gaia, self._distortion
+
+    def _refine(self, astro_path: str, xy_path: str, corr_path: str, stem: str):
+        """
+        Refit the solved chip against Gaia DR3 at the epoch (gfa_refit.refine_wcs).
+
+        On success the WCS of ``astro_path`` is replaced (TAN-SIP with the
+        fixed distortion, GFAREFIT = T) and ``<stem>.refit.corr`` is written
+        next to the solve-field .corr with the same columns and units, the
+        stars of the refit at their epoch positions: the guide catalogue
+        (combined_star.fits) is built from it, so the guider's reference
+        positions and WCS agree. Returns (crval1, crval2, corr_path) or None.
+        """
+        inputs = self._refine_inputs()
+        if inputs is None:
+            return None
+        gaia, distortion = inputs
+        cfg = self._refine_cfg()
+        try:
+            t0 = time.time()
+            hdr = fits.getheader(astro_path)
+            serial = stem.split("_")[2] if stem.count("_") >= 2 else ""
+            sip = distortion.get(serial, distortion["default"])
+            epoch = gfa_refit.frame_epoch(hdr, stem)
+            if epoch is None:
+                raise ValueError("no observation date")
+            cat_ra, cat_dec = gaia.cone(
+                float(hdr["CRVAL1"]), float(hdr["CRVAL2"]),
+                float(cfg.get("cone_deg", 0.115)), epoch,
+            )
+            xy = fits.getdata(xy_path, 1)
+            new, m, info = gfa_refit.refine_wcs(
+                hdr, xy["X"], xy["Y"], xy["FLUX"], cat_ra, cat_dec, sip,
+                match_px=float(cfg.get("match_px", 3.0)),
+                min_stars=int(cfg.get("min_stars", 6)),
+                error_model=tuple(cfg.get("error_model_arcsec", [0.079, 0.135])),
+            )
+            if new is None:
+                self.logger.info(f"[{stem}] Gaia refit skipped: {info}")
+                return None
+            with fits.open(astro_path, mode="update", memmap=False) as hdul:
+                gfa_refit.replace_wcs(hdul[0].header, new)
+                hdul.flush()
+            refit_corr = self._write_refit_corr(corr_path, m, new, stem)
+            self.logger.info(
+                f"[{stem}] Gaia refit: {info['n_fit']} stars (of {info['n_match']} matched), "
+                f"rms {info['rms_arcsec']:.3f} arcsec, CRVAL moved {info['shift_arcsec']:.2f} arcsec, "
+                f"{time.time() - t0:.2f} s"
+            )
+            return float(new["CRVAL1"]), float(new["CRVAL2"]), refit_corr
+        except Exception as e:
+            self.logger.warning(f"[{stem}] Gaia refit failed, keeping solve-field WCS: {e}")
+            return None
+
+    def _write_refit_corr(self, corr_path: str, m: dict, wcs_hdr, stem: str) -> str:
+        """The refit stars in the .corr layout (columns and units of solve-field's)."""
+        from astropy.wcs import WCS
+
+        units = {}
+        if corr_path and os.path.exists(corr_path):
+            with fits.open(corr_path) as h:
+                units = {c.name: c.unit for c in h[1].columns}
+        w = WCS(wcs_hdr)
+        fra, fdec = w.all_pix2world(m["x"], m["y"], 1)
+        ix, iy = w.all_world2pix(m["ra"], m["dec"], 1, quiet=True)
+        n = len(m["x"])
+        cols = [
+            ("field_x", "D", m["x"]), ("field_y", "D", m["y"]),
+            ("field_ra", "D", fra), ("field_dec", "D", fdec),
+            ("index_x", "D", ix), ("index_y", "D", iy),
+            ("index_ra", "D", m["ra"]), ("index_dec", "D", m["dec"]),
+            ("index_id", "K", np.full(n, -1)), ("field_id", "K", m["det_index"]),
+            ("match_weight", "D", np.ones(n)), ("FLUX", "E", m["flux"]),
+        ]
+        hdu = fits.BinTableHDU.from_columns([
+            fits.Column(name=name, format=fmt, array=np.asarray(arr), unit=units.get(name))
+            for name, fmt, arr in cols
+        ])
+        hdu.header["COMMENT"] = "GFA Gaia refit stars: index_ra/dec = Gaia DR3 at the epoch"
+        out = os.path.join(os.path.dirname(corr_path) if corr_path else self.temp_dir,
+                           f"{stem}.refit.corr")
+        fits.HDUList([fits.PrimaryHDU(), hdu]).writeto(out, overwrite=True)
+        return out
 
     def rm_tempfiles(self):
         self.logger.info("Removing temporary files.")

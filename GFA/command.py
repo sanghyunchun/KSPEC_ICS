@@ -503,7 +503,8 @@ def compute_boresight(astro_dir, images, crval1_list, crval2_list, geometry_path
 
     try:
         geometry = load_boresight_geometry(geometry_path)
-        ra_c, dec_c, info = boresight_from_astro_files(paths, geometry)
+        geometry_gaia = load_boresight_geometry_gaia(geometry_path)
+        ra_c, dec_c, info = boresight_from_astro_files(paths, geometry, geometry_gaia)
     except Exception as e:
         if ring is not None:
             printing(
@@ -522,7 +523,8 @@ def compute_boresight(astro_dir, images, crval1_list, crval2_list, geometry_path
 
     printing(
         f"Boresight from camera geometry: cameras={info['used']}, "
-        f"rejected={info['rejected']}, rms={info['rms_arcsec']:.1f} arcsec"
+        f"rejected={info['rejected']}, rms={info['rms_arcsec']:.1f} arcsec, "
+        f"Gaia-refit={info.get('refit', [])}"
     )
     reasons = []
     if info['rms_arcsec'] > RMS_CHECK_ARCSEC or info['rejected']:
