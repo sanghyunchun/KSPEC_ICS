@@ -13,7 +13,7 @@ Built on a machine with network and memory (~50 GB for the whole sky), from the 
 files on the ESA CDN (3386 gaia_source csv.gz, ~780 GB, streamed: each file is downloaded,
 cut to the columns and G limit, saved as .npy and deleted):
 
-    python -m GFA.make_gaia_zones download RAWDIR [--gmax 19] [--workers 6] [--limit N]
+    python -m GFA.make_gaia_zones download RAWDIR [--gmax 19] [--workers 6] [--limit N] [--tmpdir DIR]
     python -m GFA.make_gaia_zones build RAWDIR OUTDIR [--zone-deg 0.2]
 
 Both steps can be run again: finished files are skipped. build refuses until every bulk file is
@@ -65,13 +65,13 @@ def cut(csv_gz, gmax, dtype):
     return out
 
 
-def one_file(name, md5, rawdir, gmax):
+def one_file(name, md5, rawdir, gmax, tmpdir=None):
     """Download, check, cut and save one bulk file; returns (name, stars, MB, seconds)."""
     dst = os.path.join(rawdir, name.replace(".csv.gz", ".npy"))
     if os.path.exists(dst):
         return name, None, 0.0, 0.0
     t0 = time.time()
-    tmp = os.path.join(rawdir, name + ".part")
+    tmp = os.path.join(tmpdir or rawdir, name + ".part")  # keep the 230 MB files off a network disk
     h = hashlib.md5()
     with urllib.request.urlopen(CDN + name, timeout=600) as r, open(tmp, "wb") as fh:
         while True:
@@ -102,7 +102,7 @@ def download(a):
     print(f"{len(files)} bulk files, {len(todo)} to do, G < {a.gmax}", flush=True)
     failed, t0, done_mb = [], time.time(), 0.0
     with ProcessPoolExecutor(max_workers=a.workers) as ex:
-        futs = {ex.submit(one_file, n, m, a.rawdir, a.gmax): n for n, m in todo}
+        futs = {ex.submit(one_file, n, m, a.rawdir, a.gmax, a.tmpdir): n for n, m in todo}
         for k, f in enumerate(as_completed(futs), 1):
             try:
                 name, n, mb, dt = f.result()
@@ -153,6 +153,8 @@ def main(argv=None):
     d.add_argument("--gmax", type=float, default=19.0)
     d.add_argument("--workers", type=int, default=6)
     d.add_argument("--limit", type=int, default=0, help="only this many files (tests)")
+    d.add_argument("--tmpdir", default=None,
+                   help="where the bulk files are kept while they are cut (default RAWDIR; use a local disk)")
     b = sub.add_parser("build")
     b.add_argument("rawdir")
     b.add_argument("outdir")
