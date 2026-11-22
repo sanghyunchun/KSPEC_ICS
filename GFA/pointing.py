@@ -382,6 +382,138 @@ def boresight_from_astro_files(astro_paths, geometry, geometry_gaia=None, **kwar
     return ra, dec, info
 
 
+# --------------------------------------------------------------------------
+# Pattern-fit boresight: the five chip centres as one calibrated pattern
+# --------------------------------------------------------------------------
+# boresight_from_wcs turns each chip's WCS orientation into a boresight estimate over the
+# 1.47 deg lever, so a 0.005 deg orientation error is 0.5" at the centre, and the mean
+# moves when a camera drops out. The chip centres themselves are known to ~0.2". Fitting
+# them (shift, rotation, scale) to the calibrated chip pattern gives the boresight from the
+# centres alone: one camera less moves it 0.10" (state A) instead of 0.32-0.82".
+# The pattern ("pattern" of boresight_geometry.json) is the chip centre per camera in
+# focal-plane mm about the ring centre, so its origin is the boresight the camera
+# geometry is calibrated to; "mapping" is the planner's sky -> focal plane.
+PATTERN_MIN_CAMERAS = 3
+
+
+def _gnomonic(ra, dec, ra0, dec0):
+    """Standard coordinates [rad] about (ra0, dec0); all angles in radians."""
+    c = np.sin(dec0) * np.sin(dec) + np.cos(dec0) * np.cos(dec) * np.cos(ra - ra0)
+    xi = np.cos(dec) * np.sin(ra - ra0) / c
+    eta = (np.cos(dec0) * np.sin(dec) - np.sin(dec0) * np.cos(dec) * np.cos(ra - ra0)) / c
+    return xi, eta
+
+
+def _gnomonic_inv(xi, eta, ra0, dec0):
+    d = np.cos(dec0) - eta * np.sin(dec0)
+    ra = ra0 + np.arctan2(xi, d)
+    dec = np.arctan2(np.sin(dec0) + eta * np.cos(dec0), np.hypot(xi, d))
+    return ra, dec
+
+
+def _radial(r2, mapping):
+    return 1.0 + mapping["k1"] * r2 + mapping["k2"] * r2**2 + mapping.get("k3", 0.0) * r2**3
+
+
+def sky_to_focal(ra_deg, dec_deg, ra0_deg, dec0_deg, mapping):
+    """Focal-plane (x, y) [mm] of RA/Dec for a field centred on (ra0, dec0): gnomonic,
+    radial factor 1 + k1 r^2 + k2 r^4 + k3 r^6, then the 2x2 matrix [mm/rad]."""
+    xi, eta = _gnomonic(*(np.radians(np.asarray(v, float)) for v in (ra_deg, dec_deg, ra0_deg, dec0_deg)))
+    f = _radial(xi**2 + eta**2, mapping)
+    a = mapping["matrix"]
+    return a[0][0] * xi * f + a[0][1] * eta * f, a[1][0] * xi * f + a[1][1] * eta * f
+
+
+def focal_to_sky(x_mm, y_mm, ra0_deg, dec0_deg, mapping):
+    """Inverse of sky_to_focal [deg]."""
+    u_, v_ = np.linalg.solve(np.asarray(mapping["matrix"], float), np.array([x_mm, y_mm], float))
+    rho = np.hypot(u_, v_)  # = r f(r)
+    r = rho
+    for _ in range(20):  # Newton on r f(r) = rho
+        g = r * _radial(r**2, mapping) - rho
+        dg = 1.0 + 3 * mapping["k1"] * r**2 + 5 * mapping["k2"] * r**4 + 7 * mapping.get("k3", 0.0) * r**6
+        r -= g / dg
+    k = r / rho if rho > 0 else 1.0
+    ra, dec = _gnomonic_inv(u_ * k, v_ * k, math.radians(ra0_deg), math.radians(dec0_deg))
+    return float(np.degrees(ra) % 360.0), float(np.degrees(dec))
+
+
+def load_gfa_pattern(path):
+    """The "pattern" block of boresight_geometry.json ({mapping, cameras: {serial: {x_mm,
+    y_mm}}}), or None when absent or disabled."""
+    with open(path, "r") as f:
+        pat = json.load(f).get("pattern")
+    if not pat or not pat.get("enabled", True):
+        return None
+    return pat
+
+
+def pattern_centre(headers, pattern, min_cameras=PATTERN_MIN_CAMERAS, max_iter=20, tol_arcsec=1e-3):
+    """
+    Boresight from the chip centres: similarity fit (shift, rotation, scale) of the chip
+    centres to the calibrated pattern; the boresight is the pattern's origin.
+
+    About a trial centre the chip centres go to the focal plane (sky_to_focal); the pattern
+    is fitted as t = a z + b (complex, a = scale x rotation); the point that maps to the
+    pattern origin, -b / a, becomes the next centre, until it no longer moves.
+
+    Returns
+    -------
+    ra_deg, dec_deg : float
+    info : dict
+        used serials, rms_um / rms_arcsec of the chip residuals, per-camera residual
+        [arcsec], scale and rotation [deg] of the fit
+    """
+    m = pattern["mapping"]
+    cams = pattern["cameras"]
+    used = sorted(s for s in headers if s in cams)
+    if len(used) < min_cameras:
+        raise ValueError(f"Pattern fit needs >= {min_cameras} cameras in the pattern, got {len(used)}")
+    centres = [_camera_center(headers[s])[3] for s in used]
+    t = np.array([cams[s]["x_mm"] + 1j * cams[s]["y_mm"] for s in used])
+    ra_c = np.array([c.ra.deg for c in centres])
+    dec_c = np.array([c.dec.deg for c in centres])
+    centre, _ = ring_centre(centres)
+    ra0, dec0 = float(centre.ra.deg), float(centre.dec.deg)
+    for _ in range(max_iter):
+        x, y = sky_to_focal(ra_c, dec_c, ra0, dec0, m)
+        z = x + 1j * y
+        zm, tm = z.mean(), t.mean()
+        a = np.sum(np.conj(z - zm) * (t - tm)) / np.sum(np.abs(z - zm) ** 2)
+        b = tm - a * zm
+        z0 = -b / a
+        ra1, dec1 = focal_to_sky(z0.real, z0.imag, ra0, dec0, m)
+        step = get_separation(ra0, dec0, ra1, dec1)
+        ra0, dec0 = ra1, dec1
+        if step < tol_arcsec:
+            break
+    x, y = sky_to_focal(ra_c, dec_c, ra0, dec0, m)
+    res = a * (x + 1j * y) + b - t  # mm, in the pattern frame
+    as_per_mm = 206264.806 / math.sqrt(abs(np.linalg.det(np.asarray(m["matrix"], float))))
+    rms_um = float(np.sqrt(np.mean(np.abs(res) ** 2)) * 1e3)
+    info = {
+        "used": used,
+        "rejected": [],
+        "rms_um": rms_um,
+        "rms_arcsec": rms_um * 1e-3 * as_per_mm,
+        "resid_arcsec": {s: float(abs(r) * as_per_mm) for s, r in zip(used, res)},
+        "scale": float(abs(a)),
+        "rot_deg": float(np.degrees(np.angle(a))),
+    }
+    return float(ra0), float(dec0), info
+
+
+def pattern_from_astro_files(astro_paths, pattern, **kwargs):
+    """astro_*.fits 경로 목록으로 pattern_centre 실행."""
+    headers = {}
+    for p in astro_paths:
+        with fits.open(p) as hdul:
+            headers[camera_serial(p)] = hdul[0].header.copy()
+    ra, dec, info = pattern_centre(headers, pattern, **kwargs)
+    info["refit"] = sorted(s for s, h in headers.items() if h.get("GFAREFIT", False))
+    return ra, dec, info
+
+
 #def refine_command_coordinate(
 #    ra1, dec1, ra2, dec2,          # guide centers
 #    ra_cmd_old, dec_cmd_old,        # 내가 이미 입력했던 좌표(보통 RA_target,DEC_target)

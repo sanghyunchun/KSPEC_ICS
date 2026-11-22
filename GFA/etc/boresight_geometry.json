@@ -60,5 +60,51 @@
       "theta_deg": 89.80669,
       "n_fields": 25
     }
+  },
+  "pattern": {
+    "enabled": true,
+    "description": "Chip centre per camera in focal-plane mm about the ring centre (design frame) and the planner mapping sky -> focal plane (gnomonic about the field centre, radial factor 1 + k1 r^2 + k2 r^4 + k3 r^6, then matrix [mm/rad]). GFA.pointing.pattern_centre fits shift, rotation and scale of the chip centres to it; the boresight is the origin.",
+    "method": "state-A five-camera sets, Gaia-refit (allpl) chip centres: per set the chip positions about the ring centre turned and scaled onto the design pattern, then averaged",
+    "state": "A",
+    "n_sets": 758,
+    "n_fields": 25,
+    "nights": "2026-10-28 ... 2026-11-08",
+    "mapping": {
+      "matrix": [
+        [
+          5159.765882088489,
+          -0.007877703543042574
+        ],
+        [
+          -0.01780951345955178,
+          -5159.760629030003
+        ]
+      ],
+      "k1": 30.164648008785758,
+      "k2": 5354.52295294578,
+      "k3": 0.0
+    },
+    "cameras": {
+      "40103651": {
+        "x_mm": -0.13779,
+        "y_mm": -135.5582
+      },
+      "40103663": {
+        "x_mm": 0.04118,
+        "y_mm": 135.62885
+      },
+      "40103831": {
+        "x_mm": -117.53869,
+        "y_mm": 67.7089
+      },
+      "40103833": {
+        "x_mm": 117.32028,
+        "y_mm": 67.89369
+      },
+      "40103834": {
+        "x_mm": 117.4886,
+        "y_mm": -67.9363
+      }
+    }
   }
 }
