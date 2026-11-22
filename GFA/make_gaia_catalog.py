@@ -8,11 +8,17 @@ by default: ra, dec (ICRS, epoch
 latitude, ~75 000 (3 MB) in the Galactic plane. Copy the files to the directory of
 astrometry_params.json "astrometry.refine.catalog_dir" (default ~/work/DATA/GFADATA/gaia)
 on the GFA PC; the GFA server reads every file there and uses the stars around each chip.
-Without a file for a field the pointing keeps the solve-field solution.
+Each file records the annulus it holds completely (TILE_RA, TILE_DEC, R_IN, R_OUT). When no file
+holds a chip, the server cuts a list from the full catalogue (GFA/make_gaia_zones.py) if there is
+one, else keeps the solve-field solution.
+
+With --from-zones DIR the lists are cut from that full catalogue instead of the archive (no
+network): the annulus R_MID +- 0.2 deg.
 
 Usage:
     python -m GFA.make_gaia_catalog OUTDIR NAME RA DEC [NAME RA DEC ...]
     python -m GFA.make_gaia_catalog OUTDIR --tiles tiles.csv     # columns TILE, RA, DEC
+    python -m GFA.make_gaia_catalog OUTDIR ... --from-zones ~/work/DATA/GFADATA/gaia_zones
 RA / DEC in degrees or sexagesimal (hh:mm:ss, dd:mm:ss).
 """
 
@@ -102,6 +108,15 @@ def query(ra0, dec0, gmax, workers=6):
     return t[np.sort(keep)]
 
 
+def ring_annulus(r_mid=R_MID, r_cone=R_CIRCLE, step=STEP_DEG):
+    """(r_in, r_out) [deg] the ring of cones holds completely: between two cones the band is
+    sqrt(r_cone^2 - (half the cone spacing)^2) wide on each side."""
+    n = int(np.ceil(2 * np.pi * r_mid / step))
+    half = np.degrees(np.arcsin(np.sin(np.radians(r_mid)) * np.sin(np.pi / n)))
+    w = np.sqrt(max(r_cone**2 - half**2, 0.0))
+    return r_mid - w, r_mid + w
+
+
 def write(t, path, name, ra0, dec0, gmax):
     hdu = fits.BinTableHDU(t)
     h = hdu.header
@@ -111,6 +126,9 @@ def write(t, path, name, ra0, dec0, gmax):
     h["TILE_DEC"] = (dec0, "[deg] tile center")
     h["R_MID"] = (R_MID, "[deg] ring of cones around the tile center")
     h["R_CONE"] = (R_CIRCLE, "[deg] cone radius")
+    r_in, r_out = ring_annulus()
+    h["R_IN"] = (r_in, "[deg] every star from this distance ...")
+    h["R_OUT"] = (r_out, "[deg] ... to this one is in the list")
     h["GMAX"] = gmax
     h["REF_EPOC"] = (2016.0, "Gaia DR3 reference epoch")
     h["CATALOG"] = "gaiadr3.gaia_source"
@@ -124,6 +142,7 @@ def main(argv=None):
     ap.add_argument("--tiles", dest="tile_file", help="CSV / ECSV with columns TILE, RA, DEC")
     ap.add_argument("--gmax", type=float, default=19.0)
     ap.add_argument("--overwrite", action="store_true", help="query tiles that already have a file")
+    ap.add_argument("--from-zones", help="cut the lists from this full catalogue (make_gaia_zones.py)")
     a = ap.parse_args(argv)
 
     todo = []
@@ -145,6 +164,20 @@ def main(argv=None):
             continue
         ra0, dec0 = to_deg(ra, dec)
         t0 = time.time()
+        if a.from_zones:
+            from GFA.make_gaia_zones import _refit
+
+            g = _refit()
+            stars = g.ZoneCatalog(a.from_zones).annulus(ra0, dec0, R_MID - 0.2, R_MID + 0.2)
+            if stars is None:
+                print(f"{name}: the full catalogue does not hold this ring", flush=True)
+                failed.append(name)
+                continue
+            stars = stars[stars["phot_g_mean_mag"] < a.gmax]
+            g.write_star_list(stars, path, ra0, dec0, R_MID - 0.2, R_MID + 0.2, name=name,
+                              gmax=a.gmax, source=f"zones {a.from_zones}")
+            print(f"{name}: {len(stars)} stars from the zones, {time.time() - t0:.1f} s -> {path}", flush=True)
+            continue
         try:
             t = query(ra0, dec0, a.gmax)
         except Exception as e:

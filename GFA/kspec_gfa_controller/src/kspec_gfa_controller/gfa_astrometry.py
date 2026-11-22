@@ -156,6 +156,8 @@ class GFAAstrometry:
         self._gaia = None
         self._distortion = None
         self._refine_disabled = False
+        self._full = None  # gfa_refit.ZoneCatalog of astrometry.refine.full_catalog_dir
+        self._list_lock = threading.Lock()  # one chip at a time makes a list from it
 
     def set_subprocess_env(self, env: dict) -> None:
         self._subprocess_env = env
@@ -550,7 +552,7 @@ class GFAAstrometry:
         # (astrometry.refine). Needs the star list and a local catalogue;
         # otherwise the solve-field solution stays.
         if xy_path is not None:
-            refit = self._refine(out_fits_path, xy_path, corr_path, stem)
+            refit = self._refine(out_fits_path, xy_path, corr_path, stem, pointing=(ra_in, dec_in))
             if refit is not None:
                 crval1, crval2, corr_path = refit
 
@@ -650,14 +652,87 @@ class GFAAstrometry:
             except Exception as e:
                 self.logger.warning(f"Gaia refit skipped: catalogue {self._gaia.directory}: {e}")
                 return None
-        if n == 0:
+        if n == 0 and self._full_catalog() is None:
             self.logger.info(
                 f"Gaia refit skipped: no catalogue files in {self._gaia.directory}"
+                " and no full catalogue"
             )
             return None
         return self._gaia, self._distortion
 
-    def _refine(self, astro_path: str, xy_path: str, corr_path: str, stem: str):
+    def _full_catalog(self):
+        """The full catalogue (``refine.full_catalog_dir``, ``gfa_refit.ZoneCatalog``) or None."""
+        path = str(self._refine_cfg().get("full_catalog_dir", "") or "")
+        if not path:
+            return None
+        if self._full is None or self._full.directory != os.path.expanduser(path):
+            self._full = gfa_refit.ZoneCatalog(path)
+            if not self._full.available:
+                self.logger.info(f"Gaia full catalogue not found in {self._full.directory}")
+        return self._full if self._full.available else None
+
+    def _ensure_star_list(self, gaia, ra_c: float, dec_c: float, cone: float, pointing, stem: str):
+        """
+        Make sure the tile lists hold the cone about the chip center; when they do not, cut the
+        stars from the full catalogue into a new list (``auto_*.fits`` in the catalogue
+        directory), which the next chips and sets then find. Order: a tile list that covers
+        the chip, else a list made from the full catalogue, else nothing (the refit then works
+        with what the lists have, as before). Returns "list", "made" or "none".
+        """
+        cfg = self._refine_cfg()
+        cov = gaia.covers(ra_c, dec_c, cone)
+        if cov is True:
+            return "list"
+        if cov is None and len(gaia.cone(ra_c, dec_c, cone, gfa_refit.GAIA_EPOCH)[0]) >= int(
+            cfg.get("min_stars", 6)
+        ):
+            return "list"  # lists without a coverage header: judged by the stars they have
+        full = self._full_catalog()
+        if full is None:
+            return "none"
+        with self._list_lock:
+            if gaia.covers(ra_c, dec_c, cone) is True:  # another chip of the set made it
+                return "list"
+            t0 = time.time()
+            center, r_in, r_out, name = self._list_annulus(ra_c, dec_c, cone, pointing)
+            stars = full.annulus(center[0], center[1], r_in, r_out)
+            if stars is None:
+                self.logger.info(
+                    f"[{stem}] Gaia full catalogue has no zones at ({center[0]:.3f}, {center[1]:.3f})"
+                )
+                return "none"
+            os.makedirs(gaia.directory, exist_ok=True)
+            path = os.path.join(gaia.directory, f"auto_{name}.fits")
+            gfa_refit.write_star_list(
+                stars, path, center[0], center[1], r_in, r_out, name=f"auto {name}",
+                gmax=full.index.get("gmax"), source=f"zones {full.directory}",
+            )
+            self.logger.info(
+                f"[{stem}] Gaia list made from the full catalogue: {len(stars)} stars, "
+                f"{r_in:.3f}-{r_out:.3f} deg about ({center[0]:.4f}, {center[1]:.4f}), "
+                f"{time.time() - t0:.2f} s -> {path}"
+            )
+        return "made"
+
+    def _list_annulus(self, ra_c: float, dec_c: float, cone: float, pointing):
+        """
+        The annulus of a new list: the GFA ring about the pointing center (header RA/DEC) when
+        that ring holds this chip's cone, so one list serves the whole set; otherwise (pointing
+        unreadable or far off) a disc about the chip center.
+        """
+        cfg = self._refine_cfg()
+        r_mid = float(cfg.get("ring_deg", 1.473))
+        hw = float(cfg.get("ring_halfwidth_deg", 0.2))
+        try:
+            ra_p, dec_p = self._parse_radec_to_deg(*pointing)
+            d = float(gfa_refit.separation(ra_p, dec_p, ra_c, dec_c))
+        except Exception:
+            d = None
+        if d is not None and abs(d - r_mid) + cone <= hw:
+            return (ra_p % 360.0, dec_p), r_mid - hw, r_mid + hw, f"ring_{ra_p % 360.0:08.4f}{dec_p:+08.4f}"
+        return (ra_c, dec_c), 0.0, cone + 0.1, f"chip_{ra_c:08.4f}{dec_c:+08.4f}"
+
+    def _refine(self, astro_path: str, xy_path: str, corr_path: str, stem: str, pointing=None):
         """
         Refit the solved chip against Gaia DR3 at the epoch (gfa_refit.refine_wcs).
 
@@ -681,10 +756,11 @@ class GFAAstrometry:
             epoch = gfa_refit.frame_epoch(hdr, stem)
             if epoch is None:
                 raise ValueError("no observation date")
-            cat_ra, cat_dec = gaia.cone(
-                float(hdr["CRVAL1"]), float(hdr["CRVAL2"]),
-                float(cfg.get("cone_deg", 0.115)), epoch,
-            )
+            # chip center = CRVAL: solve-field runs with --crpix-center
+            ra_c, dec_c = float(hdr["CRVAL1"]), float(hdr["CRVAL2"])
+            cone = float(cfg.get("cone_deg", 0.115))
+            self._ensure_star_list(gaia, ra_c, dec_c, cone, pointing, stem)
+            cat_ra, cat_dec = gaia.cone(ra_c, dec_c, cone, epoch)
             xy = fits.getdata(xy_path, 1)
             new, m, info = gfa_refit.refine_wcs(
                 hdr, xy["X"], xy["Y"], xy["FLUX"], cat_ra, cat_dec, sip,

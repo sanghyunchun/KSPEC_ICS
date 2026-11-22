@@ -1,6 +1,7 @@
 # tests/test_gfa_refit.py
 """Gaia refit of the GFA chip WCS (gfa_refit) and its use in gfa_astrometry."""
 import json
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -261,3 +262,125 @@ def test_combined_star_glob_prefers_the_refit_corr(tmp_path, monkeypatch):
     corr(Path(ast.temp_dir) / "b" / "b.corr", 2)  # not refit: kept
     out = ast.build_combined_star_from_corr(corr_files=None)
     assert len(fits.getdata(out, 1)) == 9
+
+
+# --- coverage of the lists and the full catalogue in declination zones ----------------------
+def _random_sky(n, seed=0, dec_range=(-90.0, 90.0)):
+    rng = np.random.default_rng(seed)
+    s0, s1 = np.sin(np.radians(dec_range))
+    stars = np.zeros(n, gfa_refit.ZONE_DTYPE)
+    stars["ra"] = rng.uniform(0, 360, n)
+    stars["dec"] = np.degrees(np.arcsin(rng.uniform(s0, s1, n)))
+    stars["pmra"], stars["pmdec"] = rng.normal(0, 5, n), rng.normal(0, 5, n)
+    stars["phot_g_mean_mag"] = rng.uniform(10, 19, n)
+    return stars
+
+
+@pytest.mark.parametrize("ra0, dec0", [(150.0, -30.0), (359.5, 10.0), (0.3, -45.0), (80.0, -88.9), (200.0, 89.5)])
+def test_zone_annulus_equals_brute_force(tmp_path, ra0, dec0):
+    stars = _random_sky(400_000)
+    gfa_refit.write_zones(stars, str(tmp_path / "z"), zone_deg=0.2)
+    zc = gfa_refit.ZoneCatalog(str(tmp_path / "z"))
+    got = zc.annulus(ra0, dec0, 1.27, 1.67)
+    d = gfa_refit.separation(ra0, dec0, stars["ra"], stars["dec"])
+    want = stars[(d >= 1.27) & (d <= 1.67)]
+    assert len(want) > 20
+    assert sorted(got["ra"].tolist()) == sorted(want["ra"].tolist())
+
+
+def test_zone_catalog_missing_zone_or_index(tmp_path):
+    gfa_refit.write_zones(_random_sky(50_000, dec_range=(-60.0, -20.0)), str(tmp_path / "z"),
+                          dec_range=(-60.0, -20.0))
+    zc = gfa_refit.ZoneCatalog(str(tmp_path / "z"))
+    assert zc.annulus(10.0, -40.0, 0.0, 0.3) is not None
+    assert zc.annulus(10.0, -20.0, 0.0, 0.3) is None  # needs zones above -20 deg
+    assert not gfa_refit.ZoneCatalog(str(tmp_path / "none")).available
+
+
+def test_list_coverage_from_headers():
+    # older lists: 31 cones of 0.2 deg on the 1.473 deg ring hold 1.473 +- ~0.133 deg
+    ra0, dec0, r_in, r_out = gfa_refit.list_coverage({"TILE_RA": 10.0, "TILE_DEC": -30.0,
+                                                      "R_MID": 1.473, "R_CONE": 0.2})
+    assert (ra0, dec0) == (10.0, -30.0)
+    assert r_in == pytest.approx(1.473 - 0.133, abs=0.002) and r_out == pytest.approx(1.473 + 0.133, abs=0.002)
+    assert gfa_refit.list_coverage({"TILE_RA": 1, "TILE_DEC": 2, "R_IN": 0.0, "R_OUT": 0.3})[2:] == (0.0, 0.3)
+    assert gfa_refit.list_coverage({"TILE": "x"}) is None
+
+
+def test_catalog_covers(tmp_path):
+    stars = _random_sky(20_000, dec_range=(-35.0, -25.0))
+    gfa_refit.write_star_list(stars[:10], str(tmp_path / "ring.fits"), 150.0, -30.0, 1.273, 1.673)
+    gc = gfa_refit.GaiaCatalog(str(tmp_path))
+    ra1, dec1 = gfa_refit.gnomonic_inv(1.473, 0.0, 150.0, -30.0)  # a chip on the ring
+    assert gc.covers(float(ra1), float(dec1), 0.115) is True
+    ra2, dec2 = gfa_refit.gnomonic_inv(1.2, 0.0, 150.0, -30.0)  # inside the ring
+    assert gc.covers(float(ra2), float(dec2), 0.115) is False
+    Table({"ra": [1.0], "dec": [2.0]}).write(tmp_path / "plain.ecsv")  # no coverage header
+    assert gfa_refit.GaiaCatalog(str(tmp_path)).covers(float(ra2), float(dec2), 0.115) is None
+
+
+def _full_catalogue_with_scene(path, cat, ra0, dec0):
+    """Zones dir holding the scene's stars plus a random sky in -34..-26 deg."""
+    sky = _random_sky(30_000, seed=5, dec_range=(-34.0, -26.0))
+    sc = np.zeros(len(cat), gfa_refit.ZONE_DTYPE)
+    for n in ("ra", "dec", "pmra", "pmdec"):
+        sc[n] = np.asarray(cat[n])
+    sc["phot_g_mean_mag"] = 15.0
+    gfa_refit.write_zones(np.concatenate([sky, sc]), str(path), dec_range=(-34.0, -26.0))
+
+
+def _raw_frame(ast, x, y, flux, ra="10:00:00", dec="-30:00:00"):
+    raw = Path(ast.dir_path) / f"{NAME}.fits"
+    h = fits.Header()
+    h["RA"], h["DEC"] = ra, dec
+    fits.PrimaryHDU(_star_frame(x, y, 5 * flux).astype(np.float32), header=h).writeto(raw, overwrite=True)
+    return raw
+
+
+@pytest.mark.parametrize("pointing, kind", [(("10:00:00", "-30:00:00"), "chip"), (None, "ring")])
+def test_astrometry_raw_makes_a_list_from_the_full_catalogue(tmp_path, monkeypatch, pointing, kind):
+    cat, x, y, flux, _ = scene(n=40, noise_px=0.0)
+    _full_catalogue_with_scene(tmp_path / "zones", cat, 150.0, -30.0)
+    _config(tmp_path / "cfg.json", tmp_path, tmp_path / "gaia")
+    cfg = json.loads((tmp_path / "cfg.json").read_text())
+    cfg["astrometry"]["refine"]["full_catalog_dir"] = str(tmp_path / "zones")
+    (tmp_path / "cfg.json").write_text(json.dumps(cfg))
+    _patch_solve(monkeypatch, solve_field_like_header())
+    ast = GFAAstrometry(config=str(tmp_path / "cfg.json"), logger=_get_default_logger())
+    if pointing is None:  # the pointing center 1.473 deg from the chip: one ring list for the set
+        pra, pdec = gfa_refit.gnomonic_inv(0.0, -1.473, 150.0, -30.0)
+        pointing = (f"{float(pra):.6f}", f"{float(pdec):.6f}")
+    raw = _raw_frame(ast, x, y, flux, *pointing)
+
+    cr1, cr2, astro, corr = ast.astrometry_raw(str(raw))
+
+    made = sorted((tmp_path / "gaia").glob("auto_*.fits"))
+    assert len(made) == 1 and made[0].name.startswith(f"auto_{kind}_")
+    h = fits.getheader(made[0], 1)
+    assert h["R_OUT"] > h["R_IN"] >= 0.0
+    assert fits.getheader(astro)["GFAREFIT"] is True
+    truth = true_header()
+    xi, eta = gfa_refit.gnomonic(cr1, cr2, truth["CRVAL1"], truth["CRVAL2"])
+    assert np.hypot(xi, eta) * 3600 < 0.1
+    # the next frame finds the list: nothing new is made
+    shutil.rmtree(Path(ast.temp_dir) / NAME)  # the fake solve-field does not overwrite
+    ast.astrometry_raw(str(_raw_frame(ast, x, y, flux, *pointing)))
+    assert sorted((tmp_path / "gaia").glob("auto_*.fits")) == made
+
+
+def test_a_covering_tile_list_is_used_before_the_full_catalogue(tmp_path, monkeypatch):
+    cat, x, y, flux, _ = scene(n=40, noise_px=0.0)
+    _full_catalogue_with_scene(tmp_path / "zones", cat, 150.0, -30.0)
+    (tmp_path / "gaia").mkdir()
+    st = np.zeros(len(cat), gfa_refit.ZONE_DTYPE)
+    for n in ("ra", "dec", "pmra", "pmdec"):
+        st[n] = np.asarray(cat[n])
+    gfa_refit.write_star_list(st, str(tmp_path / "gaia" / "gaia_9999.fits"), 150.0, -30.0, 0.0, 0.3)
+    _config(tmp_path / "cfg.json", tmp_path, tmp_path / "gaia")
+    cfg = json.loads((tmp_path / "cfg.json").read_text())
+    cfg["astrometry"]["refine"]["full_catalog_dir"] = str(tmp_path / "zones")
+    (tmp_path / "cfg.json").write_text(json.dumps(cfg))
+    _patch_solve(monkeypatch, solve_field_like_header())
+    ast = GFAAstrometry(config=str(tmp_path / "cfg.json"), logger=_get_default_logger())
+    ast.astrometry_raw(str(_raw_frame(ast, x, y, flux)))
+    assert not list((tmp_path / "gaia").glob("auto_*.fits"))

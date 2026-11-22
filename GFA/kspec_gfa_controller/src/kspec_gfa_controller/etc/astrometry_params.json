@@ -69,6 +69,9 @@
         "refine": {
             "enabled": true,
             "catalog_dir": "~/work/DATA/GFADATA/gaia",
+            "full_catalog_dir": "~/work/DATA/GFADATA/gaia_zones",
+            "ring_deg": 1.473,
+            "ring_halfwidth_deg": 0.2,
             "distortion_file": "",
             "cone_deg": 0.115,
             "match_px": 3.0,
