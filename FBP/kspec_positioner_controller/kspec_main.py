@@ -1027,11 +1027,13 @@ async def main(plc_connections, alpha_file, beta_file, offset_mode=False, *, ste
             for axis_state in all_axis_states
         }
 
+        _disp_from = step_from if step_from is not None else 1
+        _disp_to   = step_to   if step_to   is not None else original_total_steps
         result = {
             "status": "success",
             "message": (
                 "PLC1과 PLC2의 모든 구동 대상 포지셔너가 "
-                "경로 구동을 완료했습니다."
+                f"경로 구동을 완료했습니다. ({_disp_from}->{_disp_to} step)"
             ),
             "data": {
                 "direction": motion_direction,

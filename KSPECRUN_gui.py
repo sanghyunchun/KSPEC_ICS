@@ -170,6 +170,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("K-SPEC ICS")
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        self._setup_right_panel()
         if self.ui.obstype.findText('Dark') < 0:   # not in KSPECGUI2.ui yet
             self.ui.obstype.addItem('Dark')
         self.ui.pushbtn_FBP_lock.setToolTip('Lock additional IDs; an empty field clears only additional locks.')
@@ -307,6 +308,7 @@ class MainWindow(QMainWindow):
         self.ui.pushbtn_FBP_assign.clicked.connect(self.FBP_assign_button_clicked)
         #    self.ui.pushbtn_FBP_assign_2.setCheckable(True)
         self.ui.pushbtn_FBP_assign_2.clicked.connect(self.FBP_assign_button_clicked)
+        self.ui.pushbtn_FBP_move.clicked.connect(self.FBP_move_button_clicked)
 
         self.ui.pushbtn_FBP_initial.clicked.connect(self.FBP_initial_button_clicked)
         self.ui.pushbtn_FBP_stop.clicked.connect(self.FBP_stop_button_clicked)
@@ -393,6 +395,43 @@ class MainWindow(QMainWindow):
         self.R_layout=QVBoxLayout(self.ui.frame_R)
         self.R_layout.addWidget(self.canvas_R)
 
+    def _setup_right_panel(self):
+        """Initialize the expandable controls in KSPECGUI_expand.ui."""
+        self._right_panel_width = 200
+        self._right_panel_expanded = False
+        self._right_panel = getattr(self.ui, 'rightPanel', None)
+        self._right_panel_button = getattr(self.ui, 'toolButton_expand', None)
+        if self._right_panel is None or self._right_panel_button is None:
+            raise RuntimeError(
+                'Expandable panel widgets are missing. Regenerate ui_mainwindow.py '
+                'from KSPECGUI_expand.ui using pyside6-uic.'
+            )
+
+        self._right_panel.setMinimumWidth(0)
+        self._right_panel.setMaximumWidth(0)
+        self._right_panel_button.setCheckable(True)
+        self._right_panel_button.setChecked(False)
+        self._right_panel_button.setArrowType(Qt.RightArrow)
+        self._right_panel_button.toggled.connect(self._toggle_right_panel)
+
+    def _toggle_right_panel(self, expanded):
+        """Expand the window to the right without shrinking existing controls."""
+        if expanded == self._right_panel_expanded:
+            return
+        width = self._right_panel_width
+        if expanded:
+            # Resize the outer window before giving the panel its width.
+            self.resize(self.width() + width, self.height())
+            self._right_panel.setMinimumWidth(width)
+            self._right_panel.setMaximumWidth(width)
+            self._right_panel_button.setArrowType(Qt.LeftArrow)
+        else:
+            self._right_panel.setMinimumWidth(0)
+            self._right_panel.setMaximumWidth(0)
+            self.resize(max(self.minimumWidth(), self.width() - width), self.height())
+            self._right_panel_button.setArrowType(Qt.RightArrow)
+        self._right_panel_expanded = expanded
+
     def adjust_window_size_by_screen(self):
         screen = QGuiApplication.primaryScreen()
         geometry = screen.availableGeometry()
@@ -404,6 +443,10 @@ class MainWindow(QMainWindow):
         window_width = int(screen_width * 0.5)
         window_height = int(screen_height * 0.5)
 
+        # Keep the initial window size for the collapsed state. The original
+        # panel is never squeezed when toggling the additional 200px region.
+        if self._right_panel_expanded:
+            window_width += self._right_panel_width
         self.resize(window_width, window_height)
 
     def timeout(self):
@@ -700,12 +743,16 @@ class MainWindow(QMainWindow):
 
     def _log_received_message(self, inst, msg, status):
         if isinstance(msg, dict):
-            log_msg = json.dumps(msg, indent=2)
+            full_log = json.dumps(msg, indent=2)
+            # GUI 로그에는 message 키 내용만 출력, 없으면 JSON 전체 출력
+            log_msg = msg.get('message') or full_log
         else:
-            log_msg = str(msg)
+            full_log = str(msg)
+            log_msg = full_log
 
+        # 터미널에는 전체 JSON 출력 (디버깅용)
         print(
-            f"\033[94m[ICS] received from {inst}: {log_msg}\033[0m\n",
+            f"\033[94m[ICS] received from {inst}: {full_log}\033[0m\n",
             flush=True,
         )
 
@@ -1618,6 +1665,29 @@ class MainWindow(QMainWindow):
             self.logging('Sent Positioner assignment Starts.', level='send')
         else:
             self.logging(f'Positioner assignment is only available in initial state. Current positioner status is {self.fbp_state}.', level='error')
+
+    @asyncSlot()
+    async def FBP_move_button_clicked(self):
+        if not self.check_connection() or not self.check_syscheck():
+            return
+        if self.fbp_state in ('stop', 'ING'):
+            self.logging(
+                f'FBP step range movement is unavailable in {self.fbp_state} state.',
+                level='error',
+            )
+            return
+
+        from_text = self.ui.lineEdit_step_from.text().strip()
+        to_text = self.ui.lineEdit_step_to.text().strip()
+        if not re.fullmatch(r'[1-9][0-9]*', from_text) or not re.fullmatch(r'[1-9][0-9]*', to_text):
+            self.logging('Enter positive integer values for Step From and Step To.', level='error')
+            return
+
+        step_from, step_to = int(from_text), int(to_text)
+        await handle_fbp(
+            f'fbpmoverange {step_from} {step_to}',
+            self.ICS_client, logging=self.logging,
+        )
 
     @asyncSlot()
     async def FBP_initial_button_clicked(self):
