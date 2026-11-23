@@ -226,6 +226,8 @@ class MainWindow(QMainWindow):
         ### Instrument position state & state ###
         self.adcadjusting_state = False
         self.fbp_state = False
+        self.ui.lineEdit_FBP_state.setReadOnly(True)
+        self.ui.lineEdit_FBP_state.setText('-')
         self.find_state = False
         self.mtl_state = False
         self.guiding_state = False
@@ -1314,6 +1316,30 @@ class MainWindow(QMainWindow):
                 color = 'black' if positioner in self.positioner_axis_map else 'gray'
                 self.FPLabelStyle(label, color)
 
+    def _update_fbp_state_display(self):
+        """lineEdit_FBP_state에 현재 fbp_state를 표시한다."""
+        state = self.fbp_state
+        display_map = {
+            'initial': 'Initial',
+            'assign':  'Assigned',
+            'manual':  'Manual',
+            'stop':    'Stop',
+            False:     '-',
+        }
+        color_map = {
+            'initial': 'white',
+            'assign':  'lightgreen',
+            'manual':  'lightyellow',
+            'stop':    'salmon',
+            False:     'white',
+        }
+        text  = display_map.get(state, str(state))
+        color = color_map.get(state, 'white')
+        self.ui.lineEdit_FBP_state.setText(text)
+        self.ui.lineEdit_FBP_state.setStyleSheet(
+            f'background-color: {color};'
+        )
+
     def set_fbp_state(self, state):
         """GUI의 FBP 상태를 수동 지정한다. 잘못된 상태는 ValueError를 발생시킨다."""
         if state not in ('assign', 'stop', 'initial', 'normal'):
@@ -1331,6 +1357,7 @@ class MainWindow(QMainWindow):
             )
         if state == 'initial':
             self.reset_fbp_error_labels()
+        self._update_fbp_state_display()
         self.logging(
             f'GUI FBP state changed manually: {previous_state} -> {state}.',
             level='receive', save=self.msglog_path is not None,
@@ -1390,6 +1417,7 @@ class MainWindow(QMainWindow):
             self.fbp_state = 'stop'
         elif next_state not in (None, 'None'):
             self.fbp_state = next_state
+        self._update_fbp_state_display()
 
         if process in ('ING', 'START', 'Done') and self.fbp_state in ('assign', 'manual', 'stop'):
             self._set_button_state(self.ui.pushbtn_FBP_assign, 'FBP Assigned', 'green', True)
