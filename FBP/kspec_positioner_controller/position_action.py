@@ -84,7 +84,7 @@ async def _close_plcs(plc_connections: dict[str, Any]) -> dict[str, str]:
     close_results = await asyncio.gather(
         *[
             asyncio.to_thread(plc.close)
-            for plc in active_plcs.values()
+            for plc in plc_connections.values()
         ],
         return_exceptions=True,
     )
@@ -709,7 +709,7 @@ async def _show_step_status(plc_connections: dict[str, Any]) -> dict[str, Any]:
     snapshots = await asyncio.gather(
         *[
             asyncio.to_thread(_read_step_status_one_plc, plc)
-            for plc in active_plcs.values()
+            for plc in plc_connections.values()
         ]
     )
     plc_states = dict(zip(plc_connections, snapshots))
