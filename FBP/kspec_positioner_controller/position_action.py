@@ -84,7 +84,7 @@ async def _close_plcs(plc_connections: dict[str, Any]) -> dict[str, str]:
     close_results = await asyncio.gather(
         *[
             asyncio.to_thread(plc.close)
-            for plc in plc_connections.values()
+            for plc in active_plcs.values()
         ],
         return_exceptions=True,
     )
@@ -260,12 +260,14 @@ async def check_plcs_ready() -> dict[str, Any]:
     plc_connections = None
     try:
         plc_connections = await _open_command_plcs()
+        # [PLC1 단독 모드] PLC1만 확인
+        active_plcs = {"PLC1": plc_connections["PLC1"]}
         ready = await asyncio.gather(*[
             asyncio.to_thread(plc.read_by_name, 'GVL.gSystemReady', pyads.PLCTYPE_BOOL)
-            for plc in plc_connections.values()
+            for plc in active_plcs.values()
         ])
         if not all(ready):
-            return _error_result('PLC runtime is not ready.', ready=dict(zip(plc_connections, ready)))
+            return _error_result('PLC runtime is not ready.', ready=dict(zip(active_plcs, ready)))
         return {'status': 'success', 'message': 'PLC1 is ready. (PLC2 비활성화)'}
     except Exception as error:
         return _error_result(f'Cannot verify PLC readiness: {error}')
@@ -707,7 +709,7 @@ async def _show_step_status(plc_connections: dict[str, Any]) -> dict[str, Any]:
     snapshots = await asyncio.gather(
         *[
             asyncio.to_thread(_read_step_status_one_plc, plc)
-            for plc in plc_connections.values()
+            for plc in active_plcs.values()
         ]
     )
     plc_states = dict(zip(plc_connections, snapshots))
