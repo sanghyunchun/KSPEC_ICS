@@ -177,11 +177,7 @@ async def _identify_execute(FBP_server,cmd):
             func=func,
             process='START',
             status='success',
-            # [XAE 직접 방식] TwinCAT XAE에서 Activate/Login/Play가 완료된 상태에서
-            # PLC gSystemReady 상태만 확인합니다.
-            # [원격 방식 메시지 - 비활성화됨]
-            # message='PLC1, PLC2의 TwinCAT Activate 및 PLC Login/Play를 시작합니다.',
-            message='TwinCAT XAE 직접 방식: PLC1, PLC2의 준비 상태를 확인합니다.',
+            message='PLC1, PLC2의 TwinCAT Activate 및 PLC Login/Play를 시작합니다.',
             fbp_state='None',
         )
         async with _fbp_activate_lock:
