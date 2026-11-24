@@ -279,11 +279,112 @@ def reset_and_play_one_plc_sync(plc_name: str, ams_net_id: str):
 async def activate_and_play_all_plcs():
     """
     PLC1과 PLC2를 동시에 초기화합니다.
-    kspec_1_open.py의 open_plcs() 실행 전이나, 에러 발생 후 복구 루틴으로 활용 가능합니다.
+
+    [현재 모드] XAE 직접 방식:
+      TwinCAT XAE에서 직접 Activate/Login/Play 한 후 FBP 서버를 사용합니다.
+      이 함수는 원격 Activate/Login/Play를 수행하지 않고,
+      이미 실행 중인 PLC의 gSystemReady 상태만 확인합니다.
+
+    [비활성화된 모드] 원격 방식 (아래 주석 참고):
+      FBP 서버에서 직접 TwinCAT Activate/Login/Play를 원격 수행합니다.
+      원격 방식으로 돌아가려면 아래 주석을 해제하고 위 로직을 주석 처리하세요.
     """
+    # -----------------------------------------------------------------------
+    # [원격 방식 - 비활성화됨]
+    # TwinCAT XAE 직접 방식 사용 시 아래 블록은 동작하지 않습니다.
+    # 원격 방식으로 복원하려면 이 주석 블록을 해제하고
+    # 아래 "XAE 직접 방식" 블록을 주석 처리하세요.
+    #
+    # plc_results = await asyncio.gather(
+    #     asyncio.to_thread(reset_and_play_one_plc_sync, "PLC1", PLC1_AMS_NET_ID),
+    #     asyncio.to_thread(reset_and_play_one_plc_sync, "PLC2", PLC2_AMS_NET_ID),
+    #     return_exceptions=True,
+    # )
+    # results = {}
+    # for plc_name, plc_result in zip(("PLC1", "PLC2"), plc_results):
+    #     if isinstance(plc_result, Exception):
+    #         results[plc_name] = {
+    #             "plc_name": plc_name,
+    #             "status": "error",
+    #             "errors": [str(plc_result)],
+    #             "message": f"[{plc_name}] 원격 초기화 작업에서 예외가 발생했습니다.",
+    #         }
+    #     else:
+    #         results[plc_name] = plc_result
+    #
+    # failed_plcs = [
+    #     plc_name
+    #     for plc_name, plc_result in results.items()
+    #     if plc_result.get("status") != "success"
+    # ]
+    # status = "success" if not failed_plcs else "error"
+    # message = (
+    #     "모든 PLC의 Activate 및 Play 원격 명령이 완료되었습니다."
+    #     if status == "success"
+    #     else f"다음 PLC의 Activate/Login/Play에 실패했습니다: {', '.join(failed_plcs)}"
+    # )
+    # print(message)
+    # return {
+    #     "status": status,
+    #     "message": message,
+    #     "data": {"plcs": results},
+    # }
+    # -----------------------------------------------------------------------
+
+    # [XAE 직접 방식 - 현재 활성화됨]
+    # TwinCAT XAE에서 이미 Activate/Login/Play가 완료된 상태를 가정합니다.
+    # 각 PLC의 gSystemReady 상태만 확인하여 준비 여부를 반환합니다.
+    print("TwinCAT XAE 직접 방식: gSystemReady 상태만 확인합니다.")
+
+    def check_system_ready_sync(plc_name: str, ams_net_id: str) -> dict:
+        result = {
+            "plc_name": plc_name,
+            "ams_net_id": ams_net_id,
+            "system_activated": True,   # XAE에서 이미 완료됨
+            "runtime_running": True,    # XAE에서 이미 완료됨
+            "system_ready": False,
+            "errors": [],
+        }
+        plc_conn = None
+        try:
+            plc_conn = pyads.Connection(ams_net_id, pyads.PORT_TC3PLC1)
+            plc_conn.open()
+            print(f"[{plc_name}] PLC 연결 확인 중...")
+            is_ready = False
+            for _ in range(60):  # 최대 30초 대기
+                try:
+                    is_ready = plc_conn.read_by_name("GVL.gSystemReady", pyads.PLCTYPE_BOOL)
+                    if is_ready:
+                        print(f"[{plc_name}] gSystemReady = True 확인 완료.")
+                        break
+                except pyads.ADSError:
+                    pass
+                time.sleep(0.5)
+            if not is_ready:
+                result["errors"].append("GVL.gSystemReady가 제한 시간 내 True가 되지 않았습니다.")
+                print(f"[{plc_name}] 경고: gSystemReady가 True가 되지 않았습니다. "
+                      "TwinCAT XAE에서 Activate/Login/Play 완료 여부를 확인하세요.")
+            result["system_ready"] = bool(is_ready)
+        except Exception as e:
+            result["errors"].append(f"PLC 연결 또는 gSystemReady 확인 실패: {e}")
+            print(f"[{plc_name}] 에러: {e}")
+        finally:
+            if plc_conn is not None:
+                try:
+                    plc_conn.close()
+                except Exception:
+                    pass
+        result["status"] = "success" if result["system_ready"] and not result["errors"] else "error"
+        result["message"] = (
+            f"[{plc_name}] PLC 준비 완료."
+            if result["status"] == "success"
+            else f"[{plc_name}] PLC 준비 확인 실패."
+        )
+        return result
+
     plc_results = await asyncio.gather(
-        asyncio.to_thread(reset_and_play_one_plc_sync, "PLC1", PLC1_AMS_NET_ID),
-        asyncio.to_thread(reset_and_play_one_plc_sync, "PLC2", PLC2_AMS_NET_ID),
+        asyncio.to_thread(check_system_ready_sync, "PLC1", PLC1_AMS_NET_ID),
+        asyncio.to_thread(check_system_ready_sync, "PLC2", PLC2_AMS_NET_ID),
         return_exceptions=True,
     )
     results = {}
@@ -293,7 +394,7 @@ async def activate_and_play_all_plcs():
                 "plc_name": plc_name,
                 "status": "error",
                 "errors": [str(plc_result)],
-                "message": f"[{plc_name}] 원격 초기화 작업에서 예외가 발생했습니다.",
+                "message": f"[{plc_name}] PLC 준비 확인 중 예외가 발생했습니다.",
             }
         else:
             results[plc_name] = plc_result
@@ -305,7 +406,7 @@ async def activate_and_play_all_plcs():
     ]
     status = "success" if not failed_plcs else "error"
     message = (
-        "모든 PLC의 Activate 및 Play 원격 명령이 완료되었습니다."
+        "모든 PLC의 준비 상태가 확인되었습니다."
         if status == "success"
         else f"다음 PLC의 Activate/Login/Play에 실패했습니다: {', '.join(failed_plcs)}"
     )
