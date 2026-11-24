@@ -382,13 +382,15 @@ async def activate_and_play_all_plcs():
         )
         return result
 
+    # [PLC1 단독 모드] PLC2 비활성화
+    # PLC2 복원 시: "PLC2" 항목을 다시 추가하고 zip의 튜플도 ("PLC1", "PLC2")로 변경
     plc_results = await asyncio.gather(
         asyncio.to_thread(check_system_ready_sync, "PLC1", PLC1_AMS_NET_ID),
-        asyncio.to_thread(check_system_ready_sync, "PLC2", PLC2_AMS_NET_ID),
+        # asyncio.to_thread(check_system_ready_sync, "PLC2", PLC2_AMS_NET_ID),
         return_exceptions=True,
     )
     results = {}
-    for plc_name, plc_result in zip(("PLC1", "PLC2"), plc_results):
+    for plc_name, plc_result in zip(("PLC1",), plc_results):
         if isinstance(plc_result, Exception):
             results[plc_name] = {
                 "plc_name": plc_name,
