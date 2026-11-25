@@ -99,52 +99,43 @@ async def _close_plcs(plc_connections: dict[str, Any]) -> dict[str, str]:
 
 async def _open_command_plcs() -> dict[str, Any]:
     """
-    command 실행에 사용할 PLC 연결을 연다.
+    command 실행에 사용할 PLC1/PLC2 연결을 연다.
 
-    [PLC1 단독 모드] PLC2 EtherCAT 불안정으로 PLC1만 연결합니다.
-    PLC2 복원 시: 아래 주석 블록을 해제하고 PLC1 단독 블록을 주석 처리하세요.
+    PLC1과 PLC2를 동시에 open한다. 한쪽 PLC 연결이 실패하면 이미 열린
+    다른 PLC 연결을 닫고 RuntimeError를 발생시킨다.
 
     Returns:
         {
             "PLC1": plc_connection,
-            "PLC2": plc_connection,  (PLC1 단독 모드에서는 미오픈 상태)
+            "PLC2": plc_connection,
         }
     """
-    # [PLC2 비활성화됨 - 복원 시 아래 주석 해제]
-    # plc_connections = {
-    #     "PLC1": _core.create_plc_connection("PLC1"),
-    #     "PLC2": _core.create_plc_connection("PLC2"),
-    # }
-    # open_results = await asyncio.gather(
-    #     _core.open_one_plc("PLC1", plc_connections["PLC1"]),
-    #     _core.open_one_plc("PLC2", plc_connections["PLC2"]),
-    #     return_exceptions=True,
-    # )
-    # failed_open_plcs = {}
-    # opened_plcs = {}
-    # for plc_name, open_result in zip(plc_connections.keys(), open_results):
-    #     if isinstance(open_result, Exception):
-    #         failed_open_plcs[plc_name] = str(open_result)
-    #     else:
-    #         opened_plcs[plc_name] = plc_connections[plc_name]
-    # if failed_open_plcs:
-    #     if opened_plcs:
-    #         await _close_plcs(opened_plcs)
-    #     raise RuntimeError(f"PLC 연결 실패: {failed_open_plcs}")
-    # print("PLC1, PLC2 연결 완료")
-    # return plc_connections
-
-    # [PLC1 단독 활성화]
     plc_connections = {
         "PLC1": _core.create_plc_connection("PLC1"),
-        "PLC2": _core.create_plc_connection("PLC2"),  # 객체만 생성, 오픈하지 않음
+        "PLC2": _core.create_plc_connection("PLC2"),
     }
 
-    open_result = await _core.open_one_plc("PLC1", plc_connections["PLC1"])
-    if isinstance(open_result, Exception):
-        raise RuntimeError(f"PLC1 연결 실패: {open_result}")
+    open_results = await asyncio.gather(
+        _core.open_one_plc("PLC1", plc_connections["PLC1"]),
+        _core.open_one_plc("PLC2", plc_connections["PLC2"]),
+        return_exceptions=True,
+    )
 
-    print("PLC1 단독 연결 완료 (PLC2 비활성화)")
+    failed_open_plcs = {}
+    opened_plcs = {}
+
+    for plc_name, open_result in zip(plc_connections.keys(), open_results):
+        if isinstance(open_result, Exception):
+            failed_open_plcs[plc_name] = str(open_result)
+        else:
+            opened_plcs[plc_name] = plc_connections[plc_name]
+
+    if failed_open_plcs:
+        if opened_plcs:
+            await _close_plcs(opened_plcs)
+        raise RuntimeError(f"PLC 연결 실패: {failed_open_plcs}")
+
+    print("PLC1, PLC2 연결 완료")
     return plc_connections
 
 
@@ -260,15 +251,13 @@ async def check_plcs_ready() -> dict[str, Any]:
     plc_connections = None
     try:
         plc_connections = await _open_command_plcs()
-        # [PLC1 단독 모드] PLC1만 확인
-        active_plcs = {"PLC1": plc_connections["PLC1"]}
         ready = await asyncio.gather(*[
             asyncio.to_thread(plc.read_by_name, 'GVL.gSystemReady', pyads.PLCTYPE_BOOL)
-            for plc in active_plcs.values()
+            for plc in plc_connections.values()
         ])
         if not all(ready):
-            return _error_result('PLC runtime is not ready.', ready=dict(zip(active_plcs, ready)))
-        return {'status': 'success', 'message': 'PLC1 is ready. (PLC2 비활성화)'}
+            return _error_result('PLC runtime is not ready.', ready=dict(zip(plc_connections, ready)))
+        return {'status': 'success', 'message': 'PLC1 and PLC2 are ready.'}
     except Exception as error:
         return _error_result(f'Cannot verify PLC readiness: {error}')
     finally:

@@ -15,9 +15,6 @@ PLC1_AMS_PORT = 851
 PLC2_AMS_NET_ID = "172.18.233.112.1.1"
 PLC2_AMS_PORT = 851
 
-# [PLC1 단독 모드] 비활성화된 PLC 목록
-# PLC2 복원 시 빈 set으로 변경: DISABLED_PLCS = set()
-DISABLED_PLCS = {"PLC2"}
 
 
 VELOCITY = 10.0
@@ -3619,8 +3616,6 @@ async def positioner_lock(plc_connections, positioners: list[str]):
         # ====================================================
         for positioner, positioner_info in POSITIONER_AXIS_MAP.items():
             plc_name = positioner_info["plc"]
-            if plc_name in DISABLED_PLCS:
-                continue
             plc = plc_connections[plc_name]
 
             for motor in ("alpha", "beta"):
@@ -3657,8 +3652,6 @@ async def positioner_lock(plc_connections, positioners: list[str]):
                 is_locked = positioner in locked_positioners
 
                 plc_name = positioner_info["plc"]
-                if plc_name in DISABLED_PLCS:
-                    continue
                 plc = plc_connections[plc_name]
 
                 for motor in ("alpha", "beta"):
@@ -3686,8 +3679,6 @@ async def positioner_lock(plc_connections, positioners: list[str]):
                 expected_locked = positioner in locked_positioners
 
                 plc_name = positioner_info["plc"]
-                if plc_name in DISABLED_PLCS:
-                    continue
                 plc = plc_connections[plc_name]
 
                 for motor in ("alpha", "beta"):
