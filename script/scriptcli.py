@@ -310,19 +310,19 @@ class script():
         )
         await asyncio.sleep(2)
         # [비활성화됨] ADC homing - 필요 시 아래 주석 해제
-        # await send_and_wait_reply(
-        #     scriptrun.response_queue,
-        #     handle_adc('adchome 1', scriptrun.ICSclient, logging=logging),
-        #     'ADC', 'adchome', timeout=120, logging=logging,
-        # )
-        # await asyncio.sleep(2)
+        await send_and_wait_reply(
+            scriptrun.response_queue,
+            handle_adc('adchome 1', scriptrun.ICSclient, logging=logging),
+            'ADC', 'adchome', timeout=120, logging=logging,
+        )
+        await asyncio.sleep(2)
         # [비활성화됨] ADC zeroing - 필요 시 아래 주석 해제
-        # await send_and_wait_reply(
-        #     scriptrun.response_queue,
-        #     handle_adc('adczero 4', scriptrun.ICSclient, logging=logging),
-        #     'ADC', 'adczero', timeout=120, logging=logging,
-        # )
-        # await asyncio.sleep(2)
+        await send_and_wait_reply(
+            scriptrun.response_queue,
+            handle_adc('adczero 4', scriptrun.ICSclient, logging=logging),
+            'ADC', 'adczero', timeout=120, logging=logging,
+        )
+        await asyncio.sleep(2)
         # await handle_adc('adcstatus',scriptrun.ICSclient, logging=logging)
         # await scriptrun.response_queue.get()
         # await asyncio.sleep(2)
