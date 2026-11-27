@@ -474,11 +474,21 @@ async def identify_execute(GFA_server,gfa_actions,cmd):
 # geometry vs ring centre ~4".
 RMS_CHECK_ARCSEC = 15.0
 RING_CHECK_ARCSEC = 20.0
+# Chip centres off the calibrated pattern (median of the 2026-10/11 sets): 5.5 um = 0.22" in
+# state A, 25 um = 1.0" in state B (builds up while tracking west), 54 um = 2.2" in state C
+# (ADC off its zero?). Above PATTERN_STATE_ARCSEC the pattern is not the one it was
+# calibrated in (state A) and the centre is less certain; above PATTERN_RMS_CHECK_ARCSEC a
+# chip is solved wrong or the plate moved.
+PATTERN_STATE_ARCSEC = 0.6
+PATTERN_RMS_CHECK_ARCSEC = 4.0
 
 
 def compute_boresight(astro_dir, images, crval1_list, crval2_list, geometry_path):
     """Boresight (RA, DEC deg) of the solved GFA frames.
 
+    0. With a chip pattern ("pattern" of boresight_geometry.json) and >= 3 cameras: the
+       pattern fit of the chip centres (pattern_centre); 0.10" for one camera less in
+       state A, against 0.32" for 1. on Gaia-refit chips. Checked like 1. (info['stale']).
     1. Per-camera boresight geometry (GFA/etc/boresight_geometry.json, made by
        GFA/calib_boresight.py): works with any subset of cameras, ~3" with 5.
     2. Without it: centre of the camera ring fitted to >= 3 cameras (~5").
@@ -501,9 +511,52 @@ def compute_boresight(astro_dir, images, crval1_list, crval2_list, geometry_path
     except Exception as e:
         printing(f"Ring centre unavailable ({e}).")
 
+    pattern = None
+    try:
+        pattern = load_gfa_pattern(geometry_path)
+    except Exception as e:
+        printing(f"GFA chip pattern unavailable ({e}).")
+    if pattern is not None and len(paths) >= PATTERN_MIN_CAMERAS:
+        try:
+            ra_c, dec_c, info = pattern_from_astro_files(paths, pattern)
+        except Exception as e:
+            printing(f"Pattern fit failed ({e}); using the camera geometry.")
+        else:
+            printing(
+                f"Boresight from the chip pattern: cameras={info['used']}, "
+                f"chip residual rms {info['rms_um']:.0f} um ({info['rms_arcsec']:.2f} arcsec), "
+                f"scale {info['scale']:.5f}, Gaia-refit={info.get('refit', [])}"
+            )
+            reasons = []
+            if info['rms_arcsec'] > PATTERN_RMS_CHECK_ARCSEC:
+                # e.g. a chip solved wrong, or the GFA plate deformed / remounted
+                reasons.append(f"chips off the pattern by {info['rms_arcsec']:.1f} arcsec rms "
+                               f"({ {s: round(r, 1) for s, r in info['resid_arcsec'].items()} })")
+            if ring is not None:
+                info['ring_sep_arcsec'] = float(
+                    ring.separation(SkyCoord(ra_c * u.deg, dec_c * u.deg)).arcsec
+                )
+                if info['ring_sep_arcsec'] > RING_CHECK_ARCSEC:
+                    reasons.append(f"{info['ring_sep_arcsec']:.0f} arcsec from the camera ring centre")
+            info['not_state_a'] = bool(info['rms_arcsec'] > PATTERN_STATE_ARCSEC)
+            if info['not_state_a'] and not reasons:
+                printing(
+                    f"NOTE: chips {info['rms_arcsec']:.1f} arcsec rms off the state-A pattern: the GFA "
+                    "optics are not in state A (B: long tracking west; C: ADC off zero?); centre "
+                    "less certain (one camera less moves it ~0.35 arcsec in B, ~0.7 in C)."
+                )
+            info['stale'] = bool(reasons)
+            if reasons:
+                printing(
+                    "WARNING: the chip pattern may not match the cameras any more ("
+                    + "; ".join(reasons) + ")."
+                )
+            return ra_c, dec_c, 'pattern', info
+
     try:
         geometry = load_boresight_geometry(geometry_path)
-        ra_c, dec_c, info = boresight_from_astro_files(paths, geometry)
+        geometry_gaia = load_boresight_geometry_gaia(geometry_path)
+        ra_c, dec_c, info = boresight_from_astro_files(paths, geometry, geometry_gaia)
     except Exception as e:
         if ring is not None:
             printing(
@@ -522,7 +575,8 @@ def compute_boresight(astro_dir, images, crval1_list, crval2_list, geometry_path
 
     printing(
         f"Boresight from camera geometry: cameras={info['used']}, "
-        f"rejected={info['rejected']}, rms={info['rms_arcsec']:.1f} arcsec"
+        f"rejected={info['rejected']}, rms={info['rms_arcsec']:.1f} arcsec, "
+        f"Gaia-refit={info.get('refit', [])}"
     )
     reasons = []
     if info['rms_arcsec'] > RMS_CHECK_ARCSEC or info['rejected']:

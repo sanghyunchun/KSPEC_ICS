@@ -1,49 +1,110 @@
 {
   "description": "GFA boresight geometry per camera serial: sep_deg = chip centre to boresight, theta_deg = boresight direction in the camera pixel frame (+x towards +y).",
-  "method": "boresight of each set = centre of the camera ring",
-  "created_utc": "2026-10-28T16:56:49Z",
-  "calibration_sets": [
-    "D20261028_T103804_40103651_exp10s.wcs",
-    "D20261028_T103831_40103651_exp10s.wcs",
-    "D20261028_T103858_40103651_exp10s.wcs",
-    "D20261028_T105041_40103651_exp10s.wcs",
-    "D20261028_T105107_40103651_exp10s.wcs",
-    "D20261028_T105135_40103651_exp10s.wcs",
-    "D20261028_T110106_40103651_combined.wcs",
-    "D20261028_T110155_40103651_combined.wcs",
-    "D20261028_T110244_40103651_combined.wcs",
-    "D20261028_T111717_40103651_exp10s.wcs",
-    "D20261028_T112617_40103651_exp10s.wcs",
-    "D20261028_T122351_40103651_exp10s.wcs",
-    "D20261028_T122433_40103651_exp10s.wcs",
-    "D20261028_T124707_40103651_exp5s.wcs",
-    "D20261028_T125957_40103651_exp5s.wcs"
-  ],
+  "method": "boresight of each set = centre of the camera ring; per camera the median over the state-A sets of a field, then the mean over fields (theta circular), so every field counts once. Solutions: solve-field on the matched-filter star lists (SIP order 2).",
+  "created_utc": "2026-11-14T00:00:00Z",
+  "nights": "2026-10-28 ... 2026-11-08",
+  "n_sets": 758,
+  "n_fields": 25,
+  "previous": "2026-10-28, 15 sets on 3 fields (#32)",
   "cameras": {
     "40103651": {
-      "sep_deg": 1.473285394322656,
-      "theta_deg": 89.80231105327124,
-      "n_sets": 15
+      "sep_deg": 1.4731879,
+      "theta_deg": 89.84373,
+      "n_fields": 25
     },
     "40103663": {
-      "sep_deg": 1.4740636438528738,
-      "theta_deg": 89.97170298959374,
-      "n_sets": 13
+      "sep_deg": 1.4739162,
+      "theta_deg": 89.97011,
+      "n_fields": 25
     },
     "40103831": {
-      "sep_deg": 1.4743180451874787,
-      "theta_deg": 90.09635069107297,
-      "n_sets": 15
+      "sep_deg": 1.4740833,
+      "theta_deg": 90.11172,
+      "n_fields": 25
     },
     "40103833": {
-      "sep_deg": 1.4732523473154642,
-      "theta_deg": 89.92679279567706,
-      "n_sets": 15
+      "sep_deg": 1.4730901,
+      "theta_deg": 89.92155,
+      "n_fields": 25
     },
     "40103834": {
-      "sep_deg": 1.4750482393982751,
-      "theta_deg": 89.80772999912053,
-      "n_sets": 15
+      "sep_deg": 1.4748098,
+      "theta_deg": 89.80727,
+      "n_fields": 25
+    }
+  },
+  "cameras_gaia_method": "as 'cameras', on the Gaia-refit chip solutions (fixed distortion of gfa_distortion.json + linear fit to Gaia DR3 at the epoch); used for frames with GFAREFIT = T",
+  "cameras_gaia": {
+    "40103651": {
+      "sep_deg": 1.4731841,
+      "theta_deg": 89.83797,
+      "n_fields": 25
+    },
+    "40103663": {
+      "sep_deg": 1.4739175,
+      "theta_deg": 89.97757,
+      "n_fields": 25
+    },
+    "40103831": {
+      "sep_deg": 1.4740822,
+      "theta_deg": 90.11531,
+      "n_fields": 25
+    },
+    "40103833": {
+      "sep_deg": 1.473084,
+      "theta_deg": 89.92815,
+      "n_fields": 25
+    },
+    "40103834": {
+      "sep_deg": 1.4748107,
+      "theta_deg": 89.80669,
+      "n_fields": 25
+    }
+  },
+  "pattern": {
+    "enabled": true,
+    "description": "Chip centre per camera in focal-plane mm about the ring centre (design frame) and the planner mapping sky -> focal plane (gnomonic about the field centre, radial factor 1 + k1 r^2 + k2 r^4 + k3 r^6, then matrix [mm/rad]). GFA.pointing.pattern_centre fits shift, rotation and scale of the chip centres to it; the boresight is the origin.",
+    "method": "state-A five-camera sets, Gaia-refit (allpl) chip centres: per set the chip positions about the ring centre turned and scaled onto the design pattern, then averaged",
+    "state": "A",
+    "n_sets": 758,
+    "n_fields": 25,
+    "nights": "2026-10-28 ... 2026-11-08",
+    "mapping": {
+      "matrix": [
+        [
+          5159.765882088489,
+          -0.007877703543042574
+        ],
+        [
+          -0.01780951345955178,
+          -5159.760629030003
+        ]
+      ],
+      "k1": 30.164648008785758,
+      "k2": 5354.52295294578,
+      "k3": 0.0
+    },
+    "cameras": {
+      "40103651": {
+        "x_mm": -0.13779,
+        "y_mm": -135.5582
+      },
+      "40103663": {
+        "x_mm": 0.04118,
+        "y_mm": 135.62885
+      },
+      "40103831": {
+        "x_mm": -117.53869,
+        "y_mm": 67.7089
+      },
+      "40103833": {
+        "x_mm": 117.32028,
+        "y_mm": 67.89369
+      },
+      "40103834": {
+        "x_mm": 117.4886,
+        "y_mm": -67.9363
+      }
     }
   }
 }

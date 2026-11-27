@@ -18,6 +18,7 @@ from photutils.detection import DAOStarFinder
 
 from .gfa_logger import GFALogger
 from .gfa_environment import create_environment, GFAEnvironment
+from .gfa_sources import detect_peaks
 
 # NOTE: pointing에서는 get_crvals_from_images를 쓰고 있으니 유지
 from .gfa_getcrval import get_crvals_from_images, get_crval_from_image  # noqa: F401
@@ -65,45 +66,15 @@ def matched_filter_peaks(
     from 5 to 8 px gives >= 97 % of the best S/N for those ~7 px stars.
 
     Returns (n_peaks, brightest_flux), where brightest_flux is the largest
-    background-subtracted sum within ``fwhm`` px of a peak.
+    background-subtracted sum within ``fwhm`` px of a peak. The detector is
+    ``gfa_sources.detect_peaks`` (shared with the astrometry star list).
     """
-    from scipy import ndimage
     from photutils.aperture import CircularAperture, aperture_photometry
-    from photutils.background import (
-        Background2D, MedianBackground, StdBackgroundRMS,
-    )
-    from photutils.detection import find_peaks
 
-    bad = ~np.isfinite(img) | (img <= 0)
-    bkg = Background2D(
-        img, box_size, filter_size=3, mask=bad,
-        bkg_estimator=MedianBackground(), bkgrms_estimator=StdBackgroundRMS(),
+    peaks, sub = detect_peaks(
+        img, fwhm=fwhm, nsigma=nsigma, box_size=box_size, border=border
     )
-    sub = np.where(bad, 0.0, img - bkg.background)
-
-    sig = fwhm / 2.3548
-    delta = np.zeros((81, 81))
-    delta[40, 40] = 1.0
-    knorm = np.sqrt(np.sum(ndimage.gaussian_filter(delta, sig, truncate=4.0) ** 2))
-    with np.errstate(divide="ignore", invalid="ignore"):
-        snr = ndimage.gaussian_filter(sub, sig, truncate=4.0) / (
-            bkg.background_rms * knorm
-        )
-    bad |= ~np.isfinite(snr)
-    snr[bad] = 0.0
-    _, _, renorm = sigma_clipped_stats(
-        snr[::2, ::2], mask=bad[::2, ::2], sigma=3.0, maxiters=5
-    )
-    if not renorm > 0:
-        return 0, 0.0
-    snr /= renorm
-
-    box = max(3, int(round(fwhm)))
-    peaks = find_peaks(
-        snr, nsigma, box_size=box if box % 2 else box + 1,
-        mask=bad, border_width=border,
-    )
-    if peaks is None or len(peaks) == 0:
+    if peaks is None:
         return 0, 0.0
 
     xy = np.column_stack([peaks["x_peak"], peaks["y_peak"]]).astype(float)

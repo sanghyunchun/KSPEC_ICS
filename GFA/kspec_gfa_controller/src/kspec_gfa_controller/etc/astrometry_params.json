@@ -55,7 +55,29 @@
     "astrometry": {
         "scale_range": ["0.03", "0.16"],
         "radius": 5,
-        "cpulimit_s": 60
+        "cpulimit_s": 60,
+        "source_list": {
+            "enabled": true,
+            "fwhm": 7.0,
+            "nsigma": 6.0,
+            "box_size": 64,
+            "border": 8,
+            "min_sources": 5,
+            "scale_units": "arcsecperpix",
+            "scale_range": [0.40, 0.46]
+        },
+        "refine": {
+            "enabled": true,
+            "catalog_dir": "~/work/DATA/GFADATA/gaia",
+            "full_catalog_dir": "~/work/DATA/GFADATA/gaia_zones",
+            "ring_deg": 1.473,
+            "ring_halfwidth_deg": 0.2,
+            "distortion_file": "",
+            "cone_deg": 0.115,
+            "match_px": 3.0,
+            "min_stars": 6,
+            "error_model_arcsec": [0.079, 0.135]
+        }
     },
     "detection": {
         "box_size": 40,
