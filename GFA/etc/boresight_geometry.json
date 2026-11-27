@@ -1,49 +1,36 @@
 {
   "description": "GFA boresight geometry per camera serial: sep_deg = chip centre to boresight, theta_deg = boresight direction in the camera pixel frame (+x towards +y).",
-  "method": "boresight of each set = centre of the camera ring",
-  "created_utc": "2026-10-28T16:56:49Z",
-  "calibration_sets": [
-    "D20261028_T103804_40103651_exp10s.wcs",
-    "D20261028_T103831_40103651_exp10s.wcs",
-    "D20261028_T103858_40103651_exp10s.wcs",
-    "D20261028_T105041_40103651_exp10s.wcs",
-    "D20261028_T105107_40103651_exp10s.wcs",
-    "D20261028_T105135_40103651_exp10s.wcs",
-    "D20261028_T110106_40103651_combined.wcs",
-    "D20261028_T110155_40103651_combined.wcs",
-    "D20261028_T110244_40103651_combined.wcs",
-    "D20261028_T111717_40103651_exp10s.wcs",
-    "D20261028_T112617_40103651_exp10s.wcs",
-    "D20261028_T122351_40103651_exp10s.wcs",
-    "D20261028_T122433_40103651_exp10s.wcs",
-    "D20261028_T124707_40103651_exp5s.wcs",
-    "D20261028_T125957_40103651_exp5s.wcs"
-  ],
+  "method": "boresight of each set = centre of the camera ring; per camera the median over the state-A sets of a field, then the mean over fields (theta circular), so every field counts once. Solutions: solve-field on the matched-filter star lists (SIP order 2).",
+  "created_utc": "2026-11-14T00:00:00Z",
+  "nights": "2026-10-28 ... 2026-11-08",
+  "n_sets": 758,
+  "n_fields": 25,
+  "previous": "2026-10-28, 15 sets on 3 fields (#32)",
   "cameras": {
     "40103651": {
-      "sep_deg": 1.473285394322656,
-      "theta_deg": 89.80231105327124,
-      "n_sets": 15
+      "sep_deg": 1.4731879,
+      "theta_deg": 89.84373,
+      "n_fields": 25
     },
     "40103663": {
-      "sep_deg": 1.4740636438528738,
-      "theta_deg": 89.97170298959374,
-      "n_sets": 13
+      "sep_deg": 1.4739162,
+      "theta_deg": 89.97011,
+      "n_fields": 25
     },
     "40103831": {
-      "sep_deg": 1.4743180451874787,
-      "theta_deg": 90.09635069107297,
-      "n_sets": 15
+      "sep_deg": 1.4740833,
+      "theta_deg": 90.11172,
+      "n_fields": 25
     },
     "40103833": {
-      "sep_deg": 1.4732523473154642,
-      "theta_deg": 89.92679279567706,
-      "n_sets": 15
+      "sep_deg": 1.4730901,
+      "theta_deg": 89.92155,
+      "n_fields": 25
     },
     "40103834": {
-      "sep_deg": 1.4750482393982751,
-      "theta_deg": 89.80772999912053,
-      "n_sets": 15
+      "sep_deg": 1.4748098,
+      "theta_deg": 89.80727,
+      "n_fields": 25
     }
   }
 }

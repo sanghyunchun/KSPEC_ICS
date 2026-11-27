@@ -55,7 +55,17 @@
     "astrometry": {
         "scale_range": ["0.03", "0.16"],
         "radius": 5,
-        "cpulimit_s": 60
+        "cpulimit_s": 60,
+        "source_list": {
+            "enabled": true,
+            "fwhm": 7.0,
+            "nsigma": 6.0,
+            "box_size": 64,
+            "border": 8,
+            "min_sources": 5,
+            "scale_units": "arcsecperpix",
+            "scale_range": [0.40, 0.46]
+        }
     },
     "detection": {
         "box_size": 40,
